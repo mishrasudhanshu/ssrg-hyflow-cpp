@@ -19,9 +19,10 @@ public:
 	virtual ~AbstractLogLib(){};
 	virtual void info(char const* str,...)=0;
 	virtual void debug(char const* str,...)=0;
-	virtual void warning(char const* str,...)=0;
+	virtual void warn(char const* str,...)=0;
 	virtual void error(char const* str,...)=0;
 	virtual void fatal(char const* str,...)=0;
+	virtual void result(char const* str,...)=0;
 };
 
 #ifdef USE_NAMESPACE

@@ -1,0 +1,82 @@
+/*
+ * Definitions.h
+ *
+ *  Created on: Aug 11, 2012
+ *      Author: sudhanshu
+ */
+
+#ifndef DEFINITIONS_H_
+#define DEFINITIONS_H_
+
+
+#ifdef USE_NAMESPACE
+namespace VT_DSTM
+{
+#endif
+
+#define DIRECTORY_MANAGER "directoryManager"
+#define HOME_DIRECTORY "HomeDirectory"
+#define ARROR_DIRECTORY "ArrowDirectory"
+#define RELAY_DIRECTORY "RelayDirectory"
+#define DTL2_DIRECTORY	"DTL2Directory"
+#define TRACKER_DIRECTORY "TrackerDirectory"
+#define CONTROLFLOW_DIRECTORY "ControlFlowDirectory"
+
+#define COMM_MANAGER "communicationManager"
+#define MSG_CONNECT "MsgConnect"
+
+#define LOGGER "logger"
+#define BASIC_LOGGER "Basic"
+#define PANTHEIOS_LOGGER "Pantheios"
+
+#define CONTEXT "context"
+#define EMPTY "empty"
+#define DTL "dtl"
+#define DTL2 "dtl2"
+#define UNDO_LOG "undoLog"
+#define CTRL_UNDO_LOG "control_undoLog"
+#define CTRL_WRITEBUGGER "control_writeBuffer"
+
+#define CONTENTION_POLICY "contentionPolicy"
+#define KARMA "Karma"
+#define RANDOM "Random"
+#define KINDERGARTEN "Kindergarten"
+#define TIME_STAMP "Timestamp"
+#define POLITE "Polite"
+#define AGGRESSIVE "Aggressive"
+#define PRIORITY "Priority"
+
+#define REMOTE_CALLER "remoteCaller"
+
+#define VERBOSE "verbose"
+#define DEBUG "debug"
+#define SANITY "sanity"
+#define INSTRUMENT "instrument"
+#define CHECKPOINT "checkPoint"
+
+#define LINK_DELAY "linkDelay"
+#define CALL_COST "callCost"
+#define PARENT_IP "parentIP"
+#define MY_IP "myIP"
+#define BASE_PORT "basePort"
+#define TERMINATE_IDLE "terminateIdle"
+#define MACHINES "machines"
+#define UNIT_TEST "unitTest"
+
+#define NODES "nodes"
+#define OBJECTS "objects"
+#define NESTING "nesting"
+#define CALLS "calls"
+#define READS "reads"
+#define THREADS "threads"
+#define TRANSACTIONS "transactions"
+#define TRANSACTIONS_LENGTH "transactionLength"
+#define TIMEOUT "timeout"
+
+#define TRUE "true"
+#define FALSE "false"
+
+#ifdef USE_NAMESPACE
+}
+#endif /* NAME_SPACE VT_DSTM */
+#endif /* DEFINITIONS_H_ */

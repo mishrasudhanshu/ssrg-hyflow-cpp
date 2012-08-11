@@ -8,29 +8,33 @@
 #ifndef DEFAULTLOGLIB_H_
 #define DEFAULTLOGLIB_H_
 
-#include "AbstractLogLib.hpp"
 #include <fstream>
-using namespace std;
+
+#include "AbstractLogLib.h"
 
 #ifdef USE_NAMESPACE
 namespace VT_DSTM
 {
 #endif
 
-class DefaultLogLib:public AbstractLogLib {
+class BasicLogLib:public AbstractLogLib {
 	FILE *infoStr;
 	FILE *debugStr;
 	FILE *warnStr;
 	FILE *errorStr;
 	FILE *fatalStr;
+	FILE *resultStr;
+	int nodeId;
 public:
-	DefaultLogLib();
-	~DefaultLogLib();
+	BasicLogLib();
+	~BasicLogLib();
 	void info(const char* str,...);
-	void debug(const char* str,...) {};
-	void warning(const char* str,...){};
-	void error(const char* str,...){};
-	void fatal(const char* str,...){};
+	void debug(const char* str,...);
+	void warn(const char* str,...);
+	void error(const char* str,...);
+	void fatal(const char* str,...);
+	void result(const char* str,...);
+	double getCurrentTime();
 };
 
 
