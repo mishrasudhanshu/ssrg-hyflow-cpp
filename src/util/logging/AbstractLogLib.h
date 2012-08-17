@@ -2,18 +2,14 @@
  * abstractLogLib.h
  *
  *  Created on: Aug 9, 2012
- *      Author: sudhanshu
+ *      Author: mishras[at]vt.edu
  */
 
 #ifndef ABSTRACTLOGLIB_H_
 #define ABSTRACTLOGLIB_H_
 
-
-#ifdef USE_NAMESPACE
-namespace VT_DSTM
+namespace vt_dstm
 {
-#endif
-
 class AbstractLogLib {
 public:
 	virtual ~AbstractLogLib(){};
@@ -25,7 +21,5 @@ public:
 	virtual void result(char const* str,...)=0;
 };
 
-#ifdef USE_NAMESPACE
 }
-#endif /* NAME_SPACE VT_DSTM */
 #endif /* ABSTRACTLOGLIB_H_ */

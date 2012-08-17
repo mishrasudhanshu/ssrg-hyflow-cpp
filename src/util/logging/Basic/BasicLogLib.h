@@ -2,20 +2,20 @@
  * DefaultLogLib.h
  *
  *  Created on: Aug 9, 2012
- *      Author: sudhanshu
+ *      Author: mishras[at]vt.edu
  */
 
 #ifndef DEFAULTLOGLIB_H_
 #define DEFAULTLOGLIB_H_
 
 #include <fstream>
+#include <stdint.h>
+#include <boost/thread/mutex.hpp>
 
-#include "AbstractLogLib.h"
+#include "../AbstractLogLib.h"
 
-#ifdef USE_NAMESPACE
-namespace VT_DSTM
+namespace vt_dstm
 {
-#endif
 
 class BasicLogLib:public AbstractLogLib {
 	FILE *infoStr;
@@ -24,7 +24,13 @@ class BasicLogLib:public AbstractLogLib {
 	FILE *errorStr;
 	FILE *fatalStr;
 	FILE *resultStr;
-	int nodeId;
+	boost::mutex infoGuard;
+	boost::mutex debugGuard;
+	boost::mutex warnGuard;
+	boost::mutex errorGuard;
+	boost::mutex fatalGuard;
+	boost::mutex resultGuard;
+	int32_t nodeId;
 public:
 	BasicLogLib();
 	~BasicLogLib();
@@ -37,8 +43,5 @@ public:
 	double getCurrentTime();
 };
 
-
-#ifdef USE_NAMESPACE
 }
-#endif /* NAME_SPACE VT_DSTM */
 #endif /* DEFAULTLOGLIB_H_ */

@@ -2,7 +2,7 @@
  * DefaultLogLib.cpp
  *
  *  Created on: Aug 10, 2012
- *      Author: sudhanshu
+ *      Author: mishras[at]vt.edu
  */
 
 #include <ostream>
@@ -17,12 +17,10 @@
 #include <sys/time.h>
 
 #include "BasicLogLib.h"
-#include "../networking/ClusterManager.h"
+#include "../../networking/NetworkManager.h"
 
-#ifdef USE_NAMESPACE
-namespace VT_DSTM
+namespace vt_dstm
 {
-#endif
 
 //FIXME: Add the default printings
 BasicLogLib::BasicLogLib() {
@@ -32,7 +30,7 @@ BasicLogLib::BasicLogLib() {
 	char const *dirName = "log";
 	char fileName[20];
 
-	nodeId = ClusterManager::getClusterId();
+	nodeId = NetworkManager::getNodeId();
 	e = stat(dirName, &sb);
 	if (e != 0) {
 		if (errno == ENOENT) {
@@ -115,8 +113,13 @@ void BasicLogLib::info(char const* str, ...) {
 		va_start(argptr, str);
 		/* Start up variable arguments */
 		vsprintf(buf, str, argptr); /* print the variable arguments to buffer */
-		fprintf(infoStr, "thread %lld :%.5f :", (long long) pthread_self(), getCurrentTime());
-		fprintf(infoStr, (char const*) buf); /* print the message to stream */
+		// Thread Safe access to File
+		{
+			boost::lock_guard<boost::mutex> lock(infoGuard);
+			fprintf(infoStr, "thread %lld :%.5f :", (long long) pthread_self(),
+					getCurrentTime());
+			fprintf(infoStr, (char const*) buf); /* print the message to stream */
+		}
 		/* Signify end of processing of variable arguments */
 		va_end(argptr);
 	}
@@ -129,8 +132,12 @@ void BasicLogLib::debug(char const* str, ...) {
 		va_start(argptr, str);
 		/* Start up variable arguments */
 		vsprintf(buf, str, argptr); /* print the variable arguments to buffer */
-		fprintf(debugStr, "thread %lld :%.5f :", (long long) pthread_self(), getCurrentTime());
-		fprintf(debugStr, (char const*) buf); /* print the message to stream */
+		{
+			boost::lock_guard<boost::mutex> lock(debugGuard);
+			fprintf(debugStr, "thread %lld :%.5f :", (long long) pthread_self(),
+					getCurrentTime());
+			fprintf(debugStr, (char const*) buf); /* print the message to stream */
+		}
 		/* Signify end of processing of variable arguments */
 		va_end(argptr);
 	}
@@ -143,8 +150,12 @@ void BasicLogLib::warn(char const* str, ...) {
 		va_start(argptr, str);
 		/* Start up variable arguments */
 		vsprintf(buf, str, argptr); /* print the variable arguments to buffer */
-		fprintf(warnStr, "thread %lld :%.5f :", (long long) pthread_self(), getCurrentTime());
-		fprintf(warnStr, (char const*) buf); /* print the message to stream */
+		{
+			boost::lock_guard<boost::mutex> lock(warnGuard);
+			fprintf(warnStr, "thread %lld :%.5f :", (long long) pthread_self(),
+					getCurrentTime());
+			fprintf(warnStr, (char const*) buf); /* print the message to stream */
+		}
 		/* Signify end of processing of variable arguments */
 		va_end(argptr);
 	}
@@ -157,8 +168,12 @@ void BasicLogLib::error(char const* str, ...) {
 		va_start(argptr, str);
 		/* Start up variable arguments */
 		vsprintf(buf, str, argptr); /* print the variable arguments to buffer */
-		fprintf(errorStr, "thread %lld :%.5f :", (long long) pthread_self(), getCurrentTime());
-		fprintf(errorStr, (char const*) buf); /* print the message to stream */
+		{
+			boost::lock_guard<boost::mutex> lock(errorGuard);
+			fprintf(errorStr, "thread %lld :%.5f :", (long long) pthread_self(),
+					getCurrentTime());
+			fprintf(errorStr, (char const*) buf); /* print the message to stream */
+		}
 		/* Signify end of processing of variable arguments */
 		va_end(argptr);
 	}
@@ -171,8 +186,12 @@ void BasicLogLib::fatal(char const* str, ...) {
 		va_start(argptr, str);
 		/* Start up variable arguments */
 		vsprintf(buf, str, argptr); /* print the variable arguments to buffer */
-		fprintf(fatalStr, "thread %lld :%.5f :", (long long) pthread_self());
-		fprintf(fatalStr, (char const*) buf); /* print the message to stream */
+		{
+			boost::lock_guard<boost::mutex> lock(fatalGuard);
+			fprintf(fatalStr, "thread %lld :%.5f :",
+					(long long) pthread_self());
+			fprintf(fatalStr, (char const*) buf); /* print the message to stream */
+		}
 		/* Signify end of processing of variable arguments */
 		va_end(argptr);
 	}
@@ -185,18 +204,21 @@ void BasicLogLib::result(char const* str, ...) {
 		va_start(argptr, str);
 		/* Start up variable arguments */
 		vsprintf(buf, str, argptr); /* print the variable arguments to buffer */
-		fprintf(resultStr, "thread %lld :%.5f :", (long long) pthread_self());
-		fprintf(resultStr, (char const*) buf); /* print the message to stream */
+		{
+			boost::lock_guard<boost::mutex> lock(resultGuard);
+			fprintf(resultStr, "thread %lld :%.5f :",
+					(long long) pthread_self());
+			fprintf(resultStr, (char const*) buf); /* print the message to stream */
+		}
 		/* Signify end of processing of variable arguments */
 		va_end(argptr);
 	}
 }
 
-double BasicLogLib::getCurrentTime(){
+double BasicLogLib::getCurrentTime() {
 	timeval tv;
-	gettimeofday (&tv, NULL);
-	return tv.tv_sec+0.000001*tv.tv_usec;
+	gettimeofday(&tv, NULL);
+	return tv.tv_sec + 0.000001 * tv.tv_usec;
 }
-#ifdef USE_NAMESPACE
+
 }
-#endif

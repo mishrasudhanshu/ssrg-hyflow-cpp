@@ -2,18 +2,18 @@
  * Definitions.h
  *
  *  Created on: Aug 11, 2012
- *      Author: sudhanshu
+ *      Author: mishras[at]vt.edu
  */
 
 #ifndef DEFINITIONS_H_
 #define DEFINITIONS_H_
 
 
-#ifdef USE_NAMESPACE
-namespace VT_DSTM
-{
-#endif
 
+namespace vt_dstm
+{
+
+//TODO: Move all definitions to array and enum
 #define DIRECTORY_MANAGER "directoryManager"
 #define HOME_DIRECTORY "HomeDirectory"
 #define ARROR_DIRECTORY "ArrowDirectory"
@@ -63,7 +63,10 @@ namespace VT_DSTM
 #define MACHINES "machines"
 #define UNIT_TEST "unitTest"
 
+#define NETWORK "network"
+#define MSG_CONNECT "MsgConnect"
 #define NODES "nodes"
+#define NODE_ID "nodeId"
 #define OBJECTS "objects"
 #define NESTING "nesting"
 #define CALLS "calls"
@@ -76,7 +79,5 @@ namespace VT_DSTM
 #define TRUE "true"
 #define FALSE "false"
 
-#ifdef USE_NAMESPACE
 }
-#endif /* NAME_SPACE VT_DSTM */
 #endif /* DEFINITIONS_H_ */

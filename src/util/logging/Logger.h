@@ -2,16 +2,14 @@
  * Logger.h
  *
  *  Created on: Aug 9, 2012
- *      Author: sudhanshu
+ *      Author: mishras[at]vt.edu
  */
 
 #ifndef LOGGER_H_
 #define LOGGER_H_
 
-#ifdef USE_NAMESPACE
-namespace VT_DSTM
+namespace vt_dstm
 {
-#endif
 
 /**
  * This class provides the logging interface to HyflowCPP, under the hood
@@ -42,7 +40,5 @@ public:
 	static void test();
 };
 
-#ifdef USE_NAMESPACE
 }
-#endif /* NAME_SPACE VT_DSTM */
 #endif /* LOGGER_H_ */

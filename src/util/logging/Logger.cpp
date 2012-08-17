@@ -2,7 +2,7 @@
  * Logger.cpp
  *
  *  Created on: Aug 9, 2012
- *      Author: sudhanshu
+ *      Author: mishras[at]vt.edu
  */
 #include <iostream>
 #include <stddef.h>
@@ -10,15 +10,13 @@
 #include <string.h>
 
 #include "Logger.h"
-#include "BasicLogLib.h"
-#include "Pantheios.h"
+#include "Basic/BasicLogLib.h"
+#include "Pantheios/Pantheios.h"
 #include "../Definitions.h"
 #include "../parser/ConfigFile.h"
 
-#ifdef USE_NAMESPACE
-namespace VT_DSTM
+namespace vt_dstm
 {
-#endif
 
 Logger* Logger::instance = NULL;
 bool Logger::logging = false;
@@ -153,6 +151,4 @@ void Logger::test() {
 	std::cout<<"\n...Logger Test Completed...\n"<<std::endl;
 }
 
-#ifdef USE_NAMESPACE
 }
-#endif

@@ -2,7 +2,7 @@
  * Application.cpp
  *
  *  Created on: Aug 11, 2012
- *      Author: sudhanshu
+ *      Author: mishras[at]vt.edu
  */
 
 #include <string.h>
@@ -12,13 +12,12 @@
 #include "../util/Definitions.h"
 #include "../util/parser/ConfigFile.h"
 #include "../util/logging/Logger.h"
+#include "../util/networking/NetworkManager.h"
 
-#ifdef USE_NAMESPACE
-namespace VT_DSTM
+namespace vt_dstm
 {
-#endif
 
-int main(int argc, char *argv[], char *envp[]) {
+int Nomain(int argc, char *argv[], char *envp[]) {
 	// Read Hyflow Configuration file
 	ConfigFile::ConfigFileInit("default.conf");
 
@@ -30,10 +29,13 @@ int main(int argc, char *argv[], char *envp[]) {
 		unitTests::tests();
 	}
 
+	// Set node Id
+	NetworkManager::setNodeId();
+
+	// Initiate Logger : Depends on node Id
 	Logger::LoggerInit();
 
-	// Initiate the Network library
-
+	NetworkManager::NetworkInit();
 
 	// Run Benchmarks
 
@@ -41,6 +43,5 @@ int main(int argc, char *argv[], char *envp[]) {
 	return 0;
 }
 
-#ifdef USE_NAMESPACE
 }
-#endif
+

@@ -2,18 +2,16 @@
  * Pantheios.h
  *
  *  Created on: Aug 10, 2012
- *      Author: sudhanshu
+ *      Author: mishras[at]vt.edu
  */
 
 #ifndef PANTHEIOS_H_
 #define PANTHEIOS_H_
 
-#include "AbstractLogLib.h"
+#include "../AbstractLogLib.h"
 
-#ifdef USE_NAMESPACE
-namespace VT_DSTM
+namespace vt_dstm
 {
-#endif
 
 //TODO: Use Pantheios Logging Library
 class Pantheios: public AbstractLogLib{
@@ -26,7 +24,5 @@ public:
 	void result(const char* str,...){};
 };
 
-#ifdef USE_NAMESPACE
 }
-#endif /* NAME_SPACE VT_DSTM */
 #endif /* PANTHEIOS_H_ */

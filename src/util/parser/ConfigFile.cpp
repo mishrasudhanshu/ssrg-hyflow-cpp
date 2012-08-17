@@ -2,7 +2,7 @@
  * ConfigFile.cpp
  *
  *  Created on: Aug 10, 2012
- *      Author: sudhanshu
+ *      Author: mishras[at]vt.edu
  */
 
 #include <iostream>
@@ -12,11 +12,7 @@
 #include "ConfigFile.h"
 #include "../Definitions.h"
 
-#ifdef USE_NAMESPACE
-namespace VT_DSTM
-{
-#endif
-
+namespace vt_dstm {
 std::map<std::string, std::string> ConfigFile::configMap;
 bool ConfigFile::isInitialized = false;
 
@@ -183,6 +179,10 @@ void ConfigFile::UpdateMap() {
 	if (value)
 		Update(NODES, value);
 
+	value = getenv(NODE_ID);
+	if (value)
+		Update(NODE_ID, value);
+
 	value = getenv(OBJECTS);
 	if (value)
 		Update(OBJECTS, value);
@@ -311,6 +311,4 @@ void ConfigFile::test() {
 	std::cout << "\n$$Passed ConfigFile Test$$\n" << std::endl;
 }
 
-#ifdef USE_NAMESPACE
 }
-#endif

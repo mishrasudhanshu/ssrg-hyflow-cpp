@@ -2,7 +2,7 @@
  * ConfigFile.h
  *
  *  Created on: Aug 10, 2012
- *      Author: sudhanshu
+ *      Author: mishras[at]vt.edu
  */
 
 #ifndef CONFIGFILE_H_
@@ -10,11 +10,10 @@
 
 #include <map>
 #include <string>
+#include "../Definitions.h"
 
-#ifdef USE_NAMESPACE
-namespace VT_DSTM
+namespace vt_dstm
 {
-#endif
 
 class ConfigFile {
 	static std::map<std::string, std::string> configMap;
@@ -31,7 +30,5 @@ public:
 	static void test();
 };
 
-#ifdef USE_NAMESPACE
 }
-#endif /* NAME_SPACE VT_DSTM */
 #endif /* CONFIGFILE_H_ */

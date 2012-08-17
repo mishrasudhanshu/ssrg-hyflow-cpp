@@ -2,7 +2,7 @@
  * unitTests.cpp
  *
  *  Created on: Aug 11, 2012
- *      Author: sudhanshu
+ *      Author: mishras[at]vt.edu
  */
 #include <iostream>
 
@@ -10,13 +10,10 @@
 #include "../logging/Logger.h"
 #include "../parser/ConfigFile.h"
 
-#ifdef USE_NAMESPACE
-namespace VT_DSTM
-{
-#endif
+namespace vt_dstm {
 
 void unitTests::tests() {
-	std::cout<<"<<<Running Unit Tests>>>"<<std::endl;
+	std::cout << "<<<Running Unit Tests>>>" << std::endl;
 	// Test Parser
 	ConfigFile::test();
 
@@ -24,6 +21,5 @@ void unitTests::tests() {
 	Logger::test();
 }
 
-#ifdef USE_NAMESPACE
 }
-#endif
+
