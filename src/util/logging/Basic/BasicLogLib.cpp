@@ -6,13 +6,13 @@
  */
 
 #include <ostream>
-#include <stdio.h>
-#include <stdarg.h>
+#include <cstdio>
+#include <cstdarg>
 #include <iostream>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <errno.h>
-#include <string.h>
+#include <string>
 #include <pthread.h>
 #include <sys/time.h>
 

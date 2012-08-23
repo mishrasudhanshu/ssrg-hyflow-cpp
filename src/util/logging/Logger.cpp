@@ -5,9 +5,9 @@
  *      Author: mishras[at]vt.edu
  */
 #include <iostream>
-#include <stddef.h>
-#include <stdarg.h>
-#include <string.h>
+#include <cstddef>
+#include <cstdarg>
+#include <string>
 
 #include "Logger.h"
 #include "Basic/BasicLogLib.h"

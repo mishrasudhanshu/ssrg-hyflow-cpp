@@ -8,12 +8,12 @@
 #ifndef MSCMESSAGE_H_
 #define MSCMESSAGE_H_
 
-#include "../AbstractMessage.h"
+#include "../../messages/HyflowMessage.h"
 
 namespace vt_dstm
 {
 
-class MSCMessage: public AbstractMessage {
+class MSCMessage: public HyflowMessage {
 public:
 	MSCMessage();
 	virtual ~MSCMessage();

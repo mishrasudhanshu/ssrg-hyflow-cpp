@@ -44,10 +44,12 @@
 								<option id="gnu.cpp.link.option.libs.499340229" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
 									<listOptionValue builtIn="false" value="msgconnect"/>
 									<listOptionValue builtIn="false" value="pthread"/>
+									<listOptionValue builtIn="false" value="boost_serialization"/>
 								</option>
 								<option id="gnu.cpp.link.option.paths.568121030" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths">
 									<listOptionValue builtIn="false" value="/mnt/data/RTSL_Backup/ubuntu_one/workspace/MsgConnect/Code/C++/Core/Linux"/>
 									<listOptionValue builtIn="false" value="/usr/lib/i386-linux-gnu/"/>
+									<listOptionValue builtIn="false" value="/usr/lib"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.133034414" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>

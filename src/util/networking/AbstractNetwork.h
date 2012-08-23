@@ -8,33 +8,46 @@
 #ifndef ABSTRACTNETWORK_H_
 #define ABSTRACTNETWORK_H_
 
-#include "AbstractMessage.h"
+#include <cstdio>
+#include "../messages/HyflowMessage.h"
 
-namespace vt_dstm
-{
+namespace vt_dstm {
 
 class AbstractNetwork {
 
 public:
-	virtual ~AbstractNetwork(){};
+	virtual ~AbstractNetwork() {
+	}
+	;
 	/*
 	 * Initiate the Network setup for given node
 	 */
-	virtual void NetworkInit(){};
+	virtual void NetworkInit() {
+	}
+	;
 	/**
 	 * Send a message to given node
 	 */
-	virtual void sendMessage(int nodeId, AbstractMessage Message){};
+	virtual void sendMessage(int nodeId, HyflowMessage Message) {
+	}
+	;
 
 	/**
 	 * Send a message and wait for response Message
 	 */
-	virtual AbstractMessage sendCallbackMessage(int nodeId, AbstractMessage Message){};
+	virtual HyflowMessage sendCallbackMessage(int nodeId,
+			HyflowMessage Message) {
+		HyflowMessage msg;
+		return msg;
+	}
+	;
 
 	/**
 	 * Register Message Handler for given type of Message
 	 */
-	virtual void registerHandler(MessageType msg_t, void (AbstractMessage)){};
+	virtual void registerHandler(HyMessageType msg_t, void(HyflowMessage)) {
+	}
+	;
 };
 
 }

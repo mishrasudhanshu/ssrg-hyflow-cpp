@@ -11,7 +11,7 @@
 #include <stdint.h>
 
 #include "AbstractNetwork.h"
-#include "AbstractMessage.h"
+#include "../messages/HyflowMessage.h"
 
 namespace vt_dstm
 {
@@ -22,9 +22,9 @@ public:
 	static AbstractNetwork *network;
 
 	static void NetworkInit();
-	static void sendMessage(int nodeId, AbstractMessage Message);
-	static AbstractMessage sendCallbackMessage(int nodeId, AbstractMessage Message);
-	static void registerHandler(MessageType msg_t, void (AbstractMessage));
+	static void sendMessage(int nodeId, HyflowMessage Message);
+	static HyflowMessage sendCallbackMessage(int nodeId, HyflowMessage Message);
+	static void registerHandler(HyMessageType msg_t, void (HyflowMessage));
 
 	static int32_t getNodeId();
 	static void setNodeId();

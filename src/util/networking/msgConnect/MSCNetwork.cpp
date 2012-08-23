@@ -5,7 +5,7 @@
  *      Author: mishras[at]vt.edu
  */
 
-#include <stdio.h>
+#include <cstdio>
 
 #include "MSCNetwork.h"
 #include "MSCMessage.h"
@@ -16,6 +16,7 @@ MSCNetwork* MSCNetwork::instance = NULL;
 
 MSCNetwork::MSCNetwork() {
 	if (!instance) {
+		MsgConnect::MCBaseInitialization();
 		instance = new MSCNetwork();
 		instance->messenger = new MsgConnect::MCMessenger();
 		instance->queue = new MsgConnect::MCQueue();
@@ -54,16 +55,20 @@ void MSCNetwork::NetworkInit(){
 	handler->setEnabled(true);
 }
 
-void MSCNetwork::sendMessage(int nodeId, AbstractMessage Message){
+void MSCNetwork::sendMessage(int nodeId, HyflowMessage Message){
+	// Find Messenger corresponding nodeId
+
+	// copy Message in void pointer for message
+
 
 }
 
-AbstractMessage MSCNetwork::sendCallbackMessage(int nodeId, AbstractMessage Message){
+HyflowMessage MSCNetwork::sendCallbackMessage(int nodeId, HyflowMessage Message){
 	MSCMessage *msg = NULL ;
 	return *msg;
 }
 
-void MSCNetwork::registerHandler(MessageType msg_t, void (*handlerFunc)(AbstractMessage)){
+void MSCNetwork::registerHandler(HyMessageType msg_t, void (*handlerFunc)(HyflowMessage)){
 	instance->handlerMap[msg_t] = handlerFunc;
 }
 

@@ -31,16 +31,16 @@ class MSCNetwork: public AbstractNetwork {
 	MsgConnect::MCSocketTransport* socket;
 	MsgConnect::MCMessageHandlers* handlers;
 
-	std::map<MessageType, void (*)(AbstractMessage)> handlerMap;
+	std::map<HyMessageType, void (*)(HyflowMessage)> handlerMap;
 
 public:
 	MSCNetwork();
 	virtual ~MSCNetwork();
 
 	void NetworkInit();
-	void sendMessage(int nodeId, AbstractMessage Message);
-	AbstractMessage sendCallbackMessage(int nodeId, AbstractMessage Message);
-	void registerHandler(MessageType msg_t, void (*handlerFunc)(AbstractMessage));
+	void sendMessage(int nodeId, HyflowMessage Message);
+	HyflowMessage sendCallbackMessage(int nodeId, HyflowMessage Message);
+	void registerHandler(HyMessageType msg_t, void (*handlerFunc)(HyflowMessage));
 	static void defaultHandler(void* UserData, void* Sender,
 		MsgConnect::MCMessage& Message, bool& Handled);
 };

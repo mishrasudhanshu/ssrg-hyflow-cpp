@@ -4,13 +4,13 @@
  *  Created on: Aug 10, 2012
  *      Author: mishras[at]vt.edu
  */
-#include <string.h>
-#include <stdlib.h>
+#include <string>
+#include <cstdlib>
 
 #include "NetworkManager.h"
 #include "../parser/ConfigFile.h"
 #include "../Definitions.h"
-#include "MsgConnect/MSCNetwork.h"
+#include "msgConnect/MSCNetwork.h"
 
 namespace vt_dstm {
 
@@ -26,6 +26,11 @@ void NetworkManager::NetworkInit() {
 	// Register Default handlers
 	// Register Directory handlers
 
+	// Initiate the Group
+
+	// Initiate cluster
+
+	//FIXME: All below in Network library dependent code
 	if (nodeId == 0) {
 		// Wait for all nodes to join
 		// add sockets for each node

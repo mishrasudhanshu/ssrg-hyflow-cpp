@@ -5,7 +5,7 @@
  *      Author: mishras[at]vt.edu
  */
 
-#include <string.h>
+#include <string>
 
 #include "Application.h"
 #include "../util/unitTests/unitTests.h"
@@ -25,7 +25,7 @@ int Nomain(int argc, char *argv[], char *envp[]) {
 	ConfigFile::UpdateMap();
 
 	// Run unit test if specified
-	if(strcmp(ConfigFile::Value(UNIT_TEST).c_str(), TRUE)==0) {
+	if(ConfigFile::Value(UNIT_TEST).compare(TRUE)==0) {
 		unitTests::tests();
 	}
 

@@ -7,7 +7,7 @@
 
 #include <iostream>
 #include <fstream>
-#include <stdlib.h>
+#include <cstdlib>
 
 #include "ConfigFile.h"
 #include "../Definitions.h"
