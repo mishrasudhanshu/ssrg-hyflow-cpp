@@ -25,24 +25,37 @@ namespace vt_dstm
 
 class MSCNetwork: public AbstractNetwork {
 	static MSCNetwork *instance;
-
+	static int nodeCount;
+	static int nodeId;
+	static int basePort;
+	static std::string Ips[];
+	static std::string *nodeIps;
 	MsgConnect::MCMessenger* messenger;
 	MsgConnect::MCQueue* queue;
 	MsgConnect::MCSocketTransport* socket;
-	MsgConnect::MCMessageHandlers* handlers;
 
-	std::map<HyMessageType, void (*)(HyflowMessage)> handlerMap;
+	static std::map<HyMessageType, void (*)(HyflowMessage &)> handlerMap;
+	static std::map<unsigned long long, HyflowMessage*> trackerCallbackMap;
+	static std::map<unsigned long long, HyflowMessage*> objCallbackMap;
 
+	void messageDispatcher();
+	unsigned long long getCurrentTime();
 public:
 	MSCNetwork();
 	virtual ~MSCNetwork();
 
-	void NetworkInit();
-	void sendMessage(int nodeId, HyflowMessage Message);
-	HyflowMessage sendCallbackMessage(int nodeId, HyflowMessage Message);
-	void registerHandler(HyMessageType msg_t, void (*handlerFunc)(HyflowMessage));
+	void setupSockets();
+	void sendMessage(int nodeId, HyflowMessage & Message);
+	HyflowMessage & sendCallbackMessage(int nodeId, HyflowMessage & Message);
+	void registerHandler(HyMessageType msg_t, void (*handlerFunc)(HyflowMessage &));
+	void initCluster();
+	HyflowMessage & getMessageById(unsigned long long m_id, HyMessageType t);
+
 	static void defaultHandler(void* UserData, void* Sender,
 		MsgConnect::MCMessage& Message, bool& Handled);
+	static void callbackHandler(unsigned int UserData, MsgConnect::MCMessage& Message);
+	static std::string getIp(int id);
+	static int getBasePort();
 };
 
 }

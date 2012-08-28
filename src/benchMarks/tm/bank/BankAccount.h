@@ -35,6 +35,7 @@ public:
 	static uint64_t totalBalance(std::string id1, std::string id2);
 	static void transfer(std::string fromId, std::string toId, uint64_t money);
 	void print();
+	void getClone(HyflowObject *obj);
 };
 
 

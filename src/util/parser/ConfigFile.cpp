@@ -308,7 +308,6 @@ void ConfigFile::test() {
 	std::cout << TRANSACTIONS_LENGTH <<": " << trl << std::endl;
 	std::cout << TIMEOUT <<": " << to << std::endl;
 
-	std::cout << "\n$$Passed ConfigFile Test$$\n" << std::endl;
 }
 
 }

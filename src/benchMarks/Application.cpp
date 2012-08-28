@@ -14,10 +14,13 @@
 #include "../util/logging/Logger.h"
 #include "../util/networking/NetworkManager.h"
 
+using namespace vt_dstm;
 namespace vt_dstm
 {
 
-int Nomain(int argc, char *argv[], char *envp[]) {
+}
+
+int main(int argc, char *argv[], char *envp[]) {
 	// Read Hyflow Configuration file
 	ConfigFile::ConfigFileInit("default.conf");
 
@@ -30,7 +33,7 @@ int Nomain(int argc, char *argv[], char *envp[]) {
 	}
 
 	// Set node Id
-	NetworkManager::setNodeId();
+	NetworkManager::initNode();
 
 	// Initiate Logger : Depends on node Id
 	Logger::LoggerInit();
@@ -42,6 +45,3 @@ int Nomain(int argc, char *argv[], char *envp[]) {
 
 	return 0;
 }
-
-}
-

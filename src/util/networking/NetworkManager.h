@@ -18,16 +18,29 @@ namespace vt_dstm
 
 class NetworkManager {
 	static int nodeId;
+	static int nodeCount;
+	static int machine;
+	static int basePort;
+	// FIXME: Make following conditional variables
+	static volatile int nodeJoined;
+	static volatile bool isCluster;
 public:
 	static AbstractNetwork *network;
 
 	static void NetworkInit();
 	static void sendMessage(int nodeId, HyflowMessage Message);
-	static HyflowMessage sendCallbackMessage(int nodeId, HyflowMessage Message);
-	static void registerHandler(HyMessageType msg_t, void (HyflowMessage));
+	static HyflowMessage & sendCallbackMessage(int nodeId, HyflowMessage Message);
+	static void registerHandler(HyMessageType msg_t, void (*handlerFunc)(HyflowMessage &));
 
-	static int32_t getNodeId();
-	static void setNodeId();
+	static void initNode();
+	static int getNodeId();
+	static int getNodeCount();
+	static int getMachine();
+	static int getBasePort();
+	static void atomicIncreaseNodeJoined();
+	static void setClustered();
+	static HyflowMessage & getMessageById(unsigned long long m_id, HyMessageType t);
+	static void test();
 };
 
 }

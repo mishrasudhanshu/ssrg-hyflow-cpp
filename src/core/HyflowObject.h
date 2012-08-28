@@ -9,6 +9,7 @@
 #define HYFLOWOBJECT_H_
 
 #include <string>
+#include <iostream>
 #include <boost/serialization/assume_abstract.hpp>
 #include <boost/serialization/access.hpp>
 
@@ -24,20 +25,23 @@ class HyflowObject {
     	ar & hyVersion;
     }
 protected:
+	std::string hyId;
+	int hyVersion;
+
 	HyflowObject(const std::string & Id, int v)
 		: hyId(Id), hyVersion(v) {}
 public:
-	std::string hyId;
-	int hyVersion;
 
 	HyflowObject() {}
 	virtual ~HyflowObject(){}
 
-	void setId(const std::string & Id) {hyId = Id;};
-	std::string getId() {return hyId;};
+	virtual void setId(const std::string & Id) {hyId = Id;};
+	virtual std::string & getId() {return hyId;};
 
-	void setVersion(int v) {hyVersion = v;};
-	int getVersion() {return hyVersion;};
+	virtual void setVersion(int v) {hyVersion = v;};
+	virtual int getVersion() {return hyVersion;};
+	virtual void print(){};
+	virtual void getClone(HyflowObject *obj){std::cerr<<"Hyflow base class clone function called!!\n";}
 };
 
 //LESSON: Useful in case of some other type of compiler

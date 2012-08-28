@@ -1,5 +1,7 @@
 /*
- * AbstractMessage.h
+ * HyflowMessage.h
+ *
+ * A wrapper class which is used to send and receive messages
  *
  *  Created on: Aug 14, 2012
  *      Author: mishras[at]vt.edu
@@ -10,30 +12,31 @@
 
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/assume_abstract.hpp>
+#include "BaseMessage.h"
 
 namespace vt_dstm
 {
 
 enum HyMessageType {
-	MSG_GRP_RQ, /*Group Joining Request*/
-	MSG_GRP_RS, /*Group Joining Response*/
-	MSG_CLS_CRT, /*Group Cluster Create*/
-	MSG_CLS_CPL, /*Group Cluster Completed*/
-	MSG_OBJECT_RQ, /*Object Read-Write Request*/
-	MSG_OBJECT_RS, /*Object Read-Write Response*/
+	MSG_GRP_JOIN, /*Group Joining Request*/
+	MSG_TRK_OBJECT, /*Object location tracker*/
+	MSG_ACCESS_OBJECT, /*Object Read-Write Request/Response*/
 	MSG_COMMIT_RQ, /*Object Commit Request*/
 	MSG_COMMIT_RS, /*Object Commit Response*/
 	MSG_COMMIT_FN /*Object Commit Finish*/
 };
 
 class HyflowMessage {
-    friend class boost::serialization::access;
+	BaseMessage *msg;
 
+    friend class boost::serialization::access;
     template<class Archive>
-    void serialize(Archive & ar, const unsigned int version)
-    {
+    void serialize(Archive &ar, const unsigned int version){
+    	registerMessageTypes(ar);
+    	ar & msg;
         ar & size;
         ar & msg_t;
+        ar & msg_id;
         ar & isCallback;
         ar & fromNode;
         ar & isReplied;
@@ -41,12 +44,13 @@ class HyflowMessage {
     }
 public:
 	int size;
+	HyMessageType msg_t;
+	unsigned long long msg_id;
 
 	//LESSON: Boost serialisation requires the bool to initialised
 	HyflowMessage(){isCallback = false; isReplied = false;}
 	virtual ~HyflowMessage(){}
 
-	HyMessageType msg_t;
 	bool isCallback;
 	int fromNode;
 	bool isReplied;
@@ -55,6 +59,18 @@ public:
 	int getSize() {return size;}
 	void setSize() {};
 
+	void setMsg(BaseMessage *m){msg=m;}
+	BaseMessage* getMsg(){return msg;}
+
+	void setMsgId(unsigned long id){msg_id = id;}
+	unsigned long getMsgId(){return msg_id;}
+
+    template<class Archive>
+	static void registerMessageTypes(Archive & ar);
+
+    static void registerMessageHandlers();
+    void setReplied();
+    static void test();
 };
 
 //LESSON: Useful in case of some other type of compiler

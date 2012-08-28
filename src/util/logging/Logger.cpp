@@ -148,7 +148,5 @@ void Logger::test() {
 	Logger::fatal("Hello to fatal %s %f %d\n",st.c_str(),db, i);
 	Logger::result("Hello to result %s %f %d\n",st.c_str(),db, i);
 	Logger::LoggerDeinit();
-	std::cout<<"\n...Logger Test Completed...\n"<<std::endl;
 }
-
 }

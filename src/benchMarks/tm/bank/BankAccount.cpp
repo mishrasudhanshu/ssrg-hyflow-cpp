@@ -65,12 +65,16 @@ void BankAccount::transfer(std::string fromId, std::string toId,
 void BankAccount::print(){
 	std::cout <<"Id "<<hyId<<" amount "<<amount;
 }
+
+void BankAccount::getClone(HyflowObject *obj){
+	obj = new BankAccount(this->amount, this->hyId, this->hyVersion);
+}
 } /* namespace vt_dstm */
 
 // Serialisation Test of object
-int bmain() {
+int serializationTest() {
 	// create and open a character archive for output
-	std::ofstream ofs("filename", std::ios::out);
+	std::ofstream ofs("BankAccount", std::ios::out);
 
 	// create class instance
 	vt_dstm::BankAccount  b(1000,"0-0");
@@ -87,7 +91,7 @@ int bmain() {
 	vt_dstm::BankAccount b1;
 	{
 		// create and open an archive for input
-		std::ifstream ifs("filename", std::ios::in);
+		std::ifstream ifs("BankAccount", std::ios::in);
 		boost::archive::text_iarchive ia(ifs);
 		// read class state from archive
 		ia >> b1;

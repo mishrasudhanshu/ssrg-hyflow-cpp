@@ -12,6 +12,7 @@ namespace vt_dstm
 {
 
 class Application {
+
 public:
 
 };

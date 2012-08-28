@@ -1,22 +1,21 @@
 /*
- * MSCMessage.cpp
+ * Benchmark.cpp
  *
- *  Created on: Aug 16, 2012
+ *  Created on: Aug 23, 2012
  *      Author: mishras[at]vt.edu
  */
 
-#include "MSCMessage.h"
+#include "Benchmark.h"
 
 namespace vt_dstm {
 
-MSCMessage::MSCMessage() {
+Benchmark::Benchmark() {
 	// TODO Auto-generated constructor stub
 
 }
 
-MSCMessage::~MSCMessage() {
+Benchmark::~Benchmark() {
 	// TODO Auto-generated destructor stub
 }
 
-}
-
+} /* namespace vt_dstm */
