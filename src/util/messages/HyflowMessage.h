@@ -21,6 +21,7 @@ enum HyMessageType {
 	MSG_GRP_JOIN, /*Group Joining Request*/
 	MSG_TRK_OBJECT, /*Object location tracker*/
 	MSG_ACCESS_OBJECT, /*Object Read-Write Request/Response*/
+	MSG_REGISTER_OBJ, /*Register or Unregister object in cluster*/
 	MSG_COMMIT_RQ, /*Object Commit Request*/
 	MSG_COMMIT_RS, /*Object Commit Response*/
 	MSG_COMMIT_FN /*Object Commit Finish*/
@@ -39,7 +40,6 @@ class HyflowMessage {
         ar & msg_id;
         ar & isCallback;
         ar & fromNode;
-        ar & isReplied;
         ar & toNode;
     }
 public:
@@ -69,7 +69,6 @@ public:
 	static void registerMessageTypes(Archive & ar);
 
     static void registerMessageHandlers();
-    void setReplied();
     static void test();
 };
 

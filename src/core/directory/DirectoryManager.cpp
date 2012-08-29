@@ -5,26 +5,56 @@
  *      Author: mishras[at]vt.edu
  */
 
+#include <cstddef>
 #include "DirectoryManager.h"
+#include "../../util/Definitions.h"
 
 namespace vt_dstm {
+HyflowDirectory* DirectoryManager::directory = NULL;
 
-DirectoryManager::DirectoryManager() {
-	// TODO Auto-generated constructor stub
-
+void DirectoryManager::DirectoryManagerInit(){
+	if (strcmp(ConfigFile::Value(DIRECTORY_MANAGER).c_str(), TRACKER_DIRECTORY) == 0) {
+		directory = new TrackerDirectory();
+	}
 }
 
-DirectoryManager::~DirectoryManager() {
-	// TODO Auto-generated destructor stub
+HyflowObject & DirectoryManager::locate(std::string id, bool rw, unsigned long long txn){
+	return directory->locate(id, rw, txn);
+}
+
+void DirectoryManager::locateAsync(std::string id, bool rw, unsigned long long txn, HyflowObjectFuture & fu){
+	return directory->locateAsync(id, rw, txn, fu);
+}
+
+void DirectoryManager::registerObject(HyflowObject & object, unsigned long long txn){
+	directory->registerObject(object,txn);
+}
+
+void DirectoryManager::registerObjectLocally(HyflowObject & object, unsigned long long txn){
+	directory->registerObjectLocally(object,txn);
+}
+
+void DirectoryManager::unregisterObject(HyflowObject & object, unsigned long long txn){
+	directory->unregisterObject(object,txn);
+}
+
+void DirectoryManager::unregisterObjectLocally(std::string objId, unsigned long long txn){
+	directory->unregisterObjectLocally(objId,txn);
 }
 
 HyflowObject & DirectoryManager::getObjectLocally(std::string id, bool rw) {
-	HyflowObject dummy;
-	return dummy;
+	return directory->getObjectLocally(id, rw);
 }
 
-int DirectoryManager::getObjectLocation(std::string nodeId) {
-	return 0;
+/**
+ * Update local object
+ */
+void DirectoryManager::updateObjectLocally(HyflowObject & obj) {
+	directory->updateObjectLocally(obj);
+}
+
+int DirectoryManager::getObjectLocation(std::string objId){
+	return directory->getObjectLocation(objId);
 }
 
 } /* namespace vt_dstm */

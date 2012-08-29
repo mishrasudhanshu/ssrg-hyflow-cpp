@@ -10,6 +10,7 @@
 
 #include <cstdio>
 #include "../messages/HyflowMessage.h"
+#include "../messages/HyflowMessageFuture.h"
 
 namespace vt_dstm {
 
@@ -35,8 +36,8 @@ public:
 	/**
 	 * Send a message and wait for response Message
 	 */
-	virtual HyflowMessage & sendCallbackMessage(int nodeId,
-			HyflowMessage & Message)=0;
+	virtual void sendCallbackMessage(int nodeId,
+			HyflowMessage & Message, HyflowMessageFuture & fu)=0;
 
 	/**
 	 * Register Message Handler for given type of Message
@@ -51,7 +52,9 @@ public:
 	/**
 	 * Get Message by its id, so that callback message may be updated
 	 */
-	virtual HyflowMessage & getMessageById(unsigned long long m_id, HyMessageType t)=0;
+	virtual HyflowMessageFuture & getMessageFuture(unsigned long long m_id, HyMessageType t)=0;
+
+	virtual void removeMessageFuture(unsigned long long m_id, HyMessageType t)=0;
 };
 
 }

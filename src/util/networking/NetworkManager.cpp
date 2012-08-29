@@ -22,6 +22,7 @@ int NetworkManager::basePort = -1;
 volatile int NetworkManager::nodeJoined = -1;
 volatile bool NetworkManager::isCluster = false;
 AbstractNetwork* NetworkManager::network = NULL;
+bool NetworkManager::islocal = false;
 
 void NetworkManager::NetworkInit() {
 	if (strcmp(ConfigFile::Value(NETWORK).c_str(), MSG_CONNECT) == 0) {
@@ -38,6 +39,8 @@ void NetworkManager::initNode() {
 		// Note Machine ID should be specified by user, not as in Hyflow java
 		machine = atoi(ConfigFile::Value(MACHINES).c_str());
 		basePort = atoi(ConfigFile::Value(BASE_PORT).c_str());
+		if(atoi(ConfigFile::Value(MACHINES).c_str()) == 1)
+			islocal = true;
 	}
 }
 
@@ -66,8 +69,12 @@ void NetworkManager::setClustered(){
 	isCluster = true;
 }
 
-HyflowMessage & NetworkManager::getMessageById(unsigned long long m_id, HyMessageType t) {
-	return network->getMessageById(m_id, t);
+HyflowMessageFuture & NetworkManager::getMessageFuture(unsigned long long m_id, HyMessageType t) {
+	return network->getMessageFuture(m_id, t);
+}
+
+void  NetworkManager::removeMessageFuture(unsigned long long m_id, HyMessageType t){
+	network->removeMessageFuture(m_id, t);
 }
 
 void NetworkManager::registerHandler(HyMessageType msg_t, void (*handlerFunc)(HyflowMessage &)) {
@@ -81,11 +88,8 @@ void NetworkManager::sendMessage(int nodeId, HyflowMessage msg) {
 	network->sendMessage(nodeId, msg);
 }
 
-HyflowMessage & NetworkManager::sendCallbackMessage(int nodeId, HyflowMessage msg) {
-	msg.fromNode = NetworkManager::nodeId;
-	msg.toNode = nodeId;
-
-	return network->sendCallbackMessage(nodeId, msg);
+void NetworkManager::sendCallbackMessage(int nodeId, HyflowMessage msg, HyflowMessageFuture & fu) {
+	network->sendCallbackMessage(nodeId, msg, fu);
 }
 
 void NetworkManager::test() {

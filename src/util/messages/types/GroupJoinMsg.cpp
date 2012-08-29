@@ -44,7 +44,7 @@ void GroupJoinMsg::serializationTest(){
 	std::ofstream ofs("groupJoinMsgReq", std::ios::out);
 
 	// create class instance
-	vt_dstm::GroupJoinMsg res(15, false);
+	GroupJoinMsg res(15, false);
 
 	// save data to archive
 	{
@@ -55,7 +55,7 @@ void GroupJoinMsg::serializationTest(){
 	}
 
 	// ... some time later restore the class instance to its original state
-	vt_dstm::GroupJoinMsg r1;
+	GroupJoinMsg r1;
 	{
 		// create and open an archive for input
 		std::ifstream ifs("groupJoinMsgReq", std::ios::in);

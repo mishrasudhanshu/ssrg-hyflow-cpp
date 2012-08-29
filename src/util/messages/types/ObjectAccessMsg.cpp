@@ -49,12 +49,13 @@ void ObjectAccessMsg::objectAccessHandler(HyflowMessage & msg) {
 			NetworkManager::sendMessage(msg.fromNode, msg);
 		}
 	} else {
-		// Find the wrapper message created for expected response
-		HyflowMessage cbmsg = NetworkManager::getMessageById(msg.msg_id,
+		// Find the MessageFuture created for expected response
+		HyflowMessageFuture cbfmsg = NetworkManager::getMessageFuture(msg.msg_id,
 				msg.msg_t);
-		ObjectAccessMsg *cboamsg = (ObjectAccessMsg *) cbmsg.getMsg();
-		oamsg->object->getClone(cboamsg->object);
-		cbmsg.setReplied();
+		HyflowObject *obj = NULL;
+		oamsg->object->getClone(obj);
+		DirectoryManager::updateObjectLocally(*obj);
+		cbfmsg.notifyMessage();
 	}
 }
 
@@ -65,7 +66,7 @@ void ObjectAccessMsg::serializationTest() {
 		std::ofstream ofs("objectAccessReq", std::ios::out);
 
 		// create class instance
-		vt_dstm::ObjectAccessMsg res("0-0", true);
+		ObjectAccessMsg res("0-0", true);
 
 		// save data to archive
 		{
@@ -76,7 +77,7 @@ void ObjectAccessMsg::serializationTest() {
 		}
 
 		// ... some time later restore the class instance to its original state
-		vt_dstm::ObjectAccessMsg r1;
+		ObjectAccessMsg r1;
 		{
 			// create and open an archive for input
 			std::ifstream ifs("objectAccessReq", std::ios::in);
@@ -96,12 +97,12 @@ void ObjectAccessMsg::serializationTest() {
 		// create and open a character archive for output
 		std::ofstream ofs("objectAccessRes", std::ios::out);
 
-		vt_dstm::BankAccount bac(1000, "3-0");
+		BankAccount bac(1000, "3-0");
 		// create class instance
-		vt_dstm::ObjectAccessMsg res;
+		ObjectAccessMsg res;
 		res.setObject(&bac);
 
-		vt_dstm::HyflowMessage msg;
+		HyflowMessage msg;
 		msg.setMsg(&res);
 
 		// save data to archive
@@ -113,9 +114,9 @@ void ObjectAccessMsg::serializationTest() {
 		}
 
 		// ... some time later restore the class instance to its orginal state
-		vt_dstm::ObjectAccessMsg* r1;
-		vt_dstm::BankAccount *b1;
-		vt_dstm::HyflowMessage msg1;
+		ObjectAccessMsg* r1;
+		BankAccount *b1;
+		HyflowMessage msg1;
 		{
 			// create and open an archive for input
 			std::ifstream ifs("objectAccessRes", std::ios::in);

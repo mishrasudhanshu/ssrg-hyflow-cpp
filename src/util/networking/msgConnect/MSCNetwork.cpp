@@ -34,8 +34,8 @@ std::string MSCNetwork::Ips[] = {
 int MSCNetwork::basePort = -1;
 
 std::map<HyMessageType, void (*)(HyflowMessage &)> MSCNetwork::handlerMap;
-std::map<unsigned long long, HyflowMessage*> MSCNetwork::trackerCallbackMap;
-std::map<unsigned long long, HyflowMessage*> MSCNetwork::objCallbackMap;
+std::map<unsigned long long, HyflowMessageFuture *> MSCNetwork::trackerCallbackMap;
+std::map<unsigned long long, HyflowMessageFuture *> MSCNetwork::objCallbackMap;
 
 MSCNetwork::MSCNetwork() {
 	if (!instance) {
@@ -116,17 +116,12 @@ void MSCNetwork::sendMessage(int nodeId, HyflowMessage & message){
 	messenger->PostMessage(destination.c_str(),&mcmsg,NULL);
 }
 
-HyflowMessage & MSCNetwork::sendCallbackMessage(int nodeId, HyflowMessage & message){
-	HyflowMessage *msg = new HyflowMessage() ;
-	msg->isCallback = true;
-
+void MSCNetwork::sendCallbackMessage(int nodeId, HyflowMessage & message, HyflowMessageFuture & fu){
 	message.msg_id = getCurrentTime()*1000 + nodeId;
-	msg->msg_id = message.msg_id;
 
-	msg->fromNode = message.toNode;
-	msg->toNode = message.fromNode;
-
-	objCallbackMap[msg->msg_id] = msg;
+	fu.setId(message.msg_id);
+	fu.setType(message.msg_t);
+	objCallbackMap[fu.getId()] = &fu;
 
 	std::stringstream destStr;
 	destStr << "Socket:" << getIp(nodeId) << ":" << getBasePort()+nodeId << "|" << nodeId  <<"-queue";
@@ -148,8 +143,6 @@ HyflowMessage & MSCNetwork::sendCallbackMessage(int nodeId, HyflowMessage & mess
 	mcmsg.DataSize = msgData.size();
 
 	messenger->SendMessageCallback(destination.c_str(), &mcmsg, &callbackHandler,0,NULL);
-
-	return *msg;
 }
 
 void MSCNetwork::registerHandler(HyMessageType msg_t, void (*handlerFunc)(HyflowMessage &)){
@@ -159,16 +152,27 @@ void MSCNetwork::registerHandler(HyMessageType msg_t, void (*handlerFunc)(Hyflow
 void MSCNetwork::defaultHandler(void* UserData, void* Sender,
 	MsgConnect::MCMessage& msg, bool& Handled) {
 	if(msg.Data && (msg.DataSize > 0)) {
-		std::string data((char*)msg.Data, msg.DataSize);
-		std::istringstream data_stream(data);
-		boost::archive::text_iarchive ia(data_stream);
+		// Read Message
+		std::string idata((char*)msg.Data, msg.DataSize);
+		std::istringstream idata_stream(idata);
+		boost::archive::text_iarchive ia(idata_stream);
 		vt_dstm::HyflowMessage req;
 		ia >> req;
 
+		// Handle Message
 		std::map<HyMessageType, void (*)(HyflowMessage &)>::const_iterator ci = handlerMap.find(req.msg_t);
 		if (ci == handlerMap.end())
 			throw "Invalid type message";
 		ci->second(req);
+
+		// Pack handled message
+		std::ostringstream odata_stream;
+		boost::archive::text_oarchive oa(odata_stream);
+		oa << req;
+		std::string omsg = odata_stream.str();
+
+		msg.Data = (void *) omsg.c_str();
+		msg.DataSize = omsg.size();
 		Handled = true;
 	}
 }
@@ -187,6 +191,7 @@ void MSCNetwork::callbackHandler(unsigned int UserData, MsgConnect::MCMessage& m
 		ci->second(req);
 	}
 }
+
 std::string MSCNetwork::getIp(int id){
 	//FIXME: Complete the id dependent implementation
 	int mac = NetworkManager::getMachine();
@@ -203,7 +208,7 @@ void MSCNetwork::initCluster()	{
 		// wait for cluster creation from all nodes
 		// signal go head
 	} else {
-		// Sleep for 5 sec to make sure node initiated its network
+		sleep(2);
 		// spend you group joining news
 		// Wait for group list
 		// add sockets for each node
@@ -227,24 +232,45 @@ unsigned long long MSCNetwork::getCurrentTime() {
 	return tv.tv_sec*1000000 + tv.tv_usec;
 }
 
-HyflowMessage & MSCNetwork::getMessageById(unsigned long long m_id, HyMessageType t) {
-	HyflowMessage dummy;
-	std::map<unsigned long long, HyflowMessage*>::const_iterator ci;
-	switch(t){
+HyflowMessageFuture & MSCNetwork::getMessageFuture(unsigned long long m_id, HyMessageType t) {
+	HyflowMessageFuture dummy;
+	std::map<unsigned long long, HyflowMessageFuture*>::iterator i;
+
+	switch (t) {
 	case MSG_TRK_OBJECT:
-		ci = trackerCallbackMap.find(m_id);
-		if (ci == trackerCallbackMap.end())
+		i = trackerCallbackMap.find(m_id);
+		if (i == trackerCallbackMap.end())
 			throw "Message not available";
-		return *(ci->second);
+		return *(i->second);
 	case MSG_ACCESS_OBJECT:
-		ci = objCallbackMap.find(m_id);
-		if (ci == objCallbackMap.end())
+		i = objCallbackMap.find(m_id);
+		if (i == objCallbackMap.end())
 			throw "Message not available";
-		return *(ci->second);
+		return *(i->second);
 	default:
 		throw "Invalid type message request to getbyId";
 	}
 	return dummy;
+}
+
+void MSCNetwork::removeMessageFuture(unsigned long long m_id, HyMessageType t) {
+	std::map<unsigned long long, HyflowMessageFuture*>::iterator i;
+	switch(t){
+	case MSG_TRK_OBJECT:
+		i = trackerCallbackMap.find(m_id);
+		if (i == trackerCallbackMap.end())
+			throw "Message not available";
+		trackerCallbackMap.erase(m_id);
+		break;
+	case MSG_ACCESS_OBJECT:
+		i = objCallbackMap.find(m_id);
+		if (i == objCallbackMap.end())
+			throw "Message not available";
+		trackerCallbackMap.erase(m_id);
+		break;
+	default:
+		throw "Invalid type message request to getbyId";
+	}
 }
 }
 

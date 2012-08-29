@@ -12,6 +12,7 @@
 
 #include "AbstractNetwork.h"
 #include "../messages/HyflowMessage.h"
+#include "../messages/HyflowMessageFuture.h"
 
 namespace vt_dstm
 {
@@ -24,12 +25,13 @@ class NetworkManager {
 	// FIXME: Make following conditional variables
 	static volatile int nodeJoined;
 	static volatile bool isCluster;
+	static bool islocal;
 public:
 	static AbstractNetwork *network;
 
 	static void NetworkInit();
 	static void sendMessage(int nodeId, HyflowMessage Message);
-	static HyflowMessage & sendCallbackMessage(int nodeId, HyflowMessage Message);
+	static void sendCallbackMessage(int nodeId, HyflowMessage Message, HyflowMessageFuture & fu);
 	static void registerHandler(HyMessageType msg_t, void (*handlerFunc)(HyflowMessage &));
 
 	static void initNode();
@@ -39,7 +41,10 @@ public:
 	static int getBasePort();
 	static void atomicIncreaseNodeJoined();
 	static void setClustered();
-	static HyflowMessage & getMessageById(unsigned long long m_id, HyMessageType t);
+	static bool islocal();
+
+	static HyflowMessageFuture & getMessageFuture(unsigned long long m_id, HyMessageType t);
+	static void removeMessageFuture(unsigned long long m_id, HyMessageType t);
 	static void test();
 };
 

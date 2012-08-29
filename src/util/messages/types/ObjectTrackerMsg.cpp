@@ -22,16 +22,19 @@ void ObjectTrackerMsg::serialize(Archive & ar, const unsigned int version) {
 	ar & boost::serialization::base_object<BaseMessage>(*this);
 	ar & objectId;
 	ar & nodeId;
+	ar & isRead;
 }
 
-ObjectTrackerMsg::ObjectTrackerMsg(std::string objId) {
+ObjectTrackerMsg::ObjectTrackerMsg(std::string objId, bool rw) {
 	objectId = objId;
 	nodeId = -1;
+	isRead = rw;
 }
 
-ObjectTrackerMsg::ObjectTrackerMsg(std::string objId, int id) {
+ObjectTrackerMsg::ObjectTrackerMsg(std::string objId, bool rw, int id) {
 	objectId = objId;
 	nodeId = id;
+	isRead = rw;
 }
 
 ObjectTrackerMsg::~ObjectTrackerMsg() {}
@@ -45,10 +48,11 @@ void ObjectTrackerMsg::objectTrackerHandler(HyflowMessage & msg) {
 		}
 	} else{
 		// Find the wrapper message created for expected response
-		HyflowMessage cbmsg = NetworkManager::getMessageById(msg.msg_id, msg.msg_t);
-		ObjectTrackerMsg *cbotmsg = (ObjectTrackerMsg *)cbmsg.getMsg();
-		cbotmsg->nodeId = otmsg->nodeId;
-		cbmsg.setReplied();
+		HyflowMessageFuture cbfmsg = NetworkManager::getMessageFuture(msg.msg_id, msg.msg_t);
+		ObjectAccessMsg oam(otmsg->objectId, otmsg->isRead);
+		HyflowMessage hmsg;
+		hmsg.setMsg(&oam);
+		NetworkManager::sendCallbackMessage(otmsg->nodeId,hmsg, cbfmsg);
 	}
 }
 
@@ -57,7 +61,7 @@ void ObjectTrackerMsg::serializationTest(){
 	std::ofstream ofs("ObjectTrackerMsgReq", std::ios::out);
 
 	// create class instance
-	vt_dstm::ObjectTrackerMsg res("3-0", false);
+	ObjectTrackerMsg res("3-0", false);
 
 	// save data to archive
 	{
@@ -68,7 +72,7 @@ void ObjectTrackerMsg::serializationTest(){
 	}
 
 	// ... some time later restore the class instance to its original state
-	vt_dstm::ObjectTrackerMsg r1;
+	ObjectTrackerMsg r1;
 	{
 		// create and open an archive for input
 		std::ifstream ifs("ObjectTrackerMsgReq", std::ios::in);

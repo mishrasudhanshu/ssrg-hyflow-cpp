@@ -35,8 +35,8 @@ class MSCNetwork: public AbstractNetwork {
 	MsgConnect::MCSocketTransport* socket;
 
 	static std::map<HyMessageType, void (*)(HyflowMessage &)> handlerMap;
-	static std::map<unsigned long long, HyflowMessage*> trackerCallbackMap;
-	static std::map<unsigned long long, HyflowMessage*> objCallbackMap;
+	static std::map<unsigned long long, HyflowMessageFuture*> trackerCallbackMap;
+	static std::map<unsigned long long, HyflowMessageFuture*> objCallbackMap;
 
 	void messageDispatcher();
 	unsigned long long getCurrentTime();
@@ -46,10 +46,11 @@ public:
 
 	void setupSockets();
 	void sendMessage(int nodeId, HyflowMessage & Message);
-	HyflowMessage & sendCallbackMessage(int nodeId, HyflowMessage & Message);
+	void sendCallbackMessage(int nodeId, HyflowMessage & Message, HyflowMessageFuture & fu);
 	void registerHandler(HyMessageType msg_t, void (*handlerFunc)(HyflowMessage &));
 	void initCluster();
-	HyflowMessage & getMessageById(unsigned long long m_id, HyMessageType t);
+	HyflowMessageFuture & getMessageFuture(unsigned long long m_id, HyMessageType t);
+	void removeMessageFuture(unsigned long long m_id, HyMessageType t);
 
 	static void defaultHandler(void* UserData, void* Sender,
 		MsgConnect::MCMessage& Message, bool& Handled);

@@ -15,6 +15,7 @@
 #include "types/ObjectAccessMsg.h"
 #include "types/GroupJoinMsg.h"
 #include "types/ObjectTrackerMsg.h"
+#include "types/RegisterObjectMsg.h"
 
 namespace vt_dstm{
 
@@ -22,10 +23,7 @@ void HyflowMessage::registerMessageHandlers()	{
 	NetworkManager::registerHandler(MSG_GRP_JOIN, &GroupJoinMsg::GroupJoinHandler);
 	NetworkManager::registerHandler(MSG_TRK_OBJECT, &ObjectTrackerMsg::objectTrackerHandler);
 	NetworkManager::registerHandler(MSG_ACCESS_OBJECT, &ObjectAccessMsg::objectAccessHandler);
-}
-
-void HyflowMessage::setReplied()	{
-	isReplied = true;
+	NetworkManager::registerHandler(MSG_REGISTER_OBJ, &RegisterObjectMsg::registerObjectHandler);
 }
 
 template<class Archive>
@@ -33,6 +31,7 @@ void HyflowMessage::registerMessageTypes(Archive & ar){
 	ar.register_type(static_cast<ObjectAccessMsg*>(NULL));
 	ar.register_type(static_cast<GroupJoinMsg*>(NULL));
 	ar.register_type(static_cast<ObjectTrackerMsg*>(NULL));
+	ar.register_type(static_cast<RegisterObjectMsg*>(NULL));
 }
 
 void HyflowMessage::test(){
@@ -46,6 +45,9 @@ void HyflowMessage::test(){
 
 	ObjectTrackerMsg otmsg;
 	otmsg.serializationTest();
+
+	RegisterObjectMsg romsg;
+	romsg.serializationTest();
 
 	// create and open a character archive for output
 	std::ofstream ofs("HyflowMessage", std::ios::out);
