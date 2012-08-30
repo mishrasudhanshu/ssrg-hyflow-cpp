@@ -5,13 +5,14 @@
  *      Author: mishras[at]vt.edu
  */
 
-#include "ObjectTrackerMsg.h"
 #include <fstream>
 #include <iostream>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/serialization/base_object.hpp>
 
+#include "ObjectTrackerMsg.h"
+#include "ObjectAccessMsg.h"
 #include "../../networking/NetworkManager.h"
 #include "../../../core/directory/DirectoryManager.h"
 
@@ -48,7 +49,8 @@ void ObjectTrackerMsg::objectTrackerHandler(HyflowMessage & msg) {
 		}
 	} else{
 		// Find the wrapper message created for expected response
-		HyflowMessageFuture cbfmsg = NetworkManager::getMessageFuture(msg.msg_id, msg.msg_t);
+		// LESSON: Make sure no copy constructor is called on HyflowMessageFuture!!!
+		HyflowMessageFuture & cbfmsg = NetworkManager::getMessageFuture(msg.msg_id, msg.msg_t);
 		ObjectAccessMsg oam(otmsg->objectId, otmsg->isRead);
 		HyflowMessage hmsg;
 		hmsg.setMsg(&oam);

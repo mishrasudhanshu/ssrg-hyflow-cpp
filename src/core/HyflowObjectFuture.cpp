@@ -6,6 +6,7 @@
  */
 
 #include "HyflowObjectFuture.h"
+#include "directory/DirectoryManager.h"
 
 namespace vt_dstm {
 

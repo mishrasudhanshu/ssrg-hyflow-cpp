@@ -45,6 +45,7 @@
 									<listOptionValue builtIn="false" value="msgconnect"/>
 									<listOptionValue builtIn="false" value="pthread"/>
 									<listOptionValue builtIn="false" value="boost_serialization"/>
+									<listOptionValue builtIn="false" value="boost_thread"/>
 								</option>
 								<option id="gnu.cpp.link.option.paths.568121030" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths">
 									<listOptionValue builtIn="false" value="/mnt/data/RTSL_Backup/ubuntu_one/workspace/MsgConnect/Code/C++/Core/Linux"/>

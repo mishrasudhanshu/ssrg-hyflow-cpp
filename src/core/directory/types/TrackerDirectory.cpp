@@ -6,6 +6,9 @@
  */
 
 #include "TrackerDirectory.h"
+#include "../../../util/networking/NetworkManager.h"
+#include "../../../util/messages/types/ObjectTrackerMsg.h"
+#include "../../../util/messages/types/RegisterObjectMsg.h"
 
 namespace vt_dstm {
 std::map<std::string, int> TrackerDirectory::directory;
@@ -61,7 +64,7 @@ void TrackerDirectory::unregisterObjectLocally(std::string objId, unsigned long 
 }
 
 HyflowObject & TrackerDirectory::getObjectLocally(std::string id, bool rw){
-	return local[id];
+	return *local[id];
 }
 
 

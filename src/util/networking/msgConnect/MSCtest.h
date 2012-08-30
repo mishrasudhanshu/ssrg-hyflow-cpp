@@ -12,6 +12,7 @@ namespace vt_dstm{
 
 class MSCtest {
 public:
+	static volatile bool hyShutdown;
 	static void test();
 };
 

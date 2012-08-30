@@ -13,12 +13,15 @@
 
 #include "MSCNetwork.h"
 #include "../NetworkManager.h"
-//#include "MCtest.cpp"
+#include "../../messages/HyflowMessage.h"
+#include "../../messages/types/GroupJoinMsg.h"
 
 namespace vt_dstm
 {
 int MSCNetwork::nodeCount = 0;
 int MSCNetwork::nodeId = -1;
+int MSCNetwork::nodesInCluster = 0;
+
 MSCNetwork* MSCNetwork::instance = NULL;
 std::string* MSCNetwork::nodeIps = NULL;
 std::string MSCNetwork::Ips[] = {
@@ -36,6 +39,12 @@ int MSCNetwork::basePort = -1;
 std::map<HyMessageType, void (*)(HyflowMessage &)> MSCNetwork::handlerMap;
 std::map<unsigned long long, HyflowMessageFuture *> MSCNetwork::trackerCallbackMap;
 std::map<unsigned long long, HyflowMessageFuture *> MSCNetwork::objCallbackMap;
+volatile bool MSCNetwork::hyflowShutdown = false;
+boost::thread *MSCNetwork::dispatchThread = NULL;
+
+boost::condition MSCNetwork::onCluster;
+boost::mutex MSCNetwork::clsMutex;
+bool MSCNetwork::isCluster = false;
 
 MSCNetwork::MSCNetwork() {
 	if (!instance) {
@@ -49,7 +58,7 @@ MSCNetwork::MSCNetwork() {
 		instance->queue = new MsgConnect::MCQueue[nodeCount];
 		instance->socket = new MsgConnect::MCSocketTransport[nodeCount];
 		setupSockets();
-		//FIXME: Add a background thread to dispatch the messages
+		dispatchThread = new boost::thread(dispatcher, messenger);
 	}
 }
 
@@ -57,6 +66,9 @@ MSCNetwork::~MSCNetwork() {
 	delete instance->messenger;
 	delete[] instance->queue;
 	delete[] instance->socket;
+	hyflowShutdown = true;
+	dispatchThread->join();
+	delete dispatchThread;
 }
 
 void MSCNetwork::setupSockets(){
@@ -194,26 +206,24 @@ void MSCNetwork::callbackHandler(unsigned int UserData, MsgConnect::MCMessage& m
 
 std::string MSCNetwork::getIp(int id){
 	//FIXME: Complete the id dependent implementation
+	if (NetworkManager::islocalMachine())
+		return "127.0.0.1";
 	int mac = NetworkManager::getMachine();
 	return Ips[mac];
 }
 
 void MSCNetwork::initCluster()	{
-	// Initiate cluster
-
 	if (nodeId == 0) {
-		// Wait for all nodes to join
-		// add sockets for each node
-		// send group-list to all nodes
-		// wait for cluster creation from all nodes
-		// signal go head
+		NetworkManager::waitTillClustered();
 	} else {
-		sleep(2);
-		// spend you group joining news
-		// Wait for group list
-		// add sockets for each node
-		// Send cluster creation news to zero
-		// wait for go ahead signal
+		sleep(1);
+		HyflowMessageFuture hFu;
+		GroupJoinMsg gJmsg;
+		HyflowMessage hmsg;
+		hmsg.setMsg(&gJmsg);
+		sendCallbackMessage(0,hmsg,hFu);
+//		hFu.waitOnFuture();
+		NetworkManager::waitTillClustered();
 	}
 }
 
@@ -272,5 +282,40 @@ void MSCNetwork::removeMessageFuture(unsigned long long m_id, HyMessageType t) {
 		throw "Invalid type message request to getbyId";
 	}
 }
+
+void MSCNetwork::dispatcher(MsgConnect::MCMessenger *mc) {
+	while (!hyflowShutdown) {
+		mc->DispatchMessages();
+		//TODO: Check if any sleep is required
+	}
+}
+
+void MSCNetwork::waitTillClustered() {
+	boost::unique_lock<boost::mutex> lock(clsMutex);
+	while (!isCluster) {
+		onCluster.wait(lock);
+	}
+}
+
+void MSCNetwork::notifyCluster() {
+	{
+	     boost::unique_lock<boost::mutex> lock(clsMutex);
+	     isCluster = true;
+	 }
+	 onCluster.notify_all();
+}
+
+bool MSCNetwork::allNodeJoined() {
+	{
+		boost::unique_lock<boost::mutex> lock(clsMutex);
+		nodesInCluster++;
+	}
+	return nodesInCluster == nodeCount;
+}
+
+void MSCNetwork::setClustered() {
+	notifyCluster();
+}
+
 }
 

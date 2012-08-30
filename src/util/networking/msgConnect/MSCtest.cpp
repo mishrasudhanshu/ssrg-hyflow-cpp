@@ -3,6 +3,7 @@
 #include <cstdio>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
+#include <boost/thread.hpp>
 
 #include "MC.h"
 #include "MCBase.h"
@@ -29,12 +30,12 @@ static void __stdcall event1(void* resvd, void* Sender, MCMessage& Message, bool
 
 static void __stdcall event2(void* resvd, void* Sender, MCMessage& Message, bool& Handled)
 {
-	printf("Got Event on queue1: \n");
+	printf("Got Event on queue2: \n");
 	if(Message.Data && (Message.DataSize > 0))
 	{
 		std::string data((char*)Message.Data, Message.DataSize);
-		std::istringstream dataStreamIn(data);
-		boost::archive::text_iarchive ia(dataStreamIn);
+		std::istringstream iStream(data);
+		boost::archive::text_iarchive ia(iStream);
 		vt_dstm::HyflowMessage hyMsg;
 		ia >> hyMsg;
 		vt_dstm::ObjectAccessMsg *oaM =  (vt_dstm::ObjectAccessMsg *)hyMsg.getMsg();
@@ -45,21 +46,24 @@ static void __stdcall event2(void* resvd, void* Sender, MCMessage& Message, bool
 			std::cerr<< "MSC Network object request serialization Test FAILED!!!"<<std::endl;
 		}
 
-		vt_dstm::BankAccount *ba = new vt_dstm::BankAccount(1000,"3-1");
-		oaM->setObject(ba);
+		vt_dstm::BankAccount ba(1000,"3-1");
+		vt_dstm::ObjectAccessMsg oaMS(oaM->getId(),true);
+		oaMS.setObject(&ba);
+		vt_dstm::HyflowMessage hmsg;
+		hmsg.setMsg(&oaMS);
 
 		// Serialize the Message
-		std::ostringstream dataStreamOut;
-		boost::archive::text_oarchive oa(dataStreamOut);
-		oa << hyMsg;
-		std::string msg = dataStreamOut.str();
+		std::ostringstream ostream;
+		boost::archive::text_oarchive oa(ostream);
+		oa << hmsg;
+		std::string msg = ostream.str();
 
-		char*s = (char*)MCMemAlloc(msg.size());
-		memmove(s, msg.c_str(), msg.size());
-		Message.Data = (void*)s;
+		char *buffer = new char[msg.size()];
+		std::memcpy(buffer, msg.c_str(), msg.size());
+		Message.Data = (void*)buffer;
 		Message.DataSize = msg.size();
-		Handled = true;
 	}
+	Handled = true;
 }
 
 static void __stdcall callback1(unsigned int UserData, MCMessage& Message)
@@ -83,22 +87,35 @@ static void __stdcall callback1(unsigned int UserData, MCMessage& Message)
 	}
 }
 
+
+
 namespace vt_dstm {
+
+volatile bool MSCtest::hyShutdown = false;
+
+static void dispatcher(MCMessenger* mc){
+	boost::posix_time::seconds workTime(1);
+	std::cout<<"Dispatcher Started\n";
+
+	while (!MSCtest::hyShutdown) {
+		mc->DispatchMessages();
+		boost::this_thread::sleep(workTime);
+	}
+}
 
 void MSCtest::test(){
 	MCBaseInitialization();
 
 	MCMessage Message;
+	MCMessenger* mc = new MCMessenger();
+	mc->setMaxTimeout(ULONG_MAX);
 
 	// Set Node1
-	MCMessenger* mc1 = new MCMessenger();
 	MCQueue* mq1 = new MCQueue();
 	MCMessageHandlers* mhs1 = mq1->getHandlers();
 	MCMessageHandler* mh1 = NULL;//new MCMessageHandler(mhs);
 	MCSocketTransport* st1 = new MCSocketTransport();
 
-
-	mc1->setMaxTimeout(ULONG_MAX);
 	st1->setActive(false);
 	st1->setAttemptsToConnect(1);
 	st1->setFailOnInactive(true);
@@ -106,7 +123,7 @@ void MSCtest::test(){
 	st1->setMessengerAddress("127.0.0.1");
 	st1->setMessengerPort(14583);
 	st1->setTransportMode(stmP2P);
-	st1->setMessenger(mc1);
+	st1->setMessenger(mc);
 	st1->setActive(true);
 
 	mh1 = mhs1->Add();
@@ -116,7 +133,7 @@ void MSCtest::test(){
 	mh1->setEnabled(true);
 
 	mq1->setQueueName("SendNote1");
-	mq1->setMessenger(mc1);
+	mq1->setMessenger(mc);
 
 	// Set Node2
 	MCQueue* mq2 = new MCQueue();
@@ -131,7 +148,7 @@ void MSCtest::test(){
 	st2->setMessengerAddress("127.0.0.1");
 	st2->setMessengerPort(14584);
 	st2->setTransportMode(stmP2P);
-	st2->setMessenger(mc1);
+	st2->setMessenger(mc);
 	st2->setActive(true);
 
 	mh2 = mhs2->Add();
@@ -141,39 +158,43 @@ void MSCtest::test(){
 	mh2->setEnabled(true);
 
 	mq2->setQueueName("SendNote2");
-	mq2->setMessenger(mc1);
+	mq2->setMessenger(mc);
+
+	//Creating Messenger dispatcher thread
+	boost::thread dp(dispatcher, mc);
 
 	Message.MsgCode = 1;
 	Message.Param1 = 0;
 	Message.Param2 = 0;
 	Message.DataType = bdtVar;
 
-	vt_dstm::ObjectAccessMsg bq("3-1",true);
-	vt_dstm::HyflowMessage objReq;
-	objReq.msg_t = vt_dstm::MSG_ACCESS_OBJECT;
-	objReq.setMsg(&bq);
+	vt_dstm::ObjectAccessMsg oamsg("3-1",true);
+	vt_dstm::HyflowMessage hmsg;
+	hmsg.msg_t = vt_dstm::MSG_ACCESS_OBJECT;
+	hmsg.setMsg(&oamsg);
 
-	std::ostringstream net_stream;
-	boost::archive::text_oarchive archive(net_stream);
-	archive << objReq;
-	std::string msg = net_stream.str();
+	std::ostringstream ostream;
+	boost::archive::text_oarchive oa(ostream);
+	oa << hmsg;
+	std::string msg = ostream.str();
 
-	Message.DataSize = msg.size();
 	Message.Data = (void*)msg.c_str();
+	Message.DataSize = msg.size();
 	
-	char dest2[] = "Socket:127.0.0.1:14584|SendNote2";
+	char dest[] = "Socket:127.0.0.1:14584|SendNote2";
 
-	mc1->SendMessageCallback(dest2, &Message, &callback1, 0, NULL);
+	mc->SendMessageCallback(dest, &Message, &callback1, 0, NULL);
 
 	std::cout<<"Callback message is sent"<<std::endl;
 
-	for(long ii = 0;ii < 4;ii++)
+	for(long ii = 0;ii < 5;ii++)
 	{
 		Sleep(1000);
-		mc1->DispatchMessages();
 	}
+	hyShutdown = true;
+	dp.join();
 	printf("Quitting.\n");
-	delete mc1;
+	delete mc;
 }
 
 }	/*namespace vt_dstm */

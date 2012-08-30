@@ -6,6 +6,7 @@
  */
 
 #include "HyflowMessageFuture.h"
+#include "../networking/NetworkManager.h"
 
 namespace vt_dstm {
 
@@ -27,7 +28,7 @@ bool HyflowMessageFuture::isComplete() {
 
 void HyflowMessageFuture::notifyMessage() {
 	{
-	     boost::lock_guard<boost::mutex> lock(msgMutex);
+	     boost::unique_lock<boost::mutex> lock(msgMutex);
 	     isReceived=true;
 	 }
 	 onReceive.notify_all();

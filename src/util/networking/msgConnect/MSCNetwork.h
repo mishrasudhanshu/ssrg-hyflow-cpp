@@ -9,6 +9,7 @@
 #define MSCNETWORK_H_
 
 #include <map>
+#include <boost/thread.hpp>
 
 #include "../AbstractNetwork.h"
 #include "MC.h"
@@ -25,11 +26,20 @@ namespace vt_dstm
 
 class MSCNetwork: public AbstractNetwork {
 	static MSCNetwork *instance;
-	static int nodeCount;
 	static int nodeId;
 	static int basePort;
 	static std::string Ips[];
 	static std::string *nodeIps;
+
+	static int nodeCount;
+	static int nodesInCluster;
+	static bool isCluster;
+	static boost::condition onCluster;
+	static boost::mutex clsMutex;
+
+	static volatile bool hyflowShutdown;
+	static boost::thread *dispatchThread;
+
 	MsgConnect::MCMessenger* messenger;
 	MsgConnect::MCQueue* queue;
 	MsgConnect::MCSocketTransport* socket;
@@ -51,12 +61,23 @@ public:
 	void initCluster();
 	HyflowMessageFuture & getMessageFuture(unsigned long long m_id, HyMessageType t);
 	void removeMessageFuture(unsigned long long m_id, HyMessageType t);
+	/**
+	 * Returns true if all the nodes joined
+	 */
+	bool allNodeJoined();
+	void setClustered();
 
 	static void defaultHandler(void* UserData, void* Sender,
 		MsgConnect::MCMessage& Message, bool& Handled);
 	static void callbackHandler(unsigned int UserData, MsgConnect::MCMessage& Message);
+
+	static void dispatcher(MsgConnect::MCMessenger *mc);
+
 	static std::string getIp(int id);
 	static int getBasePort();
+
+	void waitTillClustered();
+	void notifyCluster();
 };
 
 }

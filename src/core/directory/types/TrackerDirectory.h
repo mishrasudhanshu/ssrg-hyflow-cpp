@@ -10,8 +10,8 @@
 
 #include <string>
 #include <map>
-#include "HyflowDirectory.h"
-#include "HyflowObject.h"
+#include "../HyflowDirectory.h"
+#include "../../HyflowObject.h"
 
 namespace vt_dstm {
 

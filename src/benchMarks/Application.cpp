@@ -30,6 +30,7 @@ int main(int argc, char *argv[], char *envp[]) {
 	// Run unit test if specified
 	if(ConfigFile::Value(UNIT_TEST).compare(TRUE)==0) {
 		unitTests::tests();
+		return 0;
 	}
 
 	// Set node Id

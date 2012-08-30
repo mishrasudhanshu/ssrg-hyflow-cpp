@@ -19,8 +19,7 @@ int NetworkManager::nodeId = -1;
 int NetworkManager::nodeCount = 0;
 int NetworkManager::machine = -1;
 int NetworkManager::basePort = -1;
-volatile int NetworkManager::nodeJoined = -1;
-volatile bool NetworkManager::isCluster = false;
+
 AbstractNetwork* NetworkManager::network = NULL;
 bool NetworkManager::islocal = false;
 
@@ -60,13 +59,12 @@ int NetworkManager::getBasePort(){
 	return basePort;
 }
 
-void NetworkManager::atomicIncreaseNodeJoined(){
-	//FIXME: Make it thread safe
-	nodeJoined++;
+bool NetworkManager::allNodeJoined(){
+	return network->allNodeJoined();
 }
 
 void NetworkManager::setClustered(){
-	isCluster = true;
+	network->setClustered();
 }
 
 HyflowMessageFuture & NetworkManager::getMessageFuture(unsigned long long m_id, HyMessageType t) {
@@ -92,10 +90,20 @@ void NetworkManager::sendCallbackMessage(int nodeId, HyflowMessage msg, HyflowMe
 	network->sendCallbackMessage(nodeId, msg, fu);
 }
 
+bool NetworkManager::islocalMachine() {
+	return islocal;
+}
+
+void NetworkManager::waitTillClustered(){
+	network->waitTillClustered();
+}
+
+
 void NetworkManager::test() {
 	std::cout << "\n---Testing Network---\n" << std::endl;
 	if (strcmp(ConfigFile::Value(NETWORK).c_str(), MSG_CONNECT) == 0) {
 		MSCtest::test();
 	}
 }
+
 }

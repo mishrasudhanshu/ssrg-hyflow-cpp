@@ -29,9 +29,14 @@ GroupJoinMsg::~GroupJoinMsg() {}
 
 void GroupJoinMsg::GroupJoinHandler(HyflowMessage & msg){
 	GroupJoinMsg *gmsg = (GroupJoinMsg *)msg.getMsg();
-	if (!gmsg->isResponse){
-		NetworkManager::atomicIncreaseNodeJoined();
+	if (!gmsg->isResponse){	// Node 0 will receive this message
+		if(NetworkManager::allNodeJoined())	// If you are message set clustered
+			NetworkManager::setClustered();
+		else
+			NetworkManager::waitTillClustered();
+
 		if (!msg.isCallback) {
+			gmsg->isResponse = true;
 			NetworkManager::sendMessage(msg.fromNode, msg);
 		}
 	}else{

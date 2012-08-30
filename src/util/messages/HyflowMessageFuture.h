@@ -8,7 +8,7 @@
 #ifndef HYFLOWMESSAGEFUTURE_H_
 #define HYFLOWMESSAGEFUTURE_H_
 
-#include <boost/thread/condition_variable.hpp>
+#include <boost/thread/condition.hpp>
 #include <boost/thread/mutex.hpp>
 
 #include "HyflowMessage.h"
@@ -19,7 +19,7 @@ class HyflowMessageFuture {
 	bool isReceived;
 	unsigned long long msg_id;
 	HyMessageType msg_t;
-	boost::condition_variable onReceive;
+	boost::condition onReceive;
 	boost::mutex msgMutex;
 
 public:

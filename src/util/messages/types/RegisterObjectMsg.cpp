@@ -6,7 +6,16 @@
  */
 
 #include <cstddef>
+#include <fstream>
+#include <iostream>
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/serialization/base_object.hpp>
+
 #include "RegisterObjectMsg.h"
+#include "../../../benchMarks/Benchmark.h"
+#include "../../networking/NetworkManager.h"
+#include "../../../core/directory/DirectoryManager.h"
 
 namespace vt_dstm {
 
@@ -51,7 +60,7 @@ void RegisterObjectMsg::serializationTest(){
 
 	// create class instance
 	BankAccount ba(1000, "1-0");
-	RegisterObjectMsg res(ba, 0);
+	RegisterObjectMsg res(&ba, 0);
 
 	// save data to archive
 	{

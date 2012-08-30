@@ -9,7 +9,10 @@
 #define REGISTEROBJECTMSG_H_
 
 #include <string>
-#include "BaseMessage.h"
+#include <cstddef>
+#include "../BaseMessage.h"
+#include "../../../core/HyflowObject.h"
+#include "../HyflowMessage.h"
 
 namespace vt_dstm {
 
@@ -23,6 +26,7 @@ class RegisterObjectMsg: public vt_dstm::BaseMessage {
     template<class Archive>
     void serialize(Archive & ar, const unsigned int version);
 public:
+    RegisterObjectMsg(){object=NULL;}
 	RegisterObjectMsg(HyflowObject *obj, unsigned long long tid);
 	RegisterObjectMsg(std::string id, unsigned long long tid);
 	virtual ~RegisterObjectMsg();

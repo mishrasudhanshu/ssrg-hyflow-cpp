@@ -22,9 +22,7 @@ class NetworkManager {
 	static int nodeCount;
 	static int machine;
 	static int basePort;
-	// FIXME: Make following conditional variables
-	static volatile int nodeJoined;
-	static volatile bool isCluster;
+
 	static bool islocal;
 public:
 	static AbstractNetwork *network;
@@ -39,9 +37,11 @@ public:
 	static int getNodeCount();
 	static int getMachine();
 	static int getBasePort();
-	static void atomicIncreaseNodeJoined();
+	static bool islocalMachine();
+
+	static bool allNodeJoined();
 	static void setClustered();
-	static bool islocal();
+	static void waitTillClustered();
 
 	static HyflowMessageFuture & getMessageFuture(unsigned long long m_id, HyMessageType t);
 	static void removeMessageFuture(unsigned long long m_id, HyMessageType t);

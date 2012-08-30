@@ -50,7 +50,7 @@ void ObjectAccessMsg::objectAccessHandler(HyflowMessage & msg) {
 		}
 	} else {
 		// Find the MessageFuture created for expected response
-		HyflowMessageFuture cbfmsg = NetworkManager::getMessageFuture(msg.msg_id,
+		HyflowMessageFuture & cbfmsg = NetworkManager::getMessageFuture(msg.msg_id,
 				msg.msg_t);
 		HyflowObject *obj = NULL;
 		oamsg->object->getClone(obj);

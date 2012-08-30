@@ -7,7 +7,9 @@
 
 #include <cstddef>
 #include "DirectoryManager.h"
+#include "types/TrackerDirectory.h"
 #include "../../util/Definitions.h"
+#include "../../util/parser/ConfigFile.h"
 
 namespace vt_dstm {
 HyflowDirectory* DirectoryManager::directory = NULL;

@@ -9,6 +9,7 @@
 #include "unitTests.h"
 #include "../logging/Logger.h"
 #include "../parser/ConfigFile.h"
+#include "../concurrent/ConcurrentHashMap.h"
 #include "../messages/HyflowMessage.h"
 #include "../networking/NetworkManager.h"
 
@@ -27,6 +28,9 @@ void unitTests::tests() {
 
 	// Test Network communication
 	NetworkManager::test();
+
+	// TestConcurrent HashMap
+	ConcurrentHashMap<int, float>::test();
 }
 
 }

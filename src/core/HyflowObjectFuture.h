@@ -9,6 +9,7 @@
 #ifndef HYFLOWOBJECTFUTURE_H_
 #define HYFLOWOBJECTFUTURE_H_
 
+#include "HyflowObject.h"
 #include "../util/messages/HyflowMessageFuture.h"
 
 namespace vt_dstm {
