@@ -23,19 +23,19 @@ template<class Archive>
 void ObjectTrackerMsg::serialize(Archive & ar, const unsigned int version) {
 	ar & boost::serialization::base_object<BaseMessage>(*this);
 	ar & objectId;
-	ar & nodeId;
+	ar & owner;
 	ar & isRead;
 }
 
 ObjectTrackerMsg::ObjectTrackerMsg(std::string objId, bool rw) {
 	objectId = objId;
-	nodeId = -1;
+	owner = -1;
 	isRead = rw;
 }
 
 ObjectTrackerMsg::ObjectTrackerMsg(std::string objId, bool rw, int id) {
 	objectId = objId;
-	nodeId = id;
+	owner = id;
 	isRead = rw;
 }
 
@@ -43,9 +43,9 @@ ObjectTrackerMsg::~ObjectTrackerMsg() {}
 
 void ObjectTrackerMsg::objectTrackerHandler(HyflowMessage & msg) {
 	ObjectTrackerMsg *otmsg = (ObjectTrackerMsg *)msg.getMsg();
-	if (otmsg->nodeId == -1) {	// Request Message
+	if (otmsg->owner == -1) {	// Request Message
 		Logger::debug("Got object Tracker request\n");
-		otmsg->nodeId = DirectoryManager::getObjectLocation(otmsg->objectId);
+		otmsg->owner = DirectoryManager::getObjectLocation(otmsg->objectId);
 		if (!msg.isCallback) {
 			NetworkManager::sendMessage(msg.fromNode,msg);
 		}
@@ -60,8 +60,9 @@ void ObjectTrackerMsg::objectTrackerHandler(HyflowMessage & msg) {
 		ObjectAccessMsg oam(otmsg->objectId, otmsg->isRead);
 		HyflowMessage hmsg;
 		hmsg.msg_t = MSG_ACCESS_OBJECT;
+		hmsg.isCallback = true;
 		hmsg.setMsg(&oam);
-		NetworkManager::sendCallbackMessage(otmsg->nodeId,hmsg, cbfmsg);
+		NetworkManager::sendCallbackMessage(otmsg->owner,hmsg, cbfmsg);
 	}
 }
 

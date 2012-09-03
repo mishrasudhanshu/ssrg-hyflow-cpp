@@ -43,7 +43,7 @@ std::string* BankBenchmark::createLocalObjects(int objCount) {
 	int nodeId = NetworkManager::getNodeId();
 	for(int i=0; i<objCount ; i++){
 		std::ostringstream idStream;
-		idStream << nodeId <<"-"<< nodeCount;
+		idStream << nodeId <<"-"<< i;
 		ids[i] = idStream.str();
 		if((i % nodeCount)== nodeId ){
 			Logger::debug("Created locally object %d\n", i);

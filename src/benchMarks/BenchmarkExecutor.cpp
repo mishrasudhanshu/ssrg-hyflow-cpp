@@ -46,14 +46,15 @@ unsigned long long BenchmarkExecutor::getTime() {
 }
 
 void BenchmarkExecutor::writeResults() {
-	Logger::result("Throughput = %ll", transactions*1000000/executionTime);
+	unsigned long long trp =  transactions*(1000000/executionTime);
+	Logger::result("Throughput = %llu", trp);
 }
 
 std::string& BenchmarkExecutor::randomId() {
 	int randomIndex = (rand() % objectsCount);
 	return ids[randomIndex];
-
 }
+
 void BenchmarkExecutor::initExecutor(){
 	if ( !isInitiated ) {
 		benchmark = new BankBenchmark();
@@ -101,11 +102,8 @@ void BenchmarkExecutor::execute(){
 	createObjects();
 	prepareArgs();
 	Logger::debug("BNCH_EXE :....\n");
-	sleep(5);
 	NetworkManager::synchronizeCluster(2);
-
-	Logger::debug("BNCH_EXE :....\n");
-	sleep(5);
+	sleep(2);
 	unsigned long long startTime = getTime();
 	int argsCount = benchmark->getOperandsCount();
 	for(int i=0; i < transactions; i++) {
@@ -116,6 +114,7 @@ void BenchmarkExecutor::execute(){
 		}
 	}
 	executionTime = getTime() + 1 - startTime;
+	Logger::debug("BNC_EXE: Execution time = %llu\n", executionTime);
 
 	writeResults();
 

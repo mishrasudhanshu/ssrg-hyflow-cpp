@@ -17,7 +17,7 @@ namespace vt_dstm {
 class ObjectTrackerMsg: public vt_dstm::BaseMessage {
 	std::string objectId;
 	bool isRead;
-	int nodeId;
+	int owner;
 
     friend class boost::serialization::access;
 

@@ -139,6 +139,7 @@ void BankAccount::transfer(std::string id1, std::string id2,
 
 		try {
 			BankAccount* account2 = (BankAccount*)of2.waitOnObject();
+			Logger::debug("BANK : Account %s amount %llu\n", account2->hyId.c_str(), account2->amount);
 			account2->deposit(money, c);
 		}catch(TransactionException & e){
 			throw e;

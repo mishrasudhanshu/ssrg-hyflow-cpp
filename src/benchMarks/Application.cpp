@@ -50,13 +50,13 @@ int main(int argc, char *argv[], char *envp[]) {
 	// Run Benchmarks
 	Logger::debug("APP :Initiating the Benchmark Execution\n");
 	Logger::debug("APP :....\n");
-	sleep(5);
+	sleep(2);
 	BenchmarkExecutor::execute();
 //	char* dum = new char[10];	// Used to detect any heap corruption
 	Logger::debug("APP :All Done !!!\n");
 
 	// Just to make sure any last time message are printed: for debugging
 	Logger::debug("APP :....\n");
-	sleep(5);
+	sleep(2);
 	return 0;
 }
