@@ -10,7 +10,7 @@
 
 namespace vt_dstm {
 
-HyflowMessageFuture::HyflowMessageFuture() {isReceived = false;}
+HyflowMessageFuture::HyflowMessageFuture() {isReceived = false; msg_id=0;}
 HyflowMessageFuture::~HyflowMessageFuture() {
 	NetworkManager::removeMessageFuture(msg_id, msg_t);
 }

@@ -12,6 +12,7 @@
 #include <boost/thread.hpp>
 
 #include "../AbstractNetwork.h"
+#include "../../concurrent/ConcurrentHashMap.h"
 #include "MC.h"
 #include "MCBase.h"
 #include "MCSock.h"
@@ -25,7 +26,6 @@ namespace vt_dstm
  */
 
 class MSCNetwork: public AbstractNetwork {
-	static MSCNetwork *instance;
 	static int nodeId;
 	static int basePort;
 	static std::string Ips[];
@@ -33,7 +33,7 @@ class MSCNetwork: public AbstractNetwork {
 
 	static int nodeCount;
 	static int nodesInCluster;
-	static bool isCluster;
+	static int syncVersion;
 	static boost::condition onCluster;
 	static boost::mutex clsMutex;
 
@@ -44,9 +44,11 @@ class MSCNetwork: public AbstractNetwork {
 	MsgConnect::MCQueue* queue;
 	MsgConnect::MCSocketTransport* socket;
 
-	static std::map<HyMessageType, void (*)(HyflowMessage &)> handlerMap;
-	static std::map<unsigned long long, HyflowMessageFuture*> trackerCallbackMap;
-	static std::map<unsigned long long, HyflowMessageFuture*> objCallbackMap;
+	static ConcurrentHashMap<HyMessageType, void (*)(HyflowMessage &)> handlerMap;
+	static ConcurrentHashMap<unsigned long long, HyflowMessageFuture*> trackerCallbackMap;
+	static ConcurrentHashMap<unsigned long long, HyflowMessageFuture*> objCallbackMap;
+	static ConcurrentHashMap<unsigned long long, HyflowMessageFuture*> syncCallbackMap;
+	static bool isInit;
 
 	void messageDispatcher();
 	unsigned long long getCurrentTime();
@@ -58,14 +60,17 @@ public:
 	void sendMessage(int nodeId, HyflowMessage & Message);
 	void sendCallbackMessage(int nodeId, HyflowMessage & Message, HyflowMessageFuture & fu);
 	void registerHandler(HyMessageType msg_t, void (*handlerFunc)(HyflowMessage &));
-	void initCluster();
+
+	void registerMessageFuture(unsigned long long m_id, HyMessageType t, HyflowMessageFuture & fu);
 	HyflowMessageFuture & getMessageFuture(unsigned long long m_id, HyMessageType t);
 	void removeMessageFuture(unsigned long long m_id, HyMessageType t);
 	/**
 	 * Returns true if all the nodes joined
 	 */
-	bool allNodeJoined();
-	void setClustered();
+	bool allNodeJoined(int rqNo);
+	void setSynchronized(int rqNo);
+	void waitTillSynchronized(int rqNo);
+	void notifyCluster(int rqNo);
 
 	static void defaultHandler(void* UserData, void* Sender,
 		MsgConnect::MCMessage& Message, bool& Handled);
@@ -76,8 +81,6 @@ public:
 	static std::string getIp(int id);
 	static int getBasePort();
 
-	void waitTillClustered();
-	void notifyCluster();
 };
 
 }

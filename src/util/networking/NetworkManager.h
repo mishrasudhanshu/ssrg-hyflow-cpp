@@ -39,10 +39,15 @@ public:
 	static int getBasePort();
 	static bool islocalMachine();
 
-	static bool allNodeJoined();
-	static void setClustered();
-	static void waitTillClustered();
+	/*
+	 * Synchronize the whole cluster with respect to node 0
+	 */
+	static void synchronizeCluster(int rqNo);
+	static bool allNodeJoined(int rqNo);
+	static void setSynchronized(int rqNo);
+	static void waitTillSynchronized(int rqNo);
 
+	static void registerMessageFuture(unsigned long long m_id, HyMessageType t, HyflowMessageFuture & fu);
 	static HyflowMessageFuture & getMessageFuture(unsigned long long m_id, HyMessageType t);
 	static void removeMessageFuture(unsigned long long m_id, HyMessageType t);
 	static void test();

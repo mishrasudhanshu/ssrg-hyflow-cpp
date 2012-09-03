@@ -22,7 +22,7 @@ public:
 	/**
 	 * This function call blocks until object is not returned back
 	 */
-	static HyflowObject & locate(std::string id, bool rw, unsigned long long txn);
+	static HyflowObject* locate(std::string id, bool rw, unsigned long long txn);
 	/**
 	 * This function call return immediately user can check availability of
 	 * object later.
@@ -32,7 +32,7 @@ public:
 	 * Register object in the cluster
 	 */
 	static void registerObject(HyflowObject & object, unsigned long long txn);
-	static void registerObjectLocally(HyflowObject & object, unsigned long long txn);
+	static void registerObjectLocally(std::string objectId, int owner, unsigned long long txn);
 	/**
 	 * Unregister object from the cluster
 	 */

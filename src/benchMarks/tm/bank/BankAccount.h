@@ -10,6 +10,7 @@
 
 #include <stdint.h>
 #include "../../../core/HyflowObject.h"
+#include "../../../core/context/HyflowContext.h"
 
 namespace vt_dstm {
 
@@ -20,22 +21,30 @@ class BankAccount: public HyflowObject {
     template<class Archive>
     void serialize(Archive & ar, const unsigned int version);
 	uint64_t amount;
+
+	void setAmount(uint64_t amount);
+	uint64_t checkBalance();
+	uint64_t checkBalance(HyflowContext* c);
+
+	void deposit(uint64_t money);
+	void deposit(uint64_t money, HyflowContext* c);
+
+	void withdraw(uint64_t money);
+	void withdraw(uint64_t money, HyflowContext* c);
+	static uint64_t totalBalance(std::string id1, std::string id2, HyflowContext* c);
+	static void transfer(std::string fromId, std::string toId, uint64_t money, HyflowContext* c);
 public:
 	BankAccount() {};
 	BankAccount(uint64_t amount, const std::string & Id);
 	BankAccount(uint64_t amount, const std::string & Id, int version);
 	virtual ~BankAccount();
 
-	void setAmount(uint64_t amount);
-
-	uint64_t checkBalance();
-	void deposit(uint64_t money);
-	void withdraw(uint64_t money);
 
 	static uint64_t totalBalance(std::string id1, std::string id2);
 	static void transfer(std::string fromId, std::string toId, uint64_t money);
 	void print();
-	void getClone(HyflowObject *obj);
+	void getClone(HyflowObject **obj);
+	void test();
 };
 
 

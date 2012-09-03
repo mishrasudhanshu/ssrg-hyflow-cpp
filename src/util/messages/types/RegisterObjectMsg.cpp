@@ -13,22 +13,23 @@
 #include <boost/serialization/base_object.hpp>
 
 #include "RegisterObjectMsg.h"
-#include "../../../benchMarks/Benchmark.h"
+#include "../../../benchMarks/BenchmarkExecutor.h"
 #include "../../networking/NetworkManager.h"
+#include "../../logging/Logger.h"
 #include "../../../core/directory/DirectoryManager.h"
 
 namespace vt_dstm {
 
-RegisterObjectMsg::RegisterObjectMsg(HyflowObject *obj, unsigned long long tid) {
-	object = obj;
+RegisterObjectMsg::RegisterObjectMsg(std::string id, unsigned long long tid) {
+	objectId = id;
+	owner = -1;
 	txnId = tid;
-	objectId = obj->getId();
 }
 
-RegisterObjectMsg::RegisterObjectMsg(std::string id, unsigned long long tid) {
-	object = NULL;
-	txnId = tid;
+RegisterObjectMsg::RegisterObjectMsg(std::string id, int ow, unsigned long long tid) {
 	objectId = id;
+	owner = ow;
+	txnId = tid;
 }
 
 RegisterObjectMsg::~RegisterObjectMsg() {}
@@ -36,31 +37,26 @@ RegisterObjectMsg::~RegisterObjectMsg() {}
 template<class Archive>
 void RegisterObjectMsg::serialize(Archive & ar, const unsigned int version) {
 	ar & boost::serialization::base_object<BaseMessage>(*this);
-	// Register object pointers
-	Benchmark::registerObjectTypes(ar);
-	ar & object;
 	ar & txnId;
+	ar & owner;
 	ar & objectId;
 }
 
 void RegisterObjectMsg::registerObjectHandler(HyflowMessage & msg) {
 	RegisterObjectMsg* romsg = (RegisterObjectMsg*)msg.getMsg();
-	if (romsg->object)
-		DirectoryManager::registerObjectLocally(*romsg->object, romsg->txnId);
+	Logger::debug("Got Register Object Request\n");
+	if (romsg->owner != -1)
+		DirectoryManager::registerObjectLocally(romsg->objectId, romsg->owner, romsg->txnId);
 	else
 		DirectoryManager::unregisterObjectLocally(romsg->objectId, romsg->txnId);
 }
 
-HyflowObject* RegisterObjectMsg::getObject(){
-	return object;
-}
 void RegisterObjectMsg::serializationTest(){
 	// create and open a character archive for output
-	std::ofstream ofs("RegisterObjectMsg", std::ios::out);
+	std::ofstream ofs("/tmp/RegisterObjectMsg", std::ios::out);
 
 	// create class instance
-	BankAccount ba(1000, "1-0");
-	RegisterObjectMsg res(&ba, 0);
+	RegisterObjectMsg res("1-1", 0);
 
 	// save data to archive
 	{
@@ -74,13 +70,12 @@ void RegisterObjectMsg::serializationTest(){
 	RegisterObjectMsg r1;
 	{
 		// create and open an archive for input
-		std::ifstream ifs("RegisterObjectMsg", std::ios::in);
+		std::ifstream ifs("/tmp/RegisterObjectMsg", std::ios::in);
 		boost::archive::text_iarchive ia(ifs);
 		// read class state from archive
 		ia >> r1;
 		// archive and stream closed when destructors are called
-		BankAccount *ba1 = (BankAccount *)r1.getObject();
-		if (ba1->getId().compare("1-0") == 0) {
+		if (r1.objectId.compare("1-1") == 0) {
 			std::cout<< "RegisterObjectMsg serialization Test passed"<<std::endl;
 		}else {
 			std::cerr<< "RegisterObjectMsg serialization Test FAILED!!!"<<std::endl;

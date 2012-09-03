@@ -18,7 +18,7 @@ namespace vt_dstm
 {
 
 enum HyMessageType {
-	MSG_GRP_JOIN, /*Group Joining Request*/
+	MSG_GRP_SYNC, /*Group Joining Request*/
 	MSG_TRK_OBJECT, /*Object location tracker*/
 	MSG_ACCESS_OBJECT, /*Object Read-Write Request/Response*/
 	MSG_REGISTER_OBJ, /*Register or Unregister object in cluster*/
@@ -48,7 +48,7 @@ public:
 	unsigned long long msg_id;
 
 	//LESSON: Boost serialisation requires the bool to initialised
-	HyflowMessage(){isCallback = false; isReplied = false;}
+	HyflowMessage(){isCallback = false; isReplied = false; msg_id = 0;}
 	virtual ~HyflowMessage(){}
 
 	bool isCallback;

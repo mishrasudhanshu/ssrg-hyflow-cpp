@@ -13,6 +13,8 @@
 #include "../util/parser/ConfigFile.h"
 #include "../util/logging/Logger.h"
 #include "../util/networking/NetworkManager.h"
+#include "../core/directory/DirectoryManager.h"
+#include "BenchmarkExecutor.h"
 
 using namespace vt_dstm;
 namespace vt_dstm
@@ -39,10 +41,22 @@ int main(int argc, char *argv[], char *envp[]) {
 	// Initiate Logger : Depends on node Id
 	Logger::LoggerInit();
 
+	Logger::debug("APP :Initiating the Network\n");
 	NetworkManager::NetworkInit();
 
+	Logger::debug("APP :Initiating the Directory Manager\n");
+	DirectoryManager::DirectoryManagerInit();
+
 	// Run Benchmarks
+	Logger::debug("APP :Initiating the Benchmark Execution\n");
+	Logger::debug("APP :....\n");
+	sleep(5);
+	BenchmarkExecutor::execute();
+//	char* dum = new char[10];	// Used to detect any heap corruption
+	Logger::debug("APP :All Done !!!\n");
 
-
+	// Just to make sure any last time message are printed: for debugging
+	Logger::debug("APP :....\n");
+	sleep(5);
 	return 0;
 }

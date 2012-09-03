@@ -4,6 +4,7 @@
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/thread.hpp>
+#include <boost/serialization/export.hpp>
 
 #include "MC.h"
 #include "MCBase.h"
@@ -12,7 +13,7 @@
 #include "../../messages/types/ObjectAccessMsg.h"
 #include "../../../benchMarks/tm/bank/BankAccount.h"
 #include "../../messages/HyflowMessage.h"
-#include <boost/serialization/export.hpp>
+#include "../../logging/Logger.h"
 
 #include "MSCtest.h"
 
@@ -30,7 +31,7 @@ static void __stdcall event1(void* resvd, void* Sender, MCMessage& Message, bool
 
 static void __stdcall event2(void* resvd, void* Sender, MCMessage& Message, bool& Handled)
 {
-	printf("Got Event on queue2: \n");
+	vt_dstm::Logger::debug("Got Event on queue2: \n");
 	if(Message.Data && (Message.DataSize > 0))
 	{
 		std::string data((char*)Message.Data, Message.DataSize);
@@ -68,7 +69,7 @@ static void __stdcall event2(void* resvd, void* Sender, MCMessage& Message, bool
 
 static void __stdcall callback1(unsigned int UserData, MCMessage& Message)
 {
-	printf("Got callback on queue1: \n");
+	vt_dstm::Logger::debug("Got callback on queue1: \n");
 	if(Message.Data && (Message.DataSize > 0))
 	{
 		std::string data((char*)Message.Data, Message.DataSize);
@@ -79,7 +80,7 @@ static void __stdcall callback1(unsigned int UserData, MCMessage& Message)
 		vt_dstm::ObjectAccessMsg *oaM =  (vt_dstm::ObjectAccessMsg *)hyMsg.getMsg();
 
 		vt_dstm::BankAccount *bankAccount = (vt_dstm::BankAccount *) oaM->getObject();
-		if (bankAccount->checkBalance() == 1000 ) {
+		if (bankAccount->getId().compare("3-1") == 0 ) {
 			std::cout<< "MSC Network object response serialization Test passed"<<std::endl;
 		}else {
 			std::cerr<< "MSC Network object response serialization Test FAILED!!!"<<std::endl;
@@ -94,8 +95,8 @@ namespace vt_dstm {
 volatile bool MSCtest::hyShutdown = false;
 
 static void dispatcher(MCMessenger* mc){
-	boost::posix_time::seconds workTime(1);
-	std::cout<<"Dispatcher Started\n";
+	boost::posix_time::seconds workTime(0.001);
+	vt_dstm::Logger::debug("Dispatcher Started\n");
 
 	while (!MSCtest::hyShutdown) {
 		mc->DispatchMessages();

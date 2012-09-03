@@ -41,7 +41,7 @@ public:
 	virtual void setVersion(int v) {hyVersion = v;};
 	virtual int getVersion() {return hyVersion;};
 	virtual void print(){};
-	virtual void getClone(HyflowObject *obj){std::cerr<<"Hyflow base class clone function called!!\n";}
+	virtual void getClone(HyflowObject **obj){std::cerr<<"Hyflow base class clone function called!!\n";}
 };
 
 //LESSON: Useful in case of some other type of compiler

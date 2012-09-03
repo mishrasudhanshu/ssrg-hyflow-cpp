@@ -22,7 +22,7 @@ class HyflowObjectFuture {
 public:
 	HyflowObjectFuture(std::string id, bool rw, unsigned long long txnId);
 	virtual ~HyflowObjectFuture();
-	HyflowObject & waitOnObject();
+	HyflowObject* waitOnObject();
 	bool isObjectAvailable();
 	/**
 	 * Internal Use only

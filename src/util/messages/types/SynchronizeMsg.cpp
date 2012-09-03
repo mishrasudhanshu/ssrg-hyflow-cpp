@@ -9,47 +9,55 @@
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/serialization/base_object.hpp>
-#include "GroupJoinMsg.h"
+#include "SynchronizeMsg.h"
 #include "../../networking/NetworkManager.h"
+#include "../../logging/Logger.h"
 
 namespace vt_dstm {
+
 template<class Archive>
-void GroupJoinMsg::serialize(Archive & ar, const unsigned int version) {
+void SynchronizeMsg::serialize(Archive & ar, const unsigned int version) {
 	ar & boost::serialization::base_object<BaseMessage>(*this);
 	ar & nodeId;
 	ar & isResponse;
+	ar & requestNo;
 }
 
-GroupJoinMsg::GroupJoinMsg(int id, bool isR) {
+SynchronizeMsg::SynchronizeMsg(int id, bool isR, int rn) {
 	nodeId = id;
 	isResponse = isR;
+	requestNo = rn;
 }
 
-GroupJoinMsg::~GroupJoinMsg() {}
+SynchronizeMsg::~SynchronizeMsg() {}
 
-void GroupJoinMsg::GroupJoinHandler(HyflowMessage & msg){
-	GroupJoinMsg *gmsg = (GroupJoinMsg *)msg.getMsg();
-	if (!gmsg->isResponse){	// Node 0 will receive this message
-		if(NetworkManager::allNodeJoined())	// If you are message set clustered
-			NetworkManager::setClustered();
+void SynchronizeMsg::synchronizeHandler(HyflowMessage & msg){
+	SynchronizeMsg *synmsg = (SynchronizeMsg *)msg.getMsg();
+	if (!synmsg->isResponse){	// Node 0 will receive this message
+		Logger::debug("SYNC_MSG: Got Synchronize request message\n");
+		if(NetworkManager::allNodeJoined(synmsg->requestNo))	// If you are last message set synchronized
+			NetworkManager::setSynchronized(synmsg->requestNo);
 		else
-			NetworkManager::waitTillClustered();
+			NetworkManager::waitTillSynchronized(synmsg->requestNo);
 
+		synmsg->isResponse = true;
 		if (!msg.isCallback) {
-			gmsg->isResponse = true;
+			synmsg->isResponse = true;
 			NetworkManager::sendMessage(msg.fromNode, msg);
 		}
 	}else{
-		NetworkManager::setClustered();
+		Logger::debug("SYNC_MSG: Got Synchronize response message\n");
+		if( NetworkManager::getNodeId() != 0)	// Node 0 is already awaken
+			NetworkManager::setSynchronized(synmsg->requestNo);
 	}
 }
 
-void GroupJoinMsg::serializationTest(){
+void SynchronizeMsg::serializationTest(){
 	// create and open a character archive for output
-	std::ofstream ofs("groupJoinMsgReq", std::ios::out);
+	std::ofstream ofs("/tmp/groupJoinMsgReq", std::ios::out);
 
 	// create class instance
-	GroupJoinMsg res(15, false);
+	SynchronizeMsg res(15, false, 1);
 
 	// save data to archive
 	{
@@ -60,10 +68,10 @@ void GroupJoinMsg::serializationTest(){
 	}
 
 	// ... some time later restore the class instance to its original state
-	GroupJoinMsg r1;
+	SynchronizeMsg r1;
 	{
 		// create and open an archive for input
-		std::ifstream ifs("groupJoinMsgReq", std::ios::in);
+		std::ifstream ifs("/tmp/groupJoinMsgReq", std::ios::in);
 		boost::archive::text_iarchive ia(ifs);
 		// read class state from archive
 		ia >> r1;

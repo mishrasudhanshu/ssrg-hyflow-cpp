@@ -19,6 +19,8 @@ public:
 	virtual void error(char const* str,...)=0;
 	virtual void fatal(char const* str,...)=0;
 	virtual void result(char const* str,...)=0;
+	virtual void consoleOut(const char* str,...)=0;
+	virtual void consoleError(const char* str,...)=0;
 };
 
 }

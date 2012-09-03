@@ -197,6 +197,38 @@ void BasicLogLib::fatal(char const* str, ...) {
 	}
 }
 
+void BasicLogLib::consoleOut(char const* str, ...) {
+	char buf[200];
+	va_list argptr; /* Set up the variable argument list here */
+	va_start(argptr, str);
+	/* Start up variable arguments */
+	vsprintf(buf, str, argptr); /* print the variable arguments to buffer */
+	{
+		boost::lock_guard<boost::mutex> lock(debugGuard);
+		fprintf(stdout, "thread %lld :%.5f :",
+				(long long) pthread_self());
+		fprintf(stdout, (char const*) buf); /* print the message to stream */
+	}
+	/* Signify end of processing of variable arguments */
+	va_end(argptr);
+}
+
+void BasicLogLib::consoleError(char const* str, ...) {
+	char buf[200];
+	va_list argptr; /* Set up the variable argument list here */
+	va_start(argptr, str);
+	/* Start up variable arguments */
+	vsprintf(buf, str, argptr); /* print the variable arguments to buffer */
+	{
+		boost::lock_guard<boost::mutex> lock(fatalGuard);
+		fprintf(stderr, "thread %lld :%.5f :",
+				(long long) pthread_self());
+		fprintf(stderr, (char const*) buf); /* print the message to stream */
+	}
+	/* Signify end of processing of variable arguments */
+	va_end(argptr);
+}
+
 void BasicLogLib::result(char const* str, ...) {
 	if (resultStr) {
 		char buf[200];

@@ -9,7 +9,11 @@
 
 #include "NetworkManager.h"
 #include "../parser/ConfigFile.h"
+#include "../logging/Logger.h"
 #include "../Definitions.h"
+#include "../messages/HyflowMessage.h"
+#include "../messages/HyflowMessageFuture.h"
+#include "../messages/types/SynchronizeMsg.h"
 #include "msgConnect/MSCNetwork.h"
 #include "msgConnect/MSCtest.h"
 
@@ -25,9 +29,10 @@ bool NetworkManager::islocal = false;
 
 void NetworkManager::NetworkInit() {
 	if (strcmp(ConfigFile::Value(NETWORK).c_str(), MSG_CONNECT) == 0) {
+		MsgConnect::MCBaseInitialization();
 		network = new MSCNetwork();
 		HyflowMessage::registerMessageHandlers();
-		network->initCluster();
+		synchronizeCluster(1);
 	}
 }
 
@@ -59,12 +64,32 @@ int NetworkManager::getBasePort(){
 	return basePort;
 }
 
-bool NetworkManager::allNodeJoined(){
-	return network->allNodeJoined();
+void NetworkManager::synchronizeCluster(int rqNo) {
+//	HyflowMessageFuture *hFu = new HyflowMessageFuture();
+	HyflowMessageFuture hFu;
+	SynchronizeMsg gJmsg(nodeId, false, rqNo);
+	HyflowMessage hmsg;
+	hmsg.setMsg(&gJmsg);
+	hmsg.msg_t = MSG_GRP_SYNC;
+	hmsg.isCallback = true;
+	sendCallbackMessage(0,hmsg,hFu);
+	waitTillSynchronized(rqNo);
 }
 
-void NetworkManager::setClustered(){
-	network->setClustered();
+bool NetworkManager::allNodeJoined(int rqNo){
+	return network->allNodeJoined(rqNo);
+}
+
+void NetworkManager::setSynchronized(int rqNo){
+	network->setSynchronized(rqNo);
+}
+
+void NetworkManager::waitTillSynchronized(int rqNo){
+	network->waitTillSynchronized(rqNo);
+}
+
+void NetworkManager::registerMessageFuture(unsigned long long m_id, HyMessageType t, HyflowMessageFuture & fu) {
+	network->registerMessageFuture(m_id, t, fu);
 }
 
 HyflowMessageFuture & NetworkManager::getMessageFuture(unsigned long long m_id, HyMessageType t) {
@@ -87,17 +112,15 @@ void NetworkManager::sendMessage(int nodeId, HyflowMessage msg) {
 }
 
 void NetworkManager::sendCallbackMessage(int nodeId, HyflowMessage msg, HyflowMessageFuture & fu) {
+	msg.fromNode = NetworkManager::nodeId;
+	msg.toNode = nodeId;
+
 	network->sendCallbackMessage(nodeId, msg, fu);
 }
 
 bool NetworkManager::islocalMachine() {
 	return islocal;
 }
-
-void NetworkManager::waitTillClustered(){
-	network->waitTillClustered();
-}
-
 
 void NetworkManager::test() {
 	std::cout << "\n---Testing Network---\n" << std::endl;

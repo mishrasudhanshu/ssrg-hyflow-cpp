@@ -75,6 +75,7 @@ void Logger::debug(const char* str, ...) {
 		/* Start up variable arguments */
 		vsprintf(buf, str, argptr); /* print the variable arguments to buffer */
 		instance->logLib->debug((char const*) buf); /* print the message to stream */
+		instance->logLib->consoleOut((char const*) buf); /* print the message to stdout */
 		/* Signify end of processing of variable arguments */
 		va_end(argptr);
 	}
@@ -117,7 +118,7 @@ void Logger::fatal(const char* str, ...) {
 		instance->logLib->fatal((char const*) buf); /* print the message to stream */
 	}
 	// By default print logging message to console
-	fprintf(stderr, (char const*) buf);
+	instance->logLib->consoleError((char const*) buf);
 
 	/* Signify end of processing of variable arguments */
 	va_end(argptr);
@@ -130,6 +131,28 @@ void Logger::result(const char* str, ...) {
 	/* Start up variable arguments */
 	vsprintf(buf, str, argptr); /* print the variable arguments to buffer */
 	instance->logLib->result((char const*) buf); /* print the message to stream */
+	/* Signify end of processing of variable arguments */
+	va_end(argptr);
+}
+
+void Logger::consoleOut(const char* str, ...) {
+	char buf[200];
+	va_list argptr; /* Set up the variable argument list here */
+	va_start(argptr, str);
+	/* Start up variable arguments */
+	vsprintf(buf, str, argptr); /* print the variable arguments to buffer */
+	instance->logLib->consoleOut((char const*) buf); /* print the message to stream */
+	/* Signify end of processing of variable arguments */
+	va_end(argptr);
+}
+
+void Logger::consoleError(const char* str, ...) {
+	char buf[200];
+	va_list argptr; /* Set up the variable argument list here */
+	va_start(argptr, str);
+	/* Start up variable arguments */
+	vsprintf(buf, str, argptr); /* print the variable arguments to buffer */
+	instance->logLib->consoleError((char const*) buf); /* print the message to stream */
 	/* Signify end of processing of variable arguments */
 	va_end(argptr);
 }
@@ -147,6 +170,6 @@ void Logger::test() {
 	Logger::error("Hello to error %s %f %d\n",st.c_str(),db, i);
 	Logger::fatal("Hello to fatal %s %f %d\n",st.c_str(),db, i);
 	Logger::result("Hello to result %s %f %d\n",st.c_str(),db, i);
-	Logger::LoggerDeinit();
+//	Logger::LoggerDeinit();
 }
 }

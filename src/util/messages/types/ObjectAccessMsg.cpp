@@ -11,8 +11,9 @@
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/serialization/base_object.hpp>
 #include "ObjectAccessMsg.h"
-#include "../../../benchMarks/Benchmark.h"
+#include "../../../benchMarks/BenchmarkExecutor.h"
 #include "../../networking/NetworkManager.h"
+#include "../../logging/Logger.h"
 #include "../../../core/directory/DirectoryManager.h"
 
 #include "../../../benchMarks/tm/bank/BankAccount.h"
@@ -29,7 +30,7 @@ template<class Archive>
 void ObjectAccessMsg::serialize(Archive & ar, const unsigned int version) {
 	ar & boost::serialization::base_object<BaseMessage>(*this);
 	// Register object pointers
-	Benchmark::registerObjectTypes(ar);
+	BenchmarkExecutor::registerObjectTypes(ar);
 	ar & object;
 	ar & id;
 	ar & isRead;
@@ -42,6 +43,7 @@ void ObjectAccessMsg::print() {
 void ObjectAccessMsg::objectAccessHandler(HyflowMessage & msg) {
 	ObjectAccessMsg *oamsg = (ObjectAccessMsg *) msg.getMsg();
 	if (!oamsg->object) {
+		Logger::debug("Object_Access: Request\n");
 		HyflowObject & obj = DirectoryManager::getObjectLocally(oamsg->id,
 				oamsg->isRead);
 		oamsg->object = &obj;
@@ -49,12 +51,11 @@ void ObjectAccessMsg::objectAccessHandler(HyflowMessage & msg) {
 			NetworkManager::sendMessage(msg.fromNode, msg);
 		}
 	} else {
+		Logger::debug("Object_Access: Response\n");
 		// Find the MessageFuture created for expected response
 		HyflowMessageFuture & cbfmsg = NetworkManager::getMessageFuture(msg.msg_id,
 				msg.msg_t);
-		HyflowObject *obj = NULL;
-		oamsg->object->getClone(obj);
-		DirectoryManager::updateObjectLocally(*obj);
+		DirectoryManager::updateObjectLocally(*oamsg->object);
 		cbfmsg.notifyMessage();
 	}
 }
@@ -63,7 +64,7 @@ void ObjectAccessMsg::objectAccessHandler(HyflowMessage & msg) {
 void ObjectAccessMsg::serializationTest() {
 	{
 		// create and open a character archive for output
-		std::ofstream ofs("objectAccessReq", std::ios::out);
+		std::ofstream ofs("/tmp/objectAccessReq", std::ios::out);
 
 		// create class instance
 		ObjectAccessMsg res("0-0", true);
@@ -80,7 +81,7 @@ void ObjectAccessMsg::serializationTest() {
 		ObjectAccessMsg r1;
 		{
 			// create and open an archive for input
-			std::ifstream ifs("objectAccessReq", std::ios::in);
+			std::ifstream ifs("/tmp/objectAccessReq", std::ios::in);
 			boost::archive::text_iarchive ia(ifs);
 			// read class state from archive
 			ia >> r1;
@@ -95,7 +96,7 @@ void ObjectAccessMsg::serializationTest() {
 
 	{
 		// create and open a character archive for output
-		std::ofstream ofs("objectAccessRes", std::ios::out);
+		std::ofstream ofs("/tmp/objectAccessRes", std::ios::out);
 
 		BankAccount bac(1000, "3-0");
 		// create class instance
@@ -119,7 +120,7 @@ void ObjectAccessMsg::serializationTest() {
 		HyflowMessage msg1;
 		{
 			// create and open an archive for input
-			std::ifstream ifs("objectAccessRes", std::ios::in);
+			std::ifstream ifs("/tmp/objectAccessRes", std::ios::in);
 			boost::archive::text_iarchive ia(ifs);
 			// read class state from archive
 			ia >> msg1;

@@ -19,10 +19,12 @@ public:
 	HyflowDirectory(){};
 	virtual ~HyflowDirectory(){};
 
+	virtual void registerObjectLocally(std::string objId, int owner, unsigned long long txn)=0;
+	virtual void unregisterObjectLocally(std::string objId, unsigned long long txn)=0;
 	/**
 	 * This function call blocks until object is not returned back
 	 */
-	virtual HyflowObject & locate(std::string id, bool rw, unsigned long long txn)=0;
+	virtual HyflowObject* locate(std::string id, bool rw, unsigned long long txn)=0;
 	/**
 	 * This function call return immediately user can check availability of
 	 * object later.
@@ -32,12 +34,10 @@ public:
 	 * Register object in the cluster
 	 */
 	virtual void registerObject(HyflowObject & object, unsigned long long txn)=0;
-	virtual void registerObjectLocally(HyflowObject & object, unsigned long long txn)=0;
 	/**
 	 * Unregister object from the cluster
 	 */
 	virtual void unregisterObject(HyflowObject & object, unsigned long long txn)=0;
-	virtual void unregisterObjectLocally(std::string objId, unsigned long long txn)=0;
 	/**
 	 * Function used by message handler to access the object
 	 */

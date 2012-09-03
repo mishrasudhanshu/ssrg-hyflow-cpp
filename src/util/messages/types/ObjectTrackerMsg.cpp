@@ -14,6 +14,7 @@
 #include "ObjectTrackerMsg.h"
 #include "ObjectAccessMsg.h"
 #include "../../networking/NetworkManager.h"
+#include "../../logging/Logger.h"
 #include "../../../core/directory/DirectoryManager.h"
 
 namespace vt_dstm {
@@ -43,16 +44,22 @@ ObjectTrackerMsg::~ObjectTrackerMsg() {}
 void ObjectTrackerMsg::objectTrackerHandler(HyflowMessage & msg) {
 	ObjectTrackerMsg *otmsg = (ObjectTrackerMsg *)msg.getMsg();
 	if (otmsg->nodeId == -1) {	// Request Message
+		Logger::debug("Got object Tracker request\n");
 		otmsg->nodeId = DirectoryManager::getObjectLocation(otmsg->objectId);
 		if (!msg.isCallback) {
 			NetworkManager::sendMessage(msg.fromNode,msg);
 		}
 	} else{
-		// Find the wrapper message created for expected response
+		Logger::debug("Got object Tracker Response\n");
+
 		// LESSON: Make sure no copy constructor is called on HyflowMessageFuture!!!
 		HyflowMessageFuture & cbfmsg = NetworkManager::getMessageFuture(msg.msg_id, msg.msg_t);
+		// After getting a reference remove for map
+		NetworkManager::removeMessageFuture(msg.msg_id, msg.msg_t);
+
 		ObjectAccessMsg oam(otmsg->objectId, otmsg->isRead);
 		HyflowMessage hmsg;
+		hmsg.msg_t = MSG_ACCESS_OBJECT;
 		hmsg.setMsg(&oam);
 		NetworkManager::sendCallbackMessage(otmsg->nodeId,hmsg, cbfmsg);
 	}
@@ -60,7 +67,7 @@ void ObjectTrackerMsg::objectTrackerHandler(HyflowMessage & msg) {
 
 void ObjectTrackerMsg::serializationTest(){
 	// create and open a character archive for output
-	std::ofstream ofs("ObjectTrackerMsgReq", std::ios::out);
+	std::ofstream ofs("/tmp/ObjectTrackerMsgReq", std::ios::out);
 
 	// create class instance
 	ObjectTrackerMsg res("3-0", false);
@@ -77,7 +84,7 @@ void ObjectTrackerMsg::serializationTest(){
 	ObjectTrackerMsg r1;
 	{
 		// create and open an archive for input
-		std::ifstream ifs("ObjectTrackerMsgReq", std::ios::in);
+		std::ifstream ifs("/tmp/ObjectTrackerMsgReq", std::ios::in);
 		boost::archive::text_iarchive ia(ifs);
 		// read class state from archive
 		ia >> r1;

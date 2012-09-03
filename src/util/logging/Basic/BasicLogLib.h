@@ -40,6 +40,8 @@ public:
 	void error(const char* str,...);
 	void fatal(const char* str,...);
 	void result(const char* str,...);
+	void consoleOut(const char* str,...);
+	void consoleError(const char* str,...);
 	double getCurrentTime();
 };
 

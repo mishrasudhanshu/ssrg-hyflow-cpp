@@ -18,9 +18,9 @@ HyflowObjectFuture::HyflowObjectFuture(std::string id, bool rw, unsigned long lo
 
 HyflowObjectFuture::~HyflowObjectFuture() {}
 
-HyflowObject& HyflowObjectFuture::waitOnObject() {
+HyflowObject* HyflowObjectFuture::waitOnObject() {
 	messageFuture.waitOnFuture();
-	return DirectoryManager::getObjectLocally(objectId,isRead);
+	return &DirectoryManager::getObjectLocally(objectId,isRead);
 }
 
 bool HyflowObjectFuture::isObjectAvailable() {

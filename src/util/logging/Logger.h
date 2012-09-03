@@ -37,6 +37,8 @@ public:
 	static void error(char const* str,...);
 	static void fatal(char const* str,...);
 	static void result(char const* str,...);
+	static void consoleOut(const char* str,...);
+	static void consoleError(const char* str,...);
 	static void test();
 };
 

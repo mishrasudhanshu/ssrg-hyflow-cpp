@@ -12,8 +12,17 @@ namespace vt_dstm {
 
 class HyflowContext {
 public:
-	HyflowContext();
-	virtual ~HyflowContext();
+	HyflowContext() {};
+	virtual ~HyflowContext() {};
+	/*
+	 * Following function throw (TransactionException) if commitRequest
+	 * is failed.
+	 */
+	virtual void commit() = 0;
+	/*
+	 * Get transaction Id
+	 */
+	virtual unsigned long long getTransactionId() = 0;
 };
 
 } /* namespace vt_dstm */
