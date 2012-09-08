@@ -24,9 +24,11 @@ class list:
 public:
 	list(){}
 	list(const std::string & Id, const int & v, const std::string & s1, const std::string &s2);
-
 	virtual ~list(){};
+
 	void print();
+	void getClone(HyflowObject **obj) {}
+
 };
 
 } /* namespace vt_dstm */

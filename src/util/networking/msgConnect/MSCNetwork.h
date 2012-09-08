@@ -29,7 +29,6 @@ class MSCNetwork: public AbstractNetwork {
 	static int nodeId;
 	static int basePort;
 	static std::string Ips[];
-	static std::string *nodeIps;
 
 	static int nodeCount;
 	static int nodesInCluster;
@@ -48,6 +47,9 @@ class MSCNetwork: public AbstractNetwork {
 	static ConcurrentHashMap<unsigned long long, HyflowMessageFuture*> trackerCallbackMap;
 	static ConcurrentHashMap<unsigned long long, HyflowMessageFuture*> objCallbackMap;
 	static ConcurrentHashMap<unsigned long long, HyflowMessageFuture*> syncCallbackMap;
+	static ConcurrentHashMap<unsigned long long, HyflowMessageFuture*> lockCallbackMap;
+	static ConcurrentHashMap<unsigned long long, HyflowMessageFuture*> readValidCallbackMap;
+	static ConcurrentHashMap<unsigned long long, HyflowMessageFuture*> registerCallbackMap;
 	static bool isInit;
 
 	void messageDispatcher();
@@ -68,7 +70,7 @@ public:
 	 * Returns true if all the nodes joined
 	 */
 	bool allNodeJoined(int rqNo);
-	void setSynchronized(int rqNo);
+	void replySynchronized(int rqNo);
 	void waitTillSynchronized(int rqNo);
 	void notifyCluster(int rqNo);
 

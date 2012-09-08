@@ -44,8 +44,9 @@ public:
 	 */
 	static void synchronizeCluster(int rqNo);
 	static bool allNodeJoined(int rqNo);
-	static void setSynchronized(int rqNo);
+	static void replySynchronized(int rqNo);
 	static void waitTillSynchronized(int rqNo);
+	static void notifyCluster(int rqNo);
 
 	static void registerMessageFuture(unsigned long long m_id, HyMessageType t, HyflowMessageFuture & fu);
 	static HyflowMessageFuture & getMessageFuture(unsigned long long m_id, HyMessageType t);

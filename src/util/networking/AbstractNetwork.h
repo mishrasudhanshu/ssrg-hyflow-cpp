@@ -59,11 +59,12 @@ public:
 	/*
 	 * Notify the network that all the required nodes have joined the cluster
 	 */
-	virtual void setSynchronized(int rqNo)=0;
+	virtual void replySynchronized(int rqNo)=0;
 	/*
 	 * Call will return when all the nodes have responded to node 0
 	 */
 	virtual void waitTillSynchronized(int rqNo)=0;
+	virtual void notifyCluster(int rqNo) = 0;
 };
 
 }

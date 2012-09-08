@@ -24,12 +24,14 @@ RegisterObjectMsg::RegisterObjectMsg(std::string id, unsigned long long tid) {
 	objectId = id;
 	owner = -1;
 	txnId = tid;
+	request = true;
 }
 
 RegisterObjectMsg::RegisterObjectMsg(std::string id, int ow, unsigned long long tid) {
 	objectId = id;
 	owner = ow;
 	txnId = tid;
+	request = true;
 }
 
 RegisterObjectMsg::~RegisterObjectMsg() {}
@@ -40,15 +42,33 @@ void RegisterObjectMsg::serialize(Archive & ar, const unsigned int version) {
 	ar & txnId;
 	ar & owner;
 	ar & objectId;
+	ar & request;
 }
 
 void RegisterObjectMsg::registerObjectHandler(HyflowMessage & msg) {
-	RegisterObjectMsg* romsg = (RegisterObjectMsg*)msg.getMsg();
-	Logger::debug("Got Register Object Request\n");
-	if (romsg->owner != -1)
-		DirectoryManager::registerObjectLocally(romsg->objectId, romsg->owner, romsg->txnId);
-	else
-		DirectoryManager::unregisterObjectLocally(romsg->objectId, romsg->txnId);
+	RegisterObjectMsg* romsg = (RegisterObjectMsg*) (msg.getMsg());
+	if (romsg->request) {
+		Logger::debug("Got Register Object Request\n");
+		if (romsg->owner != -1)
+			DirectoryManager::registerObjectLocally(romsg->objectId, romsg->owner,
+					romsg->txnId);
+		else
+			DirectoryManager::unregisterObjectLocally(romsg->objectId,
+					romsg->txnId);
+		romsg->request = false;
+	} else {
+		Logger::debug("Got Register Object Response\n");
+		HyflowMessageFuture & cbfmsg = NetworkManager::getMessageFuture(msg.msg_id,
+						msg.msg_t);
+		cbfmsg.notifyMessage();
+	}
+}
+bool RegisterObjectMsg::isRequest() const {
+	return request;
+}
+
+void RegisterObjectMsg::setRequest(bool request) {
+	this->request = request;
 }
 
 void RegisterObjectMsg::serializationTest(){

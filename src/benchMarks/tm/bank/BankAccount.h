@@ -11,6 +11,7 @@
 #include <stdint.h>
 #include "../../../core/HyflowObject.h"
 #include "../../../core/context/HyflowContext.h"
+#include "../../../core/HyflowObjectFuture.h"
 
 namespace vt_dstm {
 
@@ -31,8 +32,8 @@ class BankAccount: public HyflowObject {
 
 	void withdraw(uint64_t money);
 	void withdraw(uint64_t money, HyflowContext* c);
-	static uint64_t totalBalance(std::string id1, std::string id2, HyflowContext* c);
-	static void transfer(std::string fromId, std::string toId, uint64_t money, HyflowContext* c);
+	static uint64_t totalBalance(std::string id1, std::string id2, HyflowContext* c, HyflowObjectFuture& of1, HyflowObjectFuture& of2);
+	static void transfer(std::string fromId, std::string toId, uint64_t money, HyflowContext* c, HyflowObjectFuture& of1, HyflowObjectFuture& of2);
 public:
 	BankAccount() {};
 	BankAccount(uint64_t amount, const std::string & Id);
@@ -44,6 +45,7 @@ public:
 	static void transfer(std::string fromId, std::string toId, uint64_t money);
 	void print();
 	void getClone(HyflowObject **obj);
+	static void checkSanity(std::string* ids, int objectCount);
 	void test();
 };
 

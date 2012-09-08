@@ -29,14 +29,14 @@ int main(int argc, char *argv[], char *envp[]) {
 	// Update Configuration based on command line input
 	ConfigFile::UpdateMap();
 
+	// Set node Id
+	NetworkManager::initNode();
+
 	// Run unit test if specified
 	if(ConfigFile::Value(UNIT_TEST).compare(TRUE)==0) {
 		unitTests::tests();
 		return 0;
 	}
-
-	// Set node Id
-	NetworkManager::initNode();
 
 	// Initiate Logger : Depends on node Id
 	Logger::LoggerInit();

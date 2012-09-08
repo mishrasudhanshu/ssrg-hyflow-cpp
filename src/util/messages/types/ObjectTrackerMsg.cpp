@@ -44,13 +44,13 @@ ObjectTrackerMsg::~ObjectTrackerMsg() {}
 void ObjectTrackerMsg::objectTrackerHandler(HyflowMessage & msg) {
 	ObjectTrackerMsg *otmsg = (ObjectTrackerMsg *)msg.getMsg();
 	if (otmsg->owner == -1) {	// Request Message
-		Logger::debug("Got object Tracker request\n");
 		otmsg->owner = DirectoryManager::getObjectLocation(otmsg->objectId);
+		Logger::debug("Got object Tracker request from %d replied for %s with owner %d\n", msg.fromNode, otmsg->objectId.c_str(), otmsg->owner);
+
 		if (!msg.isCallback) {
 			NetworkManager::sendMessage(msg.fromNode,msg);
 		}
 	} else{
-		Logger::debug("Got object Tracker Response\n");
 
 		// LESSON: Make sure no copy constructor is called on HyflowMessageFuture!!!
 		HyflowMessageFuture & cbfmsg = NetworkManager::getMessageFuture(msg.msg_id, msg.msg_t);
@@ -62,6 +62,7 @@ void ObjectTrackerMsg::objectTrackerHandler(HyflowMessage & msg) {
 		hmsg.msg_t = MSG_ACCESS_OBJECT;
 		hmsg.isCallback = true;
 		hmsg.setMsg(&oam);
+		Logger::debug("Object Tracker Response: send request to %d to from %s\n", otmsg->owner,otmsg->objectId.c_str());
 		NetworkManager::sendCallbackMessage(otmsg->owner,hmsg, cbfmsg);
 	}
 }

@@ -44,9 +44,9 @@ void ObjectAccessMsg::objectAccessHandler(HyflowMessage & msg) {
 	ObjectAccessMsg *oamsg = (ObjectAccessMsg *) msg.getMsg();
 	if (!oamsg->object) {
 		Logger::debug("Object_Access: Request\n");
-		HyflowObject & obj = DirectoryManager::getObjectLocally(oamsg->id,
+		HyflowObject* obj = DirectoryManager::getObjectLocally(oamsg->id,
 				oamsg->isRead);
-		oamsg->object = &obj;
+		oamsg->object = obj;
 		if (!msg.isCallback) {
 			NetworkManager::sendMessage(msg.fromNode, msg);
 		}
@@ -55,7 +55,14 @@ void ObjectAccessMsg::objectAccessHandler(HyflowMessage & msg) {
 		// Find the MessageFuture created for expected response
 		HyflowMessageFuture & cbfmsg = NetworkManager::getMessageFuture(msg.msg_id,
 				msg.msg_t);
-		DirectoryManager::updateObjectLocally(*oamsg->object);
+		// Update sender clock for requesting context
+		HyflowContext *c = ContextManager::findContext(cbfmsg.getTxnId());
+		c->updateClock(msg.fromNodeClock);
+
+		HyflowObject *obj = NULL;
+		oamsg->object->getClone(&obj);
+		cbfmsg.setDataResponse(obj);
+
 		cbfmsg.notifyMessage();
 	}
 }

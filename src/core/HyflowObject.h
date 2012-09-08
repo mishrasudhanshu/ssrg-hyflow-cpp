@@ -23,25 +23,73 @@ class HyflowObject {
     {
     	ar & hyId;
     	ar & hyVersion;
+    	ar & ownerTrnx;
+    	ar & ownerNode;
+    	ar & oldOwnerNode;
     }
 protected:
 	std::string hyId;
-	int hyVersion;
+	/*
+	 * Version int size required to be 32 bit as 31st and 30st are used for
+	 * Signifying remote and locking status
+	 */
+	int32_t hyVersion;
+
+	unsigned long long ownerTrnx;
+	int ownerNode;
+	int oldOwnerNode;
 
 	HyflowObject(const std::string & Id, int v)
-		: hyId(Id), hyVersion(v) {}
+		: hyId(Id), hyVersion(v) { ownerNode = -1; oldOwnerNode = -1; }
 public:
 
-	HyflowObject() {}
+	HyflowObject() { ownerNode = -1; oldOwnerNode = -1; }
 	virtual ~HyflowObject(){}
 
 	virtual void setId(const std::string & Id) {hyId = Id;};
 	virtual std::string & getId() {return hyId;};
 
-	virtual void setVersion(int v) {hyVersion = v;};
-	virtual int getVersion() {return hyVersion;};
-	virtual void print(){};
-	virtual void getClone(HyflowObject **obj){std::cerr<<"Hyflow base class clone function called!!\n";}
+	virtual void setVersion(int32_t v) {hyVersion = v;};
+	virtual int32_t getVersion() {return hyVersion;};
+	virtual void updateVersion() {hyVersion++;}
+	virtual void print()=0;
+	/*
+	 * Provides a clone on given object created on heap, make sure to
+	 * delete once removed from local cache, mostly in local cache update call
+	 */
+	virtual void getClone(HyflowObject **obj)=0;
+
+	int getOldOwnerNode() const {
+		return oldOwnerNode;
+	}
+
+	void setOldOwnerNode(int oldOwnerNode) {
+		this->oldOwnerNode = oldOwnerNode;
+	}
+
+	int getOwnerNode() const {
+		return ownerNode;
+	}
+
+	void setOwnerNode(int ownerNode) {
+		this->ownerNode = ownerNode;
+	}
+
+	unsigned long long getOwnerTrnx() const {
+		return ownerTrnx;
+	}
+
+	void setOwnerTrnx(unsigned long long ownerTrnx) {
+		this->ownerTrnx = ownerTrnx;
+	}
+
+	void baseClone(HyflowObject* obj) {
+		obj->hyId = hyId;
+		obj->hyVersion = hyVersion;
+		obj->ownerNode = ownerNode;
+		obj->oldOwnerNode = oldOwnerNode;
+		obj->ownerTrnx = ownerTrnx;
+	}
 };
 
 //LESSON: Useful in case of some other type of compiler

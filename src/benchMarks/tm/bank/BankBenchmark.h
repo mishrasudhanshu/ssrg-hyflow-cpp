@@ -16,6 +16,7 @@ namespace vt_dstm {
 
 class BankBenchmark: public vt_dstm::HyflowBenchmark {
 	std::string* ids;
+	int objectCount;
 public:
 	BankBenchmark();
 	virtual ~BankBenchmark();

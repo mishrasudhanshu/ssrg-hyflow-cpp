@@ -21,6 +21,15 @@ class HyflowMessageFuture {
 	HyMessageType msg_t;
 	boost::condition onReceive;
 	boost::mutex msgMutex;
+	
+	unsigned long long txnId;
+	/*
+	 * Following fields are used to return response of future request
+	 */
+	bool boolResponse;
+	int intResponse;
+	std::string stringResponse;
+	HyflowObject* dataResponse;
 
 public:
 	HyflowMessageFuture();
@@ -32,6 +41,17 @@ public:
 	unsigned long long getId();
 	void setType(HyMessageType t);
 	HyMessageType getType();
+
+	bool isBoolResponse() const;
+	void setBoolResponse(bool boolResponse);
+	HyflowObject* getDataResponse() const;
+	void setDataResponse(HyflowObject* dataResponse);
+	int getIntResponse() const;
+	void setIntResponse(int intResponse);
+	std::string getStringResponse() const;
+	void setStringResponse(std::string stringResponse);
+	unsigned long long getTxnId() const;
+	void setTxnId(unsigned long long txnId);
 };
 
 } /* namespace vt_dstm */

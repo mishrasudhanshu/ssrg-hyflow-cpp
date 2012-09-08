@@ -34,21 +34,12 @@ SynchronizeMsg::~SynchronizeMsg() {}
 void SynchronizeMsg::synchronizeHandler(HyflowMessage & msg){
 	SynchronizeMsg *synmsg = (SynchronizeMsg *)msg.getMsg();
 	if (!synmsg->isResponse){	// Node 0 will receive this message
-		Logger::debug("SYNC_MSG: Got Synchronize request message\n");
+		Logger::debug("SYNC_MSG: Got Synchronize request message from %d\n", msg.fromNode);
 		if(NetworkManager::allNodeJoined(synmsg->requestNo))	// If you are last message set synchronized
-			NetworkManager::setSynchronized(synmsg->requestNo);
-		else
-			NetworkManager::waitTillSynchronized(synmsg->requestNo);
-
-		synmsg->isResponse = true;
-		if (!msg.isCallback) {
-			synmsg->isResponse = true;
-			NetworkManager::sendMessage(msg.fromNode, msg);
-		}
+			NetworkManager::replySynchronized(synmsg->requestNo);
 	}else{
 		Logger::debug("SYNC_MSG: Got Synchronize response message\n");
-		if( NetworkManager::getNodeId() != 0)	// Node 0 is already awaken
-			NetworkManager::setSynchronized(synmsg->requestNo);
+		NetworkManager::notifyCluster(synmsg->requestNo);
 	}
 }
 

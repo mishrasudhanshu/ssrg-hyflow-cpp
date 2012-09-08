@@ -16,6 +16,8 @@
 #include "types/SynchronizeMsg.h"
 #include "types/ObjectTrackerMsg.h"
 #include "types/RegisterObjectMsg.h"
+#include "types/LockAccessMsg.h"
+#include "types/ReadValidationMsg.h"
 
 namespace vt_dstm{
 
@@ -24,6 +26,8 @@ void HyflowMessage::registerMessageHandlers()	{
 	NetworkManager::registerHandler(MSG_TRK_OBJECT, &ObjectTrackerMsg::objectTrackerHandler);
 	NetworkManager::registerHandler(MSG_ACCESS_OBJECT, &ObjectAccessMsg::objectAccessHandler);
 	NetworkManager::registerHandler(MSG_REGISTER_OBJ, &RegisterObjectMsg::registerObjectHandler);
+	NetworkManager::registerHandler(MSG_LOCK_ACCESS, &LockAccessMsg::lockAccessHandler);
+	NetworkManager::registerHandler(MSG_READ_VALIDATE, &ReadValidationMsg::readValidationHandle);
 }
 
 template<class Archive>
@@ -32,6 +36,22 @@ void HyflowMessage::registerMessageTypes(Archive & ar){
 	ar.register_type(static_cast<SynchronizeMsg*>(NULL));
 	ar.register_type(static_cast<ObjectTrackerMsg*>(NULL));
 	ar.register_type(static_cast<RegisterObjectMsg*>(NULL));
+	ar.register_type(static_cast<LockAccessMsg*>(NULL));
+	ar.register_type(static_cast<ReadValidationMsg*>(NULL));
+}
+
+void  HyflowMessage::syncClocks()	{
+	int localClock = ContextManager::getClock();
+	while (localClock < fromNodeClock) {
+		if (ContextManager::atomicUpdateClock(fromNodeClock, localClock))
+			return;
+		localClock = ContextManager::getClock();
+	}
+}
+
+void HyflowMessage::init(HyMessageType msg_t, bool isCallback) {
+	this->msg_t = msg_t;
+	this->isCallback = isCallback;
 }
 
 void HyflowMessage::test(){
@@ -48,6 +68,12 @@ void HyflowMessage::test(){
 
 	RegisterObjectMsg romsg;
 	romsg.serializationTest();
+
+	LockAccessMsg lamsg;
+	lamsg.serializationTest();
+
+	ReadValidationMsg rvmsg;
+	rvmsg.serializationTest();
 
 	// create and open a character archive for output
 	std::ofstream ofs("/tmp/HyflowMessage", std::ios::out);

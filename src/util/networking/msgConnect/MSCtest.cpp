@@ -13,9 +13,12 @@
 #include "../../messages/types/ObjectAccessMsg.h"
 #include "../../../benchMarks/tm/bank/BankAccount.h"
 #include "../../messages/HyflowMessage.h"
+#include "../../messages/HyflowMessageFuture.h"
 #include "../../logging/Logger.h"
+#include "../NetworkManager.h"
 
 #include "MSCtest.h"
+#include "MSCNetwork.h"
 
 using namespace MsgConnect;
 
@@ -104,7 +107,7 @@ static void dispatcher(MCMessenger* mc){
 	}
 }
 
-void MSCtest::test(){
+void MSCtest::testbase(){
 	MCBaseInitialization();
 
 	MCMessage Message;
@@ -196,6 +199,24 @@ void MSCtest::test(){
 	dp.join();
 	printf("Quitting.\n");
 	delete mc;
+}
+
+void MSCtest::test() {
+	MCBaseInitialization();
+
+	int myId = NetworkManager::getNodeId();
+
+	printf("My Id is %d\n", myId);
+
+	NetworkManager::NetworkInit();
+
+	// Give some time for callback to be send
+	for (int i=0; i <9 ; i++) {
+		Sleep(1000);
+	}
+
+	std::cout<<"MultiNode communication Test Passed\n"<<std::endl;
+	return;
 }
 
 }	/*namespace vt_dstm */

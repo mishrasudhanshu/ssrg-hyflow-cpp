@@ -42,11 +42,11 @@ BenchmarkExecutor::~BenchmarkExecutor() {
 unsigned long long BenchmarkExecutor::getTime() {
 	timeval tv;
 	gettimeofday(&tv, NULL);
-	return tv.tv_sec*1000000 + tv.tv_usec;
+	return tv.tv_sec*1000 + 0.001*tv.tv_usec;
 }
 
 void BenchmarkExecutor::writeResults() {
-	unsigned long long trp =  transactions*(1000000/executionTime);
+	unsigned long long trp =  transactions*(1000/executionTime);
 	Logger::result("Throughput = %llu", trp);
 }
 
@@ -101,11 +101,11 @@ void BenchmarkExecutor::execute(){
 	// Create objects and then make all nodes done populating objects
 	createObjects();
 	prepareArgs();
-	Logger::debug("BNCH_EXE :....\n");
 	NetworkManager::synchronizeCluster(2);
 	sleep(2);
-	unsigned long long startTime = getTime();
 	int argsCount = benchmark->getOperandsCount();
+	Logger::debug("BNCH_EXE :------------------------------>\n");
+	unsigned long long startTime = getTime();
 	for(int i=0; i < transactions; i++) {
 		if (transactionType[i]) {
 			benchmark->readOperation(argsArray[i], argsCount);
@@ -114,7 +114,7 @@ void BenchmarkExecutor::execute(){
 		}
 	}
 	executionTime = getTime() + 1 - startTime;
-	Logger::debug("BNC_EXE: Execution time = %llu\n", executionTime);
+	Logger::debug("BNC_EXE: Execution time = %llu msec <----------------------\n", executionTime);
 
 	writeResults();
 

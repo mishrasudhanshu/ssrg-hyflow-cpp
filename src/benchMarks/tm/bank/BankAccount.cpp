@@ -14,6 +14,7 @@
 #include "../../../core/HyflowObjectFuture.h"
 #include "../../../core/directory/DirectoryManager.h"
 #include "../../../util/logging/Logger.h"
+#include "../../../util/networking/NetworkManager.h"
 #include "BankAccount.h"
 
 namespace vt_dstm {
@@ -53,32 +54,35 @@ uint64_t BankAccount::checkBalance() {
 }
 
 uint64_t BankAccount::checkBalance(HyflowContext* context) {
-	return amount;
+	context->beforeReadAccess(this);
+	BankAccount* ba = (BankAccount*)context->onReadAccess(this);
+	return ba->checkBalance();
 }
 
 void BankAccount::deposit(uint64_t money) {
 	amount += money;
 }
 
-void BankAccount::deposit(uint64_t money, HyflowContext* c) {
-	amount += money;
+void BankAccount::deposit(uint64_t money, HyflowContext* context) {
+	context->beforeReadAccess(this);
+	BankAccount* ba = (BankAccount*)context->onWriteAccess(this);
+	ba->deposit(money);
 }
 
 void BankAccount::withdraw(uint64_t money) {
 	amount -= money;
 }
 
-void BankAccount::withdraw(uint64_t money, HyflowContext* c) {
-	amount -= money;
+void BankAccount::withdraw(uint64_t money, HyflowContext* context) {
+	context->beforeReadAccess(this);
+	BankAccount* ba = (BankAccount*)context->onWriteAccess(this);
+	ba->withdraw(money);
 }
 
-uint64_t BankAccount::totalBalance(std::string id1, std::string id2, HyflowContext* c) {
-	HyflowObjectFuture of1(id1, true, c->getTransactionId());
-	HyflowObjectFuture of2(id2, true, c->getTransactionId());
-	DirectoryManager::locateAsync(id1, true, c->getTransactionId(), of1);
-	DirectoryManager::locateAsync(id2, true, c->getTransactionId(), of2);
+uint64_t BankAccount::totalBalance(std::string id1, std::string id2, HyflowContext* c, HyflowObjectFuture& of1, HyflowObjectFuture& of2) {
+	DirectoryManager::locateAsync(id1, true, c->getTxnId(), of1);
+	DirectoryManager::locateAsync(id2, true, c->getTxnId(), of2);
 	try{
-
 		long balance = 0;
 		BankAccount* account1 = (BankAccount*)of1.waitOnObject();
 		balance += account1->checkBalance(c);
@@ -99,13 +103,16 @@ uint64_t BankAccount::totalBalance(std::string id1, std::string id2, HyflowConte
 	}
 	return 0;
 }
+
 uint64_t BankAccount::totalBalance(std::string id1, std::string id2) {
 	bool commit = true;
 	uint64_t result = 0;
 	for (int i = 0; i < 0x7fffffff; i++) {
 		HyflowContext* c = ContextManager::getInstance();
+		HyflowObjectFuture of1(id1, true, c->getTxnId());
+		HyflowObjectFuture of2(id2, true, c->getTxnId());
 		try {
-			result = totalBalance(id1, id2, c);
+			result = totalBalance(id1, id2, c, of1, of2);
 		} catch (TransactionException & ex) {
 			commit = false;
 		} catch (...) {
@@ -114,6 +121,7 @@ uint64_t BankAccount::totalBalance(std::string id1, std::string id2) {
 		if (commit) {
 			try {
 				c->commit();
+				Logger::debug("Transaction Successful\n");
 			} catch (TransactionException & ex) {
 				continue;
 			} catch(...) {
@@ -127,11 +135,10 @@ uint64_t BankAccount::totalBalance(std::string id1, std::string id2) {
 }
 
 void BankAccount::transfer(std::string id1, std::string id2,
-		uint64_t money, HyflowContext* c) {
+		uint64_t money, HyflowContext* c, HyflowObjectFuture& of1, HyflowObjectFuture& of2) {
 	try{
-		HyflowObjectFuture of1(id1, true, c->getTransactionId()), of2(id2, true, c->getTransactionId());
-		DirectoryManager::locateAsync(id1, true, c->getTransactionId(), of1);
-		DirectoryManager::locateAsync(id2, true, c->getTransactionId(), of2);
+		DirectoryManager::locateAsync(id1, true, c->getTxnId(), of1);
+		DirectoryManager::locateAsync(id2, true, c->getTxnId(), of2);
 
 		BankAccount* account1 = (BankAccount*)of1.waitOnObject();
 		Logger::debug("BANK : Account %s amount %llu\n", account1->hyId.c_str(), account1->amount);
@@ -161,8 +168,10 @@ void BankAccount::transfer(std::string id1, std::string id2,
 	bool commit = true;
 	for (int i = 0; i < 0x7fffffff; i++) {
 		HyflowContext* c = ContextManager::getInstance();
+		// FIXME: Set Object within the context
+		HyflowObjectFuture of1(id1, true, c->getTxnId()), of2(id2, true, c->getTxnId());
 		try {
-			transfer(id1, id2, money, c);
+			transfer(id1, id2, money, c, of1, of2);
 		} catch (TransactionException & ex) {
 			commit = false;
 		} catch (...) {
@@ -171,6 +180,7 @@ void BankAccount::transfer(std::string id1, std::string id2,
 		if (commit) {
 			try {
 				c->commit();
+				Logger::debug("Transaction Successful\n");
 			} catch (TransactionException & ex) {
 				continue;
 			} catch(...) {
@@ -187,7 +197,27 @@ void BankAccount::print(){
 }
 
 void BankAccount::getClone(HyflowObject **obj){
-	*obj = new BankAccount(this->amount, this->hyId, this->hyVersion);
+	BankAccount *ba = new BankAccount();
+	ba->amount = amount;
+	baseClone(ba);
+	*obj = ba;
+}
+
+void BankAccount::checkSanity(std::string* ids, int objectCount) {
+	uint64_t balance = 0;
+	if (NetworkManager::getNodeId() == 0) {
+		HyflowContext *c = ContextManager::getInstance();
+		for(int i=0; i <objectCount ; i++ ) {
+			BankAccount* ba = (BankAccount*)DirectoryManager::locate(ids[i], true, c->getTxnId());
+			balance += ba->checkBalance();
+		}
+		uint64_t expected = 10000*objectCount;
+		if ( expected == balance ) {
+			Logger::debug("Sanity check passed...\n");
+		} else {
+			Logger::fatal("Sanity check failed... expected = %llu & Actual = %llu\n", expected, balance	);
+		}
+	}
 }
 
 // Serialisation Test of object

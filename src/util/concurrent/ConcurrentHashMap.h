@@ -61,6 +61,7 @@ public:
 	}
 
 	Value & getValue(Key & k) {
+		boost::shared_lock<boost::shared_mutex> readLock(rwMutex);
 		return chm.at(k);
 	}
 
@@ -69,14 +70,36 @@ public:
 		try {
 			chm.erase(p.first);
 		}catch(...) {
-			//Currently just ignore
+			std::cerr<<"Concurrent HashMap: exception erase"<<std::endl;
 		}
 
 		chm.insert(p);
 	}
 
+	void updatePointerValue(std::pair<Key, Value> & p) {
+		boost::upgrade_lock<boost::shared_mutex> writeLock(rwMutex);
+		try {
+//			Value v = chm.at(p.first);
+			chm.erase(p.first);
+//			delete v;
+		}catch (std::out_of_range & e) {
+			// Means object was not already there
+			// No need to erase it and delete its pointer
+			std::cerr<<"Concurrent HashMap: Out of range exception thrown!!"<<std::endl;
+		}
+		catch(...) {
+			std::cerr<<"Concurrent HashMap: exception erase"<<std::endl;
+		}
+		chm.insert(p);
+	}
+
 	void insertValue(std::pair<Key, Value> & p) {
 		boost::upgrade_lock<boost::shared_mutex> writeLock(rwMutex);
+		try {
+			chm.erase(p.first);
+		}catch(...) {
+			std::cerr<<"Concurrent HashMap: exception erase"<<std::endl;
+		}
 		chm.insert(p);
 	}
 

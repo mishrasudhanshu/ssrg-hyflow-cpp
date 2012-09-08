@@ -32,6 +32,10 @@ void DirectoryManager::registerObject(HyflowObject & object, unsigned long long 
 	directory->registerObject(object,txn);
 }
 
+void DirectoryManager::registerObjectWait(HyflowObject & object, unsigned long long txn){
+	directory->registerObjectWait(object,txn);
+}
+
 void DirectoryManager::registerObjectLocally(std::string objectId, int owner, unsigned long long txn){
 	directory->registerObjectLocally(objectId, owner,txn);
 }
@@ -44,7 +48,7 @@ void DirectoryManager::unregisterObjectLocally(std::string objId, unsigned long 
 	directory->unregisterObjectLocally(objId,txn);
 }
 
-HyflowObject & DirectoryManager::getObjectLocally(std::string id, bool rw) {
+HyflowObject* DirectoryManager::getObjectLocally(std::string id, bool rw) {
 	return directory->getObjectLocally(id, rw);
 }
 

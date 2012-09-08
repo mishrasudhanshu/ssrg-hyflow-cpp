@@ -14,6 +14,7 @@
 #include "MSCNetwork.h"
 #include "../NetworkManager.h"
 #include "../../logging/Logger.h"
+#include "../../messages/types/SynchronizeMsg.h"
 
 namespace vt_dstm
 {
@@ -21,7 +22,6 @@ int MSCNetwork::nodeCount = 0;
 int MSCNetwork::nodeId = -1;
 int MSCNetwork::nodesInCluster = 0;
 
-std::string* MSCNetwork::nodeIps = NULL;
 std::string MSCNetwork::Ips[] = {
 		"10.1.1.20",
 		"10.1.1.21",
@@ -38,6 +38,9 @@ ConcurrentHashMap<HyMessageType, void (*)(HyflowMessage &)> MSCNetwork::handlerM
 ConcurrentHashMap<unsigned long long, HyflowMessageFuture *> MSCNetwork::trackerCallbackMap;
 ConcurrentHashMap<unsigned long long, HyflowMessageFuture *> MSCNetwork::objCallbackMap;
 ConcurrentHashMap<unsigned long long, HyflowMessageFuture *> MSCNetwork::syncCallbackMap;
+ConcurrentHashMap<unsigned long long, HyflowMessageFuture *> MSCNetwork::lockCallbackMap;
+ConcurrentHashMap<unsigned long long, HyflowMessageFuture *> MSCNetwork::readValidCallbackMap;
+ConcurrentHashMap<unsigned long long, HyflowMessageFuture *> MSCNetwork::registerCallbackMap;
 volatile bool MSCNetwork::hyflowShutdown = false;
 boost::thread *MSCNetwork::dispatchThread = NULL;
 
@@ -51,11 +54,10 @@ MSCNetwork::MSCNetwork() {
 		nodeCount = NetworkManager::getNodeCount();
 		nodeId = NetworkManager::getNodeId();
 		basePort = NetworkManager::getBasePort();
-		nodeIps = new std::string[nodeCount];
 
 		messenger = new MsgConnect::MCMessenger();
-		queue = new MsgConnect::MCQueue[nodeCount];
-		socket = new MsgConnect::MCSocketTransport[nodeCount];
+		queue = new MsgConnect::MCQueue();
+		socket = new MsgConnect::MCSocketTransport();
 		setupSockets();
 		Logger::debug("Calling boost Dispatcher Thread\n");
 		dispatchThread = new boost::thread(dispatcher, messenger);
@@ -65,47 +67,44 @@ MSCNetwork::MSCNetwork() {
 
 MSCNetwork::~MSCNetwork() {
 	delete messenger;
-	delete[] queue;
-	delete[] socket;
+	delete queue;
+	delete socket;
 	hyflowShutdown = true;
 	dispatchThread->join();
 	delete dispatchThread;
 }
 
 void MSCNetwork::setupSockets(){
-	for(int i=0 ; i<nodeCount ; i++){
-		nodeIps[i] = getIp(i);
-		std::string ipS = getIp(i);
-		char *ip = (char*)ipS.c_str();
-		unsigned int port = basePort + nodeId;
-		std::stringstream qNameStr;
-		qNameStr << nodeId << "-queue";
-		std::string qString = qNameStr.str();
-		char *qName = (char*)qString.c_str();
+	std::string ipS = getIp(nodeId);
+	char *ip = (char*)ipS.c_str();
+	unsigned int port = basePort + nodeId;
+	std::stringstream qNameStr;
+	qNameStr << nodeId << "-queue";
+	std::string qString = qNameStr.str();
+	char *qName = (char*)qString.c_str();
 
-		messenger->setMaxTimeout(ULONG_MAX);
-		socket->setActive(false);
-		socket->setAttemptsToConnect(1);
-		socket->setFailOnInactive(true);
-		socket->setMaxTimeout(900000l);
+	messenger->setMaxTimeout(ULONG_MAX);
+	socket->setActive(false);
+	socket->setAttemptsToConnect(1);
+	socket->setFailOnInactive(true);
+	socket->setMaxTimeout(900000l);
 
-		socket->setMessengerAddress(ip);
-		socket->setMessengerPort(port);
-		socket->setTransportMode(stmP2P);
-		socket->setMessenger(messenger);
-		socket->setActive(true);
+	socket->setMessengerAddress(ip);
+	socket->setMessengerPort(port);
+	socket->setTransportMode(stmP2P);
+	socket->setMessenger(messenger);
+	socket->setActive(true);
 
-		queue->setQueueName(qName);
-		queue->setMessenger(messenger);
+	queue->setQueueName(qName);
+	queue->setMessenger(messenger);
 
-		MsgConnect::MCMessageHandlers *mhls = queue->getHandlers();
-		MsgConnect::MCMessageHandler* handler = mhls->Add();
-		handler->setMsgCodeLow(1);
-		handler->setMsgCodeHigh(1);
-		handler->setOnMessage(MSCNetwork::defaultHandler);
-		handler->setEnabled(true);
-		Logger::debug("Setup socket for ip %s : port %d : queue %s\n", ipS.c_str(), port, qString.c_str());
-	}
+	MsgConnect::MCMessageHandlers *mhls = queue->getHandlers();
+	MsgConnect::MCMessageHandler* handler = mhls->Add();
+	handler->setMsgCodeLow(1);
+	handler->setMsgCodeHigh(1);
+	handler->setOnMessage(MSCNetwork::defaultHandler);
+	handler->setEnabled(true);
+	Logger::debug("Setup socket for ip %s : port %d : queue %s\n", ipS.c_str(), port, qString.c_str());
 }
 
 void MSCNetwork::sendMessage(int nodeId, HyflowMessage & message){
@@ -123,7 +122,7 @@ void MSCNetwork::sendMessage(int nodeId, HyflowMessage & message){
 	mcmsg.MsgCode = 1;
 	mcmsg.Param1 = 0;
 	mcmsg.Param2 = 0;
-	mcmsg.DataType = MsgConnect::bdtVar;
+	mcmsg.DataType = MsgConnect::bdtConst;
 
 	mcmsg.Data = (void *) msg.c_str();
 	mcmsg.DataSize = msg.size();
@@ -170,7 +169,7 @@ void MSCNetwork::registerHandler(HyMessageType msg_t, void (*handlerFunc)(Hyflow
 
 void MSCNetwork::defaultHandler(void* UserData, void* Sender,
 	MsgConnect::MCMessage& msg, bool& Handled) {
-	Logger::debug("Got the Network Event\n");
+	Logger::debug("MSNC :Got the Network Event \n");
 	if(msg.Data && (msg.DataSize > 0)) {
 		// Read Message
 		std::string idata((char*)msg.Data, msg.DataSize);
@@ -179,7 +178,9 @@ void MSCNetwork::defaultHandler(void* UserData, void* Sender,
 		vt_dstm::HyflowMessage req;
 		ia >> req;
 
+		Logger::debug("MSNC : Event from node %d\n", req.fromNode);
 		// Handle Message
+		req.syncClocks();
 		void (*handler)(HyflowMessage &) = NULL;
 		handler = handlerMap.getValue(req.msg_t);
 		if ( handler != NULL)
@@ -187,6 +188,7 @@ void MSCNetwork::defaultHandler(void* UserData, void* Sender,
 		else {
 			Logger::fatal("Message Handler Not available \n");
 		}
+
 		// Pack handled message
 		std::ostringstream odata_stream;
 		boost::archive::text_oarchive oa(odata_stream);
@@ -208,7 +210,7 @@ void MSCNetwork::defaultHandler(void* UserData, void* Sender,
 }
 
 void MSCNetwork::callbackHandler(unsigned int UserData, MsgConnect::MCMessage& msg){
-	Logger::debug("Got the Network Callback\n");
+	Logger::debug("MSNC :Got the Network Callback\n");
 	if(msg.Data && (msg.DataSize > 0)) {
 		std::string data((char*)msg.Data, msg.DataSize);
 		std::istringstream data_stream(data);
@@ -216,6 +218,8 @@ void MSCNetwork::callbackHandler(unsigned int UserData, MsgConnect::MCMessage& m
 		vt_dstm::HyflowMessage req;
 		ia >> req;
 
+		Logger::debug("MSNC : Callback from node %d\n", req.toNode);
+		req.syncClocks();
 		// FIXME: add try and catch block for possible exception
 		handlerMap.getValue(req.msg_t)(req);
 	}
@@ -256,6 +260,15 @@ void MSCNetwork::registerMessageFuture(unsigned long long m_id, HyMessageType t,
 	case MSG_GRP_SYNC:
 		syncCallbackMap.insertValue(p);
 		break;
+	case MSG_LOCK_ACCESS:
+		lockCallbackMap.insertValue(p);
+		break;
+	case MSG_READ_VALIDATE:
+		readValidCallbackMap.insertValue(p);
+		break;
+	case MSG_REGISTER_OBJ:
+		registerCallbackMap.insertValue(p);
+		break;
 	default:
 		Logger::fatal("MSCN :registerMessageFuture :Invalid type message request to getbyId");
 		break;
@@ -279,6 +292,15 @@ HyflowMessageFuture & MSCNetwork::getMessageFuture(unsigned long long m_id, HyMe
 	case MSG_GRP_SYNC:
 		future = syncCallbackMap.getValue(m_id);
 		break;
+	case MSG_LOCK_ACCESS:
+		future = lockCallbackMap.getValue(m_id);
+		break;
+	case MSG_READ_VALIDATE:
+		future = readValidCallbackMap.getValue(m_id);
+		break;
+	case MSG_REGISTER_OBJ:
+		future = registerCallbackMap.getValue(m_id);
+		break;
 	default:
 		Logger::fatal("MSCN :GetMessageFuture :Invalid type message request to getbyId");
 		break;
@@ -300,6 +322,15 @@ void MSCNetwork::removeMessageFuture(unsigned long long m_id, HyMessageType t) {
 	case MSG_GRP_SYNC:
 		syncCallbackMap.deletePair(m_id);
 		break;
+	case MSG_LOCK_ACCESS:
+		lockCallbackMap.deletePair(m_id);
+		break;
+	case MSG_READ_VALIDATE:
+		readValidCallbackMap.deletePair(m_id);
+		break;
+	case MSG_REGISTER_OBJ:
+		registerCallbackMap.deletePair(m_id);
+		break;
 	default:
 		Logger::fatal("MSCN :RemoveMessageFuture :Invalid type message request to getbyId\n");
 		break;
@@ -313,10 +344,11 @@ void MSCNetwork::dispatcher(MsgConnect::MCMessenger *mc) {
 		mc->DispatchMessages();
 		boost::this_thread::sleep(sleepTime);
 	}
+	Logger::debug("Message Dispatcher shutdown\n");
 }
 
 void MSCNetwork::waitTillSynchronized(int rqNo) {
-	Logger::debug("MSNC : Starting wait for synchronization\n");
+	Logger::debug("MSNC : Starting wait for syncVer %d and ReqNo %d\n", syncVersion, rqNo);
 	boost::unique_lock<boost::mutex> lock(clsMutex);
 	while ( syncVersion != rqNo) {
 		onCluster.wait(lock);
@@ -331,20 +363,28 @@ void MSCNetwork::notifyCluster(int rqNo) {
 	     syncVersion = rqNo;
 	 }
 	 onCluster.notify_all();
+	 Logger::debug("MSNC : Notify all ReqNo %d\n", rqNo);
 }
 
 bool MSCNetwork::allNodeJoined(int rqNo) {
-	Logger::debug("MSNC : Joining cluster\n");
 	{
 		boost::unique_lock<boost::mutex> lock(clsMutex);
 		nodesInCluster++;
 	}
+	Logger::debug("MSNC : Joining cluster in cluster %d in ReqNo %d\n", nodesInCluster, rqNo);
 	return nodesInCluster == nodeCount;
 }
 
-void MSCNetwork::setSynchronized(int rqNo) {
-	Logger::debug("MSNC : synchronize notification received\n");
-	notifyCluster(rqNo);
+void MSCNetwork::replySynchronized(int rqNo) {
+	if (nodeId == 0) {
+		SynchronizeMsg gJmsg(nodeId, true, rqNo);
+		HyflowMessage hmsg;
+		hmsg.setMsg(&gJmsg);
+		hmsg.msg_t = MSG_GRP_SYNC;
+		hmsg.isCallback = false;
+		for (int i=0 ; i < nodeCount; i++)
+			sendMessage(i,hmsg);
+	}
 }
 
 }

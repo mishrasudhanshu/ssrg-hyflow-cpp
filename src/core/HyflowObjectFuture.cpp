@@ -14,13 +14,14 @@ HyflowObjectFuture::HyflowObjectFuture(std::string id, bool rw, unsigned long lo
 	objectId = id;
 	isRead = rw;
 	txnId = tid;
+	messageFuture.setTxnId(tid);
 }
 
 HyflowObjectFuture::~HyflowObjectFuture() {}
 
 HyflowObject* HyflowObjectFuture::waitOnObject() {
 	messageFuture.waitOnFuture();
-	return &DirectoryManager::getObjectLocally(objectId,isRead);
+	return messageFuture.getDataResponse();
 }
 
 bool HyflowObjectFuture::isObjectAvailable() {

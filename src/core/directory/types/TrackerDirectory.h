@@ -33,10 +33,11 @@ public:
 	void locateAsync(std::string id, bool rw, unsigned long long txn, HyflowObjectFuture & fu);
 
 	void registerObject(HyflowObject & object, unsigned long long txn);
+	void registerObjectWait(HyflowObject & object, unsigned long long txn);
 
 	void unregisterObject(HyflowObject & object, unsigned long long txn);
 
-	HyflowObject & getObjectLocally(std::string id, bool rw);
+	HyflowObject* getObjectLocally(std::string id, bool rw);
 	void updateObjectLocally(HyflowObject & obj);
 
 	int getObjectLocation(std::string objId);

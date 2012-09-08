@@ -65,14 +65,12 @@ int NetworkManager::getBasePort(){
 }
 
 void NetworkManager::synchronizeCluster(int rqNo) {
-//	HyflowMessageFuture *hFu = new HyflowMessageFuture();
-	HyflowMessageFuture hFu;
 	SynchronizeMsg gJmsg(nodeId, false, rqNo);
 	HyflowMessage hmsg;
 	hmsg.setMsg(&gJmsg);
 	hmsg.msg_t = MSG_GRP_SYNC;
-	hmsg.isCallback = true;
-	sendCallbackMessage(0,hmsg,hFu);
+	hmsg.isCallback = false;
+	sendMessage(0,hmsg);
 	waitTillSynchronized(rqNo);
 }
 
@@ -80,8 +78,12 @@ bool NetworkManager::allNodeJoined(int rqNo){
 	return network->allNodeJoined(rqNo);
 }
 
-void NetworkManager::setSynchronized(int rqNo){
-	network->setSynchronized(rqNo);
+void NetworkManager::replySynchronized(int rqNo){
+	network->replySynchronized(rqNo);
+}
+
+void NetworkManager::notifyCluster(int rqNo){
+	network->notifyCluster(rqNo);
 }
 
 void NetworkManager::waitTillSynchronized(int rqNo){
@@ -111,11 +113,11 @@ void NetworkManager::sendMessage(int nodeId, HyflowMessage msg) {
 	network->sendMessage(nodeId, msg);
 }
 
-void NetworkManager::sendCallbackMessage(int nodeId, HyflowMessage msg, HyflowMessageFuture & fu) {
+void NetworkManager::sendCallbackMessage(int targetNodeId, HyflowMessage msg, HyflowMessageFuture & fu) {
 	msg.fromNode = NetworkManager::nodeId;
-	msg.toNode = nodeId;
+	msg.toNode = targetNodeId;
 
-	network->sendCallbackMessage(nodeId, msg, fu);
+	network->sendCallbackMessage(targetNodeId, msg, fu);
 }
 
 bool NetworkManager::islocalMachine() {
@@ -125,7 +127,11 @@ bool NetworkManager::islocalMachine() {
 void NetworkManager::test() {
 	std::cout << "\n---Testing Network---\n" << std::endl;
 	if (strcmp(ConfigFile::Value(NETWORK).c_str(), MSG_CONNECT) == 0) {
-		MSCtest::test();
+		if (NetworkManager::getNodeCount() == 1)
+			MSCtest::testbase();
+		else {
+			MSCtest::test();
+		}
 	}
 }
 

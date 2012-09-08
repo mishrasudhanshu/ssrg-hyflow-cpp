@@ -32,6 +32,7 @@ public:
 	 * Register object in the cluster
 	 */
 	static void registerObject(HyflowObject & object, unsigned long long txn);
+	static void registerObjectWait(HyflowObject & object, unsigned long long txn);
 	static void registerObjectLocally(std::string objectId, int owner, unsigned long long txn);
 	/**
 	 * Unregister object from the cluster
@@ -41,7 +42,7 @@ public:
 	/**
 	 * Function used by message handler to access the object
 	 */
-	static HyflowObject & getObjectLocally(std::string id, bool rw);
+	static HyflowObject* getObjectLocally(std::string id, bool rw);
 	/**
 	 * Update local object
 	 */

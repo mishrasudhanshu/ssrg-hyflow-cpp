@@ -35,13 +35,17 @@ public:
 	 */
 	virtual void registerObject(HyflowObject & object, unsigned long long txn)=0;
 	/**
+	 * Register object with wait in the cluster
+	 */
+	virtual void registerObjectWait(HyflowObject & object, unsigned long long txn)=0;
+	/**
 	 * Unregister object from the cluster
 	 */
 	virtual void unregisterObject(HyflowObject & object, unsigned long long txn)=0;
 	/**
 	 * Function used by message handler to access the object
 	 */
-	virtual HyflowObject & getObjectLocally(std::string id, bool rw)=0;
+	virtual HyflowObject* getObjectLocally(std::string id, bool rw)=0;
 	/**
 	 * Update local object
 	 */
