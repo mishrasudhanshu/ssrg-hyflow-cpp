@@ -22,7 +22,7 @@ LockTable::LockTable() {}
 LockTable::~LockTable() {}
 
 //FIXME: Update once concurrentHashMap is fixed
-bool LockTable::tryLock(std::string & objId) {
+bool LockTable::tryLock(std::string & objId, int32_t obVer) {
 	boost::upgrade_lock<boost::shared_mutex> writeLock(rwMutex);
 	std::map<std::string, int32_t>::iterator i = lockmap.find(objId);
 	if ( i == lockmap.end()) {
@@ -33,15 +33,21 @@ bool LockTable::tryLock(std::string & objId) {
 	int32_t versionLock = i->second;
 	// Object is registered in lock table
 	if (versionLock & LOCK) {
-		Logger::debug("LockTable :  %s already locked\n", objId.c_str());
-		return false;
+		if ( (versionLock & UNLOCK) == obVer) {
+			Logger::debug("LockTable :  %s already locked\n", objId.c_str());
+			return false;
+		} else {
+			lockmap [objId] = obVer | LOCK;
+			Logger::debug("LockTable : older Lock exist - locked successfully\n");
+			return true;
+		}
 	}
 	lockmap [objId] = versionLock | LOCK;
 	Logger::debug("LockTable :  %s locked successfully\n", objId.c_str());
 	return true;
 }
 
-bool LockTable::isLocked(std::string & objId) {
+bool LockTable::isLocked(std::string & objId, int32_t obVer) {
 	boost::shared_lock<boost::shared_mutex> readLock(rwMutex);
 	std::map<std::string, int32_t>::iterator i = lockmap.find(objId);
 	if ( i == lockmap.end()) {
@@ -49,12 +55,15 @@ bool LockTable::isLocked(std::string & objId) {
 	}
 	int32_t versionLock = i->second;
 	// Object is registered in lock table
-	if (versionLock & LOCK)
-		return true;
+	if (versionLock & LOCK) {
+		if ((versionLock & UNLOCK) == obVer) {
+			return true;
+		}
+	}
 	return false;
 }
 
-void LockTable::tryUnlock(std::string & objId) {
+void LockTable::tryUnlock(std::string & objId, int32_t obVer) {
 	boost::upgrade_lock<boost::shared_mutex> writeLock(rwMutex);
 	std::map<std::string, int32_t>::iterator i = lockmap.find(objId);
 	if ( i == lockmap.end()) {

@@ -52,7 +52,7 @@ void ReadValidationMsg::readValidationHandle(HyflowMessage & msg) {
 	if (rvmsg->request) {
 		HyflowObject* rObj = DirectoryManager::getObjectLocally(rvmsg->objectId,true);
 		// If object is locked it means object might have been moved to some other owner
-		if ((rObj->getVersion() == rvmsg->objectVersion) && !LockTable::isLocked(rvmsg->objectId)) {
+		if ((rObj->getVersion() == rvmsg->objectVersion) && !LockTable::isLocked(rvmsg->objectId, 0)) {
 			rvmsg->validationResponse = true;
 		} else {
 			rvmsg->validationResponse = false;

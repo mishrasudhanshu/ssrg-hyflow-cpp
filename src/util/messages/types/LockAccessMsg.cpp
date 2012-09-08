@@ -19,11 +19,12 @@
 
 namespace vt_dstm {
 
-LockAccessMsg::LockAccessMsg(std::string objId) {
+LockAccessMsg::LockAccessMsg(std::string objId, int32_t obVer) {
 	lock = false;
 	locked = false;
 	request = false;
 	objectId = objId;
+	objVersion = obVer;
 }
 
 template<class Archive>
@@ -33,6 +34,7 @@ void LockAccessMsg::serialize(Archive & ar, const unsigned int version) {
 	ar & locked;
 	ar & request;
 	ar & objectId;
+	ar & objVersion;
 }
 
 std::string LockAccessMsg::getObjectId() const {
@@ -47,9 +49,9 @@ void LockAccessMsg::lockAccessHandler(HyflowMessage& m) {
 	if (lmsg->request) {
 		Logger::debug ("Got a Lock request: %s for %s from %d\n", lmsg->lock?"lock":"unlock", lmsg->objectId.c_str(), m.fromNode);
 		if (lmsg->lock)
-			lmsg->locked = LockTable::tryLock(lmsg->objectId);
+			lmsg->locked = LockTable::tryLock(lmsg->objectId, lmsg->objVersion);
 		else
-			LockTable::tryUnlock(lmsg->objectId);
+			LockTable::tryUnlock(lmsg->objectId,  lmsg->objVersion);
 
 		lmsg->setRequest(false);
 	} else {
@@ -95,7 +97,7 @@ void LockAccessMsg::serializationTest(){
 	std::ofstream ofs("/tmp/ObjectTrackerMsgReq", std::ios::out);
 
 	// create class instance
-	LockAccessMsg res("3-0");
+	LockAccessMsg res("3-0",0);
 
 	// save data to archive
 	{

@@ -31,14 +31,25 @@ class LockAccessMsg: public vt_dstm::BaseMessage {
 	 * id of object for which lock-unlock is requested
 	 */
 	std::string objectId;
+	/*
+	 * Object version
+	 */
+	int32_t objVersion;
 
 	friend class boost::serialization::access;
 
     template<class Archive>
     void serialize(Archive & ar, const unsigned int version);
 public:
-    LockAccessMsg() {lock = false; locked = false; request = false; objectId= "x-x";};
-	LockAccessMsg(std::string objId);
+	LockAccessMsg() {
+		lock = false;
+		locked = false;
+		request = false;
+		objectId = "x-x";
+		objVersion = -1;
+	};
+
+	LockAccessMsg(std::string objId, int32_t obVer);
 	virtual ~LockAccessMsg();
 
 	std::string getObjectId() const;

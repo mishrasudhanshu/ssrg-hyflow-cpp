@@ -25,9 +25,9 @@ public:
 	LockTable();
 	virtual ~LockTable();
 
-	static bool isLocked(std::string & objId);
-	static bool tryLock(std::string & objId);
-	static void tryUnlock(std::string & objId);
+	static bool isLocked(std::string & objId, int32_t obVer);
+	static bool tryLock(std::string & objId, int32_t obVer);
+	static void tryUnlock(std::string & objId,  int32_t obVer);
 };
 
 } /* namespace vt_dstm */

@@ -74,7 +74,7 @@ bool DTL2Context::lockObject(HyflowObject* obj) {
 	HyflowMessageFuture mFu;
 	HyflowMessage hmsg;
 	hmsg.init(MSG_LOCK_ACCESS, true);
-	LockAccessMsg lamsg(obj->getId());
+	LockAccessMsg lamsg(obj->getId(), obj->getVersion());
 	lamsg.setLock(true);
 	lamsg.setRequest(true);
 	hmsg.setMsg(&lamsg);
@@ -91,7 +91,7 @@ bool DTL2Context::lockObject(HyflowObject* obj) {
 void  DTL2Context::unlockObjectOnFail(HyflowObject *obj) {
 	HyflowMessage hmsg;
 	hmsg.init(MSG_LOCK_ACCESS, false);
-	LockAccessMsg lamsg(obj->getId());
+	LockAccessMsg lamsg(obj->getId(), obj->getVersion());
 	lamsg.setLock(false);
 	lamsg.setRequest(true);
 	hmsg.setMsg(&lamsg);
@@ -109,7 +109,7 @@ void DTL2Context::unlockObject(HyflowObject* obj) {
 	if (obj->getOldOwnerNode() == obj->getOwnerNode()) {
 		HyflowMessage hmsg;
 		hmsg.init(MSG_LOCK_ACCESS, false);
-		LockAccessMsg lamsg(obj->getId());
+		LockAccessMsg lamsg(obj->getId(), obj->getVersion());
 		lamsg.setLock(false);
 		lamsg.setRequest(true);
 		hmsg.setMsg(&lamsg);
