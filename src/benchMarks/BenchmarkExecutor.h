@@ -8,14 +8,34 @@
 #ifndef BENCHMARKEXECUTOR_H_
 #define BENCHMARKEXECUTOR_H_
 
+#include <boost/thread/tss.hpp>
 #include "HyflowBenchmark.h"
 #include "tm/bank/BankBenchmark.h"
+#include "tm/list/ListBenchmark.h"
 
 namespace vt_dstm {
 
+class Integer {
+	int value;
+public:
+	Integer() {}
+	Integer (int v) {value =v;}
+	~Integer() {}
+
+	int getValue() const {
+		return value;
+	}
+
+	void setValue(int value) {
+		this->value = value;
+	}
+};
+
 class BenchmarkExecutor {
 	static HyflowBenchmark *benchmark;
+	static boost::thread **benchmarkThreads;
 
+	static boost::thread_specific_ptr<Integer> threadId;
 	static int calls;
 	static int delay;
 	static long timeout;
@@ -24,8 +44,10 @@ class BenchmarkExecutor {
 	static int transactions;
 	static int readPercent;
 	static int threads;
-	static unsigned long long executionTime;
 	static bool isInitiated;
+	static int threadCount;
+	static int executionTime;
+	static boost::mutex execMutex;
 
 	static bool* transactionType;
 	static std::string** argsArray;
@@ -38,6 +60,8 @@ class BenchmarkExecutor {
 	static void writeResults();
 	static std::string& randomId();
 	static void createObjects();
+    static void execute(int id);
+	static void addExecTime(unsigned long long time);
 public:
 	BenchmarkExecutor();
 	virtual ~BenchmarkExecutor();
@@ -51,9 +75,11 @@ public:
     template<class Archive>
 	static void registerObjectTypes(Archive & ar) {
     	BankBenchmark::registerObjectTypes(ar);
+//    	ListBenchmark::registerObjectTypes(ar);
     }
 
-    static void execute();
+    static void executeThreads();
+	static int getThreadId();
 
 };
 

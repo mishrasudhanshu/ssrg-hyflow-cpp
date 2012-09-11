@@ -13,37 +13,6 @@
 
 namespace vt_dstm {
 
-//template<class Key,class Value>
-//class ConcurrentHashMapBase: std::map<Key, Value> {
-//	boost::shared_mutex rwMutex;
-//public:
-//	ConcurrentHashMapBase() {};
-//	virtual ~ConcurrentHashMapBase() {};
-//
-//	void deletePair(Key & k) {
-//		boost::upgrade_lock<boost::shared_mutex> writeLock(rwMutex);
-//		std::map<Key, Value>::erase(k);
-//	}
-//
-//	Value & operator[](Key & k) {
-//		boost::upgrade_lock<boost::shared_mutex> writeLock(rwMutex);
-//		return std::map<Key, Value>::operator [](k);
-//
-//	}
-//
-//	ConcurrentHashMapBase & operator = (ConcurrentHashMapBase & chm) {
-//		boost::upgrade_lock<boost::shared_mutex> writeLock(rwMutex);
-//		return std::map<Key, Value>::operator = (chm);
-//
-//	}
-//
-//	Value & getValue(Key & k) {
-//		boost::lock_guard<boost::shared_mutex> readlock(rwMutex);
-//		return std::map<Key, Value>::at(k);
-//	}
-//
-//};
-
 template<class Key,class Value>
 class ConcurrentHashMap{
 	std::map<Key, Value> chm;

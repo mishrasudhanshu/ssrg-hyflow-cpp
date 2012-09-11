@@ -43,27 +43,6 @@ public:
 	 * To access the current clock value of node
 	 */
 	static int getClock();
-
-	/**
-	 * Before read-write call for context
-	 */
-	static void beforeReadAccess(HyflowObject *obj, HyflowContext *context);
-	/**
-	 * On read call for context
-	 */
-	static HyflowObject* onReadAccess(HyflowObject *obj, HyflowContext *context);
-	/**
-	 * On write call for context
-	 */
-	static HyflowObject* onWriteAccess(HyflowObject *obj, HyflowContext *context);
-	/**
-	 * On commit request for context
-	 */
-	static void commitContext(HyflowContext *context);
-	/**
-	 * On context abort
-	 */
-	static void abortContext(HyflowContext *context);
 };
 
 } /* namespace vt_dstm */

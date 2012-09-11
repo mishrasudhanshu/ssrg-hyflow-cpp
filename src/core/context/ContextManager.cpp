@@ -10,13 +10,17 @@
 #include "ContextManager.h"
 #include "../../util/Definitions.h"
 #include "../../util/parser/ConfigFile.h"
+#include "../../util/logging/Logger.h"
 #include "types/DTL2Context.h"
+#include "../../util/networking/NetworkManager.h"
+#include "../../benchMarks/BenchmarkExecutor.h"
 
 namespace vt_dstm {
 
 ConcurrentHashMap<unsigned long long, HyflowContext*> ContextManager::contextMap;
 boost::shared_mutex ContextManager::clockMutex;
-int ContextManager::localNodeClock = 0;
+// LESSON: As version starts from 0, even after first commit updated version will be 0 i.e. txnClock
+int ContextManager::localNodeClock = 1;
 
 ContextManager::ContextManager() {}
 
@@ -25,7 +29,7 @@ ContextManager::~ContextManager() {}
 unsigned long long ContextManager::createTid() {
 	timeval tv;
 	gettimeofday(&tv, NULL);
-	return tv.tv_sec*1000000 + tv.tv_usec;
+	return tv.tv_sec*100000 + 0.1*tv.tv_usec + 100*NetworkManager::getNodeId() + BenchmarkExecutor::getThreadId();
 }
 
 HyflowContext* ContextManager::getInstance() {
@@ -53,6 +57,7 @@ HyflowContext* ContextManager::findContext(unsigned long long int tid) {
 bool ContextManager::atomicUpdateClock(int newClock, int oldClock) {
 	boost::upgrade_lock<boost::shared_mutex> writeLock(clockMutex);
 	if (localNodeClock == oldClock) {
+		Logger::debug("CLOCK :Node clock moved from %d to %d\n", oldClock, newClock);
 		localNodeClock = newClock;
 		return true;
 	}else {
@@ -68,30 +73,6 @@ void ContextManager::atomicIncreaseClock() {
 int ContextManager::getClock() {
 	boost::shared_lock<boost::shared_mutex> readLock(clockMutex);
 	return localNodeClock;
-}
-
-/*
- * LESSON: All of following context related function are directed through contextManager
- * to do meta-data collection or generic stuff required for all type of contexts
- */
-void ContextManager::beforeReadAccess(HyflowObject *obj, HyflowContext *context) {
-
-}
-
-HyflowObject* ContextManager::onReadAccess(HyflowObject *obj, HyflowContext *context) {
-	return context->onReadAccess(obj);
-}
-
-HyflowObject* ContextManager::onWriteAccess(HyflowObject *obj, HyflowContext *context){
-	return context->onWriteAccess(obj);
-}
-
-void ContextManager::commitContext(HyflowContext *context){
-
-}
-
-void ContextManager::abortContext(HyflowContext *context) {
-
 }
 
 } /* namespace vt_dstm */

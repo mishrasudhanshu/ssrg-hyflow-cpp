@@ -34,15 +34,33 @@ void DTL2Context::beforeReadAccess(HyflowObject *obj) {
 	if ( i == readMap.end())
 		readMap[id] = obj;
 }
-
+/*
+ * Performs the early validation of object at before read time itself and on finding
+ * stale object aborts the transaction.
+ */
 void DTL2Context::forward(int senderClock) {
 	if (tnxClock < senderClock) {
 		std::map<std::string, HyflowObject*>::iterator i;
 		for (i = readMap.begin(); i != readMap.end(); i++)  {
-			if ( i->second->getVersion() > senderClock)
+			/*
+			 * Abort because following condition means that I read the object for a Node B
+			 * who don't know about Node C transactions which led it to higher clock. It is
+			 * every much possible that node B have not get the register object message from
+			 * node C and thinking itself object owner and giving me older object and actually
+			 * I should get that object from node C. Therefore when I compare Node C object
+			 * with node B's clock I should abort the transaction.
+			 *
+			 * Even though chances of this happening is rare, mostly write lock on opening
+			 * object itself will force the transaction to abort
+			 */
+			int32_t version = i->second->getVersion() ;
+			if ( version > senderClock) {
+				Logger::debug("Forward : Aborting version %d < senderClock %d\n", version, senderClock);
 				abort();
-			tnxClock = senderClock;
+			}
 		}
+		Logger::debug("Forward : context from %d to %d\n", tnxClock, senderClock);
+		tnxClock = senderClock;
 	}
 }
 
@@ -79,14 +97,14 @@ bool DTL2Context::lockObject(HyflowObject* obj) {
 	lamsg.setRequest(true);
 	hmsg.setMsg(&lamsg);
 	int owner = obj->getOwnerNode();
-	Logger::debug("DTL : Requesting lock for %s from %d\n", obj->getId().c_str(), owner);
+	Logger::debug("DTL : Requesting lock for %s from %d of version %d\n", obj->getId().c_str(), owner, obj->getVersion());
 	NetworkManager::sendCallbackMessage(owner, hmsg, mFu);
 	mFu.waitOnFuture();
 	return mFu.isBoolResponse();
 }
 
 /*
- * Called to unlock object after failed transaction
+ * Called to unlock object after failed transaction, unlock local and remote all
  */
 void  DTL2Context::unlockObjectOnFail(HyflowObject *obj) {
 	HyflowMessage hmsg;
@@ -119,15 +137,6 @@ void DTL2Context::unlockObject(HyflowObject* obj) {
 }
 
 bool DTL2Context::validateObject(HyflowObject* obj)	{
-//	HyflowMessageFuture mFu;
-//	HyflowMessage hmsg;
-//	hmsg.init(MSG_READ_VALIDATE, true);
-//	ReadValidationMsg rvmsg(obj->getId(), obj->getVersion());
-//	rvmsg.setRequest(true);
-//	hmsg.setMsg(&rvmsg);
-//	NetworkManager::sendCallbackMessage(obj->getOwnerNode(), hmsg, mFu);
-//	mFu.waitOnFuture();
-//	return mFu.isBoolResponse();
 	return !(obj->getVersion() > tnxClock);
 }
 
@@ -135,7 +144,8 @@ void DTL2Context::commit(){
 	std::vector<HyflowObject *> lockedObjects;
 
 	if (getStatus() == TXN_ABORTED) {
-		throw new TransactionException("Commit: Transaction Already aborted");
+		Logger::debug ("Commit : transaction is already aborted\n");
+		throw *(new TransactionException("Commit: Transaction Already aborted by forwarding\n"));
 	}
 
 	try {
@@ -145,16 +155,19 @@ void DTL2Context::commit(){
 		for( wi = writeMap.rbegin() ; wi != writeMap.rend() ; wi++ ) {
 			if (!lockObject(wi->second)) {
 				Logger::debug("Commit: Unable to get WriteLock for %s\n", wi->first.c_str());
-				throw new TransactionException("Commit: Unable to get WriteLock for "+wi->first);
+				throw new TransactionException("Commit: Unable to get WriteLock for "+wi->first + "\n");
 			}
 			lockedObjects.push_back(wi->second);
 		}
+
+		// Perform context
+		forward(highestSenderClock);
 		// Try to verify read versions of all the objects.
 		std::map<std::string, HyflowObject*, ObjectIdComparator>::reverse_iterator ri;
 		for ( ri = readMap.rbegin() ; ri != readMap.rend() ; ri++) {
 			if (!validateObject(ri->second)) {
-				Logger::debug("Commit: Unable to validate for %s", ri->first.c_str());
-				throw new TransactionException("Commit: Unable to validate for "+ri->first);
+				Logger::debug("Commit: Unable to validate for %s, version %d with txn %d\n", ri->first.c_str(), ri->second->getVersion(), tnxClock);
+				throw new TransactionException("Commit: Unable to validate for "+ri->first+"\n");
 			}
 		}
 	} catch (TransactionException* e) {
@@ -173,7 +186,8 @@ void DTL2Context::commit(){
 	std::map<std::string, HyflowObject*, ObjectIdComparator>::reverse_iterator wi;
 	for( wi = writeMap.rbegin() ; wi != writeMap.rend() ; wi++ ) {
 		// Update object version
-		wi->second->updateVersion();
+		wi->second->setVersion(tnxClock);
+		Logger::debug("Set object %s version %d\n",wi->first.c_str(), tnxClock);
 		// Register object
 		DirectoryManager::registerObject(*wi->second, txnId);
 	}

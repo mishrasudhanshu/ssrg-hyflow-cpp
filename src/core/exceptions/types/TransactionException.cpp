@@ -6,6 +6,7 @@
  */
 
 #include "TransactionException.h"
+#include "../../../util/logging/Logger.h"
 
 namespace vt_dstm {
 
@@ -13,5 +14,9 @@ TransactionException::TransactionException() {}
 TransactionException::TransactionException(std::string m) { msg = m; }
 
 TransactionException::~TransactionException() throw () {}
+
+void TransactionException::print() {
+	Logger::debug(msg.c_str());
+}
 
 } /* namespace vt_dstm */

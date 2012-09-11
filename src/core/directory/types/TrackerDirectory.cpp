@@ -10,27 +10,28 @@
 #include "../../../util/messages/types/ObjectTrackerMsg.h"
 #include "../../../util/messages/types/RegisterObjectMsg.h"
 #include "../../../util/logging/Logger.h"
+#include "../../directory/DirectoryManager.h"
 
 namespace vt_dstm {
 ConcurrentHashMap<std::string, int> TrackerDirectory::directory;
-ConcurrentHashMap<std::string, HyflowObject*> TrackerDirectory::local;
+LocalCache TrackerDirectory::local;
 
 TrackerDirectory::TrackerDirectory() {}
 
 TrackerDirectory::~TrackerDirectory() {}
 
-int TrackerDirectory::getTracker(std::string objectId) {
+int TrackerDirectory::getTracker(std::string & objectId) {
 	int end = objectId.find('-');
 	return atoi((objectId.substr(0,end)).c_str());
 }
 
-HyflowObject* TrackerDirectory::locate(std::string id, bool rw, unsigned long long txn){
+HyflowObject* TrackerDirectory::locate(std::string & id, bool rw, unsigned long long txn){
 	HyflowObjectFuture fu(id, rw, txn);
 	locateAsync(id, rw, txn, fu);
 	return fu.waitOnObject();
 }
 
-void TrackerDirectory::locateAsync(std::string id, bool rw, unsigned long long txn, HyflowObjectFuture & fu){
+void TrackerDirectory::locateAsync(std::string & id, bool rw, unsigned long long txn, HyflowObjectFuture & fu){
 	ObjectTrackerMsg msg(id, rw);
 	int trackerNode = getTracker(id);
 
@@ -53,17 +54,12 @@ void TrackerDirectory::registerObject(HyflowObject & object, unsigned long long 
 	int owner  = NetworkManager::getNodeId();
 	object.setOwnerNode(owner);
 	object.setOldOwnerNode(oldOwner);
-	// Save the object in local cache, create a clone and update in local cache
+	// Save the object in local cache, updateObject creates a clone and update in local cache
 	// Currently pointed objected is attached to message future and will be destroyed
 	// on its destructor call
-	HyflowObject *objectCopy = NULL;
-	object.getClone(&objectCopy);
-	std::pair<std::string, HyflowObject*> p;
-	p.first = object.getId();
-	p.second = objectCopy;
-	local.updatePointerValue(p);
+	DirectoryManager::updateObjectLocally(object);
 
-	Logger::debug("DIR : New owner of %s is %d\n", object.getId().c_str(), local.getValue(object.getId())->getOwnerNode());
+	Logger::debug("DIR : New owner of %s is %d\n", id.c_str(), owner);
 
 	if ( owner != oldOwner ) {
 		Logger::debug("DIR : Registering %s owner %d->%d\n", id.c_str(), oldOwner, owner);
@@ -76,7 +72,7 @@ void TrackerDirectory::registerObject(HyflowObject & object, unsigned long long 
 
 		NetworkManager::sendMessage(getTracker(id), hmsg);
 	} else {
-		Logger::debug("DIR :Local object %s no re-registration %d -> %d\n", object.getId().c_str(), oldOwner, owner);
+		Logger::debug("DIR :Local object %s no re-registration %d -> %d\n", id.c_str(), oldOwner, owner);
 	}
 }
 
@@ -95,14 +91,9 @@ void TrackerDirectory::registerObjectWait(HyflowObject & object, unsigned long l
 	// Save the object in local cache, create a clone and update in local cache
 	// Currently pointed objected is attached to message future and will be destroyed
 	// on its destructor call
-	HyflowObject *objectCopy = NULL;
-	object.getClone(&objectCopy);
-	std::pair<std::string, HyflowObject*> p;
-	p.first = object.getId();
-	p.second = objectCopy;
-	local.updatePointerValue(p);
+	DirectoryManager::updateObjectLocally(object);
 
-	Logger::debug("DIR : New owner of %s is %d\n", object.getId().c_str(), local.getValue(object.getId())->getOwnerNode());
+	Logger::debug("DIR : New owner of %s is %d\n", id.c_str(), owner);
 
 	if ( owner != oldOwner ) {
 		Logger::debug("DIR : Registering %s owner %d->%d\n", id.c_str(), oldOwner, owner);
@@ -117,11 +108,11 @@ void TrackerDirectory::registerObjectWait(HyflowObject & object, unsigned long l
 		NetworkManager::sendCallbackMessage(getTracker(id), hmsg, mFu);
 		mFu.waitOnFuture();
 	} else {
-		Logger::debug("DIR :Local object %s no re-registration %d -> %d\n", object.getId().c_str(), oldOwner, owner);
+		Logger::debug("DIR :Local object %s no re-registration %d -> %d\n", id.c_str(), oldOwner, owner);
 	}
 }
 
-void TrackerDirectory::registerObjectLocally(std::string objId, int owner, unsigned long long txn) {
+void TrackerDirectory::registerObjectLocally(std::string & objId, int owner, unsigned long long txn) {
 	std::pair<std::string, int> p;
 	p.first = objId;
 	p.second = owner;
@@ -143,24 +134,26 @@ void TrackerDirectory::unregisterObject(HyflowObject & object, unsigned long lon
 }
 
 // TODO: Proper clean up will require object to be deleted from all local caches
-void TrackerDirectory::unregisterObjectLocally(std::string objId, unsigned long long txn) {
+void TrackerDirectory::unregisterObjectLocally(std::string & objId, unsigned long long txn) {
 	directory.deletePair(objId);
 }
 
-HyflowObject* TrackerDirectory::getObjectLocally(std::string id, bool rw){
-	return local.getValue(id);
+/*
+ * This function returns a heap copy of object
+ */
+HyflowObject* TrackerDirectory::getObjectLocally(std::string & id, bool rw){
+	return local.getObject(id);
 }
-
 
 void TrackerDirectory::updateObjectLocally(HyflowObject & obj){
-	std::pair<std::string, HyflowObject*> p;
-	p.first = obj.getId();
-	p.second = &obj;
-	local.updateValue(p);
+	local.updateObject(&obj);
 }
 
-int TrackerDirectory::getObjectLocation(std::string id){
+int TrackerDirectory::getObjectLocation(std::string & id){
 	return directory.getValue(id);
 }
 
+int32_t TrackerDirectory::getObjectVersion(std::string & objId) {
+	return local.getObjectVersion(objId);
+}
 } /* namespace vt_dstm */

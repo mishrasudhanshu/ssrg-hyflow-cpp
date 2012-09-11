@@ -20,11 +20,11 @@ void DirectoryManager::DirectoryManagerInit(){
 	}
 }
 
-HyflowObject* DirectoryManager::locate(std::string id, bool rw, unsigned long long txn){
+HyflowObject* DirectoryManager::locate(std::string & id, bool rw, unsigned long long txn){
 	return directory->locate(id, rw, txn);
 }
 
-void DirectoryManager::locateAsync(std::string id, bool rw, unsigned long long txn, HyflowObjectFuture & fu){
+void DirectoryManager::locateAsync(std::string & id, bool rw, unsigned long long txn, HyflowObjectFuture & fu){
 	return directory->locateAsync(id, rw, txn, fu);
 }
 
@@ -36,7 +36,7 @@ void DirectoryManager::registerObjectWait(HyflowObject & object, unsigned long l
 	directory->registerObjectWait(object,txn);
 }
 
-void DirectoryManager::registerObjectLocally(std::string objectId, int owner, unsigned long long txn){
+void DirectoryManager::registerObjectLocally(std::string & objectId, int owner, unsigned long long txn){
 	directory->registerObjectLocally(objectId, owner,txn);
 }
 
@@ -44,11 +44,11 @@ void DirectoryManager::unregisterObject(HyflowObject & object, unsigned long lon
 	directory->unregisterObject(object,txn);
 }
 
-void DirectoryManager::unregisterObjectLocally(std::string objId, unsigned long long txn){
+void DirectoryManager::unregisterObjectLocally(std::string & objId, unsigned long long txn){
 	directory->unregisterObjectLocally(objId,txn);
 }
 
-HyflowObject* DirectoryManager::getObjectLocally(std::string id, bool rw) {
+HyflowObject* DirectoryManager::getObjectLocally(std::string & id, bool rw) {
 	return directory->getObjectLocally(id, rw);
 }
 
@@ -59,8 +59,12 @@ void DirectoryManager::updateObjectLocally(HyflowObject & obj) {
 	directory->updateObjectLocally(obj);
 }
 
-int DirectoryManager::getObjectLocation(std::string objId){
+int DirectoryManager::getObjectLocation(std::string & objId){
 	return directory->getObjectLocation(objId);
+}
+
+int32_t DirectoryManager::getObjectVersion(std::string & objId){
+	return directory->getObjectVersion(objId);
 }
 
 } /* namespace vt_dstm */

@@ -15,6 +15,7 @@
 #include "../NetworkManager.h"
 #include "../../logging/Logger.h"
 #include "../../messages/types/SynchronizeMsg.h"
+#include "../../../benchMarks/BenchmarkExecutor.h"
 
 namespace vt_dstm
 {
@@ -48,6 +49,7 @@ boost::condition MSCNetwork::onCluster;
 boost::mutex MSCNetwork::clsMutex;
 int MSCNetwork::syncVersion = false;
 bool MSCNetwork::isInit = false;
+int MSCNetwork::threadCount = 0;
 
 MSCNetwork::MSCNetwork() {
 	if (!isInit) {
@@ -62,6 +64,7 @@ MSCNetwork::MSCNetwork() {
 		Logger::debug("Calling boost Dispatcher Thread\n");
 		dispatchThread = new boost::thread(dispatcher, messenger);
 		isInit = true;
+		threadCount = NetworkManager::getThreadCount();
 	}
 }
 
@@ -131,7 +134,8 @@ void MSCNetwork::sendMessage(int nodeId, HyflowMessage & message){
 }
 
 void MSCNetwork::sendCallbackMessage(int toNodeId, HyflowMessage & message, HyflowMessageFuture & fu){
-	message.msg_id = getCurrentTime()*1000 + toNodeId;
+	int threadId = BenchmarkExecutor::getThreadId();
+	message.msg_id = getCurrentTime()*10000 + 100*toNodeId + threadId;	// Max 19 Digits
 	fu.setId(message.msg_id);
 	fu.setType(message.msg_t);
 
@@ -189,6 +193,9 @@ void MSCNetwork::defaultHandler(void* UserData, void* Sender,
 			Logger::fatal("Message Handler Not available \n");
 		}
 
+		// Update from node clock
+		req.fromNodeClock = ContextManager::getClock();
+
 		// Pack handled message
 		std::ostringstream odata_stream;
 		boost::archive::text_oarchive oa(odata_stream);
@@ -240,7 +247,7 @@ int MSCNetwork::getBasePort(){
 unsigned long long MSCNetwork::getCurrentTime() {
 	timeval tv;
 	gettimeofday(&tv, NULL);
-	return tv.tv_sec*1000000 + tv.tv_usec;
+	return tv.tv_sec*100000 + 0.1*tv.tv_usec;		// 15 Digits
 }
 
 void MSCNetwork::registerMessageFuture(unsigned long long m_id, HyMessageType t, HyflowMessageFuture & fu) {

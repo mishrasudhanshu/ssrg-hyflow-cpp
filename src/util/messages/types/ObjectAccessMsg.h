@@ -28,7 +28,7 @@ class ObjectAccessMsg: public BaseMessage {
 public:
 	ObjectAccessMsg(){isRead = true; object = NULL;}
 	ObjectAccessMsg(std::string id, bool isRead);
-	virtual ~ObjectAccessMsg(){};
+	virtual ~ObjectAccessMsg(){ delete object; };
 
 	HyflowObject * getObject(){return object;}
 	void setObject(HyflowObject * obj) {object = obj;}

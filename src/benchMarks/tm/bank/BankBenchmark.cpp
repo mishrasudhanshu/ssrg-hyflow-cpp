@@ -36,6 +36,7 @@ void BankBenchmark::writeOperation(std::string ids[], int size) {
 }
 
 void BankBenchmark::checkSanity() {
+	sleep(2);
 	BankAccount::checkSanity(ids, objectCount);
 }
 

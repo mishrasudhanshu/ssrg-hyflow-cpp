@@ -43,6 +43,9 @@ ObjectTrackerMsg::~ObjectTrackerMsg() {}
 
 void ObjectTrackerMsg::objectTrackerHandler(HyflowMessage & msg) {
 	ObjectTrackerMsg *otmsg = (ObjectTrackerMsg *)msg.getMsg();
+	/*
+	 * Object read is serialized at tracker value read
+	 */
 	if (otmsg->owner == -1) {	// Request Message
 		otmsg->owner = DirectoryManager::getObjectLocation(otmsg->objectId);
 		Logger::debug("Got object Tracker request from %d replied for %s with owner %d\n", msg.fromNode, otmsg->objectId.c_str(), otmsg->owner);

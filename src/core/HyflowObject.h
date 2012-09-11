@@ -28,6 +28,9 @@ class HyflowObject {
     	ar & oldOwnerNode;
     }
 protected:
+	HyflowObject(const std::string & Id, int v)
+		: hyId(Id), hyVersion(v) { ownerNode = -1; oldOwnerNode = -1; }
+
 	std::string hyId;
 	/*
 	 * Version int size required to be 32 bit as 31st and 30st are used for
@@ -38,9 +41,6 @@ protected:
 	unsigned long long ownerTrnx;
 	int ownerNode;
 	int oldOwnerNode;
-
-	HyflowObject(const std::string & Id, int v)
-		: hyId(Id), hyVersion(v) { ownerNode = -1; oldOwnerNode = -1; }
 public:
 
 	HyflowObject() { ownerNode = -1; oldOwnerNode = -1; }

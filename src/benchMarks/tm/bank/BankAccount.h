@@ -15,7 +15,6 @@
 
 namespace vt_dstm {
 
-//template <class objType>
 class BankAccount: public HyflowObject {
     friend class boost::serialization::access;
 

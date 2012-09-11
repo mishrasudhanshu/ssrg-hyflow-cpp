@@ -23,6 +23,7 @@ int NetworkManager::nodeId = -1;
 int NetworkManager::nodeCount = 0;
 int NetworkManager::machine = -1;
 int NetworkManager::basePort = -1;
+int  NetworkManager::threadCount = -1;
 
 AbstractNetwork* NetworkManager::network = NULL;
 bool NetworkManager::islocal = false;
@@ -45,6 +46,7 @@ void NetworkManager::initNode() {
 		basePort = atoi(ConfigFile::Value(BASE_PORT).c_str());
 		if(atoi(ConfigFile::Value(MACHINES).c_str()) == 1)
 			islocal = true;
+		threadCount = atoi(ConfigFile::Value(THREADS).c_str());
 	}
 }
 
@@ -122,6 +124,10 @@ void NetworkManager::sendCallbackMessage(int targetNodeId, HyflowMessage msg, Hy
 
 bool NetworkManager::islocalMachine() {
 	return islocal;
+}
+
+int NetworkManager::getThreadCount(){
+	return threadCount;
 }
 
 void NetworkManager::test() {

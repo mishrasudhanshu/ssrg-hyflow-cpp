@@ -19,6 +19,7 @@ public:
 	TransactionException();
 	TransactionException(std::string msg);
 	virtual ~TransactionException() throw ();
+	virtual void print();
 };
 
 } /* namespace vt_dstm */

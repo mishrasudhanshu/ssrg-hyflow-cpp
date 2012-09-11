@@ -22,11 +22,13 @@ class NetworkManager {
 	static int nodeCount;
 	static int machine;
 	static int basePort;
+	static int threadCount;
 
 	static bool islocal;
 public:
 	static AbstractNetwork *network;
 
+	static int getThreadCount();
 	static void NetworkInit();
 	static void sendMessage(int nodeId, HyflowMessage Message);
 	static void sendCallbackMessage(int nodeId, HyflowMessage Message, HyflowMessageFuture & fu);

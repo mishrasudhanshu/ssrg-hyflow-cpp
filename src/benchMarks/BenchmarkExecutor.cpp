@@ -7,11 +7,13 @@
 
 #include <cstddef>
 #include <cstdlib>
+#include <boost/thread/thread.hpp>
 #include "BenchmarkExecutor.h"
 #include "../util/Definitions.h"
 #include "../util/parser/ConfigFile.h"
 #include "../util/logging/Logger.h"
 #include "../util/networking/NetworkManager.h"
+#include "../core/helper/RandomIdProvider.h"
 
 namespace vt_dstm {
 
@@ -23,21 +25,21 @@ int BenchmarkExecutor::objectsCount = -1;
 int BenchmarkExecutor::transactions = 0 ;
 int BenchmarkExecutor::readPercent = 0;
 int BenchmarkExecutor::threads = 1;
-unsigned long long BenchmarkExecutor::executionTime = 0;
 bool BenchmarkExecutor::isInitiated = false;
+int BenchmarkExecutor::executionTime = 0;
+int BenchmarkExecutor::threadCount = 0;
 
 HyflowBenchmark* BenchmarkExecutor::benchmark = NULL;
 bool* BenchmarkExecutor::transactionType = NULL;
 std::string** BenchmarkExecutor::argsArray = NULL;
 std::string* BenchmarkExecutor::ids = NULL;
+boost::thread_specific_ptr<Integer> BenchmarkExecutor::threadId;
+boost::thread** BenchmarkExecutor::benchmarkThreads = NULL;
+boost::mutex BenchmarkExecutor::execMutex;
 
-BenchmarkExecutor::BenchmarkExecutor() {
-	// TODO Auto-generated constructor stub
-}
+BenchmarkExecutor::BenchmarkExecutor() {}
 
-BenchmarkExecutor::~BenchmarkExecutor() {
-	// TODO Auto-generated destructor stub
-}
+BenchmarkExecutor::~BenchmarkExecutor() {}
 
 unsigned long long BenchmarkExecutor::getTime() {
 	timeval tv;
@@ -45,14 +47,14 @@ unsigned long long BenchmarkExecutor::getTime() {
 	return tv.tv_sec*1000 + 0.001*tv.tv_usec;
 }
 
-void BenchmarkExecutor::writeResults() {
-	unsigned long long trp =  transactions*(1000/executionTime);
-	Logger::result("Throughput = %llu", trp);
+void BenchmarkExecutor::addExecTime(unsigned long long time) {
+	boost::unique_lock<boost::mutex> execlock(execMutex);
+	executionTime += time;
 }
 
-std::string& BenchmarkExecutor::randomId() {
-	int randomIndex = (rand() % objectsCount);
-	return ids[randomIndex];
+void BenchmarkExecutor::writeResults() {
+	unsigned long long trp =  threadCount*transactions*(1000/executionTime);
+	Logger::result("Throughput = %llu", trp);
 }
 
 void BenchmarkExecutor::initExecutor(){
@@ -62,6 +64,8 @@ void BenchmarkExecutor::initExecutor(){
 		transactions = atoi(ConfigFile::Value(TRANSACTIONS).c_str());
 		readPercent =  atoi(ConfigFile::Value(READS).c_str());
 		isInitiated = true;
+		threadCount = NetworkManager::getThreadCount();
+		benchmarkThreads = new boost::thread*[threadCount];
 	}
 }
 
@@ -72,12 +76,15 @@ void BenchmarkExecutor::createObjects(){
 void BenchmarkExecutor::prepareArgs() {
 	argsArray = new std::string*[transactions];
 	transactionType = new bool[transactions];
+	int nodeId = NetworkManager::getNodeId();
 
 	int argsCount = benchmark->getOperandsCount();
 	for (int i=0; i < transactions ; i++ ) {
 		argsArray[i] = new std::string[argsCount];
+		RandomIdProvider rIdPro(objectsCount);
 		for (int j=0; j < argsCount; j++ ) {
-			argsArray[i][j] = randomId();
+			int index = (rIdPro.getNext() + nodeId /*+ i*/) %objectsCount;
+			argsArray[i][j] = ids[index];
 		}
 		if ( i < (transactions*readPercent/100))
 			transactionType[i] = true;
@@ -87,43 +94,65 @@ void BenchmarkExecutor::prepareArgs() {
 
 	// Shuffle the transaction array
 	for( int k = 0; k < transactions; k++ ) {
-		int r = k + (rand() % (transactions - k));
+		int r = k + (RandomIdProvider::getRandomNumber() % (transactions - k));
 		bool tmp = transactionType[k];
 		transactionType[k] = transactionType[r];
 		transactionType[r] = tmp;
 	}
 }
 
-void BenchmarkExecutor::execute(){
+void BenchmarkExecutor::execute(int id){
+	threadId.reset(new Integer(id));
+
+	int argsCount = benchmark->getOperandsCount();
+	Logger::debug("BNCH_EXE %d:------------------------------>\n", id);
+	unsigned long long startTime = getTime();
+	for(int i=0; i < transactions; i++) {
+		int pos = (i + id) % transactions;
+		if (transactionType[i]) {
+			benchmark->readOperation(argsArray[pos], argsCount);
+		} else {
+			benchmark->writeOperation(argsArray[pos], argsCount);
+		}
+	}
+	unsigned long long executionTime = getTime() + 1 - startTime;
+	addExecTime(executionTime);
+	Logger::debug("BNC_EXE %d: Execution time = %llu msec <----------------------\n", id, executionTime);
+}
+
+int BenchmarkExecutor::getThreadId(){
+	if (!threadId.get()) {
+		threadId.reset(new Integer(0));
+	}
+	return threadId.get()->getValue();
+}
+
+void BenchmarkExecutor::executeThreads() {
 	// Read all the configuration settings
 	initExecutor();
-
 	// Create objects and then make all nodes done populating objects
 	createObjects();
 	prepareArgs();
+
 	NetworkManager::synchronizeCluster(2);
 	sleep(2);
-	int argsCount = benchmark->getOperandsCount();
-	Logger::debug("BNCH_EXE :------------------------------>\n");
-	unsigned long long startTime = getTime();
-	for(int i=0; i < transactions; i++) {
-		if (transactionType[i]) {
-			benchmark->readOperation(argsArray[i], argsCount);
-		} else {
-			benchmark->writeOperation(argsArray[i], argsCount);
-		}
+
+	int threadCount = NetworkManager::getThreadCount();
+	for (int i=0; i < threadCount ; i++) {
+		benchmarkThreads[i] = new boost::thread(execute, i);
 	}
-	executionTime = getTime() + 1 - startTime;
-	Logger::debug("BNC_EXE: Execution time = %llu msec <----------------------\n", executionTime);
+
+	for (int i=0; i < threadCount ; i++) {
+		benchmarkThreads[i]->join();
+	}
 
 	writeResults();
-
 	// Make sure all node finished transactions and then do sanity check
 	NetworkManager::synchronizeCluster(3);
-	benchmark->checkSanity();
+	if ( NetworkManager::getNodeId() == 0)
+		benchmark->checkSanity();
 	// Make sure sanity check is completed on all the nodes
 	NetworkManager::synchronizeCluster(4);
 	// DONE
 }
-
 } /* namespace vt_dstm */

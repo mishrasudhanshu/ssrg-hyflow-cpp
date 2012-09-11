@@ -66,6 +66,10 @@ public:
 	 * Required for DTL
 	 */
 	virtual void updateClock(int c) = 0;
+	/*
+	 * Forwarding the context in DTL
+	 */
+	virtual void forward(int senderClock) = 0;
 };
 
 } /* namespace vt_dstm */

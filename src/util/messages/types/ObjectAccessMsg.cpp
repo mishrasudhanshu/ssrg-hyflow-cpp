@@ -43,24 +43,26 @@ void ObjectAccessMsg::print() {
 void ObjectAccessMsg::objectAccessHandler(HyflowMessage & msg) {
 	ObjectAccessMsg *oamsg = (ObjectAccessMsg *) msg.getMsg();
 	if (!oamsg->object) {
-		Logger::debug("Object_Access: Request\n");
 		HyflowObject* obj = DirectoryManager::getObjectLocally(oamsg->id,
 				oamsg->isRead);
 		oamsg->object = obj;
+		Logger::debug("Object_Access: Request Locally got object %s of version %d\n", obj->getId().c_str(), obj->getVersion());
 		if (!msg.isCallback) {
 			NetworkManager::sendMessage(msg.fromNode, msg);
 		}
 	} else {
-		Logger::debug("Object_Access: Response\n");
 		// Find the MessageFuture created for expected response
 		HyflowMessageFuture & cbfmsg = NetworkManager::getMessageFuture(msg.msg_id,
 				msg.msg_t);
 		// Update sender clock for requesting context
 		HyflowContext *c = ContextManager::findContext(cbfmsg.getTxnId());
+		// Transaction forwarding will be done on before access call, currently just note
+		// down the highest sender clock.
 		c->updateClock(msg.fromNodeClock);
 
 		HyflowObject *obj = NULL;
 		oamsg->object->getClone(&obj);
+		Logger::debug("Object_Access: Response remote object %s of version %d\n", obj->getId().c_str(), obj->getVersion());
 		cbfmsg.setDataResponse(obj);
 
 		cbfmsg.notifyMessage();

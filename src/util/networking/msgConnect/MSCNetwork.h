@@ -29,6 +29,7 @@ class MSCNetwork: public AbstractNetwork {
 	static int nodeId;
 	static int basePort;
 	static std::string Ips[];
+	static int threadCount;
 
 	static int nodeCount;
 	static int nodesInCluster;

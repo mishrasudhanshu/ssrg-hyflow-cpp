@@ -114,6 +114,7 @@ uint64_t BankAccount::totalBalance(std::string id1, std::string id2) {
 		try {
 			result = totalBalance(id1, id2, c, of1, of2);
 		} catch (TransactionException & ex) {
+			ex.print();
 			commit = false;
 		} catch (...) {
 			throw;
@@ -121,8 +122,9 @@ uint64_t BankAccount::totalBalance(std::string id1, std::string id2) {
 		if (commit) {
 			try {
 				c->commit();
-				Logger::debug("Transaction Successful\n");
+				Logger::debug("++++++++++Transaction Successful ++++++++++\n");
 			} catch (TransactionException & ex) {
+				ex.print();
 				continue;
 			} catch(...) {
 				throw;
@@ -141,12 +143,12 @@ void BankAccount::transfer(std::string id1, std::string id2,
 		DirectoryManager::locateAsync(id2, true, c->getTxnId(), of2);
 
 		BankAccount* account1 = (BankAccount*)of1.waitOnObject();
-		Logger::debug("BANK : Account %s amount %llu\n", account1->hyId.c_str(), account1->amount);
+		Logger::debug("BANK : Account %s amount %llu version %d\n", account1->hyId.c_str(), account1->amount, account1->getVersion());
 		account1->withdraw(money, c);
 
 		try {
 			BankAccount* account2 = (BankAccount*)of2.waitOnObject();
-			Logger::debug("BANK : Account %s amount %llu\n", account2->hyId.c_str(), account2->amount);
+			Logger::debug("BANK : Account %s amount %llu version %d\n", account2->hyId.c_str(), account2->amount, account2->getVersion());
 			account2->deposit(money, c);
 		}catch(TransactionException & e){
 			throw e;
@@ -173,6 +175,7 @@ void BankAccount::transfer(std::string id1, std::string id2,
 		try {
 			transfer(id1, id2, money, c, of1, of2);
 		} catch (TransactionException & ex) {
+			ex.print();
 			commit = false;
 		} catch (...) {
 			throw;
@@ -180,8 +183,9 @@ void BankAccount::transfer(std::string id1, std::string id2,
 		if (commit) {
 			try {
 				c->commit();
-				Logger::debug("Transaction Successful\n");
+				Logger::debug("++++++++++Transaction Successful ++++++++++\n");
 			} catch (TransactionException & ex) {
+				ex.print();
 				continue;
 			} catch(...) {
 				throw;
@@ -199,7 +203,7 @@ void BankAccount::print(){
 void BankAccount::getClone(HyflowObject **obj){
 	BankAccount *ba = new BankAccount();
 	ba->amount = amount;
-	baseClone(ba);
+	this->baseClone(ba);
 	*obj = ba;
 }
 
