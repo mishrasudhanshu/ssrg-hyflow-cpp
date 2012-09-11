@@ -90,6 +90,13 @@ void LockTable::tryUnlock(std::string & objId, int32_t obVer) {
 	int32_t versionLock = i->second;
 	// Object is registered in lock table
 	if (versionLock & LOCK) {
+		if ( (versionLock & UNLOCK) > obVer) {
+			Logger::debug("LockTable : Can not unlock %s of version %d already overwritten\n",objId.c_str(), obVer);
+			return;
+		} else if ((versionLock & UNLOCK) < obVer){
+			Logger::fatal("LockTable : Impossible request Unlock %s of version %d of future\n",objId.c_str(), obVer);
+			return;
+		}
 		lockmap [objId] = versionLock & UNLOCK;
 		Logger::debug("LockTable : Unlock successful for %s\n", objId.c_str());
 		return;

@@ -127,7 +127,7 @@ void DTL2Context::unlockObject(HyflowObject* obj) {
 	if (obj->getOldOwnerNode() == obj->getOwnerNode()) {
 		HyflowMessage hmsg;
 		hmsg.init(MSG_LOCK_ACCESS, false);
-		LockAccessMsg lamsg(obj->getId(), obj->getVersion());
+		LockAccessMsg lamsg(obj->getId(), obj->getOldHyVersion());
 		lamsg.setLock(false);
 		lamsg.setRequest(true);
 		hmsg.setMsg(&lamsg);

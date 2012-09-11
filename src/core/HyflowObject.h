@@ -26,10 +26,16 @@ class HyflowObject {
     	ar & ownerTrnx;
     	ar & ownerNode;
     	ar & oldOwnerNode;
+    	ar & oldHyVersion;
     }
 protected:
-	HyflowObject(const std::string & Id, int v)
-		: hyId(Id), hyVersion(v) { ownerNode = -1; oldOwnerNode = -1; }
+	HyflowObject(const std::string & Id, int v) {
+		hyId = Id;
+		oldHyVersion = hyVersion;
+		hyVersion = v;
+		ownerNode = -1;
+		oldOwnerNode = -1;
+	}
 
 	std::string hyId;
 	/*
@@ -37,6 +43,7 @@ protected:
 	 * Signifying remote and locking status
 	 */
 	int32_t hyVersion;
+	int32_t oldHyVersion;
 
 	unsigned long long ownerTrnx;
 	int ownerNode;
@@ -49,7 +56,11 @@ public:
 	virtual void setId(const std::string & Id) {hyId = Id;};
 	virtual std::string & getId() {return hyId;};
 
-	virtual void setVersion(int32_t v) {hyVersion = v;};
+	virtual void setVersion(int32_t v) {
+		oldHyVersion = hyVersion;
+		hyVersion = v;
+	}
+
 	virtual int32_t getVersion() {return hyVersion;};
 	virtual void updateVersion() {hyVersion++;}
 	virtual void print()=0;
@@ -58,6 +69,10 @@ public:
 	 * delete once removed from local cache, mostly in local cache update call
 	 */
 	virtual void getClone(HyflowObject **obj)=0;
+
+	int32_t getOldHyVersion() const {
+		return oldHyVersion;
+	}
 
 	int getOldOwnerNode() const {
 		return oldOwnerNode;
@@ -89,6 +104,7 @@ public:
 		obj->ownerNode = ownerNode;
 		obj->oldOwnerNode = oldOwnerNode;
 		obj->ownerTrnx = ownerTrnx;
+		obj->oldHyVersion = oldHyVersion;
 	}
 };
 

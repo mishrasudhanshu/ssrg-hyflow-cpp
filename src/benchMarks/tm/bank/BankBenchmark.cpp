@@ -9,6 +9,7 @@
 #include "../../../util/networking/NetworkManager.h"
 #include "../../../util/logging/Logger.h"
 #include "../../../core/directory/DirectoryManager.h"
+#include "../../BenchmarkExecutor.h"
 
 namespace vt_dstm {
 
@@ -31,8 +32,10 @@ void BankBenchmark::readOperation(std::string ids[], int size) {
 }
 
 void BankBenchmark::writeOperation(std::string ids[], int size) {
-	Logger::debug("Transfer from %s to %s\n", ids[0].c_str(), ids[1].c_str());
-	BankAccount::transfer(ids[0], ids[1], 10);
+	static int a;
+	a += BenchmarkExecutor::getThreadId();
+	Logger::debug("Transfer from %s to %s %d\n", ids[0].c_str(), ids[1].c_str(), a);
+	BankAccount::transfer(ids[0], ids[1], a);
 }
 
 void BankBenchmark::checkSanity() {
