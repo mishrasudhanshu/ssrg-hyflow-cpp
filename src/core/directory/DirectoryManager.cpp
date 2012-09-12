@@ -6,6 +6,7 @@
  */
 
 #include <cstddef>
+#include <string.h>
 #include "DirectoryManager.h"
 #include "types/TrackerDirectory.h"
 #include "../../util/Definitions.h"

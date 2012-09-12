@@ -10,6 +10,7 @@
 #include <iostream>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
+#include <string.h>
 
 #include "MSCNetwork.h"
 #include "../NetworkManager.h"
@@ -203,7 +204,7 @@ void MSCNetwork::defaultHandler(void* UserData, void* Sender,
 		std::string omsg = odata_stream.str();
 
 		char *buffer = new char[omsg.size()];
-		std::memcpy(buffer, omsg.c_str(), omsg.size());
+		memcpy(buffer, omsg.c_str(), omsg.size());
 
 		//Do it safely Delete buffer pointing to older message
 		void* oldData = msg.Data;

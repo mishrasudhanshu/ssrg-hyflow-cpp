@@ -5,6 +5,7 @@
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/thread.hpp>
 #include <boost/serialization/export.hpp>
+#include <string.h>
 
 #include "MsgConnect/MC.h"
 #include "MsgConnect/MCBase.h"
@@ -63,7 +64,7 @@ static void __stdcall event2(void* resvd, void* Sender, MCMessage& Message, bool
 		std::string msg = ostream.str();
 
 		char *buffer = new char[msg.size()];
-		std::memcpy(buffer, msg.c_str(), msg.size());
+		memcpy(buffer, msg.c_str(), msg.size());
 		Message.Data = (void*)buffer;
 		Message.DataSize = msg.size();
 	}

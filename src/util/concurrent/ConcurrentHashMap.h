@@ -9,6 +9,7 @@
 #define CONCURRENTHASHMAP_H_
 
 #include <map>
+#include <iostream>
 #include <boost/thread/shared_mutex.hpp>
 
 namespace vt_dstm {

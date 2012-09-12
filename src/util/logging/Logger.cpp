@@ -8,6 +8,7 @@
 #include <cstddef>
 #include <cstdarg>
 #include <string>
+#include <string.h>
 
 #include "Logger.h"
 #include "Basic/BasicLogLib.h"

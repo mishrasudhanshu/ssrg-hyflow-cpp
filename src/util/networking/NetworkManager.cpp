@@ -6,6 +6,7 @@
  */
 #include <string>
 #include <cstdlib>
+#include <string.h>
 
 #include "NetworkManager.h"
 #include "../parser/ConfigFile.h"

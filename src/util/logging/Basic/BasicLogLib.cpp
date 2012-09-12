@@ -15,6 +15,7 @@
 #include <string>
 #include <pthread.h>
 #include <sys/time.h>
+#include <string.h>
 
 #include "BasicLogLib.h"
 #include "../../networking/NetworkManager.h"
