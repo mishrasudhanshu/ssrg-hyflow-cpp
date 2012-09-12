@@ -64,8 +64,10 @@ void ObjectAccessMsg::objectAccessHandler(HyflowMessage & msg) {
 		oamsg->object->getClone(&obj);
 		Logger::debug("Object_Access: Response remote object %s of version %d\n", obj->getId().c_str(), obj->getVersion());
 		cbfmsg.setDataResponse(obj);
-
 		cbfmsg.notifyMessage();
+		// Set pointed objected to null else try to delete stack copy may lead to memory corruption
+		// Currently non issue as Hyflow Message don't call the delete on BaseMessage
+		oamsg->setObject(NULL);
 	}
 }
 
@@ -104,30 +106,32 @@ void ObjectAccessMsg::serializationTest() {
 	}
 
 	{
-		// create and open a character archive for output
-		std::ofstream ofs("/tmp/objectAccessRes", std::ios::out);
-
-		BankAccount bac(1000, "3-0");
-		// create class instance
-		ObjectAccessMsg res;
-		res.setObject(&bac);
-
-		HyflowMessage msg;
-		msg.setMsg(&res);
-
-		// save data to archive
 		{
+			// create and open a character archive for output
+			std::ofstream ofs("/tmp/objectAccessRes", std::ios::out);
+
+			BankAccount bac(1000, "3-0");
+			// create class instance
+			ObjectAccessMsg res;
+			res.setObject(&bac);
+
+			HyflowMessage msg;
+			msg.setMsg(&res);
+
+			// save data to archive
 			boost::archive::text_oarchive oa(ofs);
 			// write class instance to archive
 			oa << msg;
 			// archive and stream closed when destructors are called
+			res.setObject(NULL);
 		}
 
-		// ... some time later restore the class instance to its orginal state
-		ObjectAccessMsg* r1;
-		BankAccount *b1;
-		HyflowMessage msg1;
 		{
+			// ... some time later restore the class instance to its orginal state
+			ObjectAccessMsg* r1;
+			BankAccount *b1;
+			HyflowMessage msg1;
+
 			// create and open an archive for input
 			std::ifstream ifs("/tmp/objectAccessRes", std::ios::in);
 			boost::archive::text_iarchive ia(ifs);
@@ -141,6 +145,8 @@ void ObjectAccessMsg::serializationTest() {
 			}else {
 				std::cerr<< "ObjectAccessResponse serialization Test FAILED!!!"<<std::endl;
 			}
+			// As here object Access points to a stack create object.
+			r1->setObject(NULL);
 		}
 	}
 }

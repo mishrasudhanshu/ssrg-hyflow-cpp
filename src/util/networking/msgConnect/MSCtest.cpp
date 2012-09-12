@@ -67,6 +67,9 @@ static void __stdcall event2(void* resvd, void* Sender, MCMessage& Message, bool
 		memcpy(buffer, msg.c_str(), msg.size());
 		Message.Data = (void*)buffer;
 		Message.DataSize = msg.size();
+
+		// Set the ObjectAccessMsg object to NULL
+		oaMS.setObject(NULL);
 	}
 	Handled = true;
 }
@@ -89,6 +92,7 @@ static void __stdcall callback1(unsigned int UserData, MCMessage& Message)
 		}else {
 			std::cerr<< "MSC Network object response serialization Test FAILED!!!"<<std::endl;
 		}
+		oaM->setObject(NULL);
 	}
 }
 
