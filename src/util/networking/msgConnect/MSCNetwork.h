@@ -13,10 +13,10 @@
 
 #include "../AbstractNetwork.h"
 #include "../../concurrent/ConcurrentHashMap.h"
-#include "MC.h"
-#include "MCBase.h"
-#include "MCSock.h"
-#include "MCSocket.h"
+#include "MsgConnect/MC.h"
+#include "MsgConnect/MCBase.h"
+#include "MsgConnect/MCSock.h"
+#include "MsgConnect/MCSocket.h"
 
 namespace vt_dstm
 {

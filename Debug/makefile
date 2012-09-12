@@ -11,6 +11,7 @@ RM := rm -rf
 -include src/util/unitTests/boost_serialization/subdir.mk
 -include src/util/unitTests/subdir.mk
 -include src/util/parser/subdir.mk
+-include src/util/networking/msgConnect/MsgConnect/subdir.mk
 -include src/util/networking/msgConnect/subdir.mk
 -include src/util/networking/subdir.mk
 -include src/util/messages/types/subdir.mk
@@ -61,7 +62,7 @@ all: ssrg-hyflow-cpp
 ssrg-hyflow-cpp: $(OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: GCC C++ Linker'
-	g++ -L/mnt/data/RTSL_Backup/ubuntu_one/workspace/MsgConnect/Code/C++/Core/Linux -L/usr/lib/i386-linux-gnu/ -L/usr/lib -o "ssrg-hyflow-cpp" $(OBJS) $(USER_OBJS) $(LIBS)
+	g++ -L/usr/lib/i386-linux-gnu/ -L/usr/lib -o "ssrg-hyflow-cpp" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 

@@ -26,6 +26,7 @@ SUBDIRS := \
 src/util/unitTests \
 src/util/unitTests/boost_serialization \
 src/util/parser \
+src/util/networking/msgConnect/MsgConnect \
 src/util/networking/msgConnect \
 src/util/networking \
 src/util/messages/types \

@@ -6,10 +6,10 @@
 #include <boost/thread.hpp>
 #include <boost/serialization/export.hpp>
 
-#include "MC.h"
-#include "MCBase.h"
-#include "MCSock.h"
-#include "MCSocket.h"
+#include "MsgConnect/MC.h"
+#include "MsgConnect/MCBase.h"
+#include "MsgConnect/MCSock.h"
+#include "MsgConnect/MCSocket.h"
 #include "../../messages/types/ObjectAccessMsg.h"
 #include "../../../benchMarks/tm/bank/BankAccount.h"
 #include "../../messages/HyflowMessage.h"

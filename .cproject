@@ -26,9 +26,7 @@
 								<option id="gnu.cpp.compiler.exe.debug.option.optimization.level.1271673367" name="Optimization Level" superClass="gnu.cpp.compiler.exe.debug.option.optimization.level" value="gnu.cpp.compiler.optimization.level.none" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.exe.debug.option.debugging.level.2001234237" name="Debug Level" superClass="gnu.cpp.compiler.exe.debug.option.debugging.level" value="gnu.cpp.compiler.debugging.level.max" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.option.include.files.1641994636" name="Include files (-include)" superClass="gnu.cpp.compiler.option.include.files"/>
-								<option id="gnu.cpp.compiler.option.include.paths.667101841" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
-									<listOptionValue builtIn="false" value="/mnt/data/RTSL_Backup/ubuntu_one/workspace/MsgConnect/Code/C++/Core"/>
-								</option>
+								<option id="gnu.cpp.compiler.option.include.paths.667101841" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath"/>
 								<option id="gnu.cpp.compiler.option.other.other.1866117525" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" value="-c -fmessage-length=0 -pthread" valueType="string"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.2147151513" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
@@ -42,13 +40,11 @@
 							<tool id="cdt.managedbuild.tool.gnu.c.linker.exe.debug.1811636765" name="GCC C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.exe.debug"/>
 							<tool id="cdt.managedbuild.tool.gnu.cpp.linker.exe.debug.1916960282" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.exe.debug">
 								<option id="gnu.cpp.link.option.libs.499340229" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
-									<listOptionValue builtIn="false" value="msgconnect"/>
 									<listOptionValue builtIn="false" value="pthread"/>
 									<listOptionValue builtIn="false" value="boost_serialization"/>
 									<listOptionValue builtIn="false" value="boost_thread"/>
 								</option>
 								<option id="gnu.cpp.link.option.paths.568121030" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths">
-									<listOptionValue builtIn="false" value="/mnt/data/RTSL_Backup/ubuntu_one/workspace/MsgConnect/Code/C++/Core/Linux"/>
 									<listOptionValue builtIn="false" value="/usr/lib/i386-linux-gnu/"/>
 									<listOptionValue builtIn="false" value="/usr/lib"/>
 								</option>
