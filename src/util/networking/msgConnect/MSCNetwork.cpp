@@ -62,7 +62,7 @@ MSCNetwork::MSCNetwork() {
 		queue = new MsgConnect::MCQueue();
 		socket = new MsgConnect::MCSocketTransport();
 		setupSockets();
-		Logger::debug("Calling boost Dispatcher Thread\n");
+		LOG_DEBUG("Calling boost Dispatcher Thread\n");
 		dispatchThread = new boost::thread(dispatcher, messenger);
 		isInit = true;
 		threadCount = NetworkManager::getThreadCount();
@@ -92,6 +92,7 @@ void MSCNetwork::setupSockets(){
 	socket->setAttemptsToConnect(50);
 	socket->setAttemptsInterval(100);	//Time is in MilliSecond
 	socket->setFailOnInactive(true);
+	socket->setInactivityTime(50000);
 	socket->setMaxTimeout(900000l);
 
 	socket->setMessengerAddress(ip);
@@ -109,7 +110,7 @@ void MSCNetwork::setupSockets(){
 	handler->setMsgCodeHigh(1);
 	handler->setOnMessage(MSCNetwork::defaultHandler);
 	handler->setEnabled(true);
-	Logger::debug("Setup socket for ip %s : port %d : queue %s\n", ipS.c_str(), port, qString.c_str());
+	LOG_DEBUG("Setup socket for ip %s : port %d : queue %s\n", ipS.c_str(), port, qString.c_str());
 }
 
 void MSCNetwork::sendMessage(int nodeId, HyflowMessage & message){
@@ -163,7 +164,7 @@ void MSCNetwork::sendCallbackMessage(int toNodeId, HyflowMessage & message, Hyfl
 	mcmsg.DataSize = msgData.size();
 
 	messenger->SendMessageCallback(destination.c_str(), &mcmsg, &callbackHandler,0,NULL);
-	Logger::debug("Send a callback Message to %s\n", destination.c_str());
+	LOG_DEBUG("Send a callback Message to %s\n", destination.c_str());
 }
 
 void MSCNetwork::registerHandler(HyMessageType msg_t, void (*handlerFunc)(HyflowMessage &)){
@@ -175,7 +176,7 @@ void MSCNetwork::registerHandler(HyMessageType msg_t, void (*handlerFunc)(Hyflow
 
 void MSCNetwork::defaultHandler(void* UserData, void* Sender,
 	MsgConnect::MCMessage& msg, bool& Handled) {
-	Logger::debug("MSNC :Got the Network Event \n");
+	LOG_DEBUG("MSNC :Got the Network Event \n");
 	if(msg.Data && (msg.DataSize > 0)) {
 		// Read Message
 		std::string idata((char*)msg.Data, msg.DataSize);
@@ -184,7 +185,7 @@ void MSCNetwork::defaultHandler(void* UserData, void* Sender,
 		vt_dstm::HyflowMessage req;
 		ia >> req;
 
-		Logger::debug("MSNC : Event from node %d\n", req.fromNode);
+		LOG_DEBUG("MSNC : Event from node %d\n", req.fromNode);
 		// Handle Message
 		req.syncClocks();
 		void (*handler)(HyflowMessage &) = NULL;
@@ -219,7 +220,7 @@ void MSCNetwork::defaultHandler(void* UserData, void* Sender,
 }
 
 void MSCNetwork::callbackHandler(unsigned int UserData, MsgConnect::MCMessage& msg){
-	Logger::debug("MSNC :Got the Network Callback\n");
+	LOG_DEBUG("MSNC :Got the Network Callback\n");
 	if(msg.Data && (msg.DataSize > 0)) {
 		std::string data((char*)msg.Data, msg.DataSize);
 		std::istringstream data_stream(data);
@@ -227,7 +228,7 @@ void MSCNetwork::callbackHandler(unsigned int UserData, MsgConnect::MCMessage& m
 		vt_dstm::HyflowMessage req;
 		ia >> req;
 
-		Logger::debug("MSNC : Callback from node %d\n", req.toNode);
+		LOG_DEBUG("MSNC : Callback from node %d\n", req.toNode);
 		req.syncClocks();
 		// FIXME: add try and catch block for possible exception
 		handlerMap.getValue(req.msg_t)(req);
@@ -347,17 +348,17 @@ void MSCNetwork::removeMessageFuture(unsigned long long m_id, HyMessageType t) {
 }
 
 void MSCNetwork::dispatcher(MsgConnect::MCMessenger *mc) {
-	Logger::debug("Message Dispatcher started\n");
-	boost::posix_time::seconds sleepTime(0.0005);
+	LOG_DEBUG("Message Dispatcher started\n");
+	boost::posix_time::seconds sleepTime(0.0001);
 	while (!hyflowShutdown) {
 		mc->DispatchMessages();
 		boost::this_thread::sleep(sleepTime);
 	}
-	Logger::debug("Message Dispatcher shutdown\n");
+	LOG_DEBUG("Message Dispatcher shutdown\n");
 }
 
 void MSCNetwork::waitTillSynchronized(int rqNo) {
-	Logger::debug("MSNC : Starting wait for syncVer %d and ReqNo %d\n", syncVersion, rqNo);
+	LOG_DEBUG("MSNC : Starting wait for syncVer %d and ReqNo %d\n", syncVersion, rqNo);
 	boost::unique_lock<boost::mutex> lock(clsMutex);
 	while ( syncVersion != rqNo) {
 		onCluster.wait(lock);
@@ -372,7 +373,7 @@ void MSCNetwork::notifyCluster(int rqNo) {
 	     syncVersion = rqNo;
 	 }
 	 onCluster.notify_all();
-	 Logger::debug("MSNC : Notify all ReqNo %d\n", rqNo);
+	 LOG_DEBUG("MSNC : Notify all ReqNo %d\n", rqNo);
 }
 
 bool MSCNetwork::allNodeJoined(int rqNo) {
@@ -380,7 +381,7 @@ bool MSCNetwork::allNodeJoined(int rqNo) {
 		boost::unique_lock<boost::mutex> lock(clsMutex);
 		nodesInCluster++;
 	}
-	Logger::debug("MSNC : Joining cluster in cluster %d in ReqNo %d\n", nodesInCluster, rqNo);
+	LOG_DEBUG("MSNC : Joining cluster in cluster %d in ReqNo %d\n", nodesInCluster, rqNo);
 	return nodesInCluster == nodeCount;
 }
 

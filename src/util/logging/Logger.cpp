@@ -68,7 +68,7 @@ void Logger::info(const char* str, ...) {
 	}
 }
 
-void Logger::debug(const char* str, ...) {
+void LOG_DEBUG(const char* str, ...) {
 	if (logging) {
 		char buf[200];
 		va_list argptr; /* Set up the variable argument list here */
@@ -166,7 +166,7 @@ void Logger::test() {
 
 	Logger::LoggerInit();
 	Logger::info("Hello to info %s %f %d\n",st.c_str(),db, i);
-	Logger::debug("Hello to debug %s %f %d\n",st.c_str(),db, i);
+	LOG_DEBUG("Hello to debug %s %f %d\n",st.c_str(),db, i);
 	Logger::warn("Hello to warning %s %f %d\n",st.c_str(),db, i);
 	Logger::error("Hello to error %s %f %d\n",st.c_str(),db, i);
 	Logger::fatal("Hello to fatal %s %f %d\n",st.c_str(),db, i);

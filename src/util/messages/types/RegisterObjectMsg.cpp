@@ -48,7 +48,7 @@ void RegisterObjectMsg::serialize(Archive & ar, const unsigned int version) {
 void RegisterObjectMsg::registerObjectHandler(HyflowMessage & msg) {
 	RegisterObjectMsg* romsg = (RegisterObjectMsg*) (msg.getMsg());
 	if (romsg->request) {
-		Logger::debug("Got Register Object Request\n");
+		LOG_DEBUG("Got Register Object Request\n");
 		if (romsg->owner != -1)
 			DirectoryManager::registerObjectLocally(romsg->objectId, romsg->owner,
 					romsg->txnId);
@@ -57,7 +57,7 @@ void RegisterObjectMsg::registerObjectHandler(HyflowMessage & msg) {
 					romsg->txnId);
 		romsg->request = false;
 	} else {
-		Logger::debug("Got Register Object Response\n");
+		LOG_DEBUG("Got Register Object Response\n");
 		HyflowMessageFuture & cbfmsg = NetworkManager::getMessageFuture(msg.msg_id,
 						msg.msg_t);
 		cbfmsg.notifyMessage();

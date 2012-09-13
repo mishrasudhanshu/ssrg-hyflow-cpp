@@ -16,7 +16,7 @@ TransactionException::TransactionException(std::string m) { msg = m; }
 TransactionException::~TransactionException() throw () {}
 
 void TransactionException::print() {
-	Logger::debug(msg.c_str());
+	LOG_DEBUG(msg.c_str());
 }
 
 } /* namespace vt_dstm */

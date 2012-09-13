@@ -34,11 +34,11 @@ SynchronizeMsg::~SynchronizeMsg() {}
 void SynchronizeMsg::synchronizeHandler(HyflowMessage & msg){
 	SynchronizeMsg *synmsg = (SynchronizeMsg *)msg.getMsg();
 	if (!synmsg->isResponse){	// Node 0 will receive this message
-		Logger::debug("SYNC_MSG: Got Synchronize request message from %d\n", msg.fromNode);
+		LOG_DEBUG("SYNC_MSG: Got Synchronize request message from %d\n", msg.fromNode);
 		if(NetworkManager::allNodeJoined(synmsg->requestNo))	// If you are last message set synchronized
 			NetworkManager::replySynchronized(synmsg->requestNo);
 	}else{
-		Logger::debug("SYNC_MSG: Got Synchronize response message\n");
+		LOG_DEBUG("SYNC_MSG: Got Synchronize response message\n");
 		NetworkManager::notifyCluster(synmsg->requestNo);
 	}
 }

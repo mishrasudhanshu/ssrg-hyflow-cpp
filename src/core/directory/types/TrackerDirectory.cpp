@@ -8,6 +8,7 @@
 #include "TrackerDirectory.h"
 #include "../../../util/networking/NetworkManager.h"
 #include "../../../util/messages/types/ObjectTrackerMsg.h"
+#include "../../../util/messages/types/ObjectAccessMsg.h"
 #include "../../../util/messages/types/RegisterObjectMsg.h"
 #include "../../../util/logging/Logger.h"
 #include "../../directory/DirectoryManager.h"
@@ -32,14 +33,37 @@ HyflowObject* TrackerDirectory::locate(std::string & id, bool rw, unsigned long 
 }
 
 void TrackerDirectory::locateAsync(std::string & id, bool rw, unsigned long long txn, HyflowObjectFuture & fu){
-	ObjectTrackerMsg msg(id, rw);
 	int trackerNode = getTracker(id);
+	int myNode = NetworkManager::getNodeId();
+	// Set type to invalid so no remove call is made
+	// If some messaging is done type will be overwritten
+	fu.getMessageFuture().setType(MSG_TYPE_INVALID);
 
-	HyflowMessage hmsg;
-	hmsg.msg_t = MSG_TRK_OBJECT;
-	hmsg.isCallback = true;	// isReplied false by default
-	hmsg.setMsg(&msg);
-	NetworkManager::sendCallbackMessage(trackerNode,hmsg,fu.getMessageFuture());
+	// Directly send the object request to owner
+	if (trackerNode == myNode) {
+		int ownerNode = getObjectLocation(id);
+		if (ownerNode == myNode) {
+			LOG_DEBUG("Got Object %s Locally\n",id.c_str());
+			HyflowObject* obj = DirectoryManager::getObjectLocally(id, rw);
+			fu.getMessageFuture().setDataResponse(obj);
+			fu.getMessageFuture().notifyMessage();
+		} else {
+			ObjectAccessMsg oam(id, rw);
+			HyflowMessage hmsg;
+			hmsg.msg_t = MSG_ACCESS_OBJECT;
+			hmsg.isCallback = true;
+			hmsg.setMsg(&oam);
+			NetworkManager::sendCallbackMessage(ownerNode,hmsg,fu.getMessageFuture());
+		}
+	}else {
+		ObjectTrackerMsg otm(id, rw);
+		HyflowMessage hmsg;
+		hmsg.msg_t = MSG_TRK_OBJECT;
+		hmsg.isCallback = true;	// isReplied false by default
+		hmsg.setMsg(&otm);
+		NetworkManager::sendCallbackMessage(trackerNode,hmsg,fu.getMessageFuture());
+	}
+
 }
 
 /*
@@ -59,10 +83,10 @@ void TrackerDirectory::registerObject(HyflowObject & object, unsigned long long 
 	// on its destructor call
 	DirectoryManager::updateObjectLocally(object);
 
-	Logger::debug("DIR : New owner of %s is %d\n", id.c_str(), owner);
+	LOG_DEBUG("DIR : New owner of %s is %d\n", id.c_str(), owner);
 
 	if ( owner != oldOwner ) {
-		Logger::debug("DIR : Registering %s owner %d->%d\n", id.c_str(), oldOwner, owner);
+		LOG_DEBUG("DIR : Registering %s owner %d->%d\n", id.c_str(), oldOwner, owner);
 
 		//Register the object with tracker
 		RegisterObjectMsg romsg(id, owner, txn);
@@ -72,7 +96,7 @@ void TrackerDirectory::registerObject(HyflowObject & object, unsigned long long 
 
 		NetworkManager::sendMessage(getTracker(id), hmsg);
 	} else {
-		Logger::debug("DIR :Local object %s no re-registration %d -> %d\n", id.c_str(), oldOwner, owner);
+		LOG_DEBUG("DIR :Local object %s no re-registration %d -> %d\n", id.c_str(), oldOwner, owner);
 	}
 }
 
@@ -93,10 +117,10 @@ void TrackerDirectory::registerObjectWait(HyflowObject & object, unsigned long l
 	// on its destructor call
 	DirectoryManager::updateObjectLocally(object);
 
-	Logger::debug("DIR : New owner of %s is %d\n", id.c_str(), owner);
+	LOG_DEBUG("DIR : New owner of %s is %d\n", id.c_str(), owner);
 
 	if ( owner != oldOwner ) {
-		Logger::debug("DIR : Registering %s owner %d->%d\n", id.c_str(), oldOwner, owner);
+		LOG_DEBUG("DIR : Registering %s owner %d->%d\n", id.c_str(), oldOwner, owner);
 
 		//Register the object with tracker
 		RegisterObjectMsg romsg(id, owner, txn);
@@ -108,7 +132,7 @@ void TrackerDirectory::registerObjectWait(HyflowObject & object, unsigned long l
 		NetworkManager::sendCallbackMessage(getTracker(id), hmsg, mFu);
 		mFu.waitOnFuture();
 	} else {
-		Logger::debug("DIR :Local object %s no re-registration %d -> %d\n", id.c_str(), oldOwner, owner);
+		LOG_DEBUG("DIR :Local object %s no re-registration %d -> %d\n", id.c_str(), oldOwner, owner);
 	}
 }
 
@@ -116,7 +140,7 @@ void TrackerDirectory::registerObjectLocally(std::string & objId, int owner, uns
 	std::pair<std::string, int> p;
 	p.first = objId;
 	p.second = owner;
-	Logger::debug("DIR : Object %s owner %d\n", objId.c_str(), owner);
+	LOG_DEBUG("DIR : Object %s owner %d\n", objId.c_str(), owner);
 	directory.insertValue(p);
 }
 

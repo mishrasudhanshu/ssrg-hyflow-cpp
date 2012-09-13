@@ -19,6 +19,7 @@ namespace vt_dstm
 {
 
 enum HyMessageType {
+	MSG_TYPE_INVALID, /*For Dummay Message */
 	MSG_GRP_SYNC, /*Group Joining Request*/
 	MSG_TRK_OBJECT, /*Object location tracker*/
 	MSG_ACCESS_OBJECT, /*Object Read-Write Request/Response*/

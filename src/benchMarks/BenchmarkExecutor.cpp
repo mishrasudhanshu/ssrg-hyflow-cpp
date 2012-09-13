@@ -21,6 +21,7 @@ int BenchmarkExecutor::calls = 1;
 int BenchmarkExecutor::delay = 0;
 long BenchmarkExecutor::timeout = 0;
 bool BenchmarkExecutor::checkPoint = false;
+bool BenchmarkExecutor::sanity = false;
 int BenchmarkExecutor::objectsCount = -1;
 int BenchmarkExecutor::transactions = 0 ;
 int BenchmarkExecutor::readPercent = 0;
@@ -53,8 +54,8 @@ void BenchmarkExecutor::addExecTime(unsigned long long time) {
 }
 
 void BenchmarkExecutor::writeResults() {
-	unsigned long long trp =  threadCount*transactions*(1000/executionTime);
-	Logger::result("Throughput = %llu", trp);
+	double trp =  threadCount*transactions*(1000/executionTime);
+	Logger::result("Throughput = %.2f", trp);
 }
 
 void BenchmarkExecutor::initExecutor(){
@@ -66,6 +67,7 @@ void BenchmarkExecutor::initExecutor(){
 		isInitiated = true;
 		threadCount = NetworkManager::getThreadCount();
 		benchmarkThreads = new boost::thread*[threadCount];
+		sanity = (strcmp(ConfigFile::Value(SANITY).c_str(), TRUE) == 0)? true:false;
 	}
 }
 
@@ -105,7 +107,7 @@ void BenchmarkExecutor::execute(int id){
 	threadId.reset(new Integer(id));
 
 	int argsCount = benchmark->getOperandsCount();
-	Logger::debug("BNCH_EXE %d:------------------------------>\n", id);
+	LOG_DEBUG("BNCH_EXE %d:------------------------------>\n", id);
 	unsigned long long startTime = getTime();
 	for(int i=0; i < transactions; i++) {
 		int pos = (i + id) % transactions;
@@ -117,7 +119,7 @@ void BenchmarkExecutor::execute(int id){
 	}
 	unsigned long long executionTime = getTime() + 1 - startTime;
 	addExecTime(executionTime);
-	Logger::debug("BNC_EXE %d: Execution time = %llu msec <----------------------\n", id, executionTime);
+	LOG_DEBUG("BNC_EXE %d: Execution time = %llu msec <----------------------\n", id, executionTime);
 }
 
 int BenchmarkExecutor::getThreadId(){
@@ -149,8 +151,9 @@ void BenchmarkExecutor::executeThreads() {
 	writeResults();
 	// Make sure all node finished transactions and then do sanity check
 	NetworkManager::synchronizeCluster(3);
-	if ( NetworkManager::getNodeId() == 0)
+	if ( (NetworkManager::getNodeId() == 0) && (sanity) ) {
 		benchmark->checkSanity();
+	}
 	// Make sure sanity check is completed on all the nodes
 	NetworkManager::synchronizeCluster(4);
 	// DONE

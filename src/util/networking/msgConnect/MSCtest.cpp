@@ -35,7 +35,7 @@ static void __stdcall event1(void* resvd, void* Sender, MCMessage& Message, bool
 
 static void __stdcall event2(void* resvd, void* Sender, MCMessage& Message, bool& Handled)
 {
-	vt_dstm::Logger::debug("Got Event on queue2: \n");
+	vt_dstm::LOG_DEBUG("Got Event on queue2: \n");
 	if(Message.Data && (Message.DataSize > 0))
 	{
 		std::string data((char*)Message.Data, Message.DataSize);
@@ -76,7 +76,7 @@ static void __stdcall event2(void* resvd, void* Sender, MCMessage& Message, bool
 
 static void __stdcall callback1(unsigned int UserData, MCMessage& Message)
 {
-	vt_dstm::Logger::debug("Got callback on queue1: \n");
+	vt_dstm::LOG_DEBUG("Got callback on queue1: \n");
 	if(Message.Data && (Message.DataSize > 0))
 	{
 		std::string data((char*)Message.Data, Message.DataSize);
@@ -104,7 +104,7 @@ volatile bool MSCtest::hyShutdown = false;
 
 static void dispatcher(MCMessenger* mc){
 	boost::posix_time::seconds workTime(0.001);
-	vt_dstm::Logger::debug("Dispatcher Started\n");
+	vt_dstm::LOG_DEBUG("Dispatcher Started\n");
 
 	while (!MSCtest::hyShutdown) {
 		mc->DispatchMessages();

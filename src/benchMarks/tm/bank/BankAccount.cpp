@@ -122,7 +122,7 @@ uint64_t BankAccount::totalBalance(std::string id1, std::string id2) {
 		if (commit) {
 			try {
 				c->commit();
-				Logger::debug("++++++++++Transaction Successful ++++++++++\n");
+				LOG_DEBUG("++++++++++Transaction Successful ++++++++++\n");
 			} catch (TransactionException & ex) {
 				ex.print();
 				continue;
@@ -143,12 +143,12 @@ void BankAccount::transfer(std::string id1, std::string id2,
 		DirectoryManager::locateAsync(id2, true, c->getTxnId(), of2);
 
 		BankAccount* account1 = (BankAccount*)of1.waitOnObject();
-		Logger::debug("BANK : Account %s amount %llu version %d\n", account1->hyId.c_str(), account1->amount, account1->getVersion());
+		LOG_DEBUG("BANK : Account %s amount %llu version %d\n", account1->hyId.c_str(), account1->amount, account1->getVersion());
 		account1->withdraw(money, c);
 
 		try {
 			BankAccount* account2 = (BankAccount*)of2.waitOnObject();
-			Logger::debug("BANK : Account %s amount %llu version %d\n", account2->hyId.c_str(), account2->amount, account2->getVersion());
+			LOG_DEBUG("BANK : Account %s amount %llu version %d\n", account2->hyId.c_str(), account2->amount, account2->getVersion());
 			account2->deposit(money, c);
 		}catch(TransactionException & e){
 			throw e;
@@ -183,7 +183,7 @@ void BankAccount::transfer(std::string id1, std::string id2,
 		if (commit) {
 			try {
 				c->commit();
-				Logger::debug("++++++++++Transaction Successful ++++++++++\n");
+				LOG_DEBUG("++++++++++Transaction Successful ++++++++++\n");
 			} catch (TransactionException & ex) {
 				ex.print();
 				continue;
@@ -217,7 +217,7 @@ void BankAccount::checkSanity(std::string* ids, int objectCount) {
 		}
 		uint64_t expected = 10000*objectCount;
 		if ( expected == balance ) {
-			Logger::debug("Sanity check passed...\n");
+			LOG_DEBUG("Sanity check passed...\n");
 		} else {
 			Logger::fatal("Sanity check failed... expected = %llu & Actual = %llu\n", expected, balance	);
 		}

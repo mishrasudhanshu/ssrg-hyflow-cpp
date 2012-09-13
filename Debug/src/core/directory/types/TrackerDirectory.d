@@ -24,8 +24,9 @@ src/core/directory/types/TrackerDirectory.d: \
  ../src/core/directory/types/../../../util/messages/types/ObjectTrackerMsg.h \
  ../src/core/directory/types/../../../util/messages/types/../BaseMessage.h \
  ../src/core/directory/types/../../../util/messages/types/../HyflowMessage.h \
- ../src/core/directory/types/../../../util/messages/types/RegisterObjectMsg.h \
+ ../src/core/directory/types/../../../util/messages/types/ObjectAccessMsg.h \
  ../src/core/directory/types/../../../util/messages/types/../../../core/HyflowObject.h \
+ ../src/core/directory/types/../../../util/messages/types/RegisterObjectMsg.h \
  ../src/core/directory/types/../../../util/logging/Logger.h \
  ../src/core/directory/types/../../directory/DirectoryManager.h \
  ../src/core/directory/types/../../directory/../HyflowObject.h \
@@ -79,9 +80,11 @@ src/core/directory/types/TrackerDirectory.d: \
 
 ../src/core/directory/types/../../../util/messages/types/../HyflowMessage.h:
 
-../src/core/directory/types/../../../util/messages/types/RegisterObjectMsg.h:
+../src/core/directory/types/../../../util/messages/types/ObjectAccessMsg.h:
 
 ../src/core/directory/types/../../../util/messages/types/../../../core/HyflowObject.h:
+
+../src/core/directory/types/../../../util/messages/types/RegisterObjectMsg.h:
 
 ../src/core/directory/types/../../../util/logging/Logger.h:
 

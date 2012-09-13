@@ -48,7 +48,7 @@ void ObjectTrackerMsg::objectTrackerHandler(HyflowMessage & msg) {
 	 */
 	if (otmsg->owner == -1) {	// Request Message
 		otmsg->owner = DirectoryManager::getObjectLocation(otmsg->objectId);
-		Logger::debug("Got object Tracker request from %d replied for %s with owner %d\n", msg.fromNode, otmsg->objectId.c_str(), otmsg->owner);
+		LOG_DEBUG("Got object Tracker request from %d replied for %s with owner %d\n", msg.fromNode, otmsg->objectId.c_str(), otmsg->owner);
 
 		if (!msg.isCallback) {
 			NetworkManager::sendMessage(msg.fromNode,msg);
@@ -60,13 +60,21 @@ void ObjectTrackerMsg::objectTrackerHandler(HyflowMessage & msg) {
 		// After getting a reference remove for map
 		NetworkManager::removeMessageFuture(msg.msg_id, msg.msg_t);
 
-		ObjectAccessMsg oam(otmsg->objectId, otmsg->isRead);
-		HyflowMessage hmsg;
-		hmsg.msg_t = MSG_ACCESS_OBJECT;
-		hmsg.isCallback = true;
-		hmsg.setMsg(&oam);
-		Logger::debug("Object Tracker Response: send request to %d to from %s\n", otmsg->owner,otmsg->objectId.c_str());
-		NetworkManager::sendCallbackMessage(otmsg->owner,hmsg, cbfmsg);
+		int myNode = NetworkManager::getNodeId();
+		if (myNode == otmsg->owner) {
+			LOG_DEBUG("Object Tracker Response: Local object %s\n", otmsg->objectId.c_str());
+			HyflowObject* obj = DirectoryManager::getObjectLocally(otmsg->objectId, otmsg->isRead);
+			cbfmsg.setDataResponse(obj);
+			cbfmsg.notifyMessage();
+		} else {
+			ObjectAccessMsg oam(otmsg->objectId, otmsg->isRead);
+			HyflowMessage hmsg;
+			hmsg.msg_t = MSG_ACCESS_OBJECT;
+			hmsg.isCallback = true;
+			hmsg.setMsg(&oam);
+			LOG_DEBUG("Object Tracker Response: send request to %d to from %s\n", otmsg->owner,otmsg->objectId.c_str());
+			NetworkManager::sendCallbackMessage(otmsg->owner,hmsg, cbfmsg);
+		}
 	}
 }
 

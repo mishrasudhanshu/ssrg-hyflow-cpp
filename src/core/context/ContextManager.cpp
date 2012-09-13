@@ -57,7 +57,7 @@ HyflowContext* ContextManager::findContext(unsigned long long int tid) {
 bool ContextManager::atomicUpdateClock(int newClock, int oldClock) {
 	boost::upgrade_lock<boost::shared_mutex> writeLock(clockMutex);
 	if (localNodeClock == oldClock) {
-		Logger::debug("CLOCK :Node clock moved from %d to %d\n", oldClock, newClock);
+		LOG_DEBUG("CLOCK :Node clock moved from %d to %d\n", oldClock, newClock);
 		localNodeClock = newClock;
 		return true;
 	}else {

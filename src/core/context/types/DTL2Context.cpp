@@ -55,11 +55,11 @@ void DTL2Context::forward(int senderClock) {
 			 */
 			int32_t version = i->second->getVersion() ;
 			if ( version > senderClock) {
-				Logger::debug("Forward : Aborting version %d < senderClock %d\n", version, senderClock);
+				LOG_DEBUG("Forward : Aborting version %d < senderClock %d\n", version, senderClock);
 				abort();
 			}
 		}
-		Logger::debug("Forward : context from %d to %d\n", tnxClock, senderClock);
+		LOG_DEBUG("Forward : context from %d to %d\n", tnxClock, senderClock);
 		tnxClock = senderClock;
 	}
 }
@@ -97,7 +97,7 @@ bool DTL2Context::lockObject(HyflowObject* obj) {
 	lamsg.setRequest(true);
 	hmsg.setMsg(&lamsg);
 	int owner = obj->getOwnerNode();
-	Logger::debug("DTL : Requesting lock for %s from %d of version %d\n", obj->getId().c_str(), owner, obj->getVersion());
+	LOG_DEBUG("DTL : Requesting lock for %s from %d of version %d\n", obj->getId().c_str(), owner, obj->getVersion());
 	NetworkManager::sendCallbackMessage(owner, hmsg, mFu);
 	mFu.waitOnFuture();
 	return mFu.isBoolResponse();
@@ -144,7 +144,7 @@ void DTL2Context::commit(){
 	std::vector<HyflowObject *> lockedObjects;
 
 	if (getStatus() == TXN_ABORTED) {
-		Logger::debug ("Commit : transaction is already aborted\n");
+		LOG_DEBUG ("Commit : transaction is already aborted\n");
 		throw *(new TransactionException("Commit: Transaction Already aborted by forwarding\n"));
 	}
 
@@ -154,7 +154,7 @@ void DTL2Context::commit(){
 		// FIXME: Make it asynchronous
 		for( wi = writeMap.rbegin() ; wi != writeMap.rend() ; wi++ ) {
 			if (!lockObject(wi->second)) {
-				Logger::debug("Commit: Unable to get WriteLock for %s\n", wi->first.c_str());
+				LOG_DEBUG("Commit: Unable to get WriteLock for %s\n", wi->first.c_str());
 				throw new TransactionException("Commit: Unable to get WriteLock for "+wi->first + "\n");
 			}
 			lockedObjects.push_back(wi->second);
@@ -166,7 +166,7 @@ void DTL2Context::commit(){
 		std::map<std::string, HyflowObject*, ObjectIdComparator>::reverse_iterator ri;
 		for ( ri = readMap.rbegin() ; ri != readMap.rend() ; ri++) {
 			if (!validateObject(ri->second)) {
-				Logger::debug("Commit: Unable to validate for %s, version %d with txn %d\n", ri->first.c_str(), ri->second->getVersion(), tnxClock);
+				LOG_DEBUG("Commit: Unable to validate for %s, version %d with txn %d\n", ri->first.c_str(), ri->second->getVersion(), tnxClock);
 				throw new TransactionException("Commit: Unable to validate for "+ri->first+"\n");
 			}
 		}
@@ -187,7 +187,7 @@ void DTL2Context::commit(){
 	for( wi = writeMap.rbegin() ; wi != writeMap.rend() ; wi++ ) {
 		// Update object version
 		wi->second->setVersion(tnxClock);
-		Logger::debug("Set object %s version %d\n",wi->first.c_str(), tnxClock);
+		LOG_DEBUG("Set object %s version %d\n",wi->first.c_str(), tnxClock);
 		// Register object
 		DirectoryManager::registerObject(*wi->second, txnId);
 	}

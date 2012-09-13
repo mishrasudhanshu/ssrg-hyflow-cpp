@@ -46,7 +46,7 @@ void ObjectAccessMsg::objectAccessHandler(HyflowMessage & msg) {
 		HyflowObject* obj = DirectoryManager::getObjectLocally(oamsg->id,
 				oamsg->isRead);
 		oamsg->object = obj;
-		Logger::debug("Object_Access: Request Locally got object %s of version %d\n", obj->getId().c_str(), obj->getVersion());
+		LOG_DEBUG("Object_Access: Request Locally got object %s of version %d\n", obj->getId().c_str(), obj->getVersion());
 		if (!msg.isCallback) {
 			NetworkManager::sendMessage(msg.fromNode, msg);
 		}
@@ -62,7 +62,7 @@ void ObjectAccessMsg::objectAccessHandler(HyflowMessage & msg) {
 
 		HyflowObject *obj = NULL;
 		oamsg->object->getClone(&obj);
-		Logger::debug("Object_Access: Response remote object %s of version %d\n", obj->getId().c_str(), obj->getVersion());
+		LOG_DEBUG("Object_Access: Response remote object %s of version %d\n", obj->getId().c_str(), obj->getVersion());
 		cbfmsg.setDataResponse(obj);
 		cbfmsg.notifyMessage();
 		// Set pointed objected to null else try to delete stack copy may lead to memory corruption

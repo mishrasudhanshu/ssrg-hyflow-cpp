@@ -41,22 +41,22 @@ int main(int argc, char *argv[], char *envp[]) {
 	// Initiate Logger : Depends on node Id
 	Logger::LoggerInit();
 
-	Logger::debug("APP :Initiating the Network\n");
+	LOG_DEBUG("APP :Initiating the Network\n");
 	NetworkManager::NetworkInit();
 
-	Logger::debug("APP :Initiating the Directory Manager\n");
+	LOG_DEBUG("APP :Initiating the Directory Manager\n");
 	DirectoryManager::DirectoryManagerInit();
 
 	// Run Benchmarks
-	Logger::debug("APP :Initiating the Benchmark Execution\n");
-	Logger::debug("APP :....\n");
+	LOG_DEBUG("APP :Initiating the Benchmark Execution\n");
+	LOG_DEBUG("APP :....\n");
 	sleep(2);
 	BenchmarkExecutor::executeThreads();
 //	char* dum = new char[10];	// Used to detect any heap corruption
-	Logger::debug("APP :All Done !!!\n");
+	LOG_DEBUG("APP :All Done !!!\n");
 
 	// Just to make sure any last time message are printed: for debugging
-	Logger::debug("APP :....\n");
+	LOG_DEBUG("APP :....\n");
 	sleep(2);
 	return 0;
 }

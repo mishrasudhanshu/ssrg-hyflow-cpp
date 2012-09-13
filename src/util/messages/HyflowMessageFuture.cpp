@@ -12,8 +12,10 @@ namespace vt_dstm {
 
 HyflowMessageFuture::HyflowMessageFuture() {isReceived = false; msg_id=0; dataResponse = NULL;}
 HyflowMessageFuture::~HyflowMessageFuture() {
-	NetworkManager::removeMessageFuture(msg_id, msg_t);
-	delete dataResponse;
+	if (msg_t != MSG_TYPE_INVALID) {
+		NetworkManager::removeMessageFuture(msg_id, msg_t);
+		delete dataResponse;
+	}
 }
 
 void HyflowMessageFuture::waitOnFuture(){

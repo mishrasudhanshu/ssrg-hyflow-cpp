@@ -45,6 +45,7 @@ class BenchmarkExecutor {
 	static int readPercent;
 	static int threads;
 	static bool isInitiated;
+	static bool sanity;
 	static int threadCount;
 	static int executionTime;
 	static boost::mutex execMutex;
@@ -81,6 +82,9 @@ public:
     static void executeThreads();
 	static int getThreadId();
 
+	bool isSanity() const {
+		return sanity;
+	}
 };
 
 } /* namespace vt_dstm */

@@ -27,14 +27,14 @@ int BankBenchmark::getOperandsCount() {
 }
 
 void BankBenchmark::readOperation(std::string ids[], int size) {
-	Logger::debug("Total Balance of %s & %s\n", ids[0].c_str(), ids[1].c_str());
+	LOG_DEBUG("Total Balance of %s & %s\n", ids[0].c_str(), ids[1].c_str());
 	BankAccount::totalBalance(ids[0], ids[1]);
 }
 
 void BankBenchmark::writeOperation(std::string ids[], int size) {
-	static int a;
-	a += BenchmarkExecutor::getThreadId();
-	Logger::debug("Transfer from %s to %s %d\n", ids[0].c_str(), ids[1].c_str(), a);
+	static int a = 1;
+	//a += BenchmarkExecutor::getThreadId();	// Only for debug sanity
+	LOG_DEBUG("Transfer from %s to %s %d\n", ids[0].c_str(), ids[1].c_str(), a);
 	BankAccount::transfer(ids[0], ids[1], a);
 }
 
@@ -53,7 +53,7 @@ std::string* BankBenchmark::createLocalObjects(int objCount) {
 		idStream << i%nodeCount <<"-"<< i;
 		ids[i] = idStream.str();
 		if((i % nodeCount)== nodeId ){
-			Logger::debug("Created locally object %d\n", i);
+			LOG_DEBUG("Created locally object %d\n", i);
 			// Create a stack copy of object
 			// register account will create a heap copy of object
 			// and save its pointer in local cache

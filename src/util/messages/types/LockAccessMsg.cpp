@@ -47,7 +47,7 @@ void LockAccessMsg::setObjectId(std::string objectId) {
 void LockAccessMsg::lockAccessHandler(HyflowMessage& m) {
 	LockAccessMsg *lmsg = (LockAccessMsg*) (m.getMsg());
 	if (lmsg->request) {
-		Logger::debug ("Got a Lock request: %s for %s from %d\n", lmsg->lock?"lock":"unlock", lmsg->objectId.c_str(), m.fromNode);
+		LOG_DEBUG ("Got a Lock request: %s for %s from %d\n", lmsg->lock?"lock":"unlock", lmsg->objectId.c_str(), m.fromNode);
 		if (lmsg->lock)
 			lmsg->locked = LockTable::tryLock(lmsg->objectId, lmsg->objVersion);
 		else
@@ -55,7 +55,7 @@ void LockAccessMsg::lockAccessHandler(HyflowMessage& m) {
 
 		lmsg->setRequest(false);
 	} else {
-		Logger::debug ("Got a Lock response: %s for %s\n", lmsg->lock?"lock":"unlock", lmsg->objectId.c_str());
+		LOG_DEBUG ("Got a Lock response: %s for %s\n", lmsg->lock?"lock":"unlock", lmsg->objectId.c_str());
 		if (lmsg->lock) {
 			HyflowMessageFuture& cbfmsg = NetworkManager::getMessageFuture(m.msg_id,
 					m.msg_t);
