@@ -54,7 +54,7 @@ void BenchmarkExecutor::addExecTime(unsigned long long time) {
 }
 
 void BenchmarkExecutor::writeResults() {
-	double trp =  threadCount*transactions*(1000/executionTime);
+	double trp =  (threadCount*transactions*1000)/executionTime;
 	Logger::result("Throughput = %.2f", trp);
 }
 

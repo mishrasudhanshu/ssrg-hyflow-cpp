@@ -25,7 +25,9 @@ src/core/context/types/DTL2Context.d: \
  ../src/core/context/types/../../../util/networking/AbstractNetwork.h \
  ../src/core/context/types/../../../util/networking/../messages/HyflowMessage.h \
  ../src/core/context/types/../../../util/networking/../messages/HyflowMessageFuture.h \
- ../src/core/context/types/../../../util/logging/Logger.h
+ ../src/core/context/types/../../../util/logging/Logger.h \
+ ../src/core/context/types/../LockTable.h \
+ ../src/core/context/types/../../../util/concurrent/ConcurrentHashMap.h
 
 ../src/core/context/types/DTL2Context.h:
 
@@ -78,3 +80,7 @@ src/core/context/types/DTL2Context.d: \
 ../src/core/context/types/../../../util/networking/../messages/HyflowMessageFuture.h:
 
 ../src/core/context/types/../../../util/logging/Logger.h:
+
+../src/core/context/types/../LockTable.h:
+
+../src/core/context/types/../../../util/concurrent/ConcurrentHashMap.h:

@@ -12,6 +12,7 @@
 #include "../../../util/messages/types/LockAccessMsg.h"
 #include "../../../util/networking/NetworkManager.h"
 #include "../../../util/logging/Logger.h"
+#include "../LockTable.h"
 
 namespace vt_dstm {
 
@@ -89,32 +90,43 @@ HyflowObject* DTL2Context::onWriteAccess(HyflowObject *obj){
 }
 
 bool DTL2Context::lockObject(HyflowObject* obj) {
-	HyflowMessageFuture mFu;
-	HyflowMessage hmsg;
-	hmsg.init(MSG_LOCK_ACCESS, true);
-	LockAccessMsg lamsg(obj->getId(), obj->getVersion());
-	lamsg.setLock(true);
-	lamsg.setRequest(true);
-	hmsg.setMsg(&lamsg);
-	int owner = obj->getOwnerNode();
-	LOG_DEBUG("DTL : Requesting lock for %s from %d of version %d\n", obj->getId().c_str(), owner, obj->getVersion());
-	NetworkManager::sendCallbackMessage(owner, hmsg, mFu);
-	mFu.waitOnFuture();
-	return mFu.isBoolResponse();
+	int myNode = NetworkManager::getNodeId();
+	if (myNode == obj->getOwnerNode()) {
+		LOG_DEBUG("DTL : Local Lock available for %s", obj->getId().c_str());
+		return LockTable::tryLock(obj->getId(), obj->getVersion());
+	}else {
+		HyflowMessageFuture mFu;
+		HyflowMessage hmsg;
+		hmsg.init(MSG_LOCK_ACCESS, true);
+		LockAccessMsg lamsg(obj->getId(), obj->getVersion());
+		lamsg.setLock(true);
+		lamsg.setRequest(true);
+		hmsg.setMsg(&lamsg);
+		int owner = obj->getOwnerNode();
+		LOG_DEBUG("DTL : Requesting lock for %s from %d of version %d\n", obj->getId().c_str(), owner, obj->getVersion());
+		NetworkManager::sendCallbackMessage(owner, hmsg, mFu);
+		mFu.waitOnFuture();
+		return mFu.isBoolResponse();
+	}
 }
 
 /*
  * Called to unlock object after failed transaction, unlock local and remote all
  */
 void  DTL2Context::unlockObjectOnFail(HyflowObject *obj) {
-	HyflowMessage hmsg;
-	hmsg.init(MSG_LOCK_ACCESS, false);
-	LockAccessMsg lamsg(obj->getId(), obj->getVersion());
-	lamsg.setLock(false);
-	lamsg.setRequest(true);
-	hmsg.setMsg(&lamsg);
-	// Networking will detect it as local call and short circuit it
-	NetworkManager::sendMessage(obj->getOwnerNode(), hmsg);
+	int myNode = NetworkManager::getNodeId();
+	if (myNode == obj->getOwnerNode()) {
+		LOG_DEBUG("DTL : Local Unlock available for %s", obj->getId().c_str());
+		LockTable::tryUnlock(obj->getId(), obj->getVersion());
+	}else {
+		HyflowMessage hmsg;
+		hmsg.init(MSG_LOCK_ACCESS, false);
+		LockAccessMsg lamsg(obj->getId(), obj->getVersion());
+		lamsg.setLock(false);
+		lamsg.setRequest(true);
+		hmsg.setMsg(&lamsg);
+		NetworkManager::sendMessage(obj->getOwnerNode(), hmsg);
+	}
 }
 
 /*
@@ -125,14 +137,7 @@ void  DTL2Context::unlockObjectOnFail(HyflowObject *obj) {
  */
 void DTL2Context::unlockObject(HyflowObject* obj) {
 	if (obj->getOldOwnerNode() == obj->getOwnerNode()) {
-		HyflowMessage hmsg;
-		hmsg.init(MSG_LOCK_ACCESS, false);
-		LockAccessMsg lamsg(obj->getId(), obj->getOldHyVersion());
-		lamsg.setLock(false);
-		lamsg.setRequest(true);
-		hmsg.setMsg(&lamsg);
-		// Networking will detect it as local call and short circuit it
-		NetworkManager::sendMessage(obj->getOwnerNode(), hmsg);
+		LockTable::tryUnlock(obj->getId(), obj->getOldHyVersion());
 	}
 }
 
