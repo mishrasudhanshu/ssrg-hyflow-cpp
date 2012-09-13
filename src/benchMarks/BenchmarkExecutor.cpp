@@ -83,7 +83,7 @@ void BenchmarkExecutor::prepareArgs() {
 		argsArray[i] = new std::string[argsCount];
 		RandomIdProvider rIdPro(objectsCount);
 		for (int j=0; j < argsCount; j++ ) {
-			int index = (rIdPro.getNext() + nodeId /*+ i*/) %objectsCount;
+			int index = (rIdPro.getNext() + nodeId + i) %objectsCount;
 			argsArray[i][j] = ids[index];
 		}
 		if ( i < (transactions*readPercent/100))

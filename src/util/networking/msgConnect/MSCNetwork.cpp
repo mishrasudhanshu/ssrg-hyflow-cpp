@@ -89,7 +89,8 @@ void MSCNetwork::setupSockets(){
 
 	messenger->setMaxTimeout(ULONG_MAX);
 	socket->setActive(false);
-	socket->setAttemptsToConnect(1);
+	socket->setAttemptsToConnect(50);
+	socket->setAttemptsInterval(100);	//Time is in MilliSecond
 	socket->setFailOnInactive(true);
 	socket->setMaxTimeout(900000l);
 
