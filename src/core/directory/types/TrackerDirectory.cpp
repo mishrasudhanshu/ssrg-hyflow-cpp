@@ -88,13 +88,17 @@ void TrackerDirectory::registerObject(HyflowObject & object, unsigned long long 
 	if ( owner != oldOwner ) {
 		LOG_DEBUG("DIR : Registering %s owner %d->%d\n", id.c_str(), oldOwner, owner);
 
-		//Register the object with tracker
-		RegisterObjectMsg romsg(id, owner, txn);
-		HyflowMessage hmsg;
-		hmsg.msg_t = MSG_REGISTER_OBJ;	// Not callback by default
-		hmsg.setMsg(&romsg);
-
-		NetworkManager::sendMessage(getTracker(id), hmsg);
+		if (owner == getTracker(id)) {	// If I am tracker no messaging required
+			LOG_DEBUG("DIR :Object tracked locally %s\n", id.c_str());
+			DirectoryManager::registerObjectLocally(id, owner, txn);
+		} else {
+			//Register the object with tracker
+			RegisterObjectMsg romsg(id, owner, txn);
+			HyflowMessage hmsg;
+			hmsg.msg_t = MSG_REGISTER_OBJ;	// Not callback by default
+			hmsg.setMsg(&romsg);
+			NetworkManager::sendMessage(getTracker(id), hmsg);
+		}
 	} else {
 		LOG_DEBUG("DIR :Local object %s no re-registration %d -> %d\n", id.c_str(), oldOwner, owner);
 	}
@@ -122,15 +126,20 @@ void TrackerDirectory::registerObjectWait(HyflowObject & object, unsigned long l
 	if ( owner != oldOwner ) {
 		LOG_DEBUG("DIR : Registering %s owner %d->%d\n", id.c_str(), oldOwner, owner);
 
-		//Register the object with tracker
-		RegisterObjectMsg romsg(id, owner, txn);
-		HyflowMessage hmsg;
-		hmsg.msg_t = MSG_REGISTER_OBJ;	// Not callback by default
-		hmsg.setMsg(&romsg);
+		if (owner == getTracker(id)) {	// If I am tracker no messaging required
+			LOG_DEBUG("DIR :Object tracked locally %s\n", id.c_str());
+			DirectoryManager::registerObjectLocally(id, owner, txn);
+		} else {
+			//Register the object with tracker
+			RegisterObjectMsg romsg(id, owner, txn);
+			HyflowMessage hmsg;
+			hmsg.msg_t = MSG_REGISTER_OBJ;	// Not callback by default
+			hmsg.setMsg(&romsg);
 
-		HyflowMessageFuture mFu;
-		NetworkManager::sendCallbackMessage(getTracker(id), hmsg, mFu);
-		mFu.waitOnFuture();
+			HyflowMessageFuture mFu;
+			NetworkManager::sendCallbackMessage(getTracker(id), hmsg, mFu);
+			mFu.waitOnFuture();
+		}
 	} else {
 		LOG_DEBUG("DIR :Local object %s no re-registration %d -> %d\n", id.c_str(), oldOwner, owner);
 	}
