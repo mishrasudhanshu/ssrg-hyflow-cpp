@@ -68,7 +68,7 @@ void Logger::info(const char* str, ...) {
 	}
 }
 
-void LOG_DEBUG(const char* str, ...) {
+void Logger::debug(const char* str, ...) {
 	if (logging) {
 		char buf[200];
 		va_list argptr; /* Set up the variable argument list here */

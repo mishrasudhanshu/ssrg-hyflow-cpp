@@ -55,7 +55,7 @@ void BenchmarkExecutor::addExecTime(unsigned long long time) {
 
 void BenchmarkExecutor::writeResults() {
 	double trp =  (threadCount*transactions*1000)/executionTime;
-	Logger::result("Throughput = %.2f", trp);
+	Logger::result("Throughput=%.2f\n", trp);
 }
 
 void BenchmarkExecutor::initExecutor(){
@@ -68,7 +68,18 @@ void BenchmarkExecutor::initExecutor(){
 		threadCount = NetworkManager::getThreadCount();
 		benchmarkThreads = new boost::thread*[threadCount];
 		sanity = (strcmp(ConfigFile::Value(SANITY).c_str(), TRUE) == 0)? true:false;
+		writeConfig();
 	}
+}
+
+void BenchmarkExecutor::writeConfig() {
+	Logger::result("----------%llu------------\n", getTime());
+	Logger::result("Benchmark=bank\n");
+	Logger::result("Reads=%d%%\n", readPercent);
+	Logger::result("Objects=%d\n", objectsCount);
+	Logger::result("Trnxs=%d\n", transactions);
+	Logger::result("Threads=%d\n",threadCount);
+	Logger::result("Nodes=%d\n",NetworkManager::getNodeCount());
 }
 
 void BenchmarkExecutor::createObjects(){

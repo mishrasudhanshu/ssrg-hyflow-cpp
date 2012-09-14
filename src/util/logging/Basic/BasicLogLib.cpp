@@ -86,7 +86,7 @@ BasicLogLib::BasicLogLib() {
 	memset(fileName, 0, sizeof(fileName));
 	sprintf(fileName, "%s/%d_result.log", dirName, nodeId);
 	resultStr = NULL;
-	resultStr = fopen(fileName, "wb+");
+	resultStr = fopen(fileName, "ab+");
 	if (resultStr == NULL) {
 		std::cerr << "Unable to create result file" << std::endl;
 	}
@@ -239,8 +239,8 @@ void BasicLogLib::result(char const* str, ...) {
 		vsprintf(buf, str, argptr); /* print the variable arguments to buffer */
 		{
 			boost::lock_guard<boost::mutex> lock(resultGuard);
-			fprintf(resultStr, "thread %lld :%.5f :",
-					(long long) pthread_self());
+//			fprintf(resultStr, "thread %lld :%.5f :",
+//					(long long) pthread_self());
 			fprintf(resultStr, (char const*) buf); /* print the message to stream */
 		}
 		/* Signify end of processing of variable arguments */

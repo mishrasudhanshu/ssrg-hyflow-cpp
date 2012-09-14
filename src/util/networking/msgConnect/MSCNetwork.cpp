@@ -95,9 +95,9 @@ void MSCNetwork::setupSockets(){
 	messenger->setMaxTimeout(ULONG_MAX);
 	socket->setActive(false);
 	socket->setAttemptsToConnect(50);
-	socket->setAttemptsInterval(100);	//Time is in MilliSecond
+//	socket->setAttemptsInterval(100);	//Time is in MilliSecond
 	socket->setFailOnInactive(true);
-	socket->setInactivityTime(50000);
+//	socket->setInactivityTime(5000);
 	socket->setMaxTimeout(900000l);
 
 	socket->setMessengerAddress(ip);

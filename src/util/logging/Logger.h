@@ -11,7 +11,7 @@
 #ifndef RELEASE
 #define LOG_DEBUG(...) Logger::debug(__VA_ARGS__)
 #else
-#define LOG_DEBUG(...)
+#define LOG_DEBUG(...) do{}while(0)
 #endif
 
 namespace vt_dstm

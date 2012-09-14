@@ -367,18 +367,18 @@ bool MCSocketTransportJob::PerformHandshake(void)
 			if(getIsSending())
 			{
 				FD_SET(FTransporter->getSocket(), &FDSendSet);
-//#ifdef __GNUC__
-//				select_res = select(FD_SETSIZE, &FDRecvSet, &FDSendSet, NULL, PTV);
-//#else
+#ifdef __GNUC__
+				select_res = select(FD_SETSIZE, &FDRecvSet, &FDSendSet, NULL, PTV);
+#else
 				select_res = select((mcInt32)highSocketHandle + 1, &FDRecvSet, &FDSendSet, NULL, PTV);
-//#endif
+#endif
 			}
 			else
-//#ifdef __GNUC__
-//				select_res = select(FD_SETSIZE, &FDRecvSet, NULL, NULL, PTV);
-//#else
+#ifdef __GNUC__
+				select_res = select(FD_SETSIZE, &FDRecvSet, NULL, NULL, PTV);
+#else
 				select_res = select((mcInt32)highSocketHandle + 1, &FDRecvSet, NULL, NULL, PTV);
-//#endif
+#endif
   
 			switch(select_res) {
 				case -1:

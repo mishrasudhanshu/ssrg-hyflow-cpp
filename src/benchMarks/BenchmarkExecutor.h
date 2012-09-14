@@ -63,6 +63,7 @@ class BenchmarkExecutor {
 	static void createObjects();
     static void execute(int id);
 	static void addExecTime(unsigned long long time);
+	static void writeConfig();
 public:
 	BenchmarkExecutor();
 	virtual ~BenchmarkExecutor();
