@@ -41,11 +41,14 @@ void TrackerDirectory::locateAsync(std::string & id, bool rw, unsigned long long
 
 	// Directly send the object request to owner
 	if (trackerNode == myNode) {
+		HyflowContext *c = ContextManager::findContext(txn);
+		c->updateClock(ContextManager::getClock());
 		int ownerNode = getObjectLocation(id);
 		if (ownerNode == myNode) {
 			LOG_DEBUG("Got Object %s Locally\n",id.c_str());
 			HyflowObject* obj = DirectoryManager::getObjectLocally(id, rw);
 			fu.getMessageFuture().setDataResponse(obj);
+			c->updateClock(ContextManager::getClock());
 			fu.getMessageFuture().notifyMessage();
 		} else {
 			ObjectAccessMsg oam(id, rw);

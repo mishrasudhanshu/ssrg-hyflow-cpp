@@ -44,7 +44,7 @@ ConcurrentHashMap<unsigned long long, HyflowMessageFuture *> MSCNetwork::lockCal
 ConcurrentHashMap<unsigned long long, HyflowMessageFuture *> MSCNetwork::readValidCallbackMap;
 ConcurrentHashMap<unsigned long long, HyflowMessageFuture *> MSCNetwork::registerCallbackMap;
 volatile bool MSCNetwork::hyflowShutdown = false;
-boost::thread *MSCNetwork::dispatchThread = NULL;
+boost::thread **MSCNetwork::dispatchThread = NULL;
 
 boost::condition MSCNetwork::onCluster;
 boost::mutex MSCNetwork::clsMutex;
@@ -61,11 +61,14 @@ MSCNetwork::MSCNetwork() {
 		messenger = new MsgConnect::MCMessenger();
 		queue = new MsgConnect::MCQueue();
 		socket = new MsgConnect::MCSocketTransport();
+		threadCount = NetworkManager::getThreadCount();
 		setupSockets();
 		LOG_DEBUG("Calling boost Dispatcher Thread\n");
-		dispatchThread = new boost::thread(dispatcher, messenger);
+		dispatchThread = new boost::thread*[threadCount];
+		for (int i=0; i < threadCount ; i++) {
+			dispatchThread[i] = new boost::thread(dispatcher, messenger);
+		}
 		isInit = true;
-		threadCount = NetworkManager::getThreadCount();
 	}
 }
 
@@ -74,7 +77,9 @@ MSCNetwork::~MSCNetwork() {
 	delete queue;
 	delete socket;
 	hyflowShutdown = true;
-	dispatchThread->join();
+	for (int i=0 ; i < threadCount; i++ ) {
+		dispatchThread[i]->join();
+	}
 	delete dispatchThread;
 }
 

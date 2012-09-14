@@ -38,7 +38,7 @@ class MSCNetwork: public AbstractNetwork {
 	static boost::mutex clsMutex;
 
 	static volatile bool hyflowShutdown;
-	static boost::thread *dispatchThread;
+	static boost::thread **dispatchThread;
 
 	MsgConnect::MCMessenger* messenger;
 	MsgConnect::MCQueue* queue;

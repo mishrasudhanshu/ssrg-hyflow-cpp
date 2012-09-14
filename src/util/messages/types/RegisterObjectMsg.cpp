@@ -45,6 +45,7 @@ void RegisterObjectMsg::serialize(Archive & ar, const unsigned int version) {
 	ar & request;
 }
 
+// FIXME: In List might require forwarding call
 void RegisterObjectMsg::registerObjectHandler(HyflowMessage & msg) {
 	RegisterObjectMsg* romsg = (RegisterObjectMsg*) (msg.getMsg());
 	if (romsg->request) {

@@ -92,7 +92,7 @@ HyflowObject* DTL2Context::onWriteAccess(HyflowObject *obj){
 bool DTL2Context::lockObject(HyflowObject* obj) {
 	int myNode = NetworkManager::getNodeId();
 	if (myNode == obj->getOwnerNode()) {
-		LOG_DEBUG("DTL : Local Lock available for %s", obj->getId().c_str());
+		LOG_DEBUG("DTL : Local Lock available for %s\n", obj->getId().c_str());
 		return LockTable::tryLock(obj->getId(), obj->getVersion());
 	}else {
 		HyflowMessageFuture mFu;
@@ -116,7 +116,7 @@ bool DTL2Context::lockObject(HyflowObject* obj) {
 void  DTL2Context::unlockObjectOnFail(HyflowObject *obj) {
 	int myNode = NetworkManager::getNodeId();
 	if (myNode == obj->getOwnerNode()) {
-		LOG_DEBUG("DTL : Local Unlock available for %s", obj->getId().c_str());
+		LOG_DEBUG("DTL : Local Unlock available for %s\n", obj->getId().c_str());
 		LockTable::tryUnlock(obj->getId(), obj->getVersion());
 	}else {
 		HyflowMessage hmsg;
