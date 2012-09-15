@@ -33,7 +33,7 @@ void BankBenchmark::readOperation(std::string ids[], int size) {
 
 void BankBenchmark::writeOperation(std::string ids[], int size) {
 	static int a = 1;
-	a += BenchmarkExecutor::getThreadId();	// Only for debug sanity
+	//a += BenchmarkExecutor::getThreadId();	// Only for debug sanity, not thread safe
 	LOG_DEBUG("Transfer from %s to %s %d\n", ids[0].c_str(), ids[1].c_str(), a);
 	BankAccount::transfer(ids[0], ids[1], a);
 }
@@ -58,7 +58,7 @@ std::string* BankBenchmark::createLocalObjects(int objCount) {
 			// register account will create a heap copy of object
 			// and save its pointer in local cache
 			BankAccount ba(10000, ids[i]);
-			DirectoryManager::registerObjectWait(ba, 0);
+			DirectoryManager::registerObjectWait(&ba, 0);
 		}
 	}
 	return ids;

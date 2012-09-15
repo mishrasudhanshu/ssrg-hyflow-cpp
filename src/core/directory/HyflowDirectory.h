@@ -33,15 +33,15 @@ public:
 	/**
 	 * Register object in the cluster
 	 */
-	virtual void registerObject(HyflowObject & object, unsigned long long txn)=0;
+	virtual void registerObject(HyflowObject* object, unsigned long long txn)=0;
 	/**
 	 * Register object with wait in the cluster
 	 */
-	virtual void registerObjectWait(HyflowObject & object, unsigned long long txn)=0;
+	virtual void registerObjectWait(HyflowObject* object, unsigned long long txn)=0;
 	/**
 	 * Unregister object from the cluster
 	 */
-	virtual void unregisterObject(HyflowObject & object, unsigned long long txn)=0;
+	virtual void unregisterObject(HyflowObject* object, unsigned long long txn)=0;
 	/**
 	 * Function used by message handler to access the object
 	 */
@@ -49,7 +49,7 @@ public:
 	/**
 	 * Update local object
 	 */
-	virtual void updateObjectLocally(HyflowObject & obj)=0;
+	virtual void updateObjectLocally(HyflowObject* obj)=0;
 	/**
 	 * Track the object location
 	 */

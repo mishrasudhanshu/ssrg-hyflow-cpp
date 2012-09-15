@@ -31,13 +31,13 @@ public:
 	/**
 	 * Register object in the cluster
 	 */
-	static void registerObject(HyflowObject & object, unsigned long long txn);
-	static void registerObjectWait(HyflowObject & object, unsigned long long txn);
+	static void registerObject(HyflowObject* object, unsigned long long txn);
+	static void registerObjectWait(HyflowObject* object, unsigned long long txn);
 	static void registerObjectLocally(std::string & objectId, int owner, unsigned long long txn);
 	/**
 	 * Unregister object from the cluster
 	 */
-	static void unregisterObject(HyflowObject & object, unsigned long long txn);
+	static void unregisterObject(HyflowObject* object, unsigned long long txn);
 	static void unregisterObjectLocally(std::string & objId, unsigned long long txn);
 	/**
 	 * Function used by message handler to access the object
@@ -46,7 +46,7 @@ public:
 	/**
 	 * Update local object
 	 */
-	static void updateObjectLocally(HyflowObject & obj);
+	static void updateObjectLocally(HyflowObject* obj);
 	/**
 	 * Track the object location
 	 */

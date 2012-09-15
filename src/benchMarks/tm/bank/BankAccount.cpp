@@ -84,7 +84,8 @@ uint64_t BankAccount::totalBalance(std::string id1, std::string id2, HyflowConte
 	DirectoryManager::locateAsync(id2, true, c->getTxnId(), of2);
 	try{
 		long balance = 0;
-		BankAccount* account1 = (BankAccount*)of1.waitOnObject();
+		BankAccount* account1 = NULL;
+		account1 = (BankAccount*)of1.waitOnObject();
 		balance += account1->checkBalance(c);
 
 		try {

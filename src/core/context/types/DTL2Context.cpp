@@ -194,17 +194,17 @@ void DTL2Context::commit(){
 		wi->second->setVersion(tnxClock);
 		LOG_DEBUG("Set object %s version %d\n",wi->first.c_str(), tnxClock);
 		// Register object
-		DirectoryManager::registerObject(*wi->second, txnId);
+		DirectoryManager::registerObject(wi->second, txnId);
 	}
 
 	// Publish new created objects and wait of ownership change
 	for( wi = publishMap.rbegin() ; wi != publishMap.rend() ; wi++ ) {
-		DirectoryManager::registerObject(*wi->second, txnId);
+		DirectoryManager::registerObject(wi->second, txnId);
 	}
 
 	// Unregister deleted objects
 	for( wi = deleteMap.rbegin() ; wi != deleteMap.rend() ; wi++ ) {
-		DirectoryManager::unregisterObject(*wi->second, txnId);
+		DirectoryManager::unregisterObject(wi->second, txnId);
 	}
 
 	// Release all held locks by this transaction

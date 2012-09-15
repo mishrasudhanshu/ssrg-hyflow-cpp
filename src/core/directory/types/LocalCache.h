@@ -31,7 +31,8 @@ public:
 		HyflowObject* objectCopy = NULL;
 		object->getClone(&objectCopy);
 		{
-			boost::upgrade_lock<boost::shared_mutex> writeLock(rwMutex);
+			boost::upgrade_lock<boost::shared_mutex> upLock(rwMutex);
+			boost::upgrade_to_unique_lock<boost::shared_mutex> writelock(upLock);
 			std::map<std::string, HyflowObject*>::iterator i = map.find(objId);
 			if ( i == map.end()) {
 				map[objId] = objectCopy;
@@ -46,7 +47,7 @@ public:
 	/*
 	 * Create new copy of object on heap and return its pointer to calling function
 	 */
-	HyflowObject* getObject(std::string objId) {
+	HyflowObject* getObject(std::string & objId) {
 		HyflowObject* objectCopy = NULL;
 		HyflowObject* obj=NULL;
 		{
@@ -54,6 +55,9 @@ public:
 			std::map<std::string, HyflowObject*>::iterator i = map.find(objId);
 			if ( i != map.end()) {
 				obj = i->second;
+				if (!obj) {
+					throw "No object for " + objId;
+				}
 				obj->getClone(&objectCopy);
 			}
 			return objectCopy;

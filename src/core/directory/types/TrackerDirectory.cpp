@@ -75,12 +75,12 @@ void TrackerDirectory::locateAsync(std::string & id, bool rw, unsigned long long
  * If current node is already owner of object don't send the request only update owner
  * and old owner values (Used in unlock).
  */
-void TrackerDirectory::registerObject(HyflowObject & object, unsigned long long txn) {
-	std::string & id = object.getId();
-	int oldOwner = object.getOwnerNode();
+void TrackerDirectory::registerObject(HyflowObject* object, unsigned long long txn) {
+	std::string & id = object->getId();
+	int oldOwner = object->getOwnerNode();
 	int owner  = NetworkManager::getNodeId();
-	object.setOwnerNode(owner);
-	object.setOldOwnerNode(oldOwner);
+	object->setOwnerNode(owner);
+	object->setOldOwnerNode(oldOwner);
 	// Save the object in local cache, updateObject creates a clone and update in local cache
 	// Currently pointed objected is attached to message future and will be destroyed
 	// on its destructor call
@@ -113,12 +113,12 @@ void TrackerDirectory::registerObject(HyflowObject & object, unsigned long long 
  * If current node is already owner of object don't send the request only update owner
  * and old owner values (Used in unlock).
  */
-void TrackerDirectory::registerObjectWait(HyflowObject & object, unsigned long long txn) {
-	std::string & id = object.getId();
-	int oldOwner = object.getOwnerNode();
+void TrackerDirectory::registerObjectWait(HyflowObject* object, unsigned long long txn) {
+	std::string & id = object->getId();
+	int oldOwner = object->getOwnerNode();
 	int owner  = NetworkManager::getNodeId();
-	object.setOwnerNode(owner);
-	object.setOldOwnerNode(oldOwner);
+	object->setOwnerNode(owner);
+	object->setOldOwnerNode(oldOwner);
 	// Save the object in local cache, create a clone and update in local cache
 	// Currently pointed objected is attached to message future and will be destroyed
 	// on its destructor call
@@ -156,16 +156,16 @@ void TrackerDirectory::registerObjectLocally(std::string & objId, int owner, uns
 	directory.insertValue(p);
 }
 
-void TrackerDirectory::unregisterObject(HyflowObject & object, unsigned long long txn) {
-	RegisterObjectMsg romsg(object.getId(),txn);
+void TrackerDirectory::unregisterObject(HyflowObject* object, unsigned long long txn) {
+	RegisterObjectMsg romsg(object->getId(),txn);
 	HyflowMessage hmsg;
 	hmsg.msg_t = MSG_REGISTER_OBJ;	// Not callback by default
 	hmsg.setMsg(&romsg);
-	int tracker = getTracker(object.getId());
+	int tracker = getTracker(object->getId());
 	if ( tracker != NetworkManager::getNodeId()) {
 		NetworkManager::sendMessage(tracker, hmsg);
 	} else {	// Local object
-		unregisterObjectLocally(object.getId(),txn);
+		unregisterObjectLocally(object->getId(),txn);
 	}
 }
 
@@ -181,8 +181,8 @@ HyflowObject* TrackerDirectory::getObjectLocally(std::string & id, bool rw){
 	return local.getObject(id);
 }
 
-void TrackerDirectory::updateObjectLocally(HyflowObject & obj){
-	local.updateObject(&obj);
+void TrackerDirectory::updateObjectLocally(HyflowObject* obj){
+	local.updateObject(obj);
 }
 
 int TrackerDirectory::getObjectLocation(std::string & id){

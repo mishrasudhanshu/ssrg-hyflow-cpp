@@ -11,6 +11,7 @@
 #include <map>
 #include <iostream>
 #include <boost/thread/shared_mutex.hpp>
+#include <boost/thread/locks.hpp>
 
 namespace vt_dstm {
 
@@ -26,7 +27,8 @@ public:
 	virtual ~ConcurrentHashMap() {};
 
 	void deletePair(Key & k) {
-		boost::upgrade_lock<boost::shared_mutex> writeLock(rwMutex);
+		boost::upgrade_lock<boost::shared_mutex> upLock(rwMutex);
+		boost::upgrade_to_unique_lock<boost::shared_mutex> writelock(upLock);
 		chm.erase(k);
 	}
 
@@ -36,7 +38,8 @@ public:
 	}
 
 	void updateValue(std::pair<Key, Value> & p) {
-		boost::upgrade_lock<boost::shared_mutex> writeLock(rwMutex);
+		boost::upgrade_lock<boost::shared_mutex> upLock(rwMutex);
+		boost::upgrade_to_unique_lock<boost::shared_mutex> writelock(upLock);
 		try {
 			chm.erase(p.first);
 		}catch(...) {
@@ -47,7 +50,8 @@ public:
 	}
 
 	void updatePointerValue(std::pair<Key, Value> & p) {
-		boost::upgrade_lock<boost::shared_mutex> writeLock(rwMutex);
+		boost::upgrade_lock<boost::shared_mutex> upLock(rwMutex);
+		boost::upgrade_to_unique_lock<boost::shared_mutex> writelock(upLock);
 		try {
 //			Value v = chm.at(p.first);
 			chm.erase(p.first);
@@ -64,7 +68,8 @@ public:
 	}
 
 	void insertValue(std::pair<Key, Value> & p) {
-		boost::upgrade_lock<boost::shared_mutex> writeLock(rwMutex);
+		boost::upgrade_lock<boost::shared_mutex> upLock(rwMutex);
+		boost::upgrade_to_unique_lock<boost::shared_mutex> writelock(upLock);
 		try {
 			chm.erase(p.first);
 		}catch(...) {
@@ -74,7 +79,8 @@ public:
 	}
 
 	void insertValue(Key & k, Value & v) {
-		boost::upgrade_lock<boost::shared_mutex> writeLock(rwMutex);
+		boost::upgrade_lock<boost::shared_mutex> upLock(rwMutex);
+		boost::upgrade_to_unique_lock<boost::shared_mutex> writelock(upLock);
 		chm[k] = v;
 	}
 

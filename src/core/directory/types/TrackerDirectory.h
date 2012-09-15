@@ -20,8 +20,8 @@ namespace vt_dstm {
 class TrackerDirectory: public vt_dstm::HyflowDirectory {
 	static ConcurrentHashMap<std::string, int> directory;
 	static LocalCache local;
-	void updateObjectToLocal(HyflowObject &obj);
-	void updateObjectToDirectory(HyflowObject &obj);
+	void updateObjectToLocal(HyflowObject* obj);
+	void updateObjectToDirectory(HyflowObject* obj);
 	int getTracker(std::string & objectId);
 	void registerObjectLocally(std::string & objId, int owner, unsigned long long txn);
 	void unregisterObjectLocally(std::string & id, unsigned long long txn);
@@ -33,13 +33,13 @@ public:
 
 	void locateAsync(std::string & id, bool rw, unsigned long long txn, HyflowObjectFuture & fu);
 
-	void registerObject(HyflowObject & object, unsigned long long txn);
-	void registerObjectWait(HyflowObject & object, unsigned long long txn);
+	void registerObject(HyflowObject* object, unsigned long long txn);
+	void registerObjectWait(HyflowObject* object, unsigned long long txn);
 
-	void unregisterObject(HyflowObject & object, unsigned long long txn);
+	void unregisterObject(HyflowObject* object, unsigned long long txn);
 
 	HyflowObject* getObjectLocally(std::string & id, bool rw);
-	void updateObjectLocally(HyflowObject & obj);
+	void updateObjectLocally(HyflowObject* obj);
 
 	int getObjectLocation(std::string & objId);
 
