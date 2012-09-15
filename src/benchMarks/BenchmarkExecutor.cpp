@@ -8,6 +8,7 @@
 #include <cstddef>
 #include <cstdlib>
 #include <boost/thread/thread.hpp>
+#include <string.h>
 #include "BenchmarkExecutor.h"
 #include "../util/Definitions.h"
 #include "../util/parser/ConfigFile.h"

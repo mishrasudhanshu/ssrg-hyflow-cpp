@@ -30,14 +30,16 @@ public:
 		std::string objId = object->getId();
 		HyflowObject* objectCopy = NULL;
 		object->getClone(&objectCopy);
-		boost::upgrade_lock<boost::shared_mutex> writeLock(rwMutex);
-		std::map<std::string, HyflowObject*>::iterator i = map.find(objId);
-		if ( i == map.end()) {
-			map[objId] = objectCopy;
-		} else {
-			delete i->second;
-			map.erase(i);
-			map[objId] = objectCopy;
+		{
+			boost::upgrade_lock<boost::shared_mutex> writeLock(rwMutex);
+			std::map<std::string, HyflowObject*>::iterator i = map.find(objId);
+			if ( i == map.end()) {
+				map[objId] = objectCopy;
+			} else {
+				delete i->second;
+				map.erase(i);
+				map[objId] = objectCopy;
+			}
 		}
 	}
 
@@ -46,12 +48,16 @@ public:
 	 */
 	HyflowObject* getObject(std::string objId) {
 		HyflowObject* objectCopy = NULL;
-		boost::shared_lock<boost::shared_mutex> readLock(rwMutex);
-		std::map<std::string, HyflowObject*>::iterator i = map.find(objId);
-		if ( i != map.end()) {
-			i->second->getClone(&objectCopy);
+		HyflowObject* obj=NULL;
+		{
+			boost::shared_lock<boost::shared_mutex> readLock(rwMutex);
+			std::map<std::string, HyflowObject*>::iterator i = map.find(objId);
+			if ( i != map.end()) {
+				obj = i->second;
+				obj->getClone(&objectCopy);
+			}
+			return objectCopy;
 		}
-		return objectCopy;
 	}
 
 	/*

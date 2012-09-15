@@ -6,7 +6,7 @@
  */
 
 #include <string>
-
+#include <iostream>
 #include "Application.h"
 #include "../util/unitTests/unitTests.h"
 #include "../util/Definitions.h"
@@ -56,7 +56,7 @@ int main(int argc, char *argv[], char *envp[]) {
 	LOG_DEBUG("APP :All Done !!!\n");
 
 	// Just to make sure any last time message are printed: for debugging
-	LOG_DEBUG("APP :....\n");
+	std::cerr<<"...."<<std::endl;
 	sleep(2);
 	return 0;
 }

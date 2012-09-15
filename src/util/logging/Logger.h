@@ -8,11 +8,11 @@
 #ifndef LOGGER_H_
 #define LOGGER_H_
 
-#ifndef RELEASE
-#define LOG_DEBUG(...) Logger::debug(__VA_ARGS__)
-#else
+//#ifndef RELEASE
+//#define LOG_DEBUG(...) Logger::debug(__VA_ARGS__)
+//#else
 #define LOG_DEBUG(...) do{}while(0)
-#endif
+//#endif
 
 namespace vt_dstm
 {
