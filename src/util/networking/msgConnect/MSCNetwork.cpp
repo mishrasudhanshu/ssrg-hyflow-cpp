@@ -64,8 +64,12 @@ MSCNetwork::MSCNetwork() {
 		threadCount = NetworkManager::getThreadCount();
 		setupSockets();
 		LOG_DEBUG("Calling boost Dispatcher Thread\n");
-		dispatchThread = new boost::thread*[threadCount];
-		for (int i=0; i < threadCount ; i++) {
+		int dispThreads = threadCount;
+		if (NetworkManager::getNodeCount() == 1) {
+			dispThreads = 1;	// As everything done locally.
+		}
+		dispatchThread = new boost::thread*[dispThreads];
+		for (int i=0; i < dispThreads ; i++) {
 			dispatchThread[i] = new boost::thread(dispatcher, messenger);
 		}
 		isInit = true;
