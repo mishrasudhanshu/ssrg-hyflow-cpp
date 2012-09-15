@@ -1,9 +1,10 @@
 #!/bin/bash
 
-nodeId=$1
-txns=1000
-objs=1000*$nodeId
+txns=2000
+objs=10000
 
+echo "---Box Config---"
+echo "nodeId=$nodeId, txns=$txns, objs=$objs, reads 0..100..20 threads 1...24" 
 for read in {0..100..20}
 do
     echo -e "For reads = $read"
@@ -13,7 +14,7 @@ do
         for exp in 1 2 3
         do
             echo -e "        For experiment $exp, read $read and threads $threads"
-            objects=$objs transactions=$txns nodeId=$nodeId reads=$read threads=$threads Debug/ssrg-hyflow-cpp
+            nodeCount=1 objects=$objs transactions=$txns nodeId=0 reads=$read threads=$threads Debug/ssrg-hyflow-cpp
             break
         done
         break
