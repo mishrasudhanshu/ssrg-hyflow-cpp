@@ -15,6 +15,7 @@
 #include "../../../core/directory/DirectoryManager.h"
 #include "../../../util/logging/Logger.h"
 #include "../../../util/networking/NetworkManager.h"
+#include "../../BenchmarkExecutor.h"
 #include "BankAccount.h"
 
 namespace vt_dstm {
@@ -126,6 +127,7 @@ uint64_t BankAccount::totalBalance(std::string id1, std::string id2) {
 				LOG_DEBUG("++++++++++Transaction Successful ++++++++++\n");
 			} catch (TransactionException & ex) {
 				ex.print();
+				BenchmarkExecutor::increaseRetries();
 				continue;
 			} catch(...) {
 				throw;
@@ -187,6 +189,7 @@ void BankAccount::transfer(std::string id1, std::string id2,
 				LOG_DEBUG("++++++++++Transaction Successful ++++++++++\n");
 			} catch (TransactionException & ex) {
 				ex.print();
+				BenchmarkExecutor::increaseRetries();
 				continue;
 			} catch(...) {
 				throw;

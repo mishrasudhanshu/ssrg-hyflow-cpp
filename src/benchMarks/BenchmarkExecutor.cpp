@@ -30,12 +30,14 @@ int BenchmarkExecutor::threads = 1;
 bool BenchmarkExecutor::isInitiated = false;
 int BenchmarkExecutor::executionTime = 0;
 int BenchmarkExecutor::threadCount = 0;
+int BenchmarkExecutor::retryCount = 0;
 
 HyflowBenchmark* BenchmarkExecutor::benchmark = NULL;
 bool* BenchmarkExecutor::transactionType = NULL;
 std::string** BenchmarkExecutor::argsArray = NULL;
 std::string* BenchmarkExecutor::ids = NULL;
 boost::thread_specific_ptr<Integer> BenchmarkExecutor::threadId;
+boost::thread_specific_ptr<Integer> BenchmarkExecutor::retries;
 boost::thread** BenchmarkExecutor::benchmarkThreads = NULL;
 boost::mutex BenchmarkExecutor::execMutex;
 
@@ -49,14 +51,16 @@ unsigned long long BenchmarkExecutor::getTime() {
 	return tv.tv_sec*1000 + 0.001*tv.tv_usec;
 }
 
-void BenchmarkExecutor::addExecTime(unsigned long long time) {
+void BenchmarkExecutor::addMetaData(unsigned long long time, int retry) {
 	boost::unique_lock<boost::mutex> execlock(execMutex);
 	executionTime += time;
+	retryCount += retry;
 }
 
 void BenchmarkExecutor::writeResults() {
 	double trp =  (threadCount*transactions*1000)/executionTime;
 	Logger::result("Throughput=%.2f\n", trp);
+	Logger::result("Retries=%d\n",retryCount);
 }
 
 void BenchmarkExecutor::initExecutor(){
@@ -130,8 +134,19 @@ void BenchmarkExecutor::execute(int id){
 		}
 	}
 	unsigned long long executionTime = getTime() + 1 - startTime;
-	addExecTime(executionTime);
+	int rtry = 0;
+	if (retries.get()) {
+		rtry = retries.get()->getValue();
+	}
+	addMetaData(executionTime, rtry);
 	LOG_DEBUG("BNC_EXE %d: Execution time = %llu msec <----------------------\n", id, executionTime);
+}
+
+void BenchmarkExecutor::increaseRetries() {
+	if (!retries.get()) {
+		retries.reset(new Integer(0));
+	}
+	retries.get()->increaseValue();
 }
 
 int BenchmarkExecutor::getThreadId(){
@@ -140,6 +155,7 @@ int BenchmarkExecutor::getThreadId(){
 	}
 	return threadId.get()->getValue();
 }
+
 
 void BenchmarkExecutor::executeThreads() {
 	// Read all the configuration settings

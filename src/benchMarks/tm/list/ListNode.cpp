@@ -11,6 +11,12 @@
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/serialization/base_object.hpp>
 #include "ListNode.h"
+#include "../../../core/context/ContextManager.h"
+#include "../../../core/HyflowObjectFuture.h"
+#include "../../../core/directory/DirectoryManager.h"
+#include "../../../util/logging/Logger.h"
+#include "../../../util/networking/NetworkManager.h"
+
 
 namespace vt_dstm {
 
@@ -42,12 +48,38 @@ void ListNode::setValue(int value) {
 ListNode::~ListNode() {
 }
 
-void ListNode::addNode(int value, HyflowContext *c) {
-
+void ListNode::addNode(int value, HyflowContext *c, HyflowObjectFuture & fu) {
+	std::string head="HEAD";
+	DirectoryManager::locateAsync(head, true, c->getTxnId(), fu);
 }
 
 void ListNode::addNode(int value) {
-
+	bool commit = true;
+	for (int i = 0; i < 0x7fffffff; i++) {
+		HyflowContext* c = ContextManager::getInstance();
+		HyflowObjectFuture of1("HEAD", true, c->getTxnId());
+		try {
+			addNode(value, c, of1);
+		} catch (TransactionException & ex) {
+			ex.print();
+			commit = false;
+		} catch (...) {
+			throw;
+		}
+		if (commit) {
+			try {
+				c->commit();
+				LOG_DEBUG("++++++++++Transaction Successful ++++++++++\n");
+			} catch (TransactionException & ex) {
+				ex.print();
+				continue;
+			} catch(...) {
+				throw;
+			}
+			return;
+		}
+	}
+	throw new TransactionException("Failed to commit the transaction in the defined retries.");
 }
 
 void ListNode::deleteNode(int value, HyflowContext *c) {

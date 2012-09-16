@@ -23,7 +23,7 @@ class ListNode: public vt_dstm::HyflowObject {
 
 	std::string nextId;
 	int value;
-	static void addNode(int value, HyflowContext *c);
+	static void addNode(int value, HyflowContext *c, HyflowObjectFuture & fu);
 	static void deleteNode(int value, HyflowContext *c);
 	static void sumNodes(HyflowContext *c);
 	static void findNode(int value, HyflowContext *c);

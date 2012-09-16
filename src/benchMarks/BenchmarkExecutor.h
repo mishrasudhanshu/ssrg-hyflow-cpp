@@ -29,6 +29,10 @@ public:
 	void setValue(int value) {
 		this->value = value;
 	}
+
+	void increaseValue() {
+		value++;
+	}
 };
 
 class BenchmarkExecutor {
@@ -36,6 +40,7 @@ class BenchmarkExecutor {
 	static boost::thread **benchmarkThreads;
 
 	static boost::thread_specific_ptr<Integer> threadId;
+	static boost::thread_specific_ptr<Integer> retries;
 	static int calls;
 	static int delay;
 	static long timeout;
@@ -48,6 +53,7 @@ class BenchmarkExecutor {
 	static bool sanity;
 	static int threadCount;
 	static int executionTime;
+	static int retryCount;
 	static boost::mutex execMutex;
 
 	static bool* transactionType;
@@ -62,7 +68,7 @@ class BenchmarkExecutor {
 	static std::string& randomId();
 	static void createObjects();
     static void execute(int id);
-	static void addExecTime(unsigned long long time);
+	static void addMetaData(unsigned long long time, int retry);
 	static void writeConfig();
 public:
 	BenchmarkExecutor();
@@ -82,6 +88,7 @@ public:
 
     static void executeThreads();
 	static int getThreadId();
+	static void increaseRetries();
 
 	bool isSanity() const {
 		return sanity;
