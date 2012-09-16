@@ -101,7 +101,7 @@ void LockTable::tryUnlock(std::string & objId, int32_t obVer) {
 		LOG_DEBUG("LockTable : Unlock successful for %s\n", objId.c_str());
 		return;
 	}
-	Logger::fatal("LockTable : Request object %s was already unlocked\n", objId.c_str());
+	LOG_DEBUG("LockTable : Request object %s was already unlocked\n", objId.c_str());
 }
 
 } /* namespace vt_dstm */
