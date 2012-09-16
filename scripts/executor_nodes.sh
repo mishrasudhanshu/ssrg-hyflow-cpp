@@ -25,7 +25,7 @@ do
                 echo "waiting for $pid"
                 wait $pid
             done
-            sleep 1
+            sleep 5
         done
     done
 done

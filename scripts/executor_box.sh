@@ -15,10 +15,8 @@ do
         do
             echo -e "        For experiment $exp, read $read and threads $threads"
             nodeCount=1 objects=$objs transactions=$txns nodeId=0 reads=$read threads=$threads Debug/ssrg-hyflow-cpp
-            break
+            sleep 5
         done
-        break
     done
-    break
 done
 echo "Executor completed"
