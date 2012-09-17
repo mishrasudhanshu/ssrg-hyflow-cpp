@@ -9,6 +9,7 @@
 #include <cstdlib>
 #include <boost/thread/thread.hpp>
 #include <string.h>
+#include <time.h>
 #include "BenchmarkExecutor.h"
 #include "../util/Definitions.h"
 #include "../util/parser/ConfigFile.h"
@@ -100,7 +101,7 @@ void BenchmarkExecutor::prepareArgs() {
 		argsArray[i] = new std::string[argsCount];
 		RandomIdProvider rIdPro(objectsCount);
 		for (int j=0; j < argsCount; j++ ) {
-			int index = (rIdPro.getNext() + nodeId + i) %objectsCount;
+			int index = (rIdPro.getNext() /*+ nodeId + i + nodeId*i*/) %objectsCount;
 			argsArray[i][j] = ids[index];
 		}
 		if ( i < (transactions*readPercent/100))
@@ -123,7 +124,7 @@ void BenchmarkExecutor::execute(int id){
 
 	int argsCount = benchmark->getOperandsCount();
 	LOG_DEBUG("BNCH_EXE %d:------------------------------>\n", id);
-	unsigned long long startTime = getTime();
+	clock_t start = clock();
 	for(int i=0; i < transactions; i++) {
 		int pos = (i + id) % transactions;
 		if (transactionType[i]) {
@@ -132,14 +133,16 @@ void BenchmarkExecutor::execute(int id){
 			benchmark->writeOperation(argsArray[pos], argsCount);
 		}
 	}
-	unsigned long long executionTime = getTime() + 1 - startTime;
-	float thrPut = (transactions*1000)/executionTime;
+	clock_t end = clock();
+	unsigned long long executionTime = ((end -start + 1)*1000000)/CLOCKS_PER_SEC;	// Get value in us
+	LOG_DEBUG("Execution time %llu\n",executionTime);
+	float thrPut = (transactions*1000000)/executionTime;
 	int rtry = 0;
 	if (retries.get()) {
 		rtry = retries.get()->getValue();
 	}
 	addMetaData(thrPut, rtry);
-	LOG_DEBUG("BNC_EXE %d: ThroughPut = %0.2f msec <----------------------\n", id, thrPut);
+	LOG_DEBUG("BNC_EXE %d: ThroughPut = %0.2f trxns/sec <----------------------\n", id, thrPut);
 }
 
 void BenchmarkExecutor::increaseRetries() {

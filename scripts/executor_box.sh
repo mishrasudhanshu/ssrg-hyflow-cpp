@@ -17,6 +17,7 @@ do
             nodes=1 objects=$objs transactions=$txns nodeId=0 reads=$read threads=$threads Debug/ssrg-hyflow-cpp
             sleep 5
         done
+        bash scripts/kill_ipcs.sh
     done
 done
 echo "Executor completed"

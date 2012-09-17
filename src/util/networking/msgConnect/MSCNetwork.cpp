@@ -358,7 +358,7 @@ void MSCNetwork::removeMessageFuture(unsigned long long m_id, HyMessageType t) {
 
 void MSCNetwork::dispatcher(MsgConnect::MCMessenger *mc) {
 	LOG_DEBUG("Message Dispatcher started\n");
-	boost::posix_time::seconds sleepTime(0.0001);
+	boost::posix_time::seconds sleepTime(0.0002);
 	while (!hyflowShutdown) {
 		mc->DispatchMessages();
 		boost::this_thread::sleep(sleepTime);

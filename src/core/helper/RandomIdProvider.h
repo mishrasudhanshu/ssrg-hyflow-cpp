@@ -9,6 +9,7 @@
 #define RANDOMIDPROVIDER_H_
 
 #include <cstdlib>
+#include <climits>
 #include <time.h>
 
 namespace vt_dstm {
@@ -17,6 +18,7 @@ class RandomIdProvider {
 	int objectCount;
 	int tmpCount;
 	int *valueArray;
+
 public:
 	RandomIdProvider(int objectCount) {
 		this->objectCount = objectCount;
@@ -25,13 +27,14 @@ public:
 		for (int i=0;i <objectCount ; i++) {
 			valueArray[i] = i;
 		}
-		std::srand(std::time(NULL));
+
 	}
 
 	virtual ~RandomIdProvider() {delete[] valueArray;};
 
 	int getNext() {
 		if (tmpCount < objectCount) {
+			std::srand(getSeed());
 			int pos = tmpCount + (rand() % (objectCount -tmpCount));
 			int value  = valueArray[pos];
 			int tmp = valueArray[tmpCount];
@@ -45,7 +48,15 @@ public:
 	}
 
 	static int getRandomNumber() {
+		std::srand(getSeed());
 		return rand();
+	}
+
+	static unsigned int getSeed() {
+		timeval tv;
+		gettimeofday(&tv, NULL);
+		unsigned long long t = (tv.tv_sec%10000)*1000000 + tv.tv_usec;
+		return (t%INT_MAX -1);
 	}
 };
 
