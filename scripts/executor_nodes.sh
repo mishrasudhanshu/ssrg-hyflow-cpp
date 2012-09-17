@@ -2,6 +2,7 @@
 
 txns=2000
 objs=10000
+threads=1;
 
 echo "---Nodes Config---"
 echo "txns=$txns, objs=$objs, reads 0..100..20 threads 1, nodes=1..24" 
@@ -17,10 +18,12 @@ do
             for (( nodeId=0 ; nodeId < $nodes ; nodeId++ ))
             do
                 echo "launching $nodeId in $nodes"
-                nodes=$nodes objects=$objs transactions=$txns nodeId=$nodeId reads=$read threads=1 Debug/ssrg-hyflow-cpp $nodeId -&
-                #p=`ps -ef|grep "Debug/ssrg-hyflow-cpp $nodeId -"| grep -v 'grep'|awk '{print $2}'`
-                #echo taskset -c -p $nodeId $p
-                #taskset -c -p $nodeId $p
+                nodes=$nodes objects=$objs transactions=$txns nodeId=$nodeId reads=$read threads=$threads Debug/ssrg-hyflow-cpp $nodeId -&
+                p=`ps -ef|grep "Debug/ssrg-hyflow-cpp $nodeId -"| grep -v 'grep'|awk '{print $2}'`
+                echo taskset -c -p $nodeId $p
+                coreId=$((nodeId*threads))-$((nodeId*threads+threads-1)) 
+                echo "Moving process to core set $coreId"
+                taskset -c -p $coreId $p
                 sleep 2             # Give some time for node 0 to start
             done
             wait

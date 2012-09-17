@@ -10,6 +10,7 @@
 #include <boost/thread/thread.hpp>
 #include <string.h>
 #include <time.h>
+#include <sched.h>
 #include "BenchmarkExecutor.h"
 #include "../util/Definitions.h"
 #include "../util/parser/ConfigFile.h"
@@ -120,8 +121,14 @@ void BenchmarkExecutor::prepareArgs() {
 }
 
 void BenchmarkExecutor::execute(int id){
-	threadId.reset(new Integer(id));
+	// Set the thread affinity
+	cpu_set_t s;
+	CPU_ZERO(&s);
+	CPU_SET(id, &s);
+	int node = NetworkManager::getNodeId()*threadCount + id;
+	sched_setaffinity(0, sizeof(cpu_set_t), &s);
 
+	threadId.reset(new Integer(id));
 	int argsCount = benchmark->getOperandsCount();
 	LOG_DEBUG("BNCH_EXE %d:------------------------------>\n", id);
 	clock_t start = clock();
