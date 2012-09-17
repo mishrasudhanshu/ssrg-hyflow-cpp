@@ -16,8 +16,12 @@ do
             echo "        For experiment $exp, read $read and nodes $nodes"
             for (( nodeId=0 ; nodeId < $nodes ; nodeId++ ))
             do
-                echo "launching $nodeId"
-                nodeCount=$nodes objects=$objs transactions=$txns nodeId=$nodeId reads=$read threads=1 Debug/ssrg-hyflow-cpp&
+                echo "launching $nodeId in $nodes"
+                nodes=$nodes objects=$objs transactions=$txns nodeId=$nodeId reads=$read threads=1 Debug/ssrg-hyflow-cpp $nodeId -&
+                p=`ps -ef|grep "Debug/ssrg-hyflow-cpp $nodeId -"| grep -v 'grep'|awk '{print $2}'`
+                echo taskset -c -p $nodeId $p
+                taskset -c -p $nodeId $p
+                sleep 2             # Give some time for node 0 to start
             done
             pids=$(pgrep ssrg-hyflow-cpp)   
             for pid in $pids

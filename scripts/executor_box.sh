@@ -14,7 +14,7 @@ do
         for exp in {1..3}
         do
             echo "        For experiment $exp, read $read and threads $threads"
-            nodeCount=1 objects=$objs transactions=$txns nodeId=0 reads=$read threads=$threads Debug/ssrg-hyflow-cpp
+            nodes=1 objects=$objs transactions=$txns nodeId=0 reads=$read threads=$threads Debug/ssrg-hyflow-cpp
             sleep 5
         done
     done

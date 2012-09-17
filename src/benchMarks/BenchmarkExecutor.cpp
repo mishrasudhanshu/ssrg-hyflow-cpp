@@ -28,7 +28,7 @@ int BenchmarkExecutor::transactions = 0 ;
 int BenchmarkExecutor::readPercent = 0;
 int BenchmarkExecutor::threads = 1;
 bool BenchmarkExecutor::isInitiated = false;
-int BenchmarkExecutor::executionTime = 0;
+float BenchmarkExecutor::throughPut = 0;
 int BenchmarkExecutor::threadCount = 0;
 int BenchmarkExecutor::retryCount = 0;
 
@@ -51,15 +51,14 @@ unsigned long long BenchmarkExecutor::getTime() {
 	return tv.tv_sec*1000 + 0.001*tv.tv_usec;
 }
 
-void BenchmarkExecutor::addMetaData(unsigned long long time, int retry) {
-	boost::unique_lock<boost::mutex> execlock(execMutex);
-	executionTime += time;
+void BenchmarkExecutor::addMetaData(float trp, int retry) {
+	boost::unique_lock<boost::mutex> metalock(execMutex);
+	throughPut += trp;
 	retryCount += retry;
 }
 
 void BenchmarkExecutor::writeResults() {
-	double trp =  (threadCount*transactions*1000)/executionTime;
-	Logger::result("Throughput=%.2f\n", trp);
+	Logger::result("Throughput=%.2f\n", throughPut);
 	Logger::result("Retries=%d\n",retryCount);
 }
 
@@ -134,12 +133,13 @@ void BenchmarkExecutor::execute(int id){
 		}
 	}
 	unsigned long long executionTime = getTime() + 1 - startTime;
+	float thrPut = (transactions*1000)/executionTime;
 	int rtry = 0;
 	if (retries.get()) {
 		rtry = retries.get()->getValue();
 	}
-	addMetaData(executionTime, rtry);
-	LOG_DEBUG("BNC_EXE %d: Execution time = %llu msec <----------------------\n", id, executionTime);
+	addMetaData(thrPut, rtry);
+	LOG_DEBUG("BNC_EXE %d: ThroughPut = %0.2f msec <----------------------\n", id, thrPut);
 }
 
 void BenchmarkExecutor::increaseRetries() {
