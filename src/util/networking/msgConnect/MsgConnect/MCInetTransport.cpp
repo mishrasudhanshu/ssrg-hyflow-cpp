@@ -5,6 +5,7 @@
 //   Copyright (c) 2001-2010, EldoS                   
 //                                                    
 //====================================================
+#include <iostream>
 #include "MC.h"
 #include "MCUtils.h"
 #include "MCInetTransport.h"

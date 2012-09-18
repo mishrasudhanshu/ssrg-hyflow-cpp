@@ -54,7 +54,7 @@ unsigned long long BenchmarkExecutor::getTime() {
 }
 
 void BenchmarkExecutor::addMetaData(float trp, int retry) {
-	boost::unique_lock<boost::mutex> metalock(execMutex);
+	boost::unique_lock<boost::mutex> metaDatalock(execMutex);
 	throughPut += trp;
 	retryCount += retry;
 }
@@ -95,14 +95,13 @@ void BenchmarkExecutor::createObjects(){
 void BenchmarkExecutor::prepareArgs() {
 	argsArray = new std::string*[transactions];
 	transactionType = new bool[transactions];
-	int nodeId = NetworkManager::getNodeId();
 
 	int argsCount = benchmark->getOperandsCount();
 	for (int i=0; i < transactions ; i++ ) {
 		argsArray[i] = new std::string[argsCount];
 		RandomIdProvider rIdPro(objectsCount);
 		for (int j=0; j < argsCount; j++ ) {
-			int index = (rIdPro.getNext() /*+ nodeId + i + nodeId*i*/) %objectsCount;
+			int index = (rIdPro.getNext()) %objectsCount;
 			argsArray[i][j] = ids[index];
 		}
 		if ( i < (transactions*readPercent/100))
