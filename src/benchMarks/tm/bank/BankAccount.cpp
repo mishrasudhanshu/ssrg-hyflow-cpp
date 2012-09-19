@@ -115,26 +115,34 @@ uint64_t BankAccount::totalBalance(std::string id1, std::string id2) {
 		HyflowObjectFuture of2(id2, true, c->getTxnId());
 		try {
 			result = totalBalance(id1, id2, c, of1, of2);
-		} catch (TransactionException & ex) {
-			ex.print();
-			commit = false;
-		} catch (std::string & s) {
-			Logger::fatal("%s\n",s.c_str());
 		} catch (...) {
-			throw;
+			try {
+				ContextManager::cleanInstance(c);
+				throw;
+			}catch (TransactionException & ex) {
+				ex.print();
+				commit = false;
+			} catch (std::string & s) {
+				Logger::fatal("%s\n",s.c_str());
+				throw;
+			}
 		}
 		if (commit) {
 			try {
 				c->commit();
 				LOG_DEBUG("++++++++++Transaction Successful ++++++++++\n");
-			} catch (TransactionException & ex) {
-				ex.print();
-				BenchmarkExecutor::increaseRetries();
-				continue;
-			} catch (std::string & s) {
-				Logger::fatal("%s\n",s.c_str());
+				ContextManager::cleanInstance(c);
 			} catch(...) {
-				throw;
+				try{
+					ContextManager::cleanInstance(c);
+					throw;
+				}catch (TransactionException & ex) {
+					ex.print();
+					BenchmarkExecutor::increaseRetries();
+					continue;
+				} catch (std::string & s) {
+					Logger::fatal("%s\n",s.c_str());
+				}
 			}
 			return result;
 		}
@@ -181,26 +189,32 @@ void BankAccount::transfer(std::string id1, std::string id2,
 		HyflowObjectFuture of1(id1, true, c->getTxnId()), of2(id2, true, c->getTxnId());
 		try {
 			transfer(id1, id2, money, c, of1, of2);
-		} catch (TransactionException & ex) {
-			ex.print();
-			commit = false;
-		} catch (std::string & s) {
-			Logger::fatal("%s\n",s.c_str());
-		} catch (...) {
-			throw;
+		}catch (...) {
+			try {
+				ContextManager::cleanInstance(c);
+				throw;
+			} catch (TransactionException & ex) {
+				ex.print();
+				commit = false;
+			} catch (std::string & s) {
+				Logger::fatal("%s\n",s.c_str());
+			}
 		}
 		if (commit) {
 			try {
 				c->commit();
 				LOG_DEBUG("++++++++++Transaction Successful ++++++++++\n");
-			} catch (TransactionException & ex) {
-				ex.print();
-				BenchmarkExecutor::increaseRetries();
-				continue;
-			}catch (std::string & s) {
-				Logger::fatal("%s\n",s.c_str());
+				ContextManager::cleanInstance(c);
 			} catch(...) {
-				throw;
+				try{
+					ContextManager::cleanInstance(c);
+					throw;
+				} catch (TransactionException & ex) {
+					ex.print();
+					commit = false;
+				} catch (std::string & s) {
+					Logger::fatal("%s\n",s.c_str());
+				}
 			}
 			return;
 		}

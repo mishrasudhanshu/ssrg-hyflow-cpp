@@ -186,7 +186,6 @@ void TrackerDirectory::updateObjectLocally(HyflowObject* obj){
 }
 
 int TrackerDirectory::getObjectLocation(std::string & id){
-	HyflowObject* obj=NULL;
 	tbb::concurrent_hash_map<std::string, int>::const_accessor a;
 	if (directory.find(a,id)) {
 		return a->second;

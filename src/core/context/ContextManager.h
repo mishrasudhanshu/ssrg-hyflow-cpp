@@ -29,7 +29,10 @@ public:
 
 	static void ContextManagerInit();
 	static HyflowContext* getInstance();
+	static void cleanInstance(HyflowContext *c);
+
 	static void registerContext(HyflowContext * c);
+	static void unregisterContext(HyflowContext *c);
 	static HyflowContext* findContext(unsigned long long tid);
 	/**
 	 * To update the clock value on arrival of message from newer clock node

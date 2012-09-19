@@ -6,6 +6,7 @@
 echo "backup old logs" 2>&1 | tee >run.log
 timeStamp=$(eval date +%Y"-"%m"-"%d"_"%H"-"%M"-"%S)
 mv logs logs_old_$timeStamp
+mv logs_* backupLogs/.
 
 echo "Launching the box test" 2>&1 | tee >>run.log
 bash scripts/executor_box.sh 2>&1 | tee >>run.log

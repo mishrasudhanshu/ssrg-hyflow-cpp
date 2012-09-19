@@ -50,7 +50,7 @@ BenchmarkExecutor::~BenchmarkExecutor() {}
 unsigned long long BenchmarkExecutor::getTime() {
 	timeval tv;
 	gettimeofday(&tv, NULL);
-	return tv.tv_sec*1000 + 0.001*tv.tv_usec;
+	return tv.tv_sec*1000000 + tv.tv_usec;
 }
 
 void BenchmarkExecutor::addMetaData(float trp, int retry) {
@@ -130,7 +130,7 @@ void BenchmarkExecutor::execute(int id){
 	ThreadId::setThreadId(id);
 	int argsCount = benchmark->getOperandsCount();
 	LOG_DEBUG("BNCH_EXE %d:------------------------------>\n", id);
-	clock_t start = clock();
+	unsigned long long start = getTime();
 	for(int i=0; i < transactions; i++) {
 		int pos = (i + id) % transactions;
 		if (transactionType[i]) {
@@ -139,10 +139,10 @@ void BenchmarkExecutor::execute(int id){
 			benchmark->writeOperation(argsArray[pos], argsCount);
 		}
 	}
-	clock_t end = clock();
-	unsigned long long executionTime = ((end -start + 1)*1000000)/CLOCKS_PER_SEC;	// Get value in us
-	LOG_DEBUG("Execution time %llu\n",executionTime);
-	float thrPut = (transactions*1000000)/executionTime;
+	unsigned long long end = getTime();
+	unsigned long long executionTime = (end -start + 1);	// Get value in us
+	LOG_DEBUG("Execution time %llu ms\n",executionTime/1000);
+	double thrPut = (transactions*1000000)/executionTime;
 	int rtry = 0;
 	if (retries.get()) {
 		rtry = retries.get()->getValue();

@@ -26,10 +26,11 @@ ContextManager::ContextManager() {}
 
 ContextManager::~ContextManager() {}
 
+//TODO: create unique transaction Id, independent of time
 unsigned long long ContextManager::createTid() {
 	timeval tv;
 	gettimeofday(&tv, NULL);
-	return tv.tv_sec*100000 + 0.1*tv.tv_usec + 100*NetworkManager::getNodeId() + ThreadId::getThreadId();
+	return (tv.tv_sec%100000000000 + tv.tv_usec)*10000 + 100*NetworkManager::getNodeId() + ThreadId::getThreadId();
 }
 
 HyflowContext* ContextManager::getInstance() {
@@ -43,12 +44,21 @@ HyflowContext* ContextManager::getInstance() {
 	return context;
 }
 
+void ContextManager::cleanInstance(HyflowContext *c) {
+	unregisterContext(c);
+	delete c;
+}
+
 void ContextManager::registerContext(HyflowContext *c) {
 	tbb::concurrent_hash_map<unsigned long long, HyflowContext*>::accessor a;
-	if (!contextMap.insert(a,c->getTxnId())) {
-		throw "Context with same transaction Id already exist";
-	}
+	if (!contextMap.insert(a,c->getTxnId()))
+		throw "Context with same id already exist"+c->getTxnId();
 	a->second = c;
+}
+
+void ContextManager::unregisterContext(HyflowContext *c) {
+	if (!contextMap.erase(c->getTxnId()))
+		throw "Context already Unregistered"+c->getTxnId();
 }
 
 HyflowContext* ContextManager::findContext(const unsigned long long tid) {
