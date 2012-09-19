@@ -12,22 +12,41 @@
 
 #include "HyflowMessage.h"
 #include "../networking/NetworkManager.h"
+#include "../messages/MessageMaps.h"
 #include "types/ObjectAccessMsg.h"
 #include "types/SynchronizeMsg.h"
 #include "types/ObjectTrackerMsg.h"
 #include "types/RegisterObjectMsg.h"
 #include "types/LockAccessMsg.h"
 #include "types/ReadValidationMsg.h"
+#include "../../core/context/ContextManager.h"
 
 namespace vt_dstm{
 
+HyflowMessage::HyflowMessage(){
+	isCallback = false; isReplied = false; msg_id = "00";
+	fromNodeClock = ContextManager::getClock();
+	forObjectId = "0-0";
+}
+
+/*
+ * Use this constructor when any message related to a object is created
+ * ForObjId is defined to create a unique Id for the message future
+ * As in few case all the values can be same expect forObjectId
+ */
+HyflowMessage::HyflowMessage(const std::string & forObjId){
+	isCallback = false; isReplied = false; msg_id = "00";
+	fromNodeClock = ContextManager::getClock();
+	forObjectId = forObjId;
+}
+
 void HyflowMessage::registerMessageHandlers()	{
-	NetworkManager::registerHandler(MSG_GRP_SYNC, &SynchronizeMsg::synchronizeHandler);
-	NetworkManager::registerHandler(MSG_TRK_OBJECT, &ObjectTrackerMsg::objectTrackerHandler);
-	NetworkManager::registerHandler(MSG_ACCESS_OBJECT, &ObjectAccessMsg::objectAccessHandler);
-	NetworkManager::registerHandler(MSG_REGISTER_OBJ, &RegisterObjectMsg::registerObjectHandler);
-	NetworkManager::registerHandler(MSG_LOCK_ACCESS, &LockAccessMsg::lockAccessHandler);
-	NetworkManager::registerHandler(MSG_READ_VALIDATE, &ReadValidationMsg::readValidationHandle);
+	MessageMaps::registerHandler(MSG_GRP_SYNC, &SynchronizeMsg::synchronizeHandler);
+	MessageMaps::registerHandler(MSG_TRK_OBJECT, &ObjectTrackerMsg::objectTrackerHandler);
+	MessageMaps::registerHandler(MSG_ACCESS_OBJECT, &ObjectAccessMsg::objectAccessHandler);
+	MessageMaps::registerHandler(MSG_REGISTER_OBJ, &RegisterObjectMsg::registerObjectHandler);
+	MessageMaps::registerHandler(MSG_LOCK_ACCESS, &LockAccessMsg::lockAccessHandler);
+	MessageMaps::registerHandler(MSG_READ_VALIDATE, &ReadValidationMsg::readValidationHandle);
 }
 
 template<class Archive>
@@ -54,36 +73,36 @@ void HyflowMessage::init(HyMessageType msg_t, bool isCallback) {
 	this->isCallback = isCallback;
 }
 
-void HyflowMessage::test(){
+std::string HyflowMessage::getForObjectId() const {
+	return forObjectId;
+}
+
+void HyflowMessage::setForObjectId(std::string forObjectId) {
+	this->forObjectId = forObjectId;
+}
+
+void HyflowMessage::test() {
 	//First test all different message serialization
 	std::cout << "\n---Testing Serialization---\n" << std::endl;
 	SynchronizeMsg gjmsg;
 	gjmsg.serializationTest();
-
 	ObjectAccessMsg oamsg;
 	oamsg.serializationTest();
-
 	ObjectTrackerMsg otmsg;
 	otmsg.serializationTest();
-
 	RegisterObjectMsg romsg;
 	romsg.serializationTest();
-
 	LockAccessMsg lamsg;
 	lamsg.serializationTest();
-
 	ReadValidationMsg rvmsg;
 	rvmsg.serializationTest();
-
 	// create and open a character archive for output
 	std::ofstream ofs("/tmp/HyflowMessage", std::ios::out);
-
 	// create class instance
-	vt_dstm::ObjectAccessMsg bq("3-0",true);
+	vt_dstm::ObjectAccessMsg bq("3-0", true);
 	vt_dstm::HyflowMessage res;
 	res.msg_t = vt_dstm::MSG_ACCESS_OBJECT;
 	res.setMsg(&bq);
-
 	// save data to archive
 	{
 		boost::archive::text_oarchive oa(ofs);
@@ -91,7 +110,6 @@ void HyflowMessage::test(){
 		oa << res;
 		// archive and stream closed when destructors are called
 	}
-
 	// ... some time later restore the class instance to its original state
 	vt_dstm::HyflowMessage r1;
 	{
@@ -101,7 +119,8 @@ void HyflowMessage::test(){
 		// read class state from archive
 		ia >> r1;
 		// archive and stream closed when destructors are called
-		vt_dstm::ObjectAccessMsg *bq1 =  (vt_dstm::ObjectAccessMsg *)r1.getMsg();
+		vt_dstm::ObjectAccessMsg* bq1 =
+				(vt_dstm::ObjectAccessMsg*) (r1.getMsg());
 		if (bq1->getId().compare("3-0") == 0) {
 			std::cout<< "HyflowMessage serialization Test passed"<<std::endl;
 		}else {

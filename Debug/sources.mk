@@ -33,6 +33,7 @@ src/util/messages/types \
 src/util/messages \
 src/util/logging \
 src/util/logging/Basic \
+src/util/concurrent \
 src/core/exceptions/types \
 src/core/directory/types \
 src/core/directory \

@@ -18,6 +18,7 @@ RM := rm -rf
 -include src/util/messages/subdir.mk
 -include src/util/logging/Basic/subdir.mk
 -include src/util/logging/subdir.mk
+-include src/util/concurrent/subdir.mk
 -include src/core/exceptions/types/subdir.mk
 -include src/core/directory/types/subdir.mk
 -include src/core/directory/subdir.mk

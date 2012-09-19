@@ -12,10 +12,11 @@
 #include "../../../util/messages/types/RegisterObjectMsg.h"
 #include "../../../util/logging/Logger.h"
 #include "../../directory/DirectoryManager.h"
+#include "../../context/ContextManager.h"
 
 namespace vt_dstm {
-ConcurrentHashMap<std::string, int> TrackerDirectory::directory;
-LocalCache TrackerDirectory::local;
+tbb::concurrent_hash_map<std::string, int> TrackerDirectory::directory;
+LocalCacheTbb TrackerDirectory::local;
 
 TrackerDirectory::TrackerDirectory() {}
 
@@ -52,7 +53,7 @@ void TrackerDirectory::locateAsync(std::string & id, bool rw, unsigned long long
 			fu.getMessageFuture().notifyMessage();
 		} else {
 			ObjectAccessMsg oam(id, rw);
-			HyflowMessage hmsg;
+			HyflowMessage hmsg(id);
 			hmsg.msg_t = MSG_ACCESS_OBJECT;
 			hmsg.isCallback = true;
 			hmsg.setMsg(&oam);
@@ -60,7 +61,7 @@ void TrackerDirectory::locateAsync(std::string & id, bool rw, unsigned long long
 		}
 	}else {
 		ObjectTrackerMsg otm(id, rw);
-		HyflowMessage hmsg;
+		HyflowMessage hmsg(id);
 		hmsg.msg_t = MSG_TRK_OBJECT;
 		hmsg.isCallback = true;	// isReplied false by default
 		hmsg.setMsg(&otm);
@@ -97,7 +98,7 @@ void TrackerDirectory::registerObject(HyflowObject* object, unsigned long long t
 		} else {
 			//Register the object with tracker
 			RegisterObjectMsg romsg(id, owner, txn);
-			HyflowMessage hmsg;
+			HyflowMessage hmsg(id);
 			hmsg.msg_t = MSG_REGISTER_OBJ;	// Not callback by default
 			hmsg.setMsg(&romsg);
 			NetworkManager::sendMessage(getTracker(id), hmsg);
@@ -135,7 +136,7 @@ void TrackerDirectory::registerObjectWait(HyflowObject* object, unsigned long lo
 		} else {
 			//Register the object with tracker
 			RegisterObjectMsg romsg(id, owner, txn);
-			HyflowMessage hmsg;
+			HyflowMessage hmsg(id);
 			hmsg.msg_t = MSG_REGISTER_OBJ;	// Not callback by default
 			hmsg.setMsg(&romsg);
 
@@ -149,16 +150,15 @@ void TrackerDirectory::registerObjectWait(HyflowObject* object, unsigned long lo
 }
 
 void TrackerDirectory::registerObjectLocally(std::string & objId, int owner, unsigned long long txn) {
-	std::pair<std::string, int> p;
-	p.first = objId;
-	p.second = owner;
-	LOG_DEBUG("DIR : Object %s owner %d\n", objId.c_str(), owner);
-	directory.insertValue(p);
+	tbb::concurrent_hash_map<std::string, int>::accessor a;
+	directory.insert(a,objId);
+	a->second = owner;
 }
 
 void TrackerDirectory::unregisterObject(HyflowObject* object, unsigned long long txn) {
-	RegisterObjectMsg romsg(object->getId(),txn);
-	HyflowMessage hmsg;
+	const std::string& objId = object->getId();
+	RegisterObjectMsg romsg(objId,txn);
+	HyflowMessage hmsg(objId);
 	hmsg.msg_t = MSG_REGISTER_OBJ;	// Not callback by default
 	hmsg.setMsg(&romsg);
 	int tracker = getTracker(object->getId());
@@ -171,7 +171,7 @@ void TrackerDirectory::unregisterObject(HyflowObject* object, unsigned long long
 
 // TODO: Proper clean up will require object to be deleted from all local caches
 void TrackerDirectory::unregisterObjectLocally(std::string & objId, unsigned long long txn) {
-	directory.deletePair(objId);
+	directory.erase(objId);
 }
 
 /*
@@ -186,7 +186,14 @@ void TrackerDirectory::updateObjectLocally(HyflowObject* obj){
 }
 
 int TrackerDirectory::getObjectLocation(std::string & id){
-	return directory.getValue(id);
+	HyflowObject* obj=NULL;
+	tbb::concurrent_hash_map<std::string, int>::const_accessor a;
+	if (directory.find(a,id)) {
+		return a->second;
+	} else {
+		throw "No Object Found!!";
+	}
+	return -1;
 }
 
 int32_t TrackerDirectory::getObjectVersion(std::string & objId) {

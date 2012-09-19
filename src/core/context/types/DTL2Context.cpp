@@ -13,6 +13,7 @@
 #include "../../../util/networking/NetworkManager.h"
 #include "../../../util/logging/Logger.h"
 #include "../LockTable.h"
+#include "../ContextManager.h"
 
 namespace vt_dstm {
 
@@ -95,10 +96,11 @@ bool DTL2Context::lockObject(HyflowObject* obj) {
 		LOG_DEBUG("DTL : Local Lock available for %s\n", obj->getId().c_str());
 		return LockTable::tryLock(obj->getId(), obj->getVersion());
 	}else {
+		const std::string & objId = obj->getId();
 		HyflowMessageFuture mFu;
-		HyflowMessage hmsg;
+		HyflowMessage hmsg(objId);
 		hmsg.init(MSG_LOCK_ACCESS, true);
-		LockAccessMsg lamsg(obj->getId(), obj->getVersion());
+		LockAccessMsg lamsg(objId, obj->getVersion());
 		lamsg.setLock(true);
 		lamsg.setRequest(true);
 		hmsg.setMsg(&lamsg);
@@ -119,9 +121,10 @@ void  DTL2Context::unlockObjectOnFail(HyflowObject *obj) {
 		LOG_DEBUG("DTL : Local Unlock available for %s\n", obj->getId().c_str());
 		LockTable::tryUnlock(obj->getId(), obj->getVersion());
 	}else {
-		HyflowMessage hmsg;
+		const std::string & objId = obj->getId();
+		HyflowMessage hmsg(objId);
 		hmsg.init(MSG_LOCK_ACCESS, false);
-		LockAccessMsg lamsg(obj->getId(), obj->getVersion());
+		LockAccessMsg lamsg(objId, obj->getVersion());
 		lamsg.setLock(false);
 		lamsg.setRequest(true);
 		hmsg.setMsg(&lamsg);

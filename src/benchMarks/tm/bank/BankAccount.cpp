@@ -118,6 +118,8 @@ uint64_t BankAccount::totalBalance(std::string id1, std::string id2) {
 		} catch (TransactionException & ex) {
 			ex.print();
 			commit = false;
+		} catch (std::string & s) {
+			Logger::fatal("%s\n",s.c_str());
 		} catch (...) {
 			throw;
 		}
@@ -129,6 +131,8 @@ uint64_t BankAccount::totalBalance(std::string id1, std::string id2) {
 				ex.print();
 				BenchmarkExecutor::increaseRetries();
 				continue;
+			} catch (std::string & s) {
+				Logger::fatal("%s\n",s.c_str());
 			} catch(...) {
 				throw;
 			}
@@ -180,6 +184,8 @@ void BankAccount::transfer(std::string id1, std::string id2,
 		} catch (TransactionException & ex) {
 			ex.print();
 			commit = false;
+		} catch (std::string & s) {
+			Logger::fatal("%s\n",s.c_str());
 		} catch (...) {
 			throw;
 		}
@@ -191,6 +197,8 @@ void BankAccount::transfer(std::string id1, std::string id2,
 				ex.print();
 				BenchmarkExecutor::increaseRetries();
 				continue;
+			}catch (std::string & s) {
+				Logger::fatal("%s\n",s.c_str());
 			} catch(...) {
 				throw;
 			}

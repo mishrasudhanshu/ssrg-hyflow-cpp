@@ -10,12 +10,7 @@ src/core/context/LockTable.d: ../src/core/context/LockTable.cpp \
  ../src/core/context/../directory/../../util/messages/HyflowMessageFuture.h \
  ../src/core/context/../directory/../../util/messages/HyflowMessage.h \
  ../src/core/context/../directory/../../util/messages/BaseMessage.h \
- ../src/core/context/../directory/../../util/messages/../../core/context/ContextManager.h \
- ../src/core/context/../directory/../../util/messages/../../core/context/HyflowContext.h \
- ../src/core/context/../directory/../../util/messages/../../core/context/../HyflowObject.h \
- ../src/core/context/../directory/../../util/messages/../../core/context/../exceptions/types/TransactionException.h \
- ../src/core/context/../directory/../../util/messages/../../core/context/../exceptions/types/../HyflowException.h \
- ../src/core/context/../directory/../../util/messages/../../core/context/../../util/concurrent/ConcurrentHashMap.h
+ ../src/core/context/../directory/../../util/messages/../../core/HyflowObject.h
 
 ../src/core/context/LockTable.h:
 
@@ -39,14 +34,4 @@ src/core/context/LockTable.d: ../src/core/context/LockTable.cpp \
 
 ../src/core/context/../directory/../../util/messages/BaseMessage.h:
 
-../src/core/context/../directory/../../util/messages/../../core/context/ContextManager.h:
-
-../src/core/context/../directory/../../util/messages/../../core/context/HyflowContext.h:
-
-../src/core/context/../directory/../../util/messages/../../core/context/../HyflowObject.h:
-
-../src/core/context/../directory/../../util/messages/../../core/context/../exceptions/types/TransactionException.h:
-
-../src/core/context/../directory/../../util/messages/../../core/context/../exceptions/types/../HyflowException.h:
-
-../src/core/context/../directory/../../util/messages/../../core/context/../../util/concurrent/ConcurrentHashMap.h:
+../src/core/context/../directory/../../util/messages/../../core/HyflowObject.h:

@@ -17,6 +17,7 @@
 #include "../util/logging/Logger.h"
 #include "../util/networking/NetworkManager.h"
 #include "../core/helper/RandomIdProvider.h"
+#include "../util/concurrent/ThreadId.h"
 
 namespace vt_dstm {
 
@@ -38,8 +39,7 @@ HyflowBenchmark* BenchmarkExecutor::benchmark = NULL;
 bool* BenchmarkExecutor::transactionType = NULL;
 std::string** BenchmarkExecutor::argsArray = NULL;
 std::string* BenchmarkExecutor::ids = NULL;
-boost::thread_specific_ptr<Integer> BenchmarkExecutor::threadId;
-boost::thread_specific_ptr<Integer> BenchmarkExecutor::retries;
+boost::thread_specific_ptr<HyInteger> BenchmarkExecutor::retries;
 boost::thread** BenchmarkExecutor::benchmarkThreads = NULL;
 boost::mutex BenchmarkExecutor::execMutex;
 
@@ -123,11 +123,11 @@ void BenchmarkExecutor::execute(int id){
 	// Set the thread affinity
 	cpu_set_t s;
 	CPU_ZERO(&s);
-	CPU_SET(id, &s);
 	int node = NetworkManager::getNodeId()*threadCount + id;
+	CPU_SET(node, &s);
 	sched_setaffinity(0, sizeof(cpu_set_t), &s);
 
-	threadId.reset(new Integer(id));
+	ThreadId::setThreadId(id);
 	int argsCount = benchmark->getOperandsCount();
 	LOG_DEBUG("BNCH_EXE %d:------------------------------>\n", id);
 	clock_t start = clock();
@@ -153,18 +153,10 @@ void BenchmarkExecutor::execute(int id){
 
 void BenchmarkExecutor::increaseRetries() {
 	if (!retries.get()) {
-		retries.reset(new Integer(0));
+		retries.reset(new HyInteger(0));
 	}
 	retries.get()->increaseValue();
 }
-
-int BenchmarkExecutor::getThreadId(){
-	if (!threadId.get()) {
-		threadId.reset(new Integer(0));
-	}
-	return threadId.get()->getValue();
-}
-
 
 void BenchmarkExecutor::executeThreads() {
 	// Read all the configuration settings

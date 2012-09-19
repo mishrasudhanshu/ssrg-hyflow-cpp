@@ -13,7 +13,7 @@
 
 #include "LockAccessMsg.h"
 #include "../../../core/context/LockTable.h"
-#include "../../networking/NetworkManager.h"
+#include "../../messages/MessageMaps.h"
 #include "../../logging/Logger.h"
 #include "../HyflowMessageFuture.h"
 
@@ -57,7 +57,7 @@ void LockAccessMsg::lockAccessHandler(HyflowMessage& m) {
 	} else {
 		LOG_DEBUG ("Got a Lock response: %s for %s\n", lmsg->lock?"lock":"unlock", lmsg->objectId.c_str());
 		if (lmsg->lock) {
-			HyflowMessageFuture& cbfmsg = NetworkManager::getMessageFuture(m.msg_id,
+			HyflowMessageFuture& cbfmsg = MessageMaps::getMessageFuture(m.msg_id,
 					m.msg_t);
 			cbfmsg.setBoolResponse(lmsg->locked);
 			cbfmsg.notifyMessage();

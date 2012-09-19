@@ -12,35 +12,15 @@
 #include "HyflowBenchmark.h"
 #include "tm/bank/BankBenchmark.h"
 #include "tm/list/ListBenchmark.h"
+#include "../util/concurrent/HyInteger.h"
 
 namespace vt_dstm {
-
-class Integer {
-	int value;
-public:
-	Integer() {}
-	Integer (int v) {value =v;}
-	~Integer() {}
-
-	int getValue() const {
-		return value;
-	}
-
-	void setValue(int value) {
-		this->value = value;
-	}
-
-	void increaseValue() {
-		value++;
-	}
-};
 
 class BenchmarkExecutor {
 	static HyflowBenchmark *benchmark;
 	static boost::thread **benchmarkThreads;
 
-	static boost::thread_specific_ptr<Integer> threadId;
-	static boost::thread_specific_ptr<Integer> retries;
+	static boost::thread_specific_ptr<HyInteger> retries;
 	static int calls;
 	static int delay;
 	static long timeout;
@@ -87,7 +67,6 @@ public:
     }
 
     static void executeThreads();
-	static int getThreadId();
 	static void increaseRetries();
 
 	bool isSanity() const {

@@ -7,6 +7,7 @@
 #include <string>
 #include <cstdlib>
 #include <string.h>
+#include <time.h>
 
 #include "NetworkManager.h"
 #include "../parser/ConfigFile.h"
@@ -17,6 +18,7 @@
 #include "../messages/types/SynchronizeMsg.h"
 #include "msgConnect/MSCNetwork.h"
 #include "msgConnect/MSCtest.h"
+#include "../messages/MessageHandler.h"
 
 namespace vt_dstm {
 
@@ -26,8 +28,24 @@ int NetworkManager::machine = -1;
 int NetworkManager::basePort = -1;
 int  NetworkManager::threadCount = -1;
 
+int NetworkManager::nodesInCluster=0;
+int NetworkManager::syncVersion=0;
+boost::condition NetworkManager::onCluster;
+boost::mutex NetworkManager::clsMutex;
+
 AbstractNetwork* NetworkManager::network = NULL;
 bool NetworkManager::islocal = false;
+
+std::string NetworkManager::Ips[] = {
+		"10.1.1.20",
+		"10.1.1.21",
+		"10.1.1.22",
+		"10.1.1.24",
+		"10.1.1.25",
+		"10.1.1.26",
+		"10.1.1.27",
+		"10.1.1.28",
+		};
 
 void NetworkManager::NetworkInit() {
 	if (strcmp(ConfigFile::Value(NETWORK).c_str(), MSG_CONNECT) == 0) {
@@ -78,36 +96,60 @@ void NetworkManager::synchronizeCluster(int rqNo) {
 }
 
 bool NetworkManager::allNodeJoined(int rqNo){
-	return network->allNodeJoined(rqNo);
+	{
+		boost::unique_lock<boost::mutex> lock(clsMutex);
+		nodesInCluster++;
+	}
+	LOG_DEBUG("MSNC : Joining cluster in cluster %d in ReqNo %d\n", nodesInCluster, rqNo);
+	return nodesInCluster == nodeCount;
 }
 
 void NetworkManager::replySynchronized(int rqNo){
-	network->replySynchronized(rqNo);
+	if (nodeId == 0) {
+		SynchronizeMsg gJmsg(nodeId, true, rqNo);
+		HyflowMessage hmsg;
+		hmsg.setMsg(&gJmsg);
+		hmsg.msg_t = MSG_GRP_SYNC;
+		hmsg.isCallback = false;
+		for (int i=0 ; i < nodeCount; i++)
+			sendMessage(i,hmsg);
+	}
 }
 
 void NetworkManager::notifyCluster(int rqNo){
-	network->notifyCluster(rqNo);
+	//Reset the nodes In cluster count
+	nodesInCluster = 0;
+	{
+	     boost::unique_lock<boost::mutex> lock(clsMutex);
+	     syncVersion = rqNo;
+	 }
+	 onCluster.notify_all();
+	 LOG_DEBUG("MSNC : Notify all ReqNo %d\n", rqNo);
 }
 
 void NetworkManager::waitTillSynchronized(int rqNo){
-	network->waitTillSynchronized(rqNo);
+	LOG_DEBUG("MSNC : Starting wait for syncVer %d and ReqNo %d\n", syncVersion, rqNo);
+	boost::unique_lock<boost::mutex> lock(clsMutex);
+	while ( syncVersion != rqNo) {
+		onCluster.wait(lock);
+	}
 }
 
-void NetworkManager::registerMessageFuture(unsigned long long m_id, HyMessageType t, HyflowMessageFuture & fu) {
-	network->registerMessageFuture(m_id, t, fu);
-}
-
-HyflowMessageFuture & NetworkManager::getMessageFuture(unsigned long long m_id, HyMessageType t) {
-	return network->getMessageFuture(m_id, t);
-}
-
-void  NetworkManager::removeMessageFuture(unsigned long long m_id, HyMessageType t){
-	network->removeMessageFuture(m_id, t);
-}
-
-void NetworkManager::registerHandler(HyMessageType msg_t, void (*handlerFunc)(HyflowMessage &)) {
-	network->registerHandler(msg_t, handlerFunc);
-}
+//void NetworkManager::registerMessageFuture(unsigned long long m_id, HyMessageType t, HyflowMessageFuture & fu) {
+//	network->registerMessageFuture(m_id, t, fu);
+//}
+//
+//HyflowMessageFuture & NetworkManager::getMessageFuture(unsigned long long m_id, HyMessageType t) {
+//	return network->getMessageFuture(m_id, t);
+//}
+//
+//void  NetworkManager::removeMessageFuture(unsigned long long m_id, HyMessageType t){
+//	network->removeMessageFuture(m_id, t);
+//}
+//
+//void NetworkManager::registerHandler(HyMessageType msg_t, void (*handlerFunc)(HyflowMessage &)) {
+//	network->registerHandler(msg_t, handlerFunc);
+//}
 
 void NetworkManager::sendMessage(int nodeId, HyflowMessage msg) {
 	msg.fromNode = NetworkManager::nodeId;
@@ -119,6 +161,16 @@ void NetworkManager::sendMessage(int nodeId, HyflowMessage msg) {
 void NetworkManager::sendCallbackMessage(int targetNodeId, HyflowMessage msg, HyflowMessageFuture & fu) {
 	msg.fromNode = NetworkManager::nodeId;
 	msg.toNode = targetNodeId;
+
+	fu.setType(msg.msg_t);
+	fu.setForObjectId(msg.getForObjectId());
+
+	fu.createIdNRegisterFuture();
+	msg.msg_id = fu.getId();
+//	int threadId = BenchmarkExecutor::getThreadId();
+//	msg.msg_id = getCurrentTime()*10000 + 100*targetNodeId + threadId;	// Max 19 Digits
+//	fu.setId(msg.msg_id);
+//	MessageHandler::registerMessageFuture(msg.msg_id, msg.msg_t, fu);
 
 	network->sendCallbackMessage(targetNodeId, msg, fu);
 }
@@ -140,6 +192,14 @@ void NetworkManager::test() {
 			MSCtest::test();
 		}
 	}
+}
+
+std::string NetworkManager::getIp(int id){
+	//FIXME: Complete the id dependent implementation
+	if (islocalMachine())
+		return "127.0.0.1";
+	int mac = NetworkManager::getMachine();
+	return Ips[mac];
 }
 
 }

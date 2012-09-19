@@ -17,6 +17,7 @@
 #include "../../networking/NetworkManager.h"
 #include "../../../core/directory/DirectoryManager.h"
 #include "../../../core/context/LockTable.h"
+#include "../../messages/MessageMaps.h"
 
 namespace vt_dstm {
 
@@ -58,7 +59,7 @@ void ReadValidationMsg::readValidationHandle(HyflowMessage & msg) {
 			rvmsg->validationResponse = false;
 		}
 	}else {
-		HyflowMessageFuture & cbfmsg = NetworkManager::getMessageFuture(msg.msg_id,
+		HyflowMessageFuture & cbfmsg = MessageMaps::getMessageFuture(msg.msg_id,
 						msg.msg_t);
 		cbfmsg.setBoolResponse(rvmsg->validationResponse);
 		cbfmsg.notifyMessage();

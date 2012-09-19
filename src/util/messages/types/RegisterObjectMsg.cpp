@@ -15,6 +15,7 @@
 #include "RegisterObjectMsg.h"
 #include "../../../benchMarks/BenchmarkExecutor.h"
 #include "../../networking/NetworkManager.h"
+#include "../../messages/MessageMaps.h"
 #include "../../logging/Logger.h"
 #include "../../../core/directory/DirectoryManager.h"
 
@@ -59,7 +60,7 @@ void RegisterObjectMsg::registerObjectHandler(HyflowMessage & msg) {
 		romsg->request = false;
 	} else {
 		LOG_DEBUG("Got Register Object Response\n");
-		HyflowMessageFuture & cbfmsg = NetworkManager::getMessageFuture(msg.msg_id,
+		HyflowMessageFuture & cbfmsg = MessageMaps::getMessageFuture(msg.msg_id,
 						msg.msg_t);
 		cbfmsg.notifyMessage();
 	}

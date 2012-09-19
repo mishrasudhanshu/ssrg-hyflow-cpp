@@ -12,12 +12,14 @@
 #include <boost/thread/mutex.hpp>
 
 #include "HyflowMessage.h"
+#include "../../core/HyflowObject.h"
 
 namespace vt_dstm {
 
 class HyflowMessageFuture {
 	bool isReceived;
-	unsigned long long msg_id;
+	std::string msg_id;
+	std::string forObjectId;
 	HyMessageType msg_t;
 	boost::condition onReceive;
 	boost::mutex msgMutex;
@@ -31,14 +33,15 @@ class HyflowMessageFuture {
 	std::string stringResponse;
 	HyflowObject* dataResponse;
 
+	static unsigned long long getCurrentTime();
 public:
 	HyflowMessageFuture();
 	virtual ~HyflowMessageFuture();
 	void waitOnFuture();
 	bool isComplete();
 	void notifyMessage();
-	void setId(unsigned long long id);
-	unsigned long long getId();
+	void setId(const std::string & id);
+	const std::string & getId();
 	void setType(HyMessageType t);
 	HyMessageType getType();
 
@@ -52,6 +55,16 @@ public:
 	void setStringResponse(std::string stringResponse);
 	unsigned long long getTxnId() const;
 	void setTxnId(unsigned long long txnId);
+
+	void createIdNRegisterFuture();
+
+	std::string getForObjectId() const {
+		return forObjectId;
+	}
+
+	void setForObjectId(std::string forObjectId) {
+		this->forObjectId = forObjectId;
+	}
 };
 
 } /* namespace vt_dstm */

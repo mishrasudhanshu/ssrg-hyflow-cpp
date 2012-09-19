@@ -10,25 +10,22 @@
 #ifndef HYFLOWMESSAGE_H_
 #define HYFLOWMESSAGE_H_
 
+#include <string>
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/assume_abstract.hpp>
 #include "BaseMessage.h"
-#include "../../core/context/ContextManager.h"
 
 namespace vt_dstm
 {
 
 enum HyMessageType {
-	MSG_TYPE_INVALID, /*For Dummay Message */
+	MSG_TYPE_INVALID=0, /*For Dummay Message */
 	MSG_GRP_SYNC, /*Group Joining Request*/
 	MSG_TRK_OBJECT, /*Object location tracker*/
 	MSG_ACCESS_OBJECT, /*Object Read-Write Request/Response*/
 	MSG_REGISTER_OBJ, /*Register or Unregister object in cluster*/
 	MSG_LOCK_ACCESS,  /*Request object lock unlock*/
 	MSG_READ_VALIDATE, /*Validate a object version*/
-	MSG_COMMIT_RQ, /*Object Commit Request*/
-	MSG_COMMIT_RS, /*Object Commit Response*/
-	MSG_COMMIT_FN /*Object Commit Finish*/
 };
 
 class HyflowMessage {
@@ -46,18 +43,18 @@ class HyflowMessage {
         ar & fromNode;
         ar & toNode;
         ar & fromNodeClock;
+        ar & forObjectId;
     }
+    std::string forObjectId;
 public:
 	int size;
 	HyMessageType msg_t;
-	unsigned long long msg_id;
+	std::string msg_id;
 	int fromNodeClock;
 
 	//LESSON: Boost serialisation requires the bool to initialised
-	HyflowMessage(){
-		isCallback = false; isReplied = false; msg_id = 0;
-		fromNodeClock = ContextManager::getClock();
-	}
+	HyflowMessage();
+	HyflowMessage(const std::string & forObjectId);
 
 	virtual ~HyflowMessage(){}
 
@@ -65,6 +62,8 @@ public:
 	int fromNode;
 	bool isReplied;
 	int toNode;
+	std::string getForObjectId() const;
+	void setForObjectId(std::string forObjectId);
 
 	void init(HyMessageType msg_t, bool isCallback);
 	int getSize() {return size;}
@@ -73,8 +72,8 @@ public:
 	void setMsg(BaseMessage *m){msg=m;}
 	BaseMessage* getMsg(){return msg;}
 
-	void setMsgId(unsigned long id){msg_id = id;}
-	unsigned long getMsgId(){return msg_id;}
+	void setMsgId(const std::string & id){msg_id = id;}
+	const std::string & getMsgId(){return msg_id;}
 
 	/**
 	 * Called by default handler on message receive

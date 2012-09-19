@@ -23,8 +23,14 @@ class NetworkManager {
 	static int machine;
 	static int basePort;
 	static int threadCount;
+	static std::string Ips[];
 
 	static bool islocal;
+
+	static int nodesInCluster;
+	static int syncVersion;
+	static boost::condition onCluster;
+	static boost::mutex clsMutex;
 public:
 	static AbstractNetwork *network;
 
@@ -32,13 +38,14 @@ public:
 	static void NetworkInit();
 	static void sendMessage(int nodeId, HyflowMessage Message);
 	static void sendCallbackMessage(int nodeId, HyflowMessage Message, HyflowMessageFuture & fu);
-	static void registerHandler(HyMessageType msg_t, void (*handlerFunc)(HyflowMessage &));
+//	static void registerHandler(HyMessageType msg_t, void (*handlerFunc)(HyflowMessage &));
 
 	static void initNode();
 	static int getNodeId();
 	static int getNodeCount();
 	static int getMachine();
 	static int getBasePort();
+	static std::string getIp(int id);
 	static bool islocalMachine();
 
 	/*
@@ -50,9 +57,9 @@ public:
 	static void waitTillSynchronized(int rqNo);
 	static void notifyCluster(int rqNo);
 
-	static void registerMessageFuture(unsigned long long m_id, HyMessageType t, HyflowMessageFuture & fu);
-	static HyflowMessageFuture & getMessageFuture(unsigned long long m_id, HyMessageType t);
-	static void removeMessageFuture(unsigned long long m_id, HyMessageType t);
+//	static void registerMessageFuture(unsigned long long m_id, HyMessageType t, HyflowMessageFuture & fu);
+//	static HyflowMessageFuture & getMessageFuture(unsigned long long m_id, HyMessageType t);
+//	static void removeMessageFuture(unsigned long long m_id, HyMessageType t);
 	static void test();
 };
 

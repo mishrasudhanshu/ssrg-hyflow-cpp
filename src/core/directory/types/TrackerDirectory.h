@@ -10,16 +10,17 @@
 
 #include <string>
 #include <map>
+#include "tbb/concurrent_hash_map.h"
 #include "../HyflowDirectory.h"
 #include "../../HyflowObject.h"
-#include "LocalCache.h"
+#include "LocalCacheTbb.h"
 #include "../../../util/concurrent/ConcurrentHashMap.h"
 
 namespace vt_dstm {
 
 class TrackerDirectory: public vt_dstm::HyflowDirectory {
-	static ConcurrentHashMap<std::string, int> directory;
-	static LocalCache local;
+	static tbb::concurrent_hash_map<std::string, int> directory;
+	static LocalCacheTbb local;
 	void updateObjectToLocal(HyflowObject* obj);
 	void updateObjectToDirectory(HyflowObject* obj);
 	int getTracker(std::string & objectId);

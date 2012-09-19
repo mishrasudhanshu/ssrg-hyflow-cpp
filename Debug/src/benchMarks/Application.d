@@ -9,14 +9,9 @@ src/benchMarks/Application.d: ../src/benchMarks/Application.cpp \
  ../src/benchMarks/../util/networking/AbstractNetwork.h \
  ../src/benchMarks/../util/networking/../messages/HyflowMessage.h \
  ../src/benchMarks/../util/networking/../messages/BaseMessage.h \
- ../src/benchMarks/../util/networking/../messages/../../core/context/ContextManager.h \
- ../src/benchMarks/../util/networking/../messages/../../core/context/HyflowContext.h \
- ../src/benchMarks/../util/networking/../messages/../../core/context/../HyflowObject.h \
- ../src/benchMarks/../util/networking/../messages/../../core/context/../exceptions/types/TransactionException.h \
- ../src/benchMarks/../util/networking/../messages/../../core/context/../exceptions/types/../HyflowException.h \
- ../src/benchMarks/../util/networking/../messages/../../core/context/../../util/concurrent/ConcurrentHashMap.h \
  ../src/benchMarks/../util/networking/../messages/HyflowMessageFuture.h \
  ../src/benchMarks/../util/networking/../messages/HyflowMessage.h \
+ ../src/benchMarks/../util/networking/../messages/../../core/HyflowObject.h \
  ../src/benchMarks/../core/directory/DirectoryManager.h \
  ../src/benchMarks/../core/directory/../HyflowObject.h \
  ../src/benchMarks/../core/directory/HyflowDirectory.h \
@@ -29,6 +24,7 @@ src/benchMarks/Application.d: ../src/benchMarks/Application.cpp \
  ../src/benchMarks/tm/bank/BankAccount.h \
  ../src/benchMarks/tm/bank/../../../core/HyflowObject.h \
  ../src/benchMarks/tm/bank/../../../core/context/HyflowContext.h \
+ ../src/benchMarks/tm/bank/../../../core/context/../HyflowObject.h \
  ../src/benchMarks/tm/bank/../../../core/HyflowObjectFuture.h \
  ../src/benchMarks/tm/bank/../../HyflowBenchmark.h \
  ../src/benchMarks/tm/list/ListBenchmark.h \
@@ -36,7 +32,8 @@ src/benchMarks/Application.d: ../src/benchMarks/Application.cpp \
  ../src/benchMarks/tm/list/../../../core/HyflowObject.h \
  ../src/benchMarks/tm/list/../../../core/context/HyflowContext.h \
  ../src/benchMarks/tm/list/../../../core/HyflowObjectFuture.h \
- ../src/benchMarks/tm/list/../../HyflowBenchmark.h
+ ../src/benchMarks/tm/list/../../HyflowBenchmark.h \
+ ../src/benchMarks/../util/concurrent/HyInteger.h
 
 ../src/benchMarks/Application.h:
 
@@ -58,21 +55,11 @@ src/benchMarks/Application.d: ../src/benchMarks/Application.cpp \
 
 ../src/benchMarks/../util/networking/../messages/BaseMessage.h:
 
-../src/benchMarks/../util/networking/../messages/../../core/context/ContextManager.h:
-
-../src/benchMarks/../util/networking/../messages/../../core/context/HyflowContext.h:
-
-../src/benchMarks/../util/networking/../messages/../../core/context/../HyflowObject.h:
-
-../src/benchMarks/../util/networking/../messages/../../core/context/../exceptions/types/TransactionException.h:
-
-../src/benchMarks/../util/networking/../messages/../../core/context/../exceptions/types/../HyflowException.h:
-
-../src/benchMarks/../util/networking/../messages/../../core/context/../../util/concurrent/ConcurrentHashMap.h:
-
 ../src/benchMarks/../util/networking/../messages/HyflowMessageFuture.h:
 
 ../src/benchMarks/../util/networking/../messages/HyflowMessage.h:
+
+../src/benchMarks/../util/networking/../messages/../../core/HyflowObject.h:
 
 ../src/benchMarks/../core/directory/DirectoryManager.h:
 
@@ -98,6 +85,8 @@ src/benchMarks/Application.d: ../src/benchMarks/Application.cpp \
 
 ../src/benchMarks/tm/bank/../../../core/context/HyflowContext.h:
 
+../src/benchMarks/tm/bank/../../../core/context/../HyflowObject.h:
+
 ../src/benchMarks/tm/bank/../../../core/HyflowObjectFuture.h:
 
 ../src/benchMarks/tm/bank/../../HyflowBenchmark.h:
@@ -113,3 +102,5 @@ src/benchMarks/Application.d: ../src/benchMarks/Application.cpp \
 ../src/benchMarks/tm/list/../../../core/HyflowObjectFuture.h:
 
 ../src/benchMarks/tm/list/../../HyflowBenchmark.h:
+
+../src/benchMarks/../util/concurrent/HyInteger.h:

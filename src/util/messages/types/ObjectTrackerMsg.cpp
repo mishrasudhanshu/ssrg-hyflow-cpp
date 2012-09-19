@@ -14,6 +14,7 @@
 #include "ObjectTrackerMsg.h"
 #include "ObjectAccessMsg.h"
 #include "../../networking/NetworkManager.h"
+#include "../../messages/MessageMaps.h"
 #include "../../logging/Logger.h"
 #include "../../../core/directory/DirectoryManager.h"
 
@@ -56,9 +57,11 @@ void ObjectTrackerMsg::objectTrackerHandler(HyflowMessage & msg) {
 	} else{
 
 		// LESSON: Make sure no copy constructor is called on HyflowMessageFuture!!!
-		HyflowMessageFuture & cbfmsg = NetworkManager::getMessageFuture(msg.msg_id, msg.msg_t);
+		HyflowMessageFuture & cbfmsg = MessageMaps::getMessageFuture(msg.msg_id, msg.msg_t);
 		// After getting a reference remove for map
-		NetworkManager::removeMessageFuture(msg.msg_id, msg.msg_t);
+		MessageMaps::removeMessageFuture(msg.msg_id, msg.msg_t);
+		// So at destructor don't try to remove itself if its type not overridden
+		cbfmsg.setType(MSG_TYPE_INVALID);
 
 		int myNode = NetworkManager::getNodeId();
 		if (myNode == otmsg->owner) {
@@ -67,8 +70,9 @@ void ObjectTrackerMsg::objectTrackerHandler(HyflowMessage & msg) {
 			cbfmsg.setDataResponse(obj);
 			cbfmsg.notifyMessage();
 		} else {
-			ObjectAccessMsg oam(otmsg->objectId, otmsg->isRead);
-			HyflowMessage hmsg;
+			const std::string & objId = otmsg->objectId;
+			ObjectAccessMsg oam(objId, otmsg->isRead);
+			HyflowMessage hmsg(objId);
 			hmsg.msg_t = MSG_ACCESS_OBJECT;
 			hmsg.isCallback = true;
 			hmsg.setMsg(&oam);

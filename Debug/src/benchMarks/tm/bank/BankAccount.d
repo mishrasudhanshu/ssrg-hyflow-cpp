@@ -11,7 +11,7 @@ src/benchMarks/tm/bank/BankAccount.d: \
  ../src/benchMarks/tm/bank/../../../core/../util/messages/HyflowMessageFuture.h \
  ../src/benchMarks/tm/bank/../../../core/../util/messages/HyflowMessage.h \
  ../src/benchMarks/tm/bank/../../../core/../util/messages/BaseMessage.h \
- ../src/benchMarks/tm/bank/../../../core/../util/messages/../../core/context/ContextManager.h \
+ ../src/benchMarks/tm/bank/../../../core/../util/messages/../../core/HyflowObject.h \
  ../src/benchMarks/tm/bank/../../../core/directory/DirectoryManager.h \
  ../src/benchMarks/tm/bank/../../../core/directory/../HyflowObject.h \
  ../src/benchMarks/tm/bank/../../../core/directory/HyflowDirectory.h \
@@ -35,6 +35,7 @@ src/benchMarks/tm/bank/BankAccount.d: \
  ../src/benchMarks/tm/bank/../../tm/list/../../../core/context/HyflowContext.h \
  ../src/benchMarks/tm/bank/../../tm/list/../../../core/HyflowObjectFuture.h \
  ../src/benchMarks/tm/bank/../../tm/list/../../HyflowBenchmark.h \
+ ../src/benchMarks/tm/bank/../../../util/concurrent/HyInteger.h \
  ../src/benchMarks/tm/bank/BankAccount.h
 
 ../src/benchMarks/tm/bank/../../../core/context/ContextManager.h:
@@ -59,7 +60,7 @@ src/benchMarks/tm/bank/BankAccount.d: \
 
 ../src/benchMarks/tm/bank/../../../core/../util/messages/BaseMessage.h:
 
-../src/benchMarks/tm/bank/../../../core/../util/messages/../../core/context/ContextManager.h:
+../src/benchMarks/tm/bank/../../../core/../util/messages/../../core/HyflowObject.h:
 
 ../src/benchMarks/tm/bank/../../../core/directory/DirectoryManager.h:
 
@@ -106,5 +107,7 @@ src/benchMarks/tm/bank/BankAccount.d: \
 ../src/benchMarks/tm/bank/../../tm/list/../../../core/HyflowObjectFuture.h:
 
 ../src/benchMarks/tm/bank/../../tm/list/../../HyflowBenchmark.h:
+
+../src/benchMarks/tm/bank/../../../util/concurrent/HyInteger.h:
 
 ../src/benchMarks/tm/bank/BankAccount.h:

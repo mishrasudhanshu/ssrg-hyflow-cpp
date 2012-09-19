@@ -4,14 +4,9 @@ src/util/networking/NetworkManager.d: \
  ../src/util/networking/AbstractNetwork.h \
  ../src/util/networking/../messages/HyflowMessage.h \
  ../src/util/networking/../messages/BaseMessage.h \
- ../src/util/networking/../messages/../../core/context/ContextManager.h \
- ../src/util/networking/../messages/../../core/context/HyflowContext.h \
- ../src/util/networking/../messages/../../core/context/../HyflowObject.h \
- ../src/util/networking/../messages/../../core/context/../exceptions/types/TransactionException.h \
- ../src/util/networking/../messages/../../core/context/../exceptions/types/../HyflowException.h \
- ../src/util/networking/../messages/../../core/context/../../util/concurrent/ConcurrentHashMap.h \
  ../src/util/networking/../messages/HyflowMessageFuture.h \
  ../src/util/networking/../messages/HyflowMessage.h \
+ ../src/util/networking/../messages/../../core/HyflowObject.h \
  ../src/util/networking/../parser/ConfigFile.h \
  ../src/util/networking/../parser/../Definitions.h \
  ../src/util/networking/../logging/Logger.h \
@@ -38,7 +33,9 @@ src/util/networking/NetworkManager.d: \
  ../src/util/networking/msgConnect/MsgConnect/MCSocketBase.h \
  ../src/util/networking/msgConnect/MsgConnect/MCInetTransport.h \
  ../src/util/networking/msgConnect/MsgConnect/MCSock.h \
- ../src/util/networking/msgConnect/MSCtest.h
+ ../src/util/networking/msgConnect/MSCtest.h \
+ ../src/util/networking/../messages/MessageHandler.h \
+ ../src/util/networking/../messages/HyflowMessageFuture.h
 
 ../src/util/networking/NetworkManager.h:
 
@@ -48,21 +45,11 @@ src/util/networking/NetworkManager.d: \
 
 ../src/util/networking/../messages/BaseMessage.h:
 
-../src/util/networking/../messages/../../core/context/ContextManager.h:
-
-../src/util/networking/../messages/../../core/context/HyflowContext.h:
-
-../src/util/networking/../messages/../../core/context/../HyflowObject.h:
-
-../src/util/networking/../messages/../../core/context/../exceptions/types/TransactionException.h:
-
-../src/util/networking/../messages/../../core/context/../exceptions/types/../HyflowException.h:
-
-../src/util/networking/../messages/../../core/context/../../util/concurrent/ConcurrentHashMap.h:
-
 ../src/util/networking/../messages/HyflowMessageFuture.h:
 
 ../src/util/networking/../messages/HyflowMessage.h:
+
+../src/util/networking/../messages/../../core/HyflowObject.h:
 
 ../src/util/networking/../parser/ConfigFile.h:
 
@@ -117,3 +104,7 @@ src/util/networking/NetworkManager.d: \
 ../src/util/networking/msgConnect/MsgConnect/MCSock.h:
 
 ../src/util/networking/msgConnect/MSCtest.h:
+
+../src/util/networking/../messages/MessageHandler.h:
+
+../src/util/networking/../messages/HyflowMessageFuture.h:

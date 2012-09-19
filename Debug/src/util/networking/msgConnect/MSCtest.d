@@ -21,19 +21,15 @@ src/util/networking/msgConnect/MSCtest.d: \
  ../src/util/networking/msgConnect/../../messages/types/../../../core/HyflowObject.h \
  ../src/util/networking/msgConnect/../../messages/types/../HyflowMessage.h \
  ../src/util/networking/msgConnect/../../messages/types/../BaseMessage.h \
- ../src/util/networking/msgConnect/../../messages/types/../../../core/context/ContextManager.h \
- ../src/util/networking/msgConnect/../../messages/types/../../../core/context/HyflowContext.h \
- ../src/util/networking/msgConnect/../../messages/types/../../../core/context/../HyflowObject.h \
- ../src/util/networking/msgConnect/../../messages/types/../../../core/context/../exceptions/types/TransactionException.h \
- ../src/util/networking/msgConnect/../../messages/types/../../../core/context/../exceptions/types/../HyflowException.h \
- ../src/util/networking/msgConnect/../../messages/types/../../../core/context/../../util/concurrent/ConcurrentHashMap.h \
  ../src/util/networking/msgConnect/../../../benchMarks/tm/bank/BankAccount.h \
  ../src/util/networking/msgConnect/../../../benchMarks/tm/bank/../../../core/HyflowObject.h \
  ../src/util/networking/msgConnect/../../../benchMarks/tm/bank/../../../core/context/HyflowContext.h \
+ ../src/util/networking/msgConnect/../../../benchMarks/tm/bank/../../../core/context/../HyflowObject.h \
  ../src/util/networking/msgConnect/../../../benchMarks/tm/bank/../../../core/HyflowObjectFuture.h \
  ../src/util/networking/msgConnect/../../../benchMarks/tm/bank/../../../core/HyflowObject.h \
  ../src/util/networking/msgConnect/../../../benchMarks/tm/bank/../../../core/../util/messages/HyflowMessageFuture.h \
  ../src/util/networking/msgConnect/../../../benchMarks/tm/bank/../../../core/../util/messages/HyflowMessage.h \
+ ../src/util/networking/msgConnect/../../../benchMarks/tm/bank/../../../core/../util/messages/../../core/HyflowObject.h \
  ../src/util/networking/msgConnect/../../messages/HyflowMessage.h \
  ../src/util/networking/msgConnect/../../messages/HyflowMessageFuture.h \
  ../src/util/networking/msgConnect/../../logging/Logger.h \
@@ -88,23 +84,13 @@ src/util/networking/msgConnect/MSCtest.d: \
 
 ../src/util/networking/msgConnect/../../messages/types/../BaseMessage.h:
 
-../src/util/networking/msgConnect/../../messages/types/../../../core/context/ContextManager.h:
-
-../src/util/networking/msgConnect/../../messages/types/../../../core/context/HyflowContext.h:
-
-../src/util/networking/msgConnect/../../messages/types/../../../core/context/../HyflowObject.h:
-
-../src/util/networking/msgConnect/../../messages/types/../../../core/context/../exceptions/types/TransactionException.h:
-
-../src/util/networking/msgConnect/../../messages/types/../../../core/context/../exceptions/types/../HyflowException.h:
-
-../src/util/networking/msgConnect/../../messages/types/../../../core/context/../../util/concurrent/ConcurrentHashMap.h:
-
 ../src/util/networking/msgConnect/../../../benchMarks/tm/bank/BankAccount.h:
 
 ../src/util/networking/msgConnect/../../../benchMarks/tm/bank/../../../core/HyflowObject.h:
 
 ../src/util/networking/msgConnect/../../../benchMarks/tm/bank/../../../core/context/HyflowContext.h:
+
+../src/util/networking/msgConnect/../../../benchMarks/tm/bank/../../../core/context/../HyflowObject.h:
 
 ../src/util/networking/msgConnect/../../../benchMarks/tm/bank/../../../core/HyflowObjectFuture.h:
 
@@ -113,6 +99,8 @@ src/util/networking/msgConnect/MSCtest.d: \
 ../src/util/networking/msgConnect/../../../benchMarks/tm/bank/../../../core/../util/messages/HyflowMessageFuture.h:
 
 ../src/util/networking/msgConnect/../../../benchMarks/tm/bank/../../../core/../util/messages/HyflowMessage.h:
+
+../src/util/networking/msgConnect/../../../benchMarks/tm/bank/../../../core/../util/messages/../../core/HyflowObject.h:
 
 ../src/util/networking/msgConnect/../../messages/HyflowMessage.h:
 

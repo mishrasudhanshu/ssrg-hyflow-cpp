@@ -5,8 +5,8 @@
  *      Author: mishras[at]vt.edu
  */
 
-#ifndef OBJECTREQUESTMSG_H_
-#define OBJECTREQUESTMSG_H_
+#ifndef OBJECTACCESSMSG_H_
+#define OBJECTACCESSMSG_H_
 
 #include <string>
 #include <cstddef>

@@ -13,10 +13,12 @@
 #include "ObjectAccessMsg.h"
 #include "../../../benchMarks/BenchmarkExecutor.h"
 #include "../../networking/NetworkManager.h"
+#include "../../messages/MessageMaps.h"
 #include "../../logging/Logger.h"
 #include "../../../core/directory/DirectoryManager.h"
+#include "../../../core/context/ContextManager.h"
 
-#include "../../../benchMarks/tm/bank/BankAccount.h"
+//#include "../../../benchMarks/tm/bank/BankAccount.h"
 
 namespace vt_dstm {
 
@@ -52,7 +54,7 @@ void ObjectAccessMsg::objectAccessHandler(HyflowMessage & msg) {
 		}
 	} else {
 		// Find the MessageFuture created for expected response
-		HyflowMessageFuture & cbfmsg = NetworkManager::getMessageFuture(msg.msg_id,
+		HyflowMessageFuture & cbfmsg = MessageMaps::getMessageFuture(msg.msg_id,
 				msg.msg_t);
 		// Update sender clock for requesting context
 		HyflowContext *c = ContextManager::findContext(cbfmsg.getTxnId());

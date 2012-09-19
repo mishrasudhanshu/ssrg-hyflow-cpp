@@ -13,11 +13,11 @@
 #include "../../util/logging/Logger.h"
 #include "types/DTL2Context.h"
 #include "../../util/networking/NetworkManager.h"
-#include "../../benchMarks/BenchmarkExecutor.h"
+#include "../../util/concurrent/ThreadId.h"
 
 namespace vt_dstm {
 
-ConcurrentHashMap<unsigned long long, HyflowContext*> ContextManager::contextMap;
+tbb::concurrent_hash_map<unsigned long long, HyflowContext*> ContextManager::contextMap;
 boost::shared_mutex ContextManager::clockMutex;
 // LESSON: As version starts from 0, even after first commit updated version will be 0 i.e. txnClock
 int ContextManager::localNodeClock = 1;
@@ -29,7 +29,7 @@ ContextManager::~ContextManager() {}
 unsigned long long ContextManager::createTid() {
 	timeval tv;
 	gettimeofday(&tv, NULL);
-	return tv.tv_sec*100000 + 0.1*tv.tv_usec + 100*NetworkManager::getNodeId() + BenchmarkExecutor::getThreadId();
+	return tv.tv_sec*100000 + 0.1*tv.tv_usec + 100*NetworkManager::getNodeId() + ThreadId::getThreadId();
 }
 
 HyflowContext* ContextManager::getInstance() {
@@ -44,14 +44,28 @@ HyflowContext* ContextManager::getInstance() {
 }
 
 void ContextManager::registerContext(HyflowContext *c) {
-	std::pair<unsigned long long, HyflowContext*> p;
-	p.first = c->getTxnId();
-	p.second = c;
-	contextMap.insertValue(p);
+	tbb::concurrent_hash_map<unsigned long long, HyflowContext*>::accessor a;
+	if (!contextMap.insert(a,c->getTxnId())) {
+		throw "Context with same transaction Id already exist";
+	}
+	a->second = c;
 }
 
-HyflowContext* ContextManager::findContext(unsigned long long int tid) {
-	return contextMap.getValue(tid);
+HyflowContext* ContextManager::findContext(const unsigned long long tid) {
+	HyflowContext* context = NULL;
+	{
+		tbb::concurrent_hash_map<unsigned long long, HyflowContext*>::const_accessor a;
+		if (contextMap.find(a,tid)) {
+			context = a->second;
+			if(!context) {
+				throw "NULL Context Found!!";
+			}
+			return context;
+		} else {
+			throw "No Context Found!!";
+		}
+	}
+	return context;
 }
 
 bool ContextManager::atomicUpdateClock(int newClock, int oldClock) {

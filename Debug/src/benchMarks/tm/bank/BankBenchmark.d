@@ -10,11 +10,7 @@ src/benchMarks/tm/bank/BankBenchmark.d: \
  ../src/benchMarks/tm/bank/../../../core/../util/messages/HyflowMessageFuture.h \
  ../src/benchMarks/tm/bank/../../../core/../util/messages/HyflowMessage.h \
  ../src/benchMarks/tm/bank/../../../core/../util/messages/BaseMessage.h \
- ../src/benchMarks/tm/bank/../../../core/../util/messages/../../core/context/ContextManager.h \
- ../src/benchMarks/tm/bank/../../../core/../util/messages/../../core/context/HyflowContext.h \
- ../src/benchMarks/tm/bank/../../../core/../util/messages/../../core/context/../exceptions/types/TransactionException.h \
- ../src/benchMarks/tm/bank/../../../core/../util/messages/../../core/context/../exceptions/types/../HyflowException.h \
- ../src/benchMarks/tm/bank/../../../core/../util/messages/../../core/context/../../util/concurrent/ConcurrentHashMap.h \
+ ../src/benchMarks/tm/bank/../../../core/../util/messages/../../core/HyflowObject.h \
  ../src/benchMarks/tm/bank/../../HyflowBenchmark.h \
  ../src/benchMarks/tm/bank/../../../util/networking/NetworkManager.h \
  ../src/benchMarks/tm/bank/../../../util/networking/AbstractNetwork.h \
@@ -33,7 +29,8 @@ src/benchMarks/tm/bank/BankBenchmark.d: \
  ../src/benchMarks/tm/bank/../../tm/list/../../../core/HyflowObject.h \
  ../src/benchMarks/tm/bank/../../tm/list/../../../core/context/HyflowContext.h \
  ../src/benchMarks/tm/bank/../../tm/list/../../../core/HyflowObjectFuture.h \
- ../src/benchMarks/tm/bank/../../tm/list/../../HyflowBenchmark.h
+ ../src/benchMarks/tm/bank/../../tm/list/../../HyflowBenchmark.h \
+ ../src/benchMarks/tm/bank/../../../util/concurrent/HyInteger.h
 
 ../src/benchMarks/tm/bank/BankBenchmark.h:
 
@@ -55,15 +52,7 @@ src/benchMarks/tm/bank/BankBenchmark.d: \
 
 ../src/benchMarks/tm/bank/../../../core/../util/messages/BaseMessage.h:
 
-../src/benchMarks/tm/bank/../../../core/../util/messages/../../core/context/ContextManager.h:
-
-../src/benchMarks/tm/bank/../../../core/../util/messages/../../core/context/HyflowContext.h:
-
-../src/benchMarks/tm/bank/../../../core/../util/messages/../../core/context/../exceptions/types/TransactionException.h:
-
-../src/benchMarks/tm/bank/../../../core/../util/messages/../../core/context/../exceptions/types/../HyflowException.h:
-
-../src/benchMarks/tm/bank/../../../core/../util/messages/../../core/context/../../util/concurrent/ConcurrentHashMap.h:
+../src/benchMarks/tm/bank/../../../core/../util/messages/../../core/HyflowObject.h:
 
 ../src/benchMarks/tm/bank/../../HyflowBenchmark.h:
 
@@ -102,3 +91,5 @@ src/benchMarks/tm/bank/BankBenchmark.d: \
 ../src/benchMarks/tm/bank/../../tm/list/../../../core/HyflowObjectFuture.h:
 
 ../src/benchMarks/tm/bank/../../tm/list/../../HyflowBenchmark.h:
+
+../src/benchMarks/tm/bank/../../../util/concurrent/HyInteger.h:
