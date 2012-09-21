@@ -14,6 +14,7 @@
 #include "types/DTL2Context.h"
 #include "../../util/networking/NetworkManager.h"
 #include "../../util/concurrent/ThreadId.h"
+#include "../../benchMarks/BenchmarkExecutor.h"
 
 namespace vt_dstm {
 
@@ -48,6 +49,7 @@ HyflowContext* ContextManager::getInstance() {
 }
 
 void ContextManager::cleanInstance(HyflowContext *c) {
+	BenchmarkExecutor::increaseRetries();
 	unregisterContext(c);
 	delete c;
 }

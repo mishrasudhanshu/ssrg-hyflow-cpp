@@ -13,10 +13,7 @@
 
 namespace vt_dstm {
 
-BankBenchmark::BankBenchmark() {
-	// TODO Auto-generated constructor stub
-
-}
+BankBenchmark::BankBenchmark() {}
 
 BankBenchmark::~BankBenchmark() {
 	delete ids;

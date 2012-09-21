@@ -12,6 +12,7 @@
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <string.h>
+#include <sched.h>
 
 #include "MSCNetwork.h"
 #include "../NetworkManager.h"
@@ -357,8 +358,16 @@ void MSCNetwork::callbackHandler(unsigned int UserData, MsgConnect::MCMessage& m
 
 void MSCNetwork::dispatcher(MsgConnect::MCMessenger *mc, int dispatcherId) {
 	LOG_DEBUG("Message Dispatcher started\n");
-	boost::posix_time::seconds sleepTime(0.0002);
+	boost::posix_time::seconds sleepTime(0.0001);
 	ThreadId::setThreadId(dispatcherId);
+
+	// Set the thread affinity
+	cpu_set_t s;
+	CPU_ZERO(&s);
+	int node = NetworkManager::getNodeId()*threadCount + dispatcherId;
+	CPU_SET(node, &s);
+	sched_setaffinity(0, sizeof(cpu_set_t), &s);
+
 	while (!hyflowShutdown) {
 		try {
 			mc->DispatchMessages();

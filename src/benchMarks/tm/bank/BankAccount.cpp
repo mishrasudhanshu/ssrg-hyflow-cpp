@@ -138,7 +138,6 @@ uint64_t BankAccount::totalBalance(std::string id1, std::string id2) {
 					throw;
 				}catch (TransactionException & ex) {
 					ex.print();
-					BenchmarkExecutor::increaseRetries();
 					continue;
 				} catch (std::string & s) {
 					Logger::fatal("%s\n",s.c_str());

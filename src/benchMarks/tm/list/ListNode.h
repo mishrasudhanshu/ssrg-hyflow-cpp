@@ -54,6 +54,7 @@ public:
 	 */
 	static void findNode(int value);
 
+	void test();
 };
 
 } /* namespace vt_dstm */

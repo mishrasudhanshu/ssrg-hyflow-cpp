@@ -63,7 +63,7 @@ public:
     template<class Archive>
 	static void registerObjectTypes(Archive & ar) {
     	BankBenchmark::registerObjectTypes(ar);
-//    	ListBenchmark::registerObjectTypes(ar);
+    	ListBenchmark::registerObjectTypes(ar);
     }
 
     static void executeThreads();

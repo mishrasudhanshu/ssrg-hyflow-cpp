@@ -5,6 +5,7 @@
  *      Author: mishras[at]vt.edu
  */
 
+#include <string>
 #include <fstream>
 #include <iostream>
 #include <boost/archive/text_iarchive.hpp>
@@ -112,6 +113,36 @@ void ListNode::print() {
 
 void ListNode::getClone(HyflowObject **obj) {
 
+}
+
+void ListNode::test() {
+	// create and open a character archive for output
+	std::ofstream ofs("List", std::ios::out);
+
+	// create class instance
+	std::string id="0-0";
+	vt_dstm::ListNode  l;
+	l.setId(id);
+
+	// save data to archive
+	{
+		boost::archive::text_oarchive oa(ofs);
+		// write class instance to archive
+		oa << l;
+		// archive and stream closed when destructors are called
+	}
+
+	// ... some time later restore the class instance to its orginal state
+	vt_dstm::ListNode l1;
+	{
+		// create and open an archive for input
+		std::ifstream ifs("List", std::ios::in);
+		boost::archive::text_iarchive ia(ifs);
+		// read class state from archive
+		ia >> l1;
+		// archive and stream closed when destructors are called
+		l1.print();
+	}
 }
 
 } /* namespace vt_dstm */

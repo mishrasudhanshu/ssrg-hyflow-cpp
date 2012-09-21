@@ -123,7 +123,7 @@ void BenchmarkExecutor::execute(int id){
 	// Set the thread affinity
 	cpu_set_t s;
 	CPU_ZERO(&s);
-	int node = NetworkManager::getNodeId()*threadCount + id;
+	int node = NetworkManager::getNodeId()*3*threadCount + id;
 	CPU_SET(node, &s);
 	sched_setaffinity(0, sizeof(cpu_set_t), &s);
 
@@ -147,6 +147,8 @@ void BenchmarkExecutor::execute(int id){
 	if (retries.get()) {
 		rtry = retries.get()->getValue();
 	}
+	// Tries are also get included in retried value as we count number of contexts created
+	rtry -= transactions;
 	addMetaData(thrPut, rtry);
 	LOG_DEBUG("BNC_EXE %d: ThroughPut = %0.2f trxns/sec <----------------------\n", id, thrPut);
 }
