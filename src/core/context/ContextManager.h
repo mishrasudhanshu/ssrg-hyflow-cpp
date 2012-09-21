@@ -8,9 +8,8 @@
 #ifndef CONTEXTMANAGER_H_
 #define CONTEXTMANAGER_H_
 
-#include <boost/thread/shared_mutex.hpp>
-
 #include "tbb/concurrent_hash_map.h"
+#include "tbb/atomic.h"
 #include "HyflowContext.h"
 #include "../exceptions/types/TransactionException.h"
 #include "../../util/concurrent/ConcurrentHashMap.h"
@@ -20,8 +19,7 @@ namespace vt_dstm {
 class ContextManager {
 	static tbb::concurrent_hash_map<unsigned long long, HyflowContext*> contextMap;
 
-	static boost::shared_mutex clockMutex;
-	static int localNodeClock;
+	static tbb::atomic<int> localNodeClock;
 	static unsigned long long createTid();
 public:
 	ContextManager();

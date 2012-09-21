@@ -23,11 +23,11 @@ src/core/context/types/DTL2Context.d: \
  ../src/core/context/types/../../../util/networking/../messages/HyflowMessageFuture.h \
  ../src/core/context/types/../../../util/logging/Logger.h \
  ../src/core/context/types/../LockTable.h \
- ../src/core/context/types/../../../util/concurrent/ConcurrentHashMap.h \
  ../src/core/context/types/../ContextManager.h \
  ../src/core/context/types/../HyflowContext.h \
  ../src/core/context/types/../../exceptions/types/TransactionException.h \
- ../src/core/context/types/../../exceptions/types/../HyflowException.h
+ ../src/core/context/types/../../exceptions/types/../HyflowException.h \
+ ../src/core/context/types/../../../util/concurrent/ConcurrentHashMap.h
 
 ../src/core/context/types/DTL2Context.h:
 
@@ -75,8 +75,6 @@ src/core/context/types/DTL2Context.d: \
 
 ../src/core/context/types/../LockTable.h:
 
-../src/core/context/types/../../../util/concurrent/ConcurrentHashMap.h:
-
 ../src/core/context/types/../ContextManager.h:
 
 ../src/core/context/types/../HyflowContext.h:
@@ -84,3 +82,5 @@ src/core/context/types/DTL2Context.d: \
 ../src/core/context/types/../../exceptions/types/TransactionException.h:
 
 ../src/core/context/types/../../exceptions/types/../HyflowException.h:
+
+../src/core/context/types/../../../util/concurrent/ConcurrentHashMap.h:

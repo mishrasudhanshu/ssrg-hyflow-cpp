@@ -31,7 +31,7 @@ int BenchmarkExecutor::transactions = 0 ;
 int BenchmarkExecutor::readPercent = 0;
 int BenchmarkExecutor::threads = 1;
 bool BenchmarkExecutor::isInitiated = false;
-float BenchmarkExecutor::throughPut = 0;
+double BenchmarkExecutor::throughPut = 0;
 int BenchmarkExecutor::threadCount = 0;
 int BenchmarkExecutor::retryCount = 0;
 
@@ -53,7 +53,7 @@ unsigned long long BenchmarkExecutor::getTime() {
 	return tv.tv_sec*1000000 + tv.tv_usec;
 }
 
-void BenchmarkExecutor::addMetaData(float trp, int retry) {
+void BenchmarkExecutor::addMetaData(double trp, int retry) {
 	boost::unique_lock<boost::mutex> metaDatalock(execMutex);
 	throughPut += trp;
 	retryCount += retry;

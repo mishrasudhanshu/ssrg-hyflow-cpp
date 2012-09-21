@@ -15,8 +15,7 @@ int32_t LockTable::REMOTE = 1 << 31;
 int32_t LockTable::LOCK = 1 << 30;
 int32_t LockTable::UNLOCK = ~LOCK;
 
-std::map<std::string, int32_t>	LockTable::lockmap;
-boost::shared_mutex LockTable::rwMutex;
+tbb::concurrent_hash_map<std::string, int32_t>	LockTable::lockmap;
 
 LockTable::LockTable() {}
 
@@ -24,21 +23,20 @@ LockTable::~LockTable() {}
 
 //FIXME: Update once concurrentHashMap is fixed
 bool LockTable::tryLock(std::string & objId, int32_t obVer) {
-	boost::upgrade_lock<boost::shared_mutex> writeLock(rwMutex);
-	std::map<std::string, int32_t>::iterator i = lockmap.find(objId);
-	if ( i == lockmap.end()) {		// Object does not exist in lock table
-		lockmap [objId] = obVer | LOCK;
+	tbb::concurrent_hash_map<std::string, int32_t>::accessor a;
+	if (lockmap.insert(a, objId)) {		// Object does not exist in lock table
+		a->second = obVer | LOCK;
 		LOG_DEBUG("LockTable : new lock created for %s version %d\n", objId.c_str(), obVer);
 		return true;
 	} else {						// Object exit in lock Table
-		int32_t versionLock = i->second;
+		int32_t versionLock = a->second;
 		// Object is registered in lock table
 		if (versionLock & LOCK) {	// Object is locked
 			if ( (versionLock & UNLOCK) >= obVer) {	// Some one already locked same or newer version of object
 				LOG_DEBUG("LockTable :  %s already locked for version %d\n", objId.c_str(), obVer);
 				return false;
 			} else {		// Some one had locked older version of object
-				lockmap [objId] = obVer | LOCK;
+				a->second = obVer | LOCK;
 				LOG_DEBUG("LockTable : older Lock exist - locked successfully version %d\n", obVer);
 				return true;
 			}
@@ -55,7 +53,7 @@ bool LockTable::tryLock(std::string & objId, int32_t obVer) {
 					// Unlock now in concurrent implementation
 				}
 			}
-			lockmap [objId] = obVer | LOCK;
+			a->second = obVer | LOCK;
 			LOG_DEBUG("LockTable :  %s locked successfully version %d\n", objId.c_str(), obVer);
 			return true;
 		}
@@ -65,12 +63,11 @@ bool LockTable::tryLock(std::string & objId, int32_t obVer) {
 
 // TODO: Remove it, should not be required
 bool LockTable::isLocked(std::string & objId, int32_t obVer) {
-	boost::shared_lock<boost::shared_mutex> readLock(rwMutex);
-	std::map<std::string, int32_t>::iterator i = lockmap.find(objId);
-	if ( i == lockmap.end()) {
+	tbb::concurrent_hash_map<std::string, int32_t>::const_accessor a;
+	if (!lockmap.find(a, objId)) {
 		return false;
 	}
-	int32_t versionLock = i->second;
+	int32_t versionLock = a->second;
 	// Object is registered in lock table
 	if (versionLock & LOCK) {
 		if ((versionLock & UNLOCK) == obVer) {
@@ -81,13 +78,12 @@ bool LockTable::isLocked(std::string & objId, int32_t obVer) {
 }
 
 void LockTable::tryUnlock(std::string & objId, int32_t obVer) {
-	boost::upgrade_lock<boost::shared_mutex> writeLock(rwMutex);
-	std::map<std::string, int32_t>::iterator i = lockmap.find(objId);
-	if ( i == lockmap.end()) {
+	tbb::concurrent_hash_map<std::string, int32_t>::accessor a;
+	if ( lockmap.insert(a, objId)) {
 		Logger::fatal("LockTable : on unlock call for %s not found\n", objId.c_str());
 		return;
 	}
-	int32_t versionLock = i->second;
+	int32_t versionLock = a->second;
 	// Object is registered in lock table
 	if (versionLock & LOCK) {
 		if ( (versionLock & UNLOCK) > obVer) {
@@ -97,7 +93,7 @@ void LockTable::tryUnlock(std::string & objId, int32_t obVer) {
 			Logger::fatal("LockTable : Impossible request Unlock %s of version %d of future\n",objId.c_str(), obVer);
 			return;
 		}
-		lockmap [objId] = versionLock & UNLOCK;
+		a->second = versionLock & UNLOCK;
 		LOG_DEBUG("LockTable : Unlock successful for %s\n", objId.c_str());
 		return;
 	}

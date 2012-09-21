@@ -8,8 +8,7 @@
 #ifndef LOCKTABLE_H_
 #define LOCKTABLE_H_
 
-#include <boost/thread/shared_mutex.hpp>
-#include "../../util/concurrent/ConcurrentHashMap.h"
+#include "tbb/concurrent_hash_map.h"
 
 namespace vt_dstm {
 
@@ -18,9 +17,7 @@ class LockTable {
 	static int32_t LOCK;
 	static int32_t UNLOCK;
 
-//	static ConcurrentHashMap<std::string, int32_t>	lockmap;
-	static std::map<std::string, int32_t> lockmap;
-	static boost::shared_mutex rwMutex;
+	static tbb::concurrent_hash_map<std::string, int32_t> lockmap;
 public:
 	LockTable();
 	virtual ~LockTable();

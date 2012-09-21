@@ -14,6 +14,7 @@
 #include "../util/logging/Logger.h"
 #include "../util/networking/NetworkManager.h"
 #include "../core/directory/DirectoryManager.h"
+#include "../core/context/ContextManager.h"
 #include "BenchmarkExecutor.h"
 
 using namespace vt_dstm;
@@ -44,8 +45,9 @@ int main(int argc, char *argv[], char *envp[]) {
 	LOG_DEBUG("APP :Initiating the Network\n");
 	NetworkManager::NetworkInit();
 
-	LOG_DEBUG("APP :Initiating the Directory Manager\n");
+	LOG_DEBUG("APP :Initiating the Directory and Context Managers\n");
 	DirectoryManager::DirectoryManagerInit();
+	ContextManager::ContextManagerInit();
 
 	// Run Benchmarks
 	LOG_DEBUG("APP :Initiating the Benchmark Execution\n");

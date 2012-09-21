@@ -32,7 +32,7 @@ class BenchmarkExecutor {
 	static bool isInitiated;
 	static bool sanity;
 	static int threadCount;
-	static float throughPut;
+	static double throughPut;
 	static int retryCount;
 	static boost::mutex execMutex;
 
@@ -48,7 +48,7 @@ class BenchmarkExecutor {
 	static std::string& randomId();
 	static void createObjects();
     static void execute(int id);
-	static void addMetaData(float trhPut, int retry);
+	static void addMetaData(double trhPut, int retry);
 	static void writeConfig();
 public:
 	BenchmarkExecutor();

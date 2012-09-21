@@ -18,13 +18,16 @@
 namespace vt_dstm {
 
 tbb::concurrent_hash_map<unsigned long long, HyflowContext*> ContextManager::contextMap;
-boost::shared_mutex ContextManager::clockMutex;
-// LESSON: As version starts from 0, even after first commit updated version will be 0 i.e. txnClock
-int ContextManager::localNodeClock = 1;
+tbb::atomic<int> ContextManager::localNodeClock;
 
 ContextManager::ContextManager() {}
 
 ContextManager::~ContextManager() {}
+
+void ContextManager::ContextManagerInit() {
+// LESSON: As version starts from 0, even after first commit updated version will be 0 i.e. txnClock
+	localNodeClock.store(1);
+}
 
 //TODO: create unique transaction Id, independent of time
 unsigned long long ContextManager::createTid() {
@@ -79,8 +82,8 @@ HyflowContext* ContextManager::findContext(const unsigned long long tid) {
 }
 
 bool ContextManager::atomicUpdateClock(int newClock, int oldClock) {
-	boost::upgrade_lock<boost::shared_mutex> writeLock(clockMutex);
-	if (localNodeClock == oldClock) {
+	int oldValue = localNodeClock.compare_and_swap(newClock, oldClock);
+	if (oldValue == oldClock) {
 		LOG_DEBUG("CLOCK :Node clock moved from %d to %d\n", oldClock, newClock);
 		localNodeClock = newClock;
 		return true;
@@ -90,13 +93,11 @@ bool ContextManager::atomicUpdateClock(int newClock, int oldClock) {
 }
 
 void ContextManager::atomicIncreaseClock() {
-	boost::upgrade_lock<boost::shared_mutex> writeLock(clockMutex);
 	localNodeClock++;
 }
 
 int ContextManager::getClock() {
-	boost::shared_lock<boost::shared_mutex> readLock(clockMutex);
-	return localNodeClock;
+	return localNodeClock.load();
 }
 
 } /* namespace vt_dstm */

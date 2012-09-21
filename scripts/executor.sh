@@ -5,8 +5,8 @@
 
 echo "backup old logs" 2>&1 | tee >run.log
 timeStamp=$(eval date +%Y"-"%m"-"%d"_"%H"-"%M"-"%S)
-mv logs logs_old_$timeStamp
-mv logs_* backupLogs/.
+mv log log_old_$timeStamp
+mv log_* backupLogs/.
 
 echo "Launching the box test" 2>&1 | tee >>run.log
 bash scripts/executor_box.sh 2>&1 | tee >>run.log
@@ -23,6 +23,6 @@ mv log log_nodes_$timeStamp
 sleep 1
 
 echo "Launching the Mixed test" 2>&1 | tee >>run.log
-bash scripts/executor_both.sh 2>&1 | tee >>run.log
+bash scripts/executor_mix.sh 2>&1 | tee >>run.log
 timeStamp=$(eval date +%Y"-"%m"-"%d"_"%H"-"%M"-"%S)
 mv log log_mixed_$timeStamp

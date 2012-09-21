@@ -5,7 +5,6 @@ src/util/messages/types/LockAccessMsg.d: \
  ../src/util/messages/types/../HyflowMessage.h \
  ../src/util/messages/types/../BaseMessage.h \
  ../src/util/messages/types/../../../core/context/LockTable.h \
- ../src/util/messages/types/../../../core/context/../../util/concurrent/ConcurrentHashMap.h \
  ../src/util/messages/types/../../messages/MessageMaps.h \
  ../src/util/messages/types/../../messages/../concurrent/ConcurrentHashMap.h \
  ../src/util/messages/types/../../messages/../messages/HyflowMessageFuture.h \
@@ -23,8 +22,6 @@ src/util/messages/types/LockAccessMsg.d: \
 ../src/util/messages/types/../BaseMessage.h:
 
 ../src/util/messages/types/../../../core/context/LockTable.h:
-
-../src/util/messages/types/../../../core/context/../../util/concurrent/ConcurrentHashMap.h:
 
 ../src/util/messages/types/../../messages/MessageMaps.h:
 
