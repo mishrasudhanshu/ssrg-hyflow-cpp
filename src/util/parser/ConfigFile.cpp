@@ -126,9 +126,9 @@ void ConfigFile::UpdateMap() {
 	if (value)
 		Update(VERBOSE, value);
 
-	value = getenv(DEBUG);
+	value = getenv(HY_DEBUG);
 	if (value)
-		Update(DEBUG, value);
+		Update(HY_DEBUG, value);
 
 	value = getenv(SANITY);
 	if (value)
@@ -255,7 +255,7 @@ void ConfigFile::test() {
 		cp = Value(CONTENTION_POLICY);
 		remoteCaller = Value(REMOTE_CALLER);
 		v = Value(VERBOSE);
-		d = Value(DEBUG);
+		d = Value(HY_DEBUG);
 		s = Value(SANITY);
 		i = Value(INSTRUMENT);
 		checkPoint = Value(CHECKPOINT);
@@ -285,7 +285,7 @@ void ConfigFile::test() {
 	std::cout << CONTENTION_POLICY <<": " << cp << std::endl;
 	std::cout << REMOTE_CALLER <<": " << remoteCaller << std::endl;
 	std::cout << VERBOSE <<": " << v << std::endl;
-	std::cout << DEBUG <<": " << d << std::endl;
+	std::cout << HY_DEBUG <<": " << d << std::endl;
 	std::cout << SANITY <<": " << s << std::endl;
 	std::cout << INSTRUMENT <<": " << i << std::endl;
 	std::cout << CHECKPOINT <<": " << checkPoint << std::endl;

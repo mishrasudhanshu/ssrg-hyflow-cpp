@@ -49,7 +49,7 @@ namespace vt_dstm
 #define REMOTE_CALLER "remoteCaller"
 
 #define VERBOSE "verbose"
-#define DEBUG "debug"
+#define HY_DEBUG "debug"
 #define SANITY "sanity"
 #define INSTRUMENT "instrument"
 #define CHECKPOINT "checkPoint"

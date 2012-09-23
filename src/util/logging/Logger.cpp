@@ -23,7 +23,7 @@ Logger* Logger::instance = NULL;
 bool Logger::logging = false;
 
 Logger::Logger(LoggerType libType) {
-	if (strcmp(ConfigFile::Value(DEBUG).c_str(), TRUE) == 0)
+	if (strcmp(ConfigFile::Value(HY_DEBUG).c_str(), TRUE) == 0)
 		logging = true;
 
 	if (libType == BASIC)
