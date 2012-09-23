@@ -18,7 +18,7 @@ src/core/context/ContextManager.d: ../src/core/context/ContextManager.cpp \
  ../src/core/context/../../util/networking/../messages/HyflowMessageFuture.h \
  ../src/core/context/../../util/networking/../messages/HyflowMessage.h \
  ../src/core/context/../../util/networking/../messages/../../core/HyflowObject.h \
- ../src/core/context/../../util/concurrent/ThreadId.h \
+ ../src/core/context/../../util/concurrent/ThreadMeta.h \
  ../src/core/context/../../util/concurrent/HyInteger.h \
  ../src/core/context/../../benchMarks/BenchmarkExecutor.h \
  ../src/core/context/../../benchMarks/HyflowBenchmark.h \
@@ -78,7 +78,7 @@ src/core/context/ContextManager.d: ../src/core/context/ContextManager.cpp \
 
 ../src/core/context/../../util/networking/../messages/../../core/HyflowObject.h:
 
-../src/core/context/../../util/concurrent/ThreadId.h:
+../src/core/context/../../util/concurrent/ThreadMeta.h:
 
 ../src/core/context/../../util/concurrent/HyInteger.h:
 

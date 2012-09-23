@@ -18,7 +18,7 @@
 #include "../NetworkManager.h"
 #include "../../logging/Logger.h"
 #include "../../messages/MessageHandler.h"
-#include "../../concurrent/ThreadId.h"
+#include "../../concurrent/ThreadMeta.h"
 
 namespace vt_dstm
 {
@@ -72,7 +72,7 @@ MSCNetwork::MSCNetwork() {
 		}
 		dispatchThread = new boost::thread*[dispThreads];
 		for (int i=0; i < dispThreads ; i++) {
-			dispatchThread[i] = new boost::thread(dispatcher, messenger, i+threadCount);
+			dispatchThread[i] = new boost::thread(dispatcher, messenger, i);
 		}
 		isInit = true;
 	}
@@ -103,7 +103,7 @@ void MSCNetwork::networkInit(){
 	socket->setAttemptsToConnect(50);
 	socket->setAttemptsInterval(100);	//Time is in MilliSecond
 	socket->setFailOnInactive(true);
-	socket->setInactivityTime(5000000);
+	socket->setInactivityTime(500000);
 	socket->setMaxTimeout(900000l);
 
 	socket->setMessengerAddress(ip);
@@ -359,14 +359,7 @@ void MSCNetwork::callbackHandler(unsigned int UserData, MsgConnect::MCMessage& m
 void MSCNetwork::dispatcher(MsgConnect::MCMessenger *mc, int dispatcherId) {
 	LOG_DEBUG("Message Dispatcher started\n");
 	boost::posix_time::seconds sleepTime(0.0001);
-	ThreadId::setThreadId(dispatcherId);
-
-	// Set the thread affinity
-	cpu_set_t s;
-	CPU_ZERO(&s);
-	int node = NetworkManager::getNodeId()*threadCount + dispatcherId;
-	CPU_SET(node, &s);
-	sched_setaffinity(0, sizeof(cpu_set_t), &s);
+	ThreadMeta::threadInit(dispatcherId, DISPATCHER_THREAD);
 
 	while (!hyflowShutdown) {
 		try {

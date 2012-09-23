@@ -13,7 +13,7 @@
 #include "../../util/logging/Logger.h"
 #include "types/DTL2Context.h"
 #include "../../util/networking/NetworkManager.h"
-#include "../../util/concurrent/ThreadId.h"
+#include "../../util/concurrent/ThreadMeta.h"
 #include "../../benchMarks/BenchmarkExecutor.h"
 
 namespace vt_dstm {
@@ -34,7 +34,7 @@ void ContextManager::ContextManagerInit() {
 unsigned long long ContextManager::createTid() {
 	timeval tv;
 	gettimeofday(&tv, NULL);
-	return (tv.tv_sec%100000000000 + tv.tv_usec)*10000 + 100*NetworkManager::getNodeId() + ThreadId::getThreadId();
+	return (tv.tv_sec%100000000000 + tv.tv_usec)*10000 + 100*NetworkManager::getNodeId() + ThreadMeta::getThreadId();
 }
 
 HyflowContext* ContextManager::getInstance() {

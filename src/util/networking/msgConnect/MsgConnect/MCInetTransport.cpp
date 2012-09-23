@@ -54,7 +54,7 @@ void ShowDebugInfo(const char* format,...)
 //suppress C4509
 #pragma warning( disable : 4509)
 #endif
-#pragma warning( disable : 4355)
+//#pragma warning( disable : 4355)
 
 inline mcInt32 Min(mcInt32 A, mcInt32 B)
 {
@@ -68,7 +68,8 @@ MCInetTransport::MCInetTransport()
 	FDefaultSocketFactory = new MCStdSocketFactory();
 	FSocketFactory = NULL;
 
-	FDefaultTransportName = "";
+	char empty[20] = "";
+	FDefaultTransportName = empty;
 	FOutgoingQueue = new MCList();
 	FAttemptsToConnect = 0;
     FAttemptsInterval = 1;
@@ -214,7 +215,8 @@ void MCSocketThread::KickThread(bool MessageFlag)
 			//if (NULL != SocketJob)
 			{	
 				//printf("Kicking socket...\n");
-				SocketJob->getSocket()->SendTo(&c, 1, i, "127.0.0.1", SocketJob->getSocket()->getLocalPort());
+				char localHost[20] = "127.0.0.1";
+				SocketJob->getSocket()->SendTo(&c, 1, i, localHost, SocketJob->getSocket()->getLocalPort());
 			}
 		}
 	}
@@ -968,7 +970,7 @@ bool MCInetTransport::InitiateDelivery(MCInetTransportJob* Job,
 	MCSocket* Socket = NULL;
 	MCMessageInfo* Info = NULL;
 	//mcInt32 i = 0;
-    MCInetConnectionEntry* NewEntry = NULL;
+//    MCInetConnectionEntry* NewEntry = NULL;
     //lock transport
     //FCriticalSection->Enter();
 
@@ -994,7 +996,7 @@ bool MCInetTransport::InitiateDelivery(MCInetTransportJob* Job,
             Info = (MCMessageInfo*)(*FOutgoingQueue)[0];
             char* S = Info->DMessenger;
             //move existing Info's to job's queue
-            mcInt32 removedItems = 0;
+//            mcInt32 removedItems = 0;
             mcInt32 i = 0;
             while (i < FOutgoingQueue->Length())
             {
@@ -1039,7 +1041,8 @@ void MCInetTransport::KickEntrySocket(MCInetConnectionEntry* Entry, bool Message
 	char c = (char) MessageFlag;
 	mcInt32 i = 0;
 
-	Entry->getProcessingJob()->FKickSocket->SendTo(&c, 1, i, "127.0.0.1",
+	char localHost[20] = "127.0.0.1";
+	Entry->getProcessingJob()->FKickSocket->SendTo(&c, 1, i, localHost,
 		Entry->getProcessingJob()->getSocket()->getLocalPort());
 }
 
@@ -2558,7 +2561,7 @@ void MCInetTransportJob::ClientExecute(void)
 {
     bool Connected = false;
     bool errorFlag = false, closeConnection = false, timeout = false;
-	MCMessageInfo* Info = NULL;
+//	MCMessageInfo* Info = NULL;
 
 	mcInt32 errorCode = MCError_InvalidAddress;
 
@@ -2814,7 +2817,7 @@ void MCInetTransportJob::ServerExecuteFinalizeBlock(void)
 
 void MCInetTransportJob::ServerExecute(void)
 {
-    MCMessageInfo* InfoCopy = NULL;
+//    MCMessageInfo* InfoCopy = NULL;
     bool /*Connected = false, */errorFlag = false, closeConnection = false, timeout = false;
 	TRY_BLOCK
 	{
@@ -3011,8 +3014,9 @@ bool MCInetTransportJob::ReadHeader(MCInetHeader* Header, char** s, char* Transa
 	inStream->Read(Header, sizeof(*Header));
 	
     mcUInt32 SMsgLen = 0;
+    mcUInt32 readSize = inStream->Read(&SMsgLen, sizeof(SMsgLen));
     // read the source messenger name
-	if (inStream->Read(&SMsgLen, sizeof(SMsgLen)) < sizeof(SMsgLen))
+	if (readSize < sizeof(SMsgLen))
     {
         MCASSERT(0);
     }
@@ -3511,8 +3515,9 @@ bool MCInetTransportJob::MessageReceivedCompletely2(void)
 						{
 							res = false;
 						}
-						if (res)
+						if (res) {
 							FLastMsgRecvState = State;
+						}
 													
 						delete AStream; AStream = NULL;
 						MCMemFree(DataBuf); DataBuf = NULL; DataLen = 0;
@@ -3561,7 +3566,8 @@ bool MCInetTransportJob::PrepareMessageForSending(void)
 	mcInt32 DataLen = 0;
 	MCInetHeader Header;
 	char* s = NULL;
-	bool r = false, immExit = false, im = false, wrt = false;
+	bool r = false, immExit = false, wrt = false;
+//	bool im = false;
 	mcInt32 extra = 0;
 	unsigned char bt = 0;
 	mcInt32 Port;
@@ -3600,7 +3606,7 @@ bool MCInetTransportJob::PrepareMessageForSending(void)
 				    // write data for conversion
 				    MemStream = new MCMemStream();
 			
-					im = false;
+//					im = false;
 					{
 						Info->WriteToStream(MemStream);
 					    if(Info->Message.DataSize > 0)
@@ -4200,7 +4206,7 @@ bool MCInetListenerJob::AcceptConnection(void)
 {
 	MCSocket* NewSocket = NULL;
 	MCInetConnectionEntry* NewEntry = NULL;
-	MCInetTransportJob* NewJob = NULL;
+//	MCInetTransportJob* NewJob = NULL;
 	char* s = NULL;
 	bool r = false;
 

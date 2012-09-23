@@ -110,6 +110,8 @@ private:
 	mcInt32                 FMapping;
 #else
 #endif
+	MCEvent*            FStopEvent;
+	MCMMFTransport*     FOwner;
 	/*
 	This event is used to signal possibility to send the data.
 	Once a sender grabs the event, nobody except the received is able to write 
@@ -120,15 +122,13 @@ private:
 	//This event is used to signal that reply has been received by sender
 	MCEvent*            FReceiptEvent;
 
-    //This event is used to signal about reply available in the MMF 
-	MCEvent*            FReplyEvent;
-	
 	//This event is used to signal about incoming data available in the MMF
 	MCEvent*            FRequestEvent;
+
+    //This event is used to signal about reply available in the MMF 
+	MCEvent*            FReplyEvent;
 #else
 #endif
-	MCEvent*            FStopEvent;
-	MCMMFTransport*     FOwner;
 protected:
 	virtual void    Execute(void);
 	virtual bool	CanExecute(void);

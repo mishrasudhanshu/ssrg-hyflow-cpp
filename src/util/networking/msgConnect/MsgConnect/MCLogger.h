@@ -40,8 +40,8 @@ class MCLogger
 {
 friend class MCObject;
 protected:
-	MCLogLevel			FLevel;
 	MCLogMessageHandler FOnLogMessage;
+	MCLogLevel			FLevel;
 	unsigned int		FRefCount;
 	MCCriticalSection	FGuard;
 	static MCLogger*	FSingletone;

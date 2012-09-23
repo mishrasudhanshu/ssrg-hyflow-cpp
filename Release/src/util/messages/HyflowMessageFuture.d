@@ -13,7 +13,7 @@ src/util/messages/HyflowMessageFuture.d: \
  ../src/util/messages/../messages/MessageHandler.h \
  ../src/util/messages/../messages/HyflowMessage.h \
  ../src/util/messages/../messages/HyflowMessageFuture.h \
- ../src/util/messages/../concurrent/ThreadId.h \
+ ../src/util/messages/../concurrent/ThreadMeta.h \
  ../src/util/messages/../concurrent/HyInteger.h \
  ../src/util/messages/../logging/Logger.h
 
@@ -45,7 +45,7 @@ src/util/messages/HyflowMessageFuture.d: \
 
 ../src/util/messages/../messages/HyflowMessageFuture.h:
 
-../src/util/messages/../concurrent/ThreadId.h:
+../src/util/messages/../concurrent/ThreadMeta.h:
 
 ../src/util/messages/../concurrent/HyInteger.h:
 

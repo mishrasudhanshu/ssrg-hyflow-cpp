@@ -74,9 +74,9 @@ public:
 class MCEvent: public MCSynchroObject {
 #ifdef __GNUC__
 private:
+	bool		FManualReset;
 	char*		FFileName;
     int			FFileObj;
-	bool		FManualReset;
 public:
 	void		Initialize(void* EventAttributes, bool ManualReset, bool InitialState, bool InitialOwner, const char* Name);
 #endif

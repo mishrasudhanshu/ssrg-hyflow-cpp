@@ -4,13 +4,13 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
-../src/util/concurrent/ThreadId.cpp 
+../src/util/concurrent/ThreadMeta.cpp 
 
 OBJS += \
-./src/util/concurrent/ThreadId.o 
+./src/util/concurrent/ThreadMeta.o 
 
 CPP_DEPS += \
-./src/util/concurrent/ThreadId.d 
+./src/util/concurrent/ThreadMeta.d 
 
 
 # Each subdirectory must supply rules for building sources it contributes

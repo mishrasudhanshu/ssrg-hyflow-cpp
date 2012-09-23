@@ -203,10 +203,8 @@ class MCThreadPool
 friend class MCWorkerThread;
 protected:
     unsigned int        FSize;
-    unsigned int        FMaxSize;
     MCList              FThreadList;
     MCList              FJobList;
-    unsigned int        FJobsRan;
 
 #ifndef _WIN32
     pthread_mutex_t	FGuard;
@@ -215,8 +213,10 @@ protected:
 #endif
     MCThreadFactory*    FFactory;
     MCJobErrorHandler*  FErrorHandler;
-    unsigned int        FBusyCount;
     unsigned int        FInactivityIdle;    
+    unsigned int        FMaxSize;
+    unsigned int        FJobsRan;
+    unsigned int        FBusyCount;
 public:
     MCThreadPool(MCThreadFactory* Factory, MCJobErrorHandler* ErrorHandler);
     virtual ~MCThreadPool();

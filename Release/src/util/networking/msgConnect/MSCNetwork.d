@@ -29,7 +29,7 @@ src/util/networking/msgConnect/MSCNetwork.d: \
  ../src/util/networking/msgConnect/../../logging/Logger.h \
  ../src/util/networking/msgConnect/../../messages/MessageHandler.h \
  ../src/util/networking/msgConnect/../../messages/HyflowMessageFuture.h \
- ../src/util/networking/msgConnect/../../concurrent/ThreadId.h \
+ ../src/util/networking/msgConnect/../../concurrent/ThreadMeta.h \
  ../src/util/networking/msgConnect/../../concurrent/HyInteger.h
 
 ../src/util/networking/msgConnect/MSCNetwork.h:
@@ -90,6 +90,6 @@ src/util/networking/msgConnect/MSCNetwork.d: \
 
 ../src/util/networking/msgConnect/../../messages/HyflowMessageFuture.h:
 
-../src/util/networking/msgConnect/../../concurrent/ThreadId.h:
+../src/util/networking/msgConnect/../../concurrent/ThreadMeta.h:
 
 ../src/util/networking/msgConnect/../../concurrent/HyInteger.h:

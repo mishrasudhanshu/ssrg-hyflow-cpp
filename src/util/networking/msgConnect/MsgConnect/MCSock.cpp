@@ -961,7 +961,8 @@ mcInt32 MCStdSocket::HTTPConnect(MCSocket* CtlSocket, mcInt32 Timeout)
             }
 
             mcInt32 psize = strlen(buf);
-            mcInt32 cnt = 0, selectRes = 0, rcvcnt = 0;
+            mcInt32 cnt = 0, rcvcnt = 0;
+//            mcInt32 selectRes = 0;
             bool Term = false;
             if (!SocksSendReceive(Term, CtlSocket, Timeout, buf, psize, cnt, buf, 1024, rcvcnt, true))
                 THROW_ERROR(0);
@@ -1157,7 +1158,7 @@ mcInt32 MCStdSocket::SyncConnect(void)
 }
 
 /*
-//*nix code
+//nix code
 mcInt32 MCStdSocket::AsyncConnect(void)
 {
     mcUInt32 addr;

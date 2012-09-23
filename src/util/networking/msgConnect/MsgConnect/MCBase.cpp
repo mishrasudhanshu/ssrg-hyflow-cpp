@@ -226,7 +226,8 @@ char* Pstr2c(char* p)
 {
   char* t = (char*)MCMemAlloc(p[0]+1);
   strncpy(t, &p[1], p[0]);
-  t[p[0]] = 0;
+  int size = (int)p[0];
+  t[size] = 0;
   return t;
 }
 
@@ -920,7 +921,7 @@ void MCMessenger::MCGetMessage(MCMessage* Message)
 	mcInt32 i = -1;
 	bool cq = false;
 	bool canBreak = false;
-	MCHandle HandleArray[2];
+//	MCHandle HandleArray[2];
 	MCMessageInfo* Info;
 
 /*	if(FThreadID != GetCurrentThreadID())
@@ -1007,16 +1008,17 @@ void MCMessenger::MessageProcessed(MCMessage* Message)
 mcUInt32 MCMessenger::MsgWaitForMultipleObjects(mcUInt32 nCount,void* pHandles,
         bool fWaitAll, mcUInt32 dwMilliseconds)
 {
-        MCHandle* Handles = NULL;
-        mcUInt32 i = 0, r = 0;
+//        MCHandle* Handles = NULL;
+//        mcUInt32 i = 0;
+        mcUInt32 r = 0;
 //#ifndef NO_CHECK_DISPATCHTHREAD
 //        if(FThreadID != IntGetCurrentThreadID())
 //            THROW_ERROR(MCError_WrongReceiverThread);
 //#endif
-
-		mcInt32 ToWait = (mcInt32) dwMilliseconds;
-		mcUInt32 StTime = 0;
-		mcUInt32 Elapsed = 0;
+//
+//		mcInt32 ToWait = (mcInt32) dwMilliseconds;
+//		mcUInt32 StTime = 0;
+//		mcUInt32 Elapsed = 0;
 	
         DispatchCompleteMessages();
         FIncomingCriticalSection->Enter();
@@ -1166,12 +1168,12 @@ bool MCMessenger::MCSendMessageTimeout(const char* Destination, MCMessage* Messa
 	MCMessageInfo* Info;
 	mcInt32 ToWait;
 #if defined(__GNUC__) && !(defined(__MINGW32__) || defined(__MINGW64__))
-	mcInt32 wtime;
+//	mcInt32 wtime;
 #endif
 	mcUInt32 StTime;
 	mcUInt32 Elapsed;
 	bool b,r;
-	MCHandle HandleArray[3];
+//	MCHandle HandleArray[3];
 
 #ifndef MC_FORCE_EVAL
   if (false)
@@ -1192,7 +1194,7 @@ bool MCMessenger::MCSendMessageTimeout(const char* Destination, MCMessage* Messa
 		memmove(&Info->Credentials, Credentials, sizeof(*Credentials));
 	else
 		memset(&Info->Credentials, 0, sizeof(*Credentials));
-    mcInt32 errorCode = 0;
+//    mcInt32 errorCode = 0;
 	TRY_BLOCK 
     {
 		DoSendMessage(Destination, Info);
@@ -1401,7 +1403,7 @@ void MCMessenger::MCWaitMessage(void)
 //Timeout pointed in milliseconds
 bool MCMessenger::MCWaitMessageEx(mcUInt32 Timeout)
 {
-	MCHandle HandleArray[2];
+//	MCHandle HandleArray[2];
 	bool cq = false;
 	mcInt32 i;
 
@@ -1588,7 +1590,6 @@ bool MCMessenger::ForwardMessage(const char* Destination, MCMessage* Message,
 				else
 					memset(&NewInfo->Credentials, 0, sizeof(Info->Credentials));
 
-				mcInt32 MCErrorCode = 0;
 				TRY_BLOCK
 				{
 					DoSendMessage(Destination, NewInfo);
@@ -1604,6 +1605,7 @@ bool MCMessenger::ForwardMessage(const char* Destination, MCMessage* Message,
 				{
 					delete NewInfo; NewInfo = NULL;
 #ifndef USE_CPPEXCEPTIONS
+					mcInt32 MCErrorCode = 0;
 					THROW_ERROR(MCErrorCode);
 #else
 					throw;
@@ -2068,9 +2070,12 @@ void MCBaseTransport::InsertInfoIntoQueueWithPriorities(MCList* Queue, MCMessage
 		else
 		{
 			TmpInfo = (MCMessageInfo *)((*Queue)[j]);
-			if ((TmpInfo != NULL) && (TmpInfo->IsSendMsg && (!Info->IsSendMsg)) ||
-				((TmpInfo->IsSendMsg == Info->IsSendMsg) && (IgnoreMode || 
-				(TmpInfo->Message.Priority >= Info->Message.Priority))) )
+			if ((TmpInfo != NULL)
+					&& ((TmpInfo->IsSendMsg && (!Info->IsSendMsg))
+							|| ((TmpInfo->IsSendMsg == Info->IsSendMsg)
+									&& (IgnoreMode
+											|| (TmpInfo->Message.Priority
+													>= Info->Message.Priority)))))
 			{
 				Queue->Insert(j + 1, Info);
 				break;
@@ -2641,7 +2646,8 @@ MCDirectTransport* MCDirectTransport::FindTransportByID(char* ID)
 MCDirectTransport::MCDirectTransport()
 :MCBaseTransport()
 {
-	FDefaultTransportName = "LOCAL";
+	char local[20] = "LOCAL";
+	FDefaultTransportName =  local;
 
 	FTransportID = (char *) MCMemAlloc(11);
 	sprintf(FTransportID, "%d", (int)(mcPtrInt) this); 
@@ -3308,7 +3314,8 @@ void MCBaseInitialization(void)
 {
 	DefineOS();
 #if (defined(__GNUC__) && !(defined(__MINGW32__) || defined(__MINGW64__))) || defined(_WIN32_WCE)
-	GlobalSeed = (mcUInt32)(((__int64)0x7FFFFFFFul)*Random()/(RAND_MAX+1));
+	GlobalSeed = (mcUInt32) ((((__int64 ) 0x7FFFFFFFLL) * Random())
+			% (RAND_MAX));
 #else
 #if !defined(_MSC_VER) && !(defined(__MINGW32__) || defined(__MINGW64__))
 	GlobalSeed = random(0x7FFFFFFFul);

@@ -250,8 +250,8 @@ was closed.
 #ifndef QNX
 void _strupr(char* s)
 {
-    for (mcInt32 i=0; i<strlen(s); i++)
-	s[i] = toupper(s[i]);
+    for (mcUInt32 i=0; i<strlen(s); i++)
+    	s[i] = toupper(s[i]);
 }
 #endif
 #endif
@@ -516,7 +516,8 @@ static mcInt32 findChunkedSize(const char* s, mcInt32 maxSize)
 
 bool MCHttpTransportJob::ReceiveData()
 {
-    mcInt32 HttpCode = 200, ContentLength = 0, HttpLength = 0, toRead = 0;
+    mcInt32 HttpCode = 200, ContentLength = 0, toRead = 0;
+//    mcInt32 HttpLength = 0;
     mcInt32 Received = 0;
     bool POST = false, Chunked = false;
     char* TS1 = NULL;

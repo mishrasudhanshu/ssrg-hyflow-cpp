@@ -164,16 +164,16 @@ public:
 	MCNotifyProc        TimeoutProc;
 	MCErrorProc         ErrorProc;
 	//char				SourcePrefix[4];
-	mcInt32				ConnID;
-	mcInt32				ClientID;
 	char*               SMessenger;
 	char*               DMessenger;
+    bool                Sent;
     char*               URL;
 	mcUInt32			StartTime;
 	mcUInt32			Timeout;
     void*               Track;
+	mcInt32				ConnID;
+	mcInt32				ClientID;
     MCMessageState      OldState;
-    bool                Sent;
     
 
     MCMessageInfo(MCMessage* Msg);

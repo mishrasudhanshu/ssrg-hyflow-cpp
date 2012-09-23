@@ -41,7 +41,8 @@ MCSynchroObject::MCSynchroObject()
 #if !defined(QNX)
 //**********************UNIX*******************************************
 void MCSynchroObject::Initialize(int InitialState, key_t Id, bool Orig, unsigned long MaxCount)
-{int fd;
+{
+//	int fd;
 	FId = Id;
 	FEvent = -1;
 	if (Orig)

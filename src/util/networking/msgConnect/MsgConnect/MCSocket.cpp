@@ -178,14 +178,29 @@ bool MCSocketTransportJob::HSReplyReceived(bool& Success)
 				if (Success)
 				{
 
-					Success = Success && (((Header.dwEncryptID == 0) && ((!FOwner->FNoTransformerFallback) || (FOwner->FEncryptor == NULL)) ||
-						((FOwner->FEncryptor != NULL) && (FOwner->FEncryptor->GetID() == Header.dwEncryptID))));
+					Success = Success
+							&& ((((Header.dwEncryptID == 0)
+									&& ((!FOwner->FNoTransformerFallback)
+											|| (FOwner->FEncryptor == NULL)))
+									|| (((FOwner->FEncryptor != NULL)
+											&& (FOwner->FEncryptor->GetID()
+													== Header.dwEncryptID)))));
 
-					Success = Success && (((Header.dwCompressID == 0) && ((!FOwner->FNoTransformerFallback) || (FOwner->FCompressor == NULL)) ||
-						((FOwner->FCompressor != NULL) && (FOwner->FCompressor->GetID() == Header.dwCompressID))));
+					Success = Success
+							&& ((((Header.dwCompressID == 0)
+									&& ((!FOwner->FNoTransformerFallback)
+											|| (FOwner->FCompressor == NULL)))
+									|| (((FOwner->FCompressor != NULL)
+											&& (FOwner->FCompressor->GetID()
+													== Header.dwCompressID)))));
 
-					Success = Success && (((Header.dwSealID == 0) && ((!FOwner->FNoTransformerFallback) || (FOwner->FSealer == NULL)) ||
-						((FOwner->FSealer  != NULL) && (FOwner->FSealer->GetID() == Header.dwSealID))));
+					Success = Success
+							&& ((((Header.dwSealID == 0)
+									&& ((!FOwner->FNoTransformerFallback)
+											|| (FOwner->FSealer == NULL)))
+									|| (((FOwner->FSealer != NULL)
+											&& (FOwner->FSealer->GetID()
+													== Header.dwSealID)))));
 
 				}
 

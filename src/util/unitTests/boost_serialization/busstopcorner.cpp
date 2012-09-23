@@ -5,6 +5,16 @@
  *      Author: mishras[at]vt.edu
  */
 
+
+#include <cstddef> // NULL
+#include <iomanip>
+#include <iostream>
+#include <fstream>
+#include <string>
+
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
+
 #include "busstopcorner.h"
 
 namespace vt_dstm{

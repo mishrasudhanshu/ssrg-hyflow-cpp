@@ -140,11 +140,13 @@ long MCMemStream::Write(void* d, long l)
 	if(l < 1)
 		return(0);
 	long x = l;
-	if((FPos + l) > FSize)
-		if(Grow(FPos + l - FSize) == 0)
+	if((FPos + l) > FSize) {
+		if(Grow(FPos + l - FSize) == 0) {
 			x = FSize - FPos;
-		else
+		}else {
 			FLen = FPos + l;
+		}
+	}
 	memcpy(&FData[FPos], d, x);
 	FPos += x;
 	if(FPos > FLen)
@@ -265,7 +267,7 @@ MCTmpFileStream::MCTmpFileStream(char*s, __int64 i): MCStream()
 	//build temp file name
 #ifdef __APPLE__
 #else
-	sprintf(buf, "mc%ld%d%d.tmp", i, IntGetCurrentThreadID(), GetCurrentThread());
+	sprintf(buf, "mc%ld%lud%lud.tmp", i, IntGetCurrentThreadID(), GetCurrentThread());
 #endif
 	FName = (char*)malloc(strlen(s)+strlen(buf)+1);
 	strcpy(FName, s);

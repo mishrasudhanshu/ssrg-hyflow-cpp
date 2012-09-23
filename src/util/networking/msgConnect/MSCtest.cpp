@@ -113,6 +113,10 @@ static void dispatcher(MCMessenger* mc){
 }
 
 void MSCtest::testbase(){
+	char localHost[20] = "127.0.0.1";
+	char sendNote1[20] = "SendNote1";
+	char sendNote2[20] = "SendNote2";
+
 	MCBaseInitialization();
 
 	MCMessage Message;
@@ -129,7 +133,7 @@ void MSCtest::testbase(){
 	st1->setAttemptsToConnect(1);
 	st1->setFailOnInactive(true);
 	st1->setMaxTimeout(900000l);
-	st1->setMessengerAddress("127.0.0.1");
+	st1->setMessengerAddress(localHost);
 	st1->setMessengerPort(14583);
 	st1->setTransportMode(stmP2P);
 	st1->setMessenger(mc);
@@ -141,7 +145,7 @@ void MSCtest::testbase(){
 	mh1->setOnMessage(&event1);
 	mh1->setEnabled(true);
 
-	mq1->setQueueName("SendNote1");
+	mq1->setQueueName(sendNote1);
 	mq1->setMessenger(mc);
 
 	// Set Node2
@@ -154,7 +158,7 @@ void MSCtest::testbase(){
 	st2->setAttemptsToConnect(1);
 	st2->setFailOnInactive(true);
 	st2->setMaxTimeout(900000l);
-	st2->setMessengerAddress("127.0.0.1");
+	st2->setMessengerAddress(localHost);
 	st2->setMessengerPort(14584);
 	st2->setTransportMode(stmP2P);
 	st2->setMessenger(mc);
@@ -166,7 +170,7 @@ void MSCtest::testbase(){
 	mh2->setOnMessage(&event2);
 	mh2->setEnabled(true);
 
-	mq2->setQueueName("SendNote2");
+	mq2->setQueueName(sendNote2);
 	mq2->setMessenger(mc);
 
 	//Creating Messenger dispatcher thread

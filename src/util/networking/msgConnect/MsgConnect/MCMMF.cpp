@@ -125,7 +125,7 @@ MCMMFReceiverThread* MCMMFTransport::CreateReceiverThread(bool x)
 void MCMMFTransport::DoSetActive(void)
 {
 	bool initFailed = false;
-	MCHandle HandleArray[2];
+//	MCHandle HandleArray[2];
 
 	if(!FMessenger)
 		return;
@@ -697,7 +697,7 @@ bool MCMMFReceiverThread::CanExecute(void)
 
 void MCMMFReceiverThread::Execute(void)
 {
-	MCHandle HandleArray[2];
+//	MCHandle HandleArray[2];
 
 	while(!getTerminated())
 	{
@@ -729,7 +729,7 @@ void MCMMFReceiverThread::Initialize(MCMMFTransport* Owner)
 {
 #if !defined(__GNUC__) || defined(__MINGW32__) || defined(__MINGW64__)
 #endif
-	mcInt32 i;
+//	mcInt32 i;
 	MCMMFHeader* MMFPtr;
 	char* p;
 
@@ -849,7 +849,7 @@ void MCMMFReceiverThread::ReceiveMessage(void)
 	mcUInt32 ToWait;
 	MCMemStream* AStream;
 	mcInt32 TotalSize;
-	MCHandle HandleArray[2];
+//	MCHandle HandleArray[2];
 	__int64 GTC;
 	MCMessage Message;
 	mcInt32 i;

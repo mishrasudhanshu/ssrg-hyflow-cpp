@@ -10,7 +10,7 @@
 #include <iostream>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
-#include <boost/serialization/base_object.hpp>
+
 #include "ListNode.h"
 #include "../../../core/context/ContextManager.h"
 #include "../../../core/HyflowObjectFuture.h"
@@ -22,13 +22,6 @@
 namespace vt_dstm {
 
 ListNode::ListNode() {}
-
-template<class Archive>
-void ListNode::serialize(Archive & ar, const unsigned int version){
-    	ar & boost::serialization::base_object<HyflowObject>(*this);
-    	ar & nextId;
-    	ar & value;
-}
 
 std::string ListNode::getNextId() const {
 	return nextId;

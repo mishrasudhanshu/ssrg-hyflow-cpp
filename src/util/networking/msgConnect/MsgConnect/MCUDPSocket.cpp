@@ -675,10 +675,11 @@ bool MCUDPSenderThread::PrepareMessage(MCMessageInfo** AInfo, char** DataBuf,
 	mcInt32 i, j;
 	MCMemStream* MemStream;
 	MCInetHeader Header;
-	bool im, wrt;
+//	bool im;
+	bool wrt = false;
 	bool res = false;
 	mcInt32 extra;
-	unsigned char bt = 0;
+//	unsigned char bt = 0;
 	//bool result = false;
 	MCMessageInfo* Info = NULL;
 
@@ -716,7 +717,7 @@ bool MCUDPSenderThread::PrepareMessage(MCMessageInfo** AInfo, char** DataBuf,
 			MemStream = new MCMemStream();
 			TRY_BLOCK
 			{
-				im = false;
+//				im = false;
 
 				{
 					Info->WriteToStream(MemStream);//->Write(Info, (mcInt32)((char*)&Info->Message.Data - (char*)Info));
@@ -936,7 +937,7 @@ bool MCUDPReceiverThread::ReceiveMessage(void)
   //this is used always, but is related to MC_COMMERCIAL
 	char* RouteTo = NULL;
 	char* RecvPath = NULL;
-	char TransactCmd = 0;
+//	char TransactCmd = 0;
 	char* DQueue = NULL;
   
 	Received = FRecvBufSize;
@@ -976,7 +977,7 @@ bool MCUDPReceiverThread::ReceiveMessage(void)
 							if (pe - ps < 14)
 								break;
 							// read TransactCmd
-							TransactCmd = *ps;
+//							TransactCmd = *ps;
 							ps++;
 
 							// read RecvPath
@@ -1316,7 +1317,8 @@ void MCUDPThread::KickThread(bool MessageFlag)
 {
 	char c = (char) MessageFlag;
 	mcInt32 i;
-	FKickSocket->SendTo(&c, 1, i, "127.0.0.1",
+	char localHost[20] = "127.0.0.1";
+	FKickSocket->SendTo(&c, 1, i, localHost,
 		FSocket->getLocalPort());
 }
 

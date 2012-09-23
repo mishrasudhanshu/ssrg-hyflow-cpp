@@ -9,6 +9,9 @@
 #define LISTNODE_H_
 
 #include <string>
+#include <boost/serialization/access.hpp>
+#include <boost/serialization/base_object.hpp>
+
 #include "../../../core/HyflowObject.h"
 #include "../../../core/context/HyflowContext.h"
 #include "../../../core/HyflowObjectFuture.h"
@@ -19,7 +22,11 @@ class ListNode: public vt_dstm::HyflowObject {
     friend class boost::serialization::access;
 
     template<class Archive>
-    void serialize(Archive & ar, const unsigned int version);
+    void serialize(Archive & ar, unsigned int version){
+    	ar & boost::serialization::base_object<HyflowObject>(*this);
+    	ar & nextId;
+    	ar & value;
+    }
 
 	std::string nextId;
 	int value;

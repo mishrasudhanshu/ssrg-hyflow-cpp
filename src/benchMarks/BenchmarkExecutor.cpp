@@ -10,14 +10,13 @@
 #include <boost/thread/thread.hpp>
 #include <string.h>
 #include <time.h>
-#include <sched.h>
 #include "BenchmarkExecutor.h"
 #include "../util/Definitions.h"
 #include "../util/parser/ConfigFile.h"
 #include "../util/logging/Logger.h"
 #include "../util/networking/NetworkManager.h"
 #include "../core/helper/RandomIdProvider.h"
-#include "../util/concurrent/ThreadId.h"
+#include "../util/concurrent/ThreadMeta.h"
 
 namespace vt_dstm {
 
@@ -120,14 +119,8 @@ void BenchmarkExecutor::prepareArgs() {
 }
 
 void BenchmarkExecutor::execute(int id){
-	// Set the thread affinity
-	cpu_set_t s;
-	CPU_ZERO(&s);
-	int node = NetworkManager::getNodeId()*3*threadCount + id;
-	CPU_SET(node, &s);
-	sched_setaffinity(0, sizeof(cpu_set_t), &s);
+	ThreadMeta::threadInit(id, TRANSACTIONAL_THREAD);
 
-	ThreadId::setThreadId(id);
 	int argsCount = benchmark->getOperandsCount();
 	LOG_DEBUG("BNCH_EXE %d:------------------------------>\n", id);
 	unsigned long long start = getTime();

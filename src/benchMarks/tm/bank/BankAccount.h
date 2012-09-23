@@ -9,6 +9,9 @@
 #define BANKACCOUNT_H_
 
 #include <stdint.h>
+#include <boost/serialization/access.hpp>
+#include <boost/serialization/base_object.hpp>
+
 #include "../../../core/HyflowObject.h"
 #include "../../../core/context/HyflowContext.h"
 #include "../../../core/HyflowObjectFuture.h"
@@ -19,7 +22,11 @@ class BankAccount: public HyflowObject {
     friend class boost::serialization::access;
 
     template<class Archive>
-    void serialize(Archive & ar, const unsigned int version);
+    void serialize(Archive & ar, const unsigned int version) {
+    	ar & boost::serialization::base_object<HyflowObject>(*this);
+    	ar & amount;
+    }
+
 	uint64_t amount;
 
 	void setAmount(uint64_t amount);

@@ -240,8 +240,8 @@ friend class MCSocketTransport;
 friend class MCHTTPTransport;
 friend class MCSocketThread;
 
-	MCStdSocket*        FKickSocket;
     MCSocket*           FSocket;
+	MCStdSocket*        FKickSocket;
 	bool				FNotifyStop;
     bool				FNotifyMsg;
     bool				FNoUDPNotify;

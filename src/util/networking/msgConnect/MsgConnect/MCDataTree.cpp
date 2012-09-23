@@ -1172,11 +1172,13 @@ void MCDataTree::IntLoadKey(MCStringList* SL, mcInt32 CurLine, char* LoadInto)
                     }
                     continue;
                 }
+                char False[20] = "FALSE";
+                char True[20] = "TRUE";
                 // boolean
-                if(0 == UpperTrimCmp(Value,"FALSE") || 0 == UpperTrimCmp(Value,"TRUE"))
+                if(0 == UpperTrimCmp(Value,False) || 0 == UpperTrimCmp(Value,True))
                 {
                     E->FValueData->ValueType = evtBoolean;
-                    if(0 == UpperTrimCmp(Value,"TRUE"))
+                    if(0 == UpperTrimCmp(Value,True))
                         E->FValueData->BoolValue = true;
                     else
                         E->FValueData->BoolValue = false;
@@ -2175,7 +2177,7 @@ void MCDataTree::IntSaveBinKey(TStream* F, char* KeyName, MCTreeItem* KeyEntry)
     for(i=1; i<=KeyEntry->FChildren->Length(); i++)
     {
         E = (MCTreeItem*)(*KeyEntry->FChildren)[i-1];
-        if(E->FIsKey)
+        if(E->FIsKey) {
             if(KeyName)
             {
                 size_t zl=strlen(KeyName)+strlen(E->FValueName)+2;
@@ -2191,8 +2193,10 @@ void MCDataTree::IntSaveBinKey(TStream* F, char* KeyName, MCTreeItem* KeyEntry)
                 IntSaveBinKey(F,z,E);
                 free(z);
             }
-            else 
+            else {
                 IntSaveBinKey(F, E->FValueName, E);
+            }
+        }
     } // for
 }
 
@@ -2324,7 +2328,7 @@ void MCDataTree::IntSaveKey(TStream* F, char* KeyName, MCTreeItem* KeyEntry)
     for(i=1; i<=KeyEntry->FChildren->Length(); i++)
     {
         E = (MCTreeItem*)(*KeyEntry->FChildren)[i-1];
-        if(E->FIsKey)
+        if(E->FIsKey) {
             if(KeyName)
             {
                 size_t zl = strlen(KeyName) + strlen(E->FValueName) + 2;
@@ -2340,8 +2344,10 @@ void MCDataTree::IntSaveKey(TStream* F, char* KeyName, MCTreeItem* KeyEntry)
                 IntSaveKey(F,z,E);
                 free(z);
             }
-            else 
+            else {
                 IntSaveKey(F, E->FValueName, E);
+            }
+        }
     } // for
 }
 

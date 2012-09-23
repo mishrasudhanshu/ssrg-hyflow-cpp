@@ -9,7 +9,7 @@
 #include <iostream>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
-#include <boost/serialization/base_object.hpp>
+
 #include "../../../core/context/ContextManager.h"
 #include "../../../core/HyflowObjectFuture.h"
 #include "../../../core/directory/DirectoryManager.h"
@@ -39,12 +39,6 @@ BankAccount::BankAccount(uint64_t amnt, const std::string & Id, int v)
 }
 
 BankAccount::~BankAccount() {}
-
-template<class Archive>
-void BankAccount::serialize(Archive & ar, const unsigned int version){
-	ar & boost::serialization::base_object<HyflowObject>(*this);
-	ar & amount;
-}
 
 void BankAccount::setAmount(uint64_t amnt) {
 	amount = amnt;

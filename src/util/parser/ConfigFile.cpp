@@ -79,7 +79,6 @@ std::string const& ConfigFile::Value(std::string const& entry,
 	} catch (const char *) {
 		return configMap.insert(std::make_pair(entry, value)).first->second;
 	}
-	return NULL;
 }
 
 std::string const& ConfigFile::Update(std::string const& entry,
@@ -93,7 +92,7 @@ std::string const& ConfigFile::Update(std::string const& entry,
 		std::cerr << "Specified key " << x << " not defined in default.conf"
 				<< std::endl;
 	}
-	return NULL;
+	return value;
 }
 
 void ConfigFile::UpdateMap() {

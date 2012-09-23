@@ -125,7 +125,7 @@ long ThreadProc(void* p)
 MCThread::MCThread(bool CreateSuspended, int Priority)
 {
 #if defined(__GNUC__) && !(defined(__MINGW32__) || defined(__MINGW64__))
-	long ErrCode;
+//	long ErrCode;
 	FInitialSuspendDone = false;
 #endif
 	FTerminated = false;
@@ -143,7 +143,8 @@ MCThread::MCThread(bool CreateSuspended, int Priority)
 #else
 	//FCreateSuspendedSem = 0;
 	sem_init(&FCreateSuspendedSem, false, 0);
-	ErrCode = BeginThread(NULL, &ThreadProc, this, FThreadID);
+//	ErrCode =
+	BeginThread(NULL, &ThreadProc, this, FThreadID);
 #endif
 	//AfterConstruction();
 }
@@ -359,11 +360,12 @@ void MCThread::setPolicy(long Value)
 
 void MCThread::setSuspended(bool Value)
 {
-	if(Value != FSuspended)
+	if(Value != FSuspended) {
 		if(Value)
 			Suspend();
 		else
 			Resume();
+	}
 }
 
 #if !defined(__GNUC__) || defined(__MINGW32__) || defined(__MINGW64__)
@@ -837,7 +839,7 @@ bool MCWorkerThread::CanExecute(void)
 
 void MCWorkerThread::Execute(void)
 {
-    bool timeout = false;
+//    bool timeout = false;
 
     while (getTerminated() == false)
     {

@@ -9,7 +9,7 @@
 #include "../networking/NetworkManager.h"
 #include "../messages/MessageMaps.h"
 #include "../messages/MessageHandler.h"
-#include "../concurrent/ThreadId.h"
+#include "../concurrent/ThreadMeta.h"
 #include "../logging/Logger.h"
 
 
@@ -109,7 +109,7 @@ HyMessageType HyflowMessageFuture::getType(){
 
 void HyflowMessageFuture::createIdNRegisterFuture(){
 	std::stringstream idNameStr;
-	idNameStr << getCurrentTime()<< "|"<<msg_t<<"|"<<NetworkManager::getNodeId()<<"|"<<ThreadId::getThreadId()<<"|"<<forObjectId;
+	idNameStr << getCurrentTime()<< "|"<<msg_t<<"|"<<NetworkManager::getNodeId()<<"|"<<ThreadMeta::getThreadId()<<"|"<<forObjectId;
 	msg_id = idNameStr.str();
 	MessageHandler::registerMessageFuture(msg_id, msg_t, *this);
 }

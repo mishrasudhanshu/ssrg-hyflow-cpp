@@ -30,7 +30,7 @@ src/benchMarks/BenchmarkExecutor.d: \
  ../src/benchMarks/../util/networking/../messages/HyflowMessage.h \
  ../src/benchMarks/../util/networking/../messages/HyflowMessageFuture.h \
  ../src/benchMarks/../core/helper/RandomIdProvider.h \
- ../src/benchMarks/../util/concurrent/ThreadId.h \
+ ../src/benchMarks/../util/concurrent/ThreadMeta.h \
  ../src/benchMarks/../util/concurrent/HyInteger.h
 
 ../src/benchMarks/BenchmarkExecutor.h:
@@ -93,6 +93,6 @@ src/benchMarks/BenchmarkExecutor.d: \
 
 ../src/benchMarks/../core/helper/RandomIdProvider.h:
 
-../src/benchMarks/../util/concurrent/ThreadId.h:
+../src/benchMarks/../util/concurrent/ThreadMeta.h:
 
 ../src/benchMarks/../util/concurrent/HyInteger.h:
