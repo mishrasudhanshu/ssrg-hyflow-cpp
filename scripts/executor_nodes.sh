@@ -15,7 +15,7 @@ echo "txns=$txns, objs=$objs, reads 0..100..20 threads 1, nodes=1..24"
 for read in {0..100..20}
 do
     echo "For reads = $read"
-    for nodes in 1 2 4 8 12 16
+    for nodes in 1 2 4 8 12
     do
         echo "    For nodes = $nodes"
         for exp in {1..3} 
@@ -27,7 +27,7 @@ do
                 nodes=$nodes objects=$objs transactions=$txns nodeId=$nodeId reads=$read threads=$threads $build/ssrg-hyflow-cpp $nodeId -&
                 p=`ps -ef|grep "$build/ssrg-hyflow-cpp $nodeId -"| grep -v 'grep'|awk '{print $2}'`
                 echo taskset -c -p $nodeId $p
-                coreId=$((nodeId*threads*3))-$((nodeId*threads*3+3*threads-1)) 
+                coreId=$((nodeId*threads*4))-$((nodeId*threads*4+4*threads-1)) 
                 echo "Moving process to core set $coreId"
                 taskset -c -p $coreId $p
                 sleep 2             # Give some time for node 0 to start

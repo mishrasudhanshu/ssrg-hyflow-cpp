@@ -27,22 +27,24 @@ namespace vt_dstm{
 		int nodeId = NetworkManager::getNodeId();
 		int threadCount = NetworkManager::getThreadCount();
 		if (T_type == TRANSACTIONAL_THREAD) {
-			coreId = nodeId*threadCount*3 + id;
+			coreId = nodeId*threadCount*4 + id;
 		} else {
-			coreId = nodeId*threadCount*3 + threadCount + id;
+			coreId = nodeId*threadCount*4 + threadCount + id;
 		}
 
+		// Leave two additional cores for Msgconnect server listener and worker thread
+		// Per node core used = 4*threadCount
 		// Set the thread affinity
 		cpu_set_t s;
 		CPU_ZERO(&s);
-		int node = NetworkManager::getNodeId()*3*threadCount + id;
-		CPU_SET(node, &s);
+		CPU_SET(coreId, &s);
 		if (sched_setaffinity(0, sizeof(cpu_set_t), &s) < 0){
 			perror("Set affinity transactional thread");
 		}
 
 		setThreadId(coreId);
 
+		// Causing system to hang
 //	   struct sched_param sp;
 //	   int policy;
 //
