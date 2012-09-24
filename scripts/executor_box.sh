@@ -14,7 +14,7 @@ echo "nodeId=$nodeId, txns=$txns, objs=$objs, reads 0..100..20 threads 1...24"
 for read in {0..100..20}
 do
     echo "For reads = $read"
-    for threads in 1 2 4 8 16 24
+    for threads in 1 2 4 8 12 16
     do
         echo "    For threads = $threads"
         for exp in {1..3}
