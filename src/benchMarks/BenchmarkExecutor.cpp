@@ -38,7 +38,7 @@ HyflowBenchmark* BenchmarkExecutor::benchmark = NULL;
 bool* BenchmarkExecutor::transactionType = NULL;
 std::string** BenchmarkExecutor::argsArray = NULL;
 std::string* BenchmarkExecutor::ids = NULL;
-boost::thread_specific_ptr<HyInteger> BenchmarkExecutor::retries;
+boost::thread_specific_ptr<HyInteger> BenchmarkExecutor::tries;
 boost::thread** BenchmarkExecutor::benchmarkThreads = NULL;
 boost::mutex BenchmarkExecutor::execMutex;
 
@@ -137,20 +137,20 @@ void BenchmarkExecutor::execute(int id){
 	LOG_DEBUG("Execution time %llu ms\n",executionTime/1000);
 	double thrPut = (transactions*1000000)/executionTime;
 	int rtry = 0;
-	if (retries.get()) {
-		rtry = retries.get()->getValue();
-	}
+	if (tries.get()) {
 	// Tries are also get included in retried value as we count number of contexts created
-	rtry -= transactions;
+		rtry = tries.get()->getValue() - transactions;
+	}
 	addMetaData(thrPut, rtry);
 	LOG_DEBUG("BNC_EXE %d: ThroughPut = %0.2f trxns/sec <----------------------\n", id, thrPut);
 }
 
 void BenchmarkExecutor::increaseRetries() {
-	if (!retries.get()) {
-		retries.reset(new HyInteger(0));
+	if (!tries.get()) {
+		tries.reset(new HyInteger(0));
 	}
-	retries.get()->increaseValue();
+	tries.get()->increaseValue();
+	LOG_DEBUG("---tries++-->%d\n", tries.get()->getValue());
 }
 
 void BenchmarkExecutor::executeThreads() {

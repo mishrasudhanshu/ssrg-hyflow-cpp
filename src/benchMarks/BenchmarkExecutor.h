@@ -20,7 +20,7 @@ class BenchmarkExecutor {
 	static HyflowBenchmark *benchmark;
 	static boost::thread **benchmarkThreads;
 
-	static boost::thread_specific_ptr<HyInteger> retries;
+	static boost::thread_specific_ptr<HyInteger> tries;
 	static int calls;
 	static int delay;
 	static long timeout;

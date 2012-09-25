@@ -101,9 +101,9 @@ uint64_t BankAccount::totalBalance(std::string id1, std::string id2, HyflowConte
 }
 
 uint64_t BankAccount::totalBalance(std::string id1, std::string id2) {
-	bool commit = true;
 	uint64_t result = 0;
 	for (int i = 0; i < 0x7fffffff; i++) {
+		bool commit = true;
 		HyflowContext* c = ContextManager::getInstance();
 		HyflowObjectFuture of1(id1, true, c->getTxnId());
 		HyflowObjectFuture of2(id2, true, c->getTxnId());
@@ -175,8 +175,8 @@ void BankAccount::transfer(std::string id1, std::string id2,
 
 void BankAccount::transfer(std::string id1, std::string id2,
 		uint64_t money) {
-	bool commit = true;
 	for (int i = 0; i < 0x7fffffff; i++) {
+		bool commit = true;
 		HyflowContext* c = ContextManager::getInstance();
 		// FIXME: Set Object within the context
 		HyflowObjectFuture of1(id1, true, c->getTxnId()), of2(id2, true, c->getTxnId());
@@ -204,7 +204,7 @@ void BankAccount::transfer(std::string id1, std::string id2,
 					throw;
 				} catch (TransactionException & ex) {
 					ex.print();
-					commit = false;
+					continue;
 				} catch (std::string & s) {
 					Logger::fatal("%s\n",s.c_str());
 				}
