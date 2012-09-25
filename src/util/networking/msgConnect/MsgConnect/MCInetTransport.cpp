@@ -2273,11 +2273,21 @@ bool MCInetTransportJob::PerformRecvSend(bool& errorFlag, bool& closeConnection,
 				if((b || FTransporter->HasBufferedOutgoingData())  && SendAllowed)
 				{
 					FD_SET(FTransporter->getSocket(), &FDSendSet);
+#ifdef __GNUC__
+					select_res = select(FD_SETSIZE, &FDRecvSet, &FDSendSet, NULL, PTV);
+#elif
 					select_res = select(highSocketHandle + 1, &FDRecvSet, &FDSendSet, NULL, PTV);
+#endif
 				}
 				else
 				if (RecvAllowed || !FNoUDPNotify)
-        			select_res = select(highSocketHandle + 1, &FDRecvSet, NULL, NULL, PTV);
+				{
+#ifdef __GNUC__
+        			select_res = select(FD_SETSIZE, &FDRecvSet, NULL, NULL, PTV);
+#elif
+					select_res = select(highSocketHandle + 1, &FDRecvSet, NULL, NULL, PTV);
+#endif
+				}
 				else
 				{
 					Sleep(TimeoutV);

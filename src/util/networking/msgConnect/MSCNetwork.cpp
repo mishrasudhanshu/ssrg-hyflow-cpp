@@ -103,7 +103,7 @@ void MSCNetwork::networkInit(){
 	socket->setAttemptsToConnect(50);
 	socket->setAttemptsInterval(100);	//Time is in MilliSecond
 	socket->setFailOnInactive(true);
-	socket->setInactivityTime(10000);	// If no response in 10 sec on handshake retry
+	socket->setInactivityTime(60000);	// If no response in 1 min on handshake retry
 	socket->setMaxTimeout(900000l);
 
 	socket->setMessengerAddress(ip);

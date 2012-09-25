@@ -1,6 +1,6 @@
 #!/bin/bash
 
-$build=Debug
+build=Debug
 
 if ! [ -z $1 ]
 then

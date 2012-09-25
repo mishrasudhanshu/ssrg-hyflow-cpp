@@ -2,7 +2,7 @@
 
 txns=2000
 objs=10000
-$build=Debug
+build=Debug
 
 if ! [ -z $1 ]
 then
