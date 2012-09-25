@@ -2565,6 +2565,8 @@ void MCInetTransportJob::ClientExecute(void)
 
 	mcInt32 errorCode = MCError_InvalidAddress;
 
+
+
 	//bool toDel = (strcmp(FEntry->FRemoteAddress, "192.168.0.4:14583") == 0);
 
 	TRY_BLOCK
@@ -2616,6 +2618,7 @@ void MCInetTransportJob::ClientExecute(void)
 					}
 					else
 					{
+						std::cerr<<"Client handShake failure!!"<<std::endl;
 						FinalizeConnection();
 						if (FTransporter != NULL)
 							FTransporter->Close(true);
