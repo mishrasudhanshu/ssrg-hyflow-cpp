@@ -194,7 +194,12 @@ void DTL2Context::commit(){
 	std::map<std::string, HyflowObject*, ObjectIdComparator>::reverse_iterator wi;
 	for( wi = writeMap.rbegin() ; wi != writeMap.rend() ; wi++ ) {
 		// Update object version
-		wi->second->setVersion(tnxClock);
+		int version = ContextManager::getClock();
+		// LESSON : Use node clock instead of transaction clock to make sure to
+		// transaction threads set different object version after commit and object
+		// version must increase after each commit.
+//		wi->second->setVersion(tnxClock);
+		wi->second->setVersion(version);
 		LOG_DEBUG("Set object %s version %d\n",wi->first.c_str(), tnxClock);
 		// Register object
 		DirectoryManager::registerObject(wi->second, txnId);
