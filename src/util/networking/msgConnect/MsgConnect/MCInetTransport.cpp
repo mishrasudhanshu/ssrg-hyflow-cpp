@@ -2275,7 +2275,7 @@ bool MCInetTransportJob::PerformRecvSend(bool& errorFlag, bool& closeConnection,
 					FD_SET(FTransporter->getSocket(), &FDSendSet);
 #ifdef __GNUC__
 					select_res = select(FD_SETSIZE, &FDRecvSet, &FDSendSet, NULL, PTV);
-#elif
+#else
 					select_res = select(highSocketHandle + 1, &FDRecvSet, &FDSendSet, NULL, PTV);
 #endif
 				}
@@ -2284,7 +2284,7 @@ bool MCInetTransportJob::PerformRecvSend(bool& errorFlag, bool& closeConnection,
 				{
 #ifdef __GNUC__
         			select_res = select(FD_SETSIZE, &FDRecvSet, NULL, NULL, PTV);
-#elif
+#else
 					select_res = select(highSocketHandle + 1, &FDRecvSet, NULL, NULL, PTV);
 #endif
 				}

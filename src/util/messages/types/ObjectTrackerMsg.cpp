@@ -76,7 +76,7 @@ void ObjectTrackerMsg::objectTrackerHandler(HyflowMessage & msg) {
 			hmsg.msg_t = MSG_ACCESS_OBJECT;
 			hmsg.isCallback = true;
 			hmsg.setMsg(&oam);
-			LOG_DEBUG("Object Tracker Response: send request to %d to from %s\n", otmsg->owner,otmsg->objectId.c_str());
+			LOG_DEBUG("Object Tracker Response: send request to %d for %s\n", otmsg->owner,otmsg->objectId.c_str());
 			NetworkManager::sendCallbackMessage(otmsg->owner,hmsg, cbfmsg);
 		}
 	}

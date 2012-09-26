@@ -47,7 +47,7 @@ void LockAccessMsg::setObjectId(std::string objectId) {
 void LockAccessMsg::lockAccessHandler(HyflowMessage& m) {
 	LockAccessMsg *lmsg = (LockAccessMsg*) (m.getMsg());
 	if (lmsg->request) {
-		LOG_DEBUG ("Got a Lock request: %s for %s from %d\n", lmsg->lock?"lock":"unlock", lmsg->objectId.c_str(), m.fromNode);
+		LOG_DEBUG ("Got a Lock request: %s for %s from %d for version%d\n", lmsg->lock?"lock":"unlock", lmsg->objectId.c_str(), m.fromNode, lmsg->objVersion);
 		if (lmsg->lock)
 			lmsg->locked = LockTable::tryLock(lmsg->objectId, lmsg->objVersion);
 		else

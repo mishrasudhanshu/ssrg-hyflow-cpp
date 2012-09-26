@@ -10,6 +10,7 @@
 #include "../../../util/logging/Logger.h"
 #include "../../../core/directory/DirectoryManager.h"
 #include "../../BenchmarkExecutor.h"
+#include "../../../util/concurrent/ThreadMeta.h"
 
 namespace vt_dstm {
 
@@ -29,8 +30,8 @@ void BankBenchmark::readOperation(std::string ids[], int size) {
 }
 
 void BankBenchmark::writeOperation(std::string ids[], int size) {
-	static int a = 1;
-	//a += BenchmarkExecutor::getThreadId();	// Only for debug sanity, not thread safe
+	int a = 1;
+	a += ThreadMeta::getThreadId();	// Only for debug sanity
 	LOG_DEBUG("Transfer from %s to %s %d\n", ids[0].c_str(), ids[1].c_str(), a);
 	BankAccount::transfer(ids[0], ids[1], a);
 }

@@ -113,6 +113,7 @@ void NetworkManager::replySynchronized(int rqNo){
 		hmsg.isCallback = false;
 		for (int i=0 ; i < nodeCount; i++)
 			sendMessage(i,hmsg);
+		LOG_DEBUG("MSNC : Everyone Joined Awaking all\n");
 	}
 }
 
@@ -124,7 +125,7 @@ void NetworkManager::notifyCluster(int rqNo){
 	     syncVersion = rqNo;
 	 }
 	 onCluster.notify_all();
-	 LOG_DEBUG("MSNC : Notify all ReqNo %d\n", rqNo);
+	 LOG_DEBUG("MSNC : Awaking node - notify all waiting on ReqNo %d\n", rqNo);
 }
 
 void NetworkManager::waitTillSynchronized(int rqNo){

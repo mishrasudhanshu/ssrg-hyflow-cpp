@@ -36,9 +36,16 @@ bool LockTable::tryLock(std::string & objId, int32_t obVer) {
 				LOG_DEBUG("LockTable :  %s already locked for version %d\n", objId.c_str(), obVer);
 				return false;
 			} else {		// Some one had locked older version of object
-				a->second = obVer | LOCK;
-				LOG_DEBUG("LockTable : older Lock exist - locked successfully version %d\n", obVer);
-				return true;
+				int nodeVersion = DirectoryManager::getObjectVersion(objId);
+				if ((obVer&UNLOCK) < nodeVersion) {
+					// Requesting node is still having older version of object
+					LOG_DEBUG("LockTable: Object version increased on owner node to %d\n", nodeVersion);
+					return false;
+				} else {
+					a->second = obVer | LOCK;
+					LOG_DEBUG("LockTable : older Lock exist - locked successfully version %d\n", obVer);
+					return true;
+				}
 			}
 		} else {	// Object is unlock
 			if ( versionLock > obVer) {	// User is requesting lock for older version of object

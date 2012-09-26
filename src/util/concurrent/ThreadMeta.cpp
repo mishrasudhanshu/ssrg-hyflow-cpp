@@ -35,12 +35,12 @@ namespace vt_dstm{
 		// Leave two additional cores for Msgconnect server listener and worker thread
 		// Per node core used = 4*threadCount
 		// Set the thread affinity
-		cpu_set_t s;
-		CPU_ZERO(&s);
-		CPU_SET(coreId, &s);
-		if (sched_setaffinity(0, sizeof(cpu_set_t), &s) < 0){
-			perror("Set affinity transactional thread");
-		}
+//		cpu_set_t s;
+//		CPU_ZERO(&s);
+//		CPU_SET(coreId, &s);
+//		if (sched_setaffinity(0, sizeof(cpu_set_t), &s) < 0){
+//			perror("Set affinity transactional thread");
+//		}
 
 		setThreadId(coreId);
 
