@@ -58,7 +58,8 @@ void DTL2Context::forward(int senderClock) {
 			int32_t version = i->second->getVersion() ;
 			if ( version > senderClock) {
 				LOG_DEBUG("Forward : Aborting version %d < senderClock %d\n", version, senderClock);
-				abort();
+//				abort();
+				throw *(new TransactionException("Forward : Aborting on version "));
 			}
 		}
 		LOG_DEBUG("Forward : context from %d to %d\n", tnxClock, senderClock);
