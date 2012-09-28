@@ -24,7 +24,24 @@ DTL2Context::DTL2Context() {
 	tnxClock = ContextManager::getClock();
 }
 
-DTL2Context::~DTL2Context() {}
+DTL2Context::~DTL2Context() {
+	//TODO: Adjust interfaces: currently objects are deleted by object future
+//	for (std::map<std::string, HyflowObject*>::iterator i= readMap.begin(); i != readMap.end(); i++ ) {
+//		if (i->second) delete i->second;
+//	}
+//
+//	for (std::map<std::string, HyflowObject*>::iterator i= writeMap.begin(); i != writeMap.end(); i++ ) {
+//		if (i->second) delete i->second;
+//	}
+//
+//	for (std::map<std::string, HyflowObject*>::iterator i= publishMap.begin(); i != publishMap.end(); i++ ) {
+//		if (i->second) delete i->second;
+//	}
+//
+//	for (std::map<std::string, HyflowObject*>::iterator i= deleteMap.begin(); i != deleteMap.end(); i++ ) {
+//		if (i->second) delete i->second;
+//	}
+}
 
 void DTL2Context::beforeReadAccess(HyflowObject *obj) {
 	// Perform early validation step : Not required though

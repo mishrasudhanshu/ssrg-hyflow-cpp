@@ -29,7 +29,6 @@ int NetworkManager::machine = -1;
 int NetworkManager::basePort = -1;
 int  NetworkManager::threadCount = -1;
 
-//int NetworkManager::nodesInCluster=0;
 std::string NetworkManager::nodeIp;
 int NetworkManager::syncVersion=0;
 boost::condition NetworkManager::onCluster;
@@ -40,17 +39,6 @@ bool NetworkManager::islocal = false;
 std::map<int, int> NetworkManager::syncMap ;
 std::map<int, std::string> NetworkManager::ipMap ;
 
-//std::string NetworkManager::Ips[] = {
-//		"10.1.1.20",
-//		"10.1.1.21",
-//		"10.1.1.22",
-//		"10.1.1.24",
-//		"10.1.1.25",
-//		"10.1.1.26",
-//		"10.1.1.27",
-//		"10.1.1.28",
-//		};
-
 void NetworkManager::NetworkInit() {
 	nodeIp = IPAddressProvider::getIPv4Address();
 	if (strcmp(ConfigFile::Value(NETWORK).c_str(), MSG_CONNECT) == 0) {
@@ -59,6 +47,7 @@ void NetworkManager::NetworkInit() {
 		HyflowMessage::registerMessageHandlers();
 		synchronizeCluster();
 	}
+	sleep(2);
 }
 
 void NetworkManager::initNode() {
@@ -111,7 +100,7 @@ bool NetworkManager::allNodeJoined(int rqNo){
 			currentNodes = 1;
 		}else {
 			currentNodes = i->second;
-			syncMap[rqNo] = currentNodes++;
+			syncMap[rqNo] = ++currentNodes;
 		}
 //		nodesInCluster++;
 	}
@@ -133,8 +122,6 @@ void NetworkManager::replySynchronized(int rqNo){
 }
 
 void NetworkManager::notifyCluster(int rqNo){
-	//Reset the nodes In cluster count
-//	nodesInCluster = 0;
 	{
 	     boost::unique_lock<boost::mutex> lock(clsMutex);
 	     syncMap.erase(rqNo);
@@ -168,10 +155,6 @@ void NetworkManager::sendCallbackMessage(int targetNodeId, HyflowMessage msg, Hy
 
 	fu.createIdNRegisterFuture();
 	msg.msg_id = fu.getId();
-//	int threadId = BenchmarkExecutor::getThreadId();
-//	msg.msg_id = getCurrentTime()*10000 + 100*targetNodeId + threadId;	// Max 19 Digits
-//	fu.setId(msg.msg_id);
-//	MessageHandler::registerMessageFuture(msg.msg_id, msg.msg_t, fu);
 
 	network->sendCallbackMessage(targetNodeId, msg, fu);
 }
@@ -220,6 +203,7 @@ void NetworkManager::registerNode(int nodeId, std::string & ipAddress) {
 }
 
 void NetworkManager::registerCluster(std::map<int, std::string> & nodeMap) {
+	LOG_DEBUG("Registering the Node Map\n");
     boost::unique_lock<boost::mutex> lock(clsMutex);
 	ipMap.insert(nodeMap.begin(), nodeMap.end());
 }

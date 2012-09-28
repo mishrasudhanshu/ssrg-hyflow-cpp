@@ -99,7 +99,7 @@ std::string IPAddressProvider::getIPv6Address() {
 	if (!init) {
 		InitIPs();
 		if (!init) {
-			Logger::fatal("Failded to collect IPs for this machine\n");
+			Logger::fatal("Failed to collect IPs for this machine\n");
 			throw "Failed to collect IPs for this machine\n";
 		}
 	}
