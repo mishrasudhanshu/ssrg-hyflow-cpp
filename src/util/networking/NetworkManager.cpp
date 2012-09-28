@@ -19,6 +19,7 @@
 #include "msgConnect/MSCNetwork.h"
 #include "msgConnect/MSCtest.h"
 #include "../messages/MessageHandler.h"
+#include "IPAddressProvider.h"
 
 namespace vt_dstm {
 
@@ -28,31 +29,35 @@ int NetworkManager::machine = -1;
 int NetworkManager::basePort = -1;
 int  NetworkManager::threadCount = -1;
 
-int NetworkManager::nodesInCluster=0;
+//int NetworkManager::nodesInCluster=0;
+std::string NetworkManager::nodeIp;
 int NetworkManager::syncVersion=0;
 boost::condition NetworkManager::onCluster;
 boost::mutex NetworkManager::clsMutex;
 
 AbstractNetwork* NetworkManager::network = NULL;
 bool NetworkManager::islocal = false;
+std::map<int, int> NetworkManager::syncMap ;
+std::map<int, std::string> NetworkManager::ipMap ;
 
-std::string NetworkManager::Ips[] = {
-		"10.1.1.20",
-		"10.1.1.21",
-		"10.1.1.22",
-		"10.1.1.24",
-		"10.1.1.25",
-		"10.1.1.26",
-		"10.1.1.27",
-		"10.1.1.28",
-		};
+//std::string NetworkManager::Ips[] = {
+//		"10.1.1.20",
+//		"10.1.1.21",
+//		"10.1.1.22",
+//		"10.1.1.24",
+//		"10.1.1.25",
+//		"10.1.1.26",
+//		"10.1.1.27",
+//		"10.1.1.28",
+//		};
 
 void NetworkManager::NetworkInit() {
+	nodeIp = IPAddressProvider::getIPv4Address();
 	if (strcmp(ConfigFile::Value(NETWORK).c_str(), MSG_CONNECT) == 0) {
 		MsgConnect::MCBaseInitialization();
 		network = new MSCNetwork();
 		HyflowMessage::registerMessageHandlers();
-		synchronizeCluster(1);
+		synchronizeCluster();
 	}
 }
 
@@ -85,7 +90,8 @@ int NetworkManager::getBasePort(){
 	return basePort;
 }
 
-void NetworkManager::synchronizeCluster(int rqNo) {
+void NetworkManager::synchronizeCluster() {
+	int rqNo = syncVersion + 1;
 	SynchronizeMsg gJmsg(nodeId, false, rqNo);
 	HyflowMessage hmsg;
 	hmsg.setMsg(&gJmsg);
@@ -96,12 +102,21 @@ void NetworkManager::synchronizeCluster(int rqNo) {
 }
 
 bool NetworkManager::allNodeJoined(int rqNo){
+	int currentNodes = 0;
 	{
 		boost::unique_lock<boost::mutex> lock(clsMutex);
-		nodesInCluster++;
+		std::map<int, int>::iterator i = syncMap.find(rqNo);
+		if ( i == syncMap.end()) {
+			syncMap[rqNo] = 1;
+			currentNodes = 1;
+		}else {
+			currentNodes = i->second;
+			syncMap[rqNo] = currentNodes++;
+		}
+//		nodesInCluster++;
 	}
-	LOG_DEBUG("MSNC : Joining cluster in cluster %d in ReqNo %d\n", nodesInCluster, rqNo);
-	return nodesInCluster == nodeCount;
+	LOG_DEBUG("MSNC : Joining cluster in cluster %d in ReqNo %d\n", currentNodes, rqNo);
+	return nodeCount == currentNodes;
 }
 
 void NetworkManager::replySynchronized(int rqNo){
@@ -119,9 +134,10 @@ void NetworkManager::replySynchronized(int rqNo){
 
 void NetworkManager::notifyCluster(int rqNo){
 	//Reset the nodes In cluster count
-	nodesInCluster = 0;
+//	nodesInCluster = 0;
 	{
 	     boost::unique_lock<boost::mutex> lock(clsMutex);
+	     syncMap.erase(rqNo);
 	     syncVersion = rqNo;
 	 }
 	 onCluster.notify_all();
@@ -131,26 +147,10 @@ void NetworkManager::notifyCluster(int rqNo){
 void NetworkManager::waitTillSynchronized(int rqNo){
 	LOG_DEBUG("MSNC : Starting wait for syncVer %d and ReqNo %d\n", syncVersion, rqNo);
 	boost::unique_lock<boost::mutex> lock(clsMutex);
-	while ( syncVersion != rqNo) {
+	while ( syncVersion < rqNo) {
 		onCluster.wait(lock);
 	}
 }
-
-//void NetworkManager::registerMessageFuture(unsigned long long m_id, HyMessageType t, HyflowMessageFuture & fu) {
-//	network->registerMessageFuture(m_id, t, fu);
-//}
-//
-//HyflowMessageFuture & NetworkManager::getMessageFuture(unsigned long long m_id, HyMessageType t) {
-//	return network->getMessageFuture(m_id, t);
-//}
-//
-//void  NetworkManager::removeMessageFuture(unsigned long long m_id, HyMessageType t){
-//	network->removeMessageFuture(m_id, t);
-//}
-//
-//void NetworkManager::registerHandler(HyMessageType msg_t, void (*handlerFunc)(HyflowMessage &)) {
-//	network->registerHandler(msg_t, handlerFunc);
-//}
 
 void NetworkManager::sendMessage(int nodeId, HyflowMessage msg) {
 	msg.fromNode = NetworkManager::nodeId;
@@ -196,11 +196,32 @@ void NetworkManager::test() {
 }
 
 std::string NetworkManager::getIp(int id){
-	//FIXME: Complete the id dependent implementation
 	if (islocalMachine())
 		return "127.0.0.1";
-	int mac = NetworkManager::getMachine();
-	return Ips[mac];
+
+	if (id == 0) {
+		return ConfigFile::Value(PARENT_IP);
+	}
+	if (id == nodeId) {
+		return nodeIp;
+	}
+	std::map<int,std::string>::iterator i= ipMap.find(id);
+	if ( i == ipMap.end()) {
+		Logger::fatal("Unable to get IP for node %d\n",id);
+		throw "Unable to get IP\n";
+	}else {
+		return ipMap.at(id);
+	}
+}
+
+void NetworkManager::registerNode(int nodeId, std::string & ipAddress) {
+    boost::unique_lock<boost::mutex> lock(clsMutex);
+	ipMap[nodeId] = ipAddress;
+}
+
+void NetworkManager::registerCluster(std::map<int, std::string> & nodeMap) {
+    boost::unique_lock<boost::mutex> lock(clsMutex);
+	ipMap.insert(nodeMap.begin(), nodeMap.end());
 }
 
 }

@@ -9,6 +9,8 @@
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/serialization/base_object.hpp>
+#include <boost/serialization/map.hpp>
+#include <boost/serialization/string.hpp>
 #include "SynchronizeMsg.h"
 #include "../../networking/NetworkManager.h"
 #include "../../logging/Logger.h"
@@ -21,9 +23,19 @@ void SynchronizeMsg::serialize(Archive & ar, const unsigned int version) {
 	ar & nodeId;
 	ar & isResponse;
 	ar & requestNo;
+	ar & myIP;
+	ar & clusterIPs;
 }
 
 SynchronizeMsg::SynchronizeMsg(int id, bool isR, int rn) {
+	if (rn == 1) {	// If first ever request pass IPs
+		if (isR) {
+			std::map<int, std::string> & ipMap = NetworkManager::getIpMap();
+			clusterIPs.insert(ipMap.begin(), ipMap.end());
+		}else {
+			myIP = NetworkManager::getNodeIP();
+		}
+	}
 	nodeId = id;
 	isResponse = isR;
 	requestNo = rn;
@@ -35,10 +47,16 @@ void SynchronizeMsg::synchronizeHandler(HyflowMessage & msg){
 	SynchronizeMsg *synmsg = (SynchronizeMsg *)msg.getMsg();
 	if (!synmsg->isResponse){	// Node 0 will receive this message
 		LOG_DEBUG("SYNC_MSG: Got Synchronize request message from %d\n", msg.fromNode);
+		if (synmsg->requestNo == 1) {
+			NetworkManager::registerNode(synmsg->nodeId, synmsg->myIP);
+		}
 		if(NetworkManager::allNodeJoined(synmsg->requestNo))	// If you are last message set synchronized
 			NetworkManager::replySynchronized(synmsg->requestNo);
 	}else{
 		LOG_DEBUG("SYNC_MSG: Got Synchronize response message\n");
+		if ((synmsg->requestNo == 1) && (NetworkManager::getNodeId()!=0)) {
+			NetworkManager::registerCluster(synmsg->clusterIPs);
+		}
 		NetworkManager::notifyCluster(synmsg->requestNo);
 	}
 }

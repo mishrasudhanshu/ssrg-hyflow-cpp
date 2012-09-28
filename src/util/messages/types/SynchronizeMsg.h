@@ -9,6 +9,7 @@
 #ifndef SYNCHRONIZEMSG_H_
 #define SYNCHRONIZEMSG_H_
 
+#include <map>
 #include "../BaseMessage.h"
 #include "../HyflowMessage.h"
 
@@ -24,6 +25,8 @@ class SynchronizeMsg: public vt_dstm::BaseMessage {
     template<class Archive>
     void serialize(Archive & ar, const unsigned int version);
 public:
+	std::string myIP;
+	std::map<int, std::string> clusterIPs;
     SynchronizeMsg() {isResponse = false;}
 	SynchronizeMsg(int nodeId, bool isR, int rn);
 	virtual ~SynchronizeMsg();

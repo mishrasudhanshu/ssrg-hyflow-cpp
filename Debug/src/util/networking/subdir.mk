@@ -4,12 +4,15 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
+../src/util/networking/IPAddressProvider.cpp \
 ../src/util/networking/NetworkManager.cpp 
 
 OBJS += \
+./src/util/networking/IPAddressProvider.o \
 ./src/util/networking/NetworkManager.o 
 
 CPP_DEPS += \
+./src/util/networking/IPAddressProvider.d \
 ./src/util/networking/NetworkManager.d 
 
 

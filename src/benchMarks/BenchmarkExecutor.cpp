@@ -160,7 +160,7 @@ void BenchmarkExecutor::executeThreads() {
 	createObjects();
 	prepareArgs();
 
-	NetworkManager::synchronizeCluster(2);
+	NetworkManager::synchronizeCluster();
 	sleep(2);
 
 	int threadCount = NetworkManager::getThreadCount();
@@ -175,13 +175,13 @@ void BenchmarkExecutor::executeThreads() {
 	writeResults();
 	sleep(2);
 	// Make sure all node finished transactions and then do sanity check
-	NetworkManager::synchronizeCluster(3);
+	NetworkManager::synchronizeCluster();
 	if ( (NetworkManager::getNodeId() == 0) && (sanity) ) {
 		benchmark->checkSanity();
 	}
 	sleep(2);	// Require to stop out of order synchronize request
 	// Make sure sanity check is completed on all the nodes
-	NetworkManager::synchronizeCluster(4);
+	NetworkManager::synchronizeCluster();
 	// DONE
 }
 } /* namespace vt_dstm */

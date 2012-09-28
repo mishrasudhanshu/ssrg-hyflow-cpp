@@ -23,16 +23,21 @@ class NetworkManager {
 	static int machine;
 	static int basePort;
 	static int threadCount;
-	static std::string Ips[];
+	static std::string nodeIp;
 
 	static bool islocal;
-
-	static int nodesInCluster;
+//	static int nodesInCluster;
 	static int syncVersion;
 	static boost::condition onCluster;
 	static boost::mutex clsMutex;
+	static std::map<int, int> syncMap;
+	static std::map<int, std::string> ipMap;
 public:
 	static AbstractNetwork *network;
+
+	static std::map<int, std::string> & getIpMap() {
+		return ipMap;
+	}
 
 	static int getThreadCount();
 	static void NetworkInit();
@@ -51,11 +56,14 @@ public:
 	/*
 	 * Synchronize the whole cluster with respect to node 0
 	 */
-	static void synchronizeCluster(int rqNo);
+	static void synchronizeCluster();
 	static bool allNodeJoined(int rqNo);
 	static void replySynchronized(int rqNo);
 	static void waitTillSynchronized(int rqNo);
 	static void notifyCluster(int rqNo);
+	static void registerNode(int nodeId, std::string & ipAddress);
+	static void registerCluster(std::map<int, std::string> & nodeMap);
+	static std::string & getNodeIP() {return nodeIp;}
 
 //	static void registerMessageFuture(unsigned long long m_id, HyMessageType t, HyflowMessageFuture & fu);
 //	static HyflowMessageFuture & getMessageFuture(unsigned long long m_id, HyMessageType t);
