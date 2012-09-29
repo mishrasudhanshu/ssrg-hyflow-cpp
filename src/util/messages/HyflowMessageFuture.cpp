@@ -30,7 +30,11 @@ HyflowMessageFuture::~HyflowMessageFuture() {
 			Logger::fatal("%s\n",s.c_str());
 			throw s;
 		}
-		delete dataResponse;
+		if (dataResponse) {
+			HyflowObject* saveData = dataResponse;
+			dataResponse = NULL;
+			delete saveData;
+		}
 	}
 }
 

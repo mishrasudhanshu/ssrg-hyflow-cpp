@@ -55,7 +55,7 @@ std::string* BankBenchmark::createLocalObjects(int objCount) {
 			// Create a stack copy of object
 			// register account will create a heap copy of object
 			// and save its pointer in local cache
-			BankAccount ba(1000000, ids[i]);
+			BankAccount ba(AMOUNT, ids[i]);
 			DirectoryManager::registerObjectWait(&ba, 0);
 		}
 	}

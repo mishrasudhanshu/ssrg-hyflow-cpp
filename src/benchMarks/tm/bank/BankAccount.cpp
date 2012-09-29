@@ -111,7 +111,7 @@ uint64_t BankAccount::totalBalance(std::string id1, std::string id2) {
 			result = totalBalance(id1, id2, c, of1, of2);
 		} catch (...) {
 			try {
-				ContextManager::cleanInstance(c);
+				ContextManager::cleanInstance(&c);
 				throw;
 			}catch (TransactionException & ex) {
 				ex.print();
@@ -125,10 +125,10 @@ uint64_t BankAccount::totalBalance(std::string id1, std::string id2) {
 			try {
 				c->commit();
 				LOG_DEBUG("++++++++++Transaction Successful ++++++++++\n");
-				ContextManager::cleanInstance(c);
+				ContextManager::cleanInstance(&c);
 			} catch(...) {
 				try{
-					ContextManager::cleanInstance(c);
+					ContextManager::cleanInstance(&c);
 					throw;
 				}catch (TransactionException & ex) {
 					ex.print();
@@ -184,7 +184,7 @@ void BankAccount::transfer(std::string id1, std::string id2,
 			transfer(id1, id2, money, c, of1, of2);
 		}catch (...) {
 			try {
-				ContextManager::cleanInstance(c);
+				ContextManager::cleanInstance(&c);
 				throw;
 			} catch (TransactionException & ex) {
 				ex.print();
@@ -197,10 +197,10 @@ void BankAccount::transfer(std::string id1, std::string id2,
 			try {
 				c->commit();
 				LOG_DEBUG("++++++++++Transaction Successful ++++++++++\n");
-				ContextManager::cleanInstance(c);
+				ContextManager::cleanInstance(&c);
 			} catch(...) {
 				try{
-					ContextManager::cleanInstance(c);
+					ContextManager::cleanInstance(&c);
 					throw;
 				} catch (TransactionException & ex) {
 					ex.print();
@@ -234,7 +234,7 @@ void BankAccount::checkSanity(std::string* ids, int objectCount) {
 			BankAccount* ba = (BankAccount*)DirectoryManager::locate(ids[i], true, c->getTxnId());
 			balance += ba->checkBalance();
 		}
-		uint64_t expected = 10000*objectCount;
+		uint64_t expected = AMOUNT*objectCount;
 		if ( expected == balance ) {
 			LOG_DEBUG("Sanity check passed...\n");
 		} else {

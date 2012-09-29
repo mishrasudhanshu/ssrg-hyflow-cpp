@@ -31,7 +31,9 @@ public:
 		{
 			tbb::concurrent_hash_map<std::string, HyflowObject*>::accessor a;
 			if (!map.insert(a,objId)) {
-				delete a->second;
+				HyflowObject *saveObject = a->second;
+				a->second = NULL;
+				delete saveObject;
 			}
 			a->second = objectCopy;
 		}

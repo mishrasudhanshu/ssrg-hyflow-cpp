@@ -48,10 +48,14 @@ HyflowContext* ContextManager::getInstance() {
 	return context;
 }
 
-void ContextManager::cleanInstance(HyflowContext *c) {
+void ContextManager::cleanInstance(HyflowContext **c) {
 	BenchmarkExecutor::increaseRetries();
-	unregisterContext(c);
-	delete c;
+	if (*c) {
+		unregisterContext(*c);
+		HyflowContext* saveContext = *c;
+		*c = NULL;
+		delete saveContext;
+	}
 }
 
 void ContextManager::registerContext(HyflowContext *c) {

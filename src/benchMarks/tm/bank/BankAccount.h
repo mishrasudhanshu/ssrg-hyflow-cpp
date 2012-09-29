@@ -16,6 +16,8 @@
 #include "../../../core/context/HyflowContext.h"
 #include "../../../core/HyflowObjectFuture.h"
 
+#define AMOUNT 100000
+
 namespace vt_dstm {
 
 class BankAccount: public HyflowObject {

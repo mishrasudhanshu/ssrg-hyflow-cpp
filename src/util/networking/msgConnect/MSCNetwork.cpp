@@ -56,14 +56,30 @@ MSCNetwork::MSCNetwork() {
 }
 
 MSCNetwork::~MSCNetwork() {
-	delete messenger;
-	delete queue;
-	delete socket;
+	if (messenger) {
+		MsgConnect::MCMessenger* saveMessager = messenger;
+		messenger = NULL;
+		delete saveMessager;
+	}
+	if (queue) {
+		MsgConnect::MCQueue* saveQueue = queue;
+		queue = NULL;
+		delete saveQueue;
+	}
+	if (socket) {
+		MsgConnect::MCSocketTransport* saveSocket = socket;
+		socket = NULL;
+		delete saveSocket;
+	}
 	hyflowShutdown = true;
 	for (int i=0 ; i < threadCount; i++ ) {
 		dispatchThread[i]->join();
 	}
-	delete dispatchThread;
+	if (dispatchThread) {
+		boost::thread **dp = dispatchThread;
+		dispatchThread = NULL;
+		delete dp;
+	}
 }
 
 void MSCNetwork::networkInit(){

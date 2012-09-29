@@ -27,7 +27,7 @@ public:
 
 	static void ContextManagerInit();
 	static HyflowContext* getInstance();
-	static void cleanInstance(HyflowContext *c);
+	static void cleanInstance(HyflowContext **c);
 
 	static void registerContext(HyflowContext * c);
 	static void unregisterContext(HyflowContext *c);
