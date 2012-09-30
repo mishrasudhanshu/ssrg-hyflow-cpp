@@ -11,6 +11,7 @@ RM := rm -rf
 -include src/util/unitTests/boost_serialization/subdir.mk
 -include src/util/unitTests/subdir.mk
 -include src/util/parser/subdir.mk
+-include src/util/networking/zeroMQ/subdir.mk
 -include src/util/networking/msgConnect/MsgConnect/subdir.mk
 -include src/util/networking/msgConnect/subdir.mk
 -include src/util/networking/subdir.mk

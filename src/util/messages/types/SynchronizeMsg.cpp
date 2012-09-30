@@ -50,8 +50,10 @@ void SynchronizeMsg::synchronizeHandler(HyflowMessage & msg){
 		if (synmsg->requestNo == 1) {
 			NetworkManager::registerNode(synmsg->nodeId, synmsg->myIP);
 		}
-		if(NetworkManager::allNodeJoined(synmsg->requestNo))	// If you are last message set synchronized
+		if(NetworkManager::allNodeJoined(synmsg->requestNo))	{// If you are last message set synchronized
+			LOG_DEBUG("SYNC_MSG: Last message from %d\n", msg.fromNode);
 			NetworkManager::replySynchronized(synmsg->requestNo);
+		}
 	}else{
 		LOG_DEBUG("SYNC_MSG: Got Synchronize response message\n");
 		if ((synmsg->requestNo == 1) && (NetworkManager::getNodeId()!=0)) {

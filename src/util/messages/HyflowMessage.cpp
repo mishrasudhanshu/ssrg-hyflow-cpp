@@ -27,6 +27,7 @@ HyflowMessage::HyflowMessage(){
 	isCallback = false; isReplied = false; msg_id = "00";
 	fromNodeClock = ContextManager::getClock();
 	forObjectId = "0-0";
+	msg = NULL;
 }
 
 /*
@@ -38,6 +39,7 @@ HyflowMessage::HyflowMessage(const std::string & forObjId){
 	isCallback = false; isReplied = false; msg_id = "00";
 	fromNodeClock = ContextManager::getClock();
 	forObjectId = forObjId;
+	msg = NULL;
 }
 
 void HyflowMessage::registerMessageHandlers()	{

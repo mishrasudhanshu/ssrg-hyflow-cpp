@@ -65,6 +65,7 @@ void RegisterObjectMsg::registerObjectHandler(HyflowMessage & msg) {
 		cbfmsg.notifyMessage();
 	}
 }
+
 bool RegisterObjectMsg::isRequest() const {
 	return request;
 }

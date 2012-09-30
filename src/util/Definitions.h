@@ -65,6 +65,7 @@ namespace vt_dstm
 
 #define NETWORK "network"
 #define MSG_CONNECT "MsgConnect"
+#define ZERO_MQ "zeroMQ"
 #define NODES "nodes"
 #define NODE_ID "nodeId"
 #define OBJECTS "objects"

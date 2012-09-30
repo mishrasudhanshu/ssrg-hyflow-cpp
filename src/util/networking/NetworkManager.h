@@ -63,7 +63,7 @@ public:
 	static void notifyCluster(int rqNo);
 	static void registerNode(int nodeId, std::string & ipAddress);
 	static void registerCluster(std::map<int, std::string> & nodeMap);
-	static std::string & getNodeIP() {return nodeIp;}
+	static std::string getNodeIP();
 
 //	static void registerMessageFuture(unsigned long long m_id, HyMessageType t, HyflowMessageFuture & fu);
 //	static HyflowMessageFuture & getMessageFuture(unsigned long long m_id, HyMessageType t);

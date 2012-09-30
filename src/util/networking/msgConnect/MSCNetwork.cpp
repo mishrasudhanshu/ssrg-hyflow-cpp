@@ -12,7 +12,6 @@
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <string.h>
-#include <sched.h>
 
 #include "MSCNetwork.h"
 #include "../NetworkManager.h"

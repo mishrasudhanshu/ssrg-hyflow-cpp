@@ -4,5 +4,5 @@
 
 USER_OBJS :=
 
-LIBS := -lpthread -ltbb -lboost_serialization -lboost_thread
+LIBS := -lpthread -lzmq -ltbb -lboost_serialization -lboost_thread
 

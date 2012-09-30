@@ -47,6 +47,7 @@
 							<tool id="cdt.managedbuild.tool.gnu.cpp.linker.exe.debug.1916960282" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.exe.debug">
 								<option id="gnu.cpp.link.option.libs.499340229" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
 									<listOptionValue builtIn="false" value="pthread"/>
+									<listOptionValue builtIn="false" value="zmq"/>
 									<listOptionValue builtIn="false" value="tbb"/>
 									<listOptionValue builtIn="false" value="boost_serialization"/>
 									<listOptionValue builtIn="false" value="boost_thread"/>
@@ -91,7 +92,7 @@
 							<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.exe.release.997383790" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.exe.release">
 								<option id="gnu.cpp.compiler.exe.release.option.optimization.level.1020031458" name="Optimization Level" superClass="gnu.cpp.compiler.exe.release.option.optimization.level" value="gnu.cpp.compiler.optimization.level.most" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.exe.release.option.debugging.level.1472292643" name="Debug Level" superClass="gnu.cpp.compiler.exe.release.option.debugging.level" value="gnu.cpp.compiler.debugging.level.none" valueType="enumerated"/>
-								<option id="gnu.cpp.compiler.option.preprocessor.def.691476021" superClass="gnu.cpp.compiler.option.preprocessor.def" valueType="definedSymbols">
+								<option id="gnu.cpp.compiler.option.preprocessor.def.691476021" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="RELEASE"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.979166061" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
@@ -105,6 +106,7 @@
 							<tool id="cdt.managedbuild.tool.gnu.cpp.linker.exe.release.103119006" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.exe.release">
 								<option id="gnu.cpp.link.option.libs.1153135615" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
 									<listOptionValue builtIn="false" value="pthread"/>
+									<listOptionValue builtIn="false" value="zmq"/>
 									<listOptionValue builtIn="false" value="tbb"/>
 									<listOptionValue builtIn="false" value="boost_thread"/>
 									<listOptionValue builtIn="false" value="boost_serialization"/>

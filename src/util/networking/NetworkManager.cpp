@@ -18,6 +18,7 @@
 #include "../messages/types/SynchronizeMsg.h"
 #include "msgConnect/MSCNetwork.h"
 #include "msgConnect/MSCtest.h"
+#include "zeroMQ/ZMQNetwork.h"
 #include "../messages/MessageHandler.h"
 #include "IPAddressProvider.h"
 
@@ -46,6 +47,11 @@ void NetworkManager::NetworkInit() {
 		network = new MSCNetwork();
 		HyflowMessage::registerMessageHandlers();
 		synchronizeCluster();
+	}else if (strcmp(ConfigFile::Value(NETWORK).c_str(), ZERO_MQ) == 0) {
+		network = new ZMQNetwork();
+		HyflowMessage::registerMessageHandlers();
+		synchronizeCluster();
+		network->networkInit();
 	}
 	sleep(2);
 }
@@ -102,9 +108,8 @@ bool NetworkManager::allNodeJoined(int rqNo){
 			currentNodes = i->second;
 			syncMap[rqNo] = ++currentNodes;
 		}
-//		nodesInCluster++;
 	}
-	LOG_DEBUG("MSNC : Joining cluster in cluster %d in ReqNo %d\n", currentNodes, rqNo);
+	LOG_DEBUG("NETM : Joining cluster in cluster %d in ReqNo %d\n", currentNodes, rqNo);
 	return nodeCount == currentNodes;
 }
 
@@ -115,9 +120,12 @@ void NetworkManager::replySynchronized(int rqNo){
 		hmsg.setMsg(&gJmsg);
 		hmsg.msg_t = MSG_GRP_SYNC;
 		hmsg.isCallback = false;
-		for (int i=0 ; i < nodeCount; i++)
+		for (int i=1 ; i < nodeCount; i++) {
 			sendMessage(i,hmsg);
-		LOG_DEBUG("MSNC : Everyone Joined Awaking all\n");
+		}
+		// For node zero locally wake up the thread
+		notifyCluster(rqNo);
+		LOG_DEBUG("NETM : Everyone Joined Awaking all\n");
 	}
 }
 
@@ -128,11 +136,11 @@ void NetworkManager::notifyCluster(int rqNo){
 	     syncVersion = rqNo;
 	 }
 	 onCluster.notify_all();
-	 LOG_DEBUG("MSNC : Awaking node - notify all waiting on ReqNo %d\n", rqNo);
+	 LOG_DEBUG("NETM : Awaking node - notify all waiting on ReqNo %d\n", rqNo);
 }
 
 void NetworkManager::waitTillSynchronized(int rqNo){
-	LOG_DEBUG("MSNC : Starting wait for syncVer %d and ReqNo %d\n", syncVersion, rqNo);
+	LOG_DEBUG("NETM : Starting wait for syncVer %d and ReqNo %d\n", syncVersion, rqNo);
 	boost::unique_lock<boost::mutex> lock(clsMutex);
 	while ( syncVersion < rqNo) {
 		onCluster.wait(lock);
@@ -197,9 +205,19 @@ std::string NetworkManager::getIp(int id){
 	}
 }
 
+std::string NetworkManager::getNodeIP() {
+	if (islocalMachine()) {
+		return "127.0.0.1";
+	}
+	return nodeIp;
+}
+
 void NetworkManager::registerNode(int nodeId, std::string & ipAddress) {
     boost::unique_lock<boost::mutex> lock(clsMutex);
 	ipMap[nodeId] = ipAddress;
+	if (strcmp(ConfigFile::Value(NETWORK).c_str(), ZERO_MQ) == 0) {
+		ZMQNetwork::connectClient(nodeId);
+	}
 }
 
 void NetworkManager::registerCluster(std::map<int, std::string> & nodeMap) {

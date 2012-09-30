@@ -48,7 +48,8 @@ void MessageMaps::registerMessageFuture(const std::string & m_id, HyMessageType 
 	{
 	case MSG_TRK_OBJECT:
 		if (!trackerCallbackMap.insert(a, m_id)) {
-			throw "Future already exist with same m_id "+m_id;
+			Logger::fatal("Future already exist with same m_id %s",m_id.c_str());
+			//throw "Future already exist with same m_id "+m_id;
 		}else {
 			a->second = &fu;
 		}
@@ -87,6 +88,8 @@ void MessageMaps::registerMessageFuture(const std::string & m_id, HyMessageType 
 		}else {
 			a->second = &fu;
 		}
+		break;
+	case MSG_TYPE_INVALID:
 		break;
 	default:
 		Logger::fatal("MSCN :registerMessageFuture :Invalid type message request to getbyId %s\n",m_id.c_str());
@@ -142,6 +145,8 @@ HyflowMessageFuture & MessageMaps::getMessageFuture(const std::string & m_id, Hy
 			throw "Future don't exist for registerCallbackMap m_id "+m_id;
 		}
 		break;
+	case MSG_TYPE_INVALID:
+		break;
 	default:
 		Logger::fatal("MSCN :GetMessageFuture :Invalid type message request to getbyId %s\n", m_id.c_str());
 		break;
@@ -174,6 +179,8 @@ void MessageMaps::removeMessageFuture(const std::string & m_id, HyMessageType t)
 	case MSG_REGISTER_OBJ:
 		if(!registerCallbackMap.erase(m_id))
 			throw "registerCallback already deleted for id "+m_id;
+		break;
+	case MSG_TYPE_INVALID:
 		break;
 	default:
 		Logger::fatal("MSCN :RemoveMessageFuture :Invalid type message request to getbyId %s\n", m_id.c_str());

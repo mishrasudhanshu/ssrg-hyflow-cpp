@@ -34,6 +34,8 @@ src/util/networking/NetworkManager.d: \
  ../src/util/networking/msgConnect/MsgConnect/MCInetTransport.h \
  ../src/util/networking/msgConnect/MsgConnect/MCSock.h \
  ../src/util/networking/msgConnect/MSCtest.h \
+ ../src/util/networking/zeroMQ/ZMQNetwork.h \
+ ../src/util/networking/zeroMQ/../AbstractNetwork.h \
  ../src/util/networking/../messages/MessageHandler.h \
  ../src/util/networking/../messages/HyflowMessageFuture.h \
  ../src/util/networking/IPAddressProvider.h
@@ -105,6 +107,10 @@ src/util/networking/NetworkManager.d: \
 ../src/util/networking/msgConnect/MsgConnect/MCSock.h:
 
 ../src/util/networking/msgConnect/MSCtest.h:
+
+../src/util/networking/zeroMQ/ZMQNetwork.h:
+
+../src/util/networking/zeroMQ/../AbstractNetwork.h:
 
 ../src/util/networking/../messages/MessageHandler.h:
 
