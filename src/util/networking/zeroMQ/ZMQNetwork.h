@@ -11,6 +11,7 @@
 #include <vector>
 #include "zmq.hpp"
 #include "boost/thread/thread.hpp"
+#include "boost/thread/mutex.hpp"
 #include "../AbstractNetwork.h"
 
 namespace vt_dstm {
@@ -24,6 +25,7 @@ class ZMQNetwork: public AbstractNetwork {
 	static volatile bool hyflowShutdown;
 
 	zmq::context_t* context;
+	static std::vector<boost::mutex*> socketMutexs;
 	static std::vector<zmq::socket_t*> clientSockets;
 	static zmq::socket_t * serverSocket;
 	static boost::thread *serverThread;

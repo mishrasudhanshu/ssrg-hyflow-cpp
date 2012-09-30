@@ -11,6 +11,7 @@
 #include <string>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
+#include <boost/thread/locks.hpp>
 
 #include "ZMQNetwork.h"
 #include "../NetworkManager.h"
@@ -30,6 +31,7 @@ bool ZMQNetwork::isInit = false;
 int ZMQNetwork::threadCount = 0;
 
 std::vector<zmq::socket_t*> ZMQNetwork::clientSockets;
+std::vector<boost::mutex*> ZMQNetwork::socketMutexs;
 zmq::socket_t * ZMQNetwork::serverSocket = NULL;
 boost::thread *ZMQNetwork::serverThread = NULL;
 
@@ -42,6 +44,7 @@ ZMQNetwork::ZMQNetwork() {
 		context = new zmq::context_t(1);
 		for (int i=0 ; i < nodeCount ; i++) {
 			clientSockets.push_back(new zmq::socket_t(*context, ZMQ_REQ));
+			socketMutexs.push_back(new boost::mutex());
 		}
 		// Create server socket
 		serverSocket = new zmq::socket_t(*context, ZMQ_REP);
@@ -105,10 +108,14 @@ void ZMQNetwork::sendMessage(int toNodeId, HyflowMessage & message){
 	zmq::message_t zmqmsg(msgData.size());
 	memcpy(zmqmsg.data(), msgData.c_str(), msgData.size());
 
-	clientSockets[toNodeId]->send(zmqmsg);
-	zmq::message_t zmqReply;
-	clientSockets[toNodeId]->recv(&zmqReply);
-	// Simply ignore the reply
+	// serialize the node socket access for multiple threads
+	{
+		boost::lock_guard<boost::mutex> socketGuard(*socketMutexs[toNodeId]);
+		clientSockets[toNodeId]->send(zmqmsg);
+		zmq::message_t zmqReply;
+		clientSockets[toNodeId]->recv(&zmqReply);
+		// Simply ignore the reply
+	}
 }
 
 void ZMQNetwork::sendCallbackMessage(int toNodeId, HyflowMessage & message, HyflowMessageFuture & fu){
