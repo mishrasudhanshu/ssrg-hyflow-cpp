@@ -27,8 +27,8 @@ class ZMQNetwork: public AbstractNetwork {
 	zmq::context_t* context;
 	static std::vector<boost::mutex*> socketMutexs;
 	static std::vector<zmq::socket_t*> clientSockets;
-	static zmq::socket_t * serverSocket;
-	static boost::thread *serverThread;
+	static std::vector<zmq::socket_t*> serverSockets;
+	static std::vector<boost::thread*> serverThreads;
 
 	static bool isInit;
 
@@ -44,7 +44,7 @@ public:
 	void networkInit();
 	void sendMessage(int nodeId, HyflowMessage & Message);
 	void sendCallbackMessage(int nodeId, HyflowMessage & Message, HyflowMessageFuture & fu);
-	static void serverExecute();
+	static void serverExecute(int id);
 	static void connectClient(int nodeId);
 };
 
