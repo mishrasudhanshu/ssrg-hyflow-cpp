@@ -1,5 +1,12 @@
 #!/bin/bash
 
+# TODO: Add checks for required libraries:
+# libboost-serialization-dev
+# libboost-thread-dev
+# libpthread
+# libzmq
+# libtbb
+
 echo "Cleaning the old stuff"
 make clean -C Debug | tee >/dev/null
 make clean -C Release | tee >/dev/null

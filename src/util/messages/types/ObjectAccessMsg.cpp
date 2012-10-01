@@ -54,22 +54,26 @@ void ObjectAccessMsg::objectAccessHandler(HyflowMessage & msg) {
 		}
 	} else {
 		// Find the MessageFuture created for expected response
-		HyflowMessageFuture & cbfmsg = MessageMaps::getMessageFuture(msg.msg_id,
+		HyflowMessageFuture* cbfmsg = MessageMaps::getMessageFuture(msg.msg_id,
 				msg.msg_t);
-		// Update sender clock for requesting context
-		HyflowContext *c = ContextManager::findContext(cbfmsg.getTxnId());
-		// Transaction forwarding will be done on before access call, currently just note
-		// down the highest sender clock.
-		c->updateClock(msg.fromNodeClock);
+		if (cbfmsg) {
+			// Update sender clock for requesting context
+			HyflowContext *c = ContextManager::findContext(cbfmsg->getTxnId());
+			// Transaction forwarding will be done on before access call, currently just note
+			// down the highest sender clock.
+			c->updateClock(msg.fromNodeClock);
 
-		HyflowObject *obj = NULL;
-		oamsg->object->getClone(&obj);
-		LOG_DEBUG("Object_Access: Response remote object %s of version %d\n", obj->getId().c_str(), obj->getVersion());
-		cbfmsg.setDataResponse(obj);
-		cbfmsg.notifyMessage();
-		// Set pointed objected to null else try to delete stack copy may lead to memory corruption
-		// Currently non issue as Hyflow Message don't call the delete on BaseMessage
-		oamsg->setObject(NULL);
+			HyflowObject *obj = NULL;
+			oamsg->object->getClone(&obj);
+			LOG_DEBUG("Object_Access: Response remote object %s of version %d\n", obj->getId().c_str(), obj->getVersion());
+			cbfmsg->setDataResponse(obj);
+			cbfmsg->notifyMessage();
+			// Set pointed objected to null else try to delete stack copy may lead to memory corruption
+			// Currently non issue as Hyflow Message don't call the delete on BaseMessage
+			oamsg->setObject(NULL);
+		}else {
+			Logger::fatal("Can not find Object access future for m_id %s\n", msg.msg_id.c_str());
+		}
 	}
 }
 

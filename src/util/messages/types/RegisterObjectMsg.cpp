@@ -60,9 +60,13 @@ void RegisterObjectMsg::registerObjectHandler(HyflowMessage & msg) {
 		romsg->request = false;
 	} else {
 		LOG_DEBUG("Got Register Object Response\n");
-		HyflowMessageFuture & cbfmsg = MessageMaps::getMessageFuture(msg.msg_id,
+		HyflowMessageFuture* cbfmsg = MessageMaps::getMessageFuture(msg.msg_id,
 						msg.msg_t);
-		cbfmsg.notifyMessage();
+		if (cbfmsg) {
+			cbfmsg->notifyMessage();
+		}else {
+			Logger::fatal("Can not find Register access for m_id %s\n", msg.msg_id.c_str());
+		}
 	}
 }
 

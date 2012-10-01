@@ -29,7 +29,7 @@ public:
 	static void(*getMessageHandler(HyMessageType type))(HyflowMessage & hmsg);
 
 	static void registerMessageFuture(const std::string & m_id, HyMessageType t, HyflowMessageFuture & fu);
-	static HyflowMessageFuture & getMessageFuture(const std::string & m_id, HyMessageType t);
+	static HyflowMessageFuture* getMessageFuture(const std::string & m_id, HyMessageType t);
 	static void removeMessageFuture(const std::string & m_id, HyMessageType t);
 };
 } /* namespace vt_dstm */

@@ -57,27 +57,31 @@ void ObjectTrackerMsg::objectTrackerHandler(HyflowMessage & msg) {
 	} else{
 
 		// LESSON: Make sure no copy constructor is called on HyflowMessageFuture!!!
-		HyflowMessageFuture & cbfmsg = MessageMaps::getMessageFuture(msg.msg_id, msg.msg_t);
-		// After getting a reference remove for map
-		MessageMaps::removeMessageFuture(msg.msg_id, msg.msg_t);
-		// So at destructor don't try to remove itself if its type not overridden
-		cbfmsg.setType(MSG_TYPE_INVALID);
+		HyflowMessageFuture* cbfmsg = MessageMaps::getMessageFuture(msg.msg_id, msg.msg_t);
+		if (cbfmsg) {
+			// After getting a reference remove for map
+			MessageMaps::removeMessageFuture(msg.msg_id, msg.msg_t);
+			// So at destructor don't try to remove itself if its type not overridden
+			cbfmsg->setType(MSG_TYPE_INVALID);
 
-		int myNode = NetworkManager::getNodeId();
-		if (myNode == otmsg->owner) {
-			LOG_DEBUG("Object Tracker Response: Local object %s\n", otmsg->objectId.c_str());
-			HyflowObject* obj = DirectoryManager::getObjectLocally(otmsg->objectId, otmsg->isRead);
-			cbfmsg.setDataResponse(obj);
-			cbfmsg.notifyMessage();
-		} else {
-			const std::string & objId = otmsg->objectId;
-			ObjectAccessMsg oam(objId, otmsg->isRead);
-			HyflowMessage hmsg(objId);
-			hmsg.msg_t = MSG_ACCESS_OBJECT;
-			hmsg.isCallback = true;
-			hmsg.setMsg(&oam);
-			LOG_DEBUG("Object Tracker Response: send request to %d for %s\n", otmsg->owner,otmsg->objectId.c_str());
-			NetworkManager::sendCallbackMessage(otmsg->owner,hmsg, cbfmsg);
+			int myNode = NetworkManager::getNodeId();
+			if (myNode == otmsg->owner) {
+				LOG_DEBUG("Object Tracker Response: Local object %s\n", otmsg->objectId.c_str());
+				HyflowObject* obj = DirectoryManager::getObjectLocally(otmsg->objectId, otmsg->isRead);
+				cbfmsg->setDataResponse(obj);
+				cbfmsg->notifyMessage();
+			} else {
+				const std::string & objId = otmsg->objectId;
+				ObjectAccessMsg oam(objId, otmsg->isRead);
+				HyflowMessage hmsg(objId);
+				hmsg.msg_t = MSG_ACCESS_OBJECT;
+				hmsg.isCallback = true;
+				hmsg.setMsg(&oam);
+				LOG_DEBUG("Object Tracker Response: send request to %d for %s\n", otmsg->owner,otmsg->objectId.c_str());
+				NetworkManager::sendCallbackMessage(otmsg->owner,hmsg, *cbfmsg);
+			}
+		}else {
+			Logger::fatal("Can not find Tracker object future for m_id %s\n", msg.msg_id.c_str());
 		}
 	}
 }

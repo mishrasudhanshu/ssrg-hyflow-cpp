@@ -57,10 +57,14 @@ void LockAccessMsg::lockAccessHandler(HyflowMessage& m) {
 	} else {
 		LOG_DEBUG ("Got a Lock response: %s for %s\n", lmsg->lock?"lock":"unlock", lmsg->objectId.c_str());
 		if (lmsg->lock) {
-			HyflowMessageFuture& cbfmsg = MessageMaps::getMessageFuture(m.msg_id,
+			HyflowMessageFuture* cbfmsg = MessageMaps::getMessageFuture(m.msg_id,
 					m.msg_t);
-			cbfmsg.setBoolResponse(lmsg->locked);
-			cbfmsg.notifyMessage();
+			if (cbfmsg) {
+				cbfmsg->setBoolResponse(lmsg->locked);
+				cbfmsg->notifyMessage();
+			} else {
+				Logger::fatal("Can not find Lock access future for m_id %s\n", m.msg_id.c_str());
+			}
 		}
 		// Unlock response can be ignored
 	}

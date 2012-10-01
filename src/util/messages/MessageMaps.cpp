@@ -48,43 +48,42 @@ void MessageMaps::registerMessageFuture(const std::string & m_id, HyMessageType 
 	{
 	case MSG_TRK_OBJECT:
 		if (!trackerCallbackMap.insert(a, m_id)) {
-			Logger::fatal("Future already exist with same m_id %s",m_id.c_str());
-			//throw "Future already exist with same m_id "+m_id;
+			Logger::fatal("TrackerCallback already exist with same m_id %s\n",m_id.c_str());
 		}else {
 			a->second = &fu;
 		}
 		break;
 	case MSG_ACCESS_OBJECT:
 		if (!objCallbackMap.insert(a, m_id)) {
-			throw "Future already exist with same m_id "+m_id;
+			Logger::fatal("ObjectCallback already exist with same m_id %s\n",m_id.c_str());
 		}else {
 			a->second = &fu;
 		}
 		break;
 	case MSG_GRP_SYNC:
 		if (!syncCallbackMap.insert(a, m_id)) {
-			throw "Future already exist with same m_id "+m_id;
+			Logger::fatal("SyncCallback already exist with same m_id %s\n",m_id.c_str());
 		}else {
 			a->second = &fu;
 		}
 		break;
 	case MSG_LOCK_ACCESS:
 		if (!lockCallbackMap.insert(a, m_id)) {
-			throw "Future already exist with same m_id "+m_id;
+			Logger::fatal("LockCallback already exist with same m_id %s\n",m_id.c_str());
 		}else {
 			a->second = &fu;
 		}
 		break;
 	case MSG_READ_VALIDATE:
 		if (!readValidCallbackMap.insert(a, m_id)) {
-			throw "Future already exist with same m_id "+m_id;
+			Logger::fatal("ReadValidateCallback already exist with same m_id %s\n",m_id.c_str());
 		}else {
 			a->second = &fu;
 		}
 		break;
 	case MSG_REGISTER_OBJ:
 		if (!registerCallbackMap.insert(a, m_id)) {
-			throw "Future already exist with same m_id "+m_id;
+			Logger::fatal("RegisterCallback already exist with same m_id %s\n",m_id.c_str());
 		}else {
 			a->second = &fu;
 		}
@@ -97,7 +96,7 @@ void MessageMaps::registerMessageFuture(const std::string & m_id, HyMessageType 
 	}
 }
 
-HyflowMessageFuture & MessageMaps::getMessageFuture(const std::string & m_id, HyMessageType t) {
+HyflowMessageFuture* MessageMaps::getMessageFuture(const std::string & m_id, HyMessageType t) {
 	HyflowMessageFuture* future = NULL;
 	tbb::concurrent_hash_map<std::string, HyflowMessageFuture*>::const_accessor a;
 
@@ -107,42 +106,42 @@ HyflowMessageFuture & MessageMaps::getMessageFuture(const std::string & m_id, Hy
 		if (trackerCallbackMap.find(a, m_id)) {
 			future = a->second;
 		}else {
-			throw "Future don't exist for trackerCallbackMap  m_id "+m_id;
+			Logger::fatal("Future don't exist for trackerCallbackMap m_id %s\n",m_id.c_str());
 		}
 		break;
 	case MSG_ACCESS_OBJECT:
 		if (objCallbackMap.find(a, m_id)) {
 			future = a->second;
 		}else {
-			throw "Future don't exist for objectCallbackMap m_id "+m_id;
+			Logger::fatal("Future don't exist for ObjectCallbackMap m_id %s\n",m_id.c_str());
 		}
 		break;
 	case MSG_GRP_SYNC:
 		if (syncCallbackMap.find(a, m_id)) {
 			future = a->second;
 		}else {
-			throw "Future don't exist for syncCallback m_id "+m_id;
+			Logger::fatal("Future don't exist for SyncCallbackMap m_id %s\n",m_id.c_str());
 		}
 		break;
 	case MSG_LOCK_ACCESS:
 		if (lockCallbackMap.find(a, m_id)) {
 			future = a->second;
 		}else {
-			throw "Future don't exist for lockCallback m_id "+m_id;
+			Logger::fatal("Future don't exist for LockCallbackMap m_id %s\n",m_id.c_str());
 		}
 		break;
 	case MSG_READ_VALIDATE:
 		if (readValidCallbackMap.find(a, m_id)) {
 			future = a->second;
 		}else {
-			throw "Future don't exist for readVaildCallbackMap m_id "+m_id;
+			Logger::fatal("Future don't exist for ReadValidCallbackMap m_id %s\n",m_id.c_str());
 		}
 		break;
 	case MSG_REGISTER_OBJ:
 		if (registerCallbackMap.find(a, m_id)) {
 			future = a->second;
 		}else {
-			throw "Future don't exist for registerCallbackMap m_id "+m_id;
+			Logger::fatal("Future don't exist for RegisterCallbackMap m_id %s\n",m_id.c_str());
 		}
 		break;
 	case MSG_TYPE_INVALID:
@@ -151,34 +150,34 @@ HyflowMessageFuture & MessageMaps::getMessageFuture(const std::string & m_id, Hy
 		Logger::fatal("MSCN :GetMessageFuture :Invalid type message request to getbyId %s\n", m_id.c_str());
 		break;
 	}
-	return *future;
+	return future;
 }
 
 void MessageMaps::removeMessageFuture(const std::string & m_id, HyMessageType t) {
 	switch(t){
 	case MSG_TRK_OBJECT:
 		if (!trackerCallbackMap.erase(m_id))
-			throw "Tracker Object already deleted for id "+m_id;
+			Logger::fatal("Tracker Object already deleted for m_id %s\n",m_id.c_str());
 		break;
 	case MSG_ACCESS_OBJECT:
 		if (!objCallbackMap.erase(m_id))
-			throw "Object Access already deleted for id "+m_id;;
+			Logger::fatal("Object Access already deleted for m_id %s\n",m_id.c_str());
 		break;
 	case MSG_GRP_SYNC:
 		if (!syncCallbackMap.erase(m_id))
-			throw "Sync already deleted for id "+m_id;
+			Logger::fatal("Sync Callback already deleted for m_id %s\n",m_id.c_str());
 		break;
 	case MSG_LOCK_ACCESS:
 		if(!lockCallbackMap.erase(m_id))
-			throw "lockCallback already deleted for id "+m_id;
+			Logger::fatal("Lock Callback already deleted for m_id %s\n",m_id.c_str());
 		break;
 	case MSG_READ_VALIDATE:
 		if (!readValidCallbackMap.erase(m_id))
-			throw "readValid already deleted for id "+m_id;
+			Logger::fatal("Read Validate already deleted for m_id %s\n",m_id.c_str());
 		break;
 	case MSG_REGISTER_OBJ:
 		if(!registerCallbackMap.erase(m_id))
-			throw "registerCallback already deleted for id "+m_id;
+			Logger::fatal("Register Callback already deleted for m_id %s\n",m_id.c_str());
 		break;
 	case MSG_TYPE_INVALID:
 		break;

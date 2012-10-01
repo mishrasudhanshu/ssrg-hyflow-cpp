@@ -18,6 +18,7 @@
 #include "../../../core/directory/DirectoryManager.h"
 #include "../../../core/context/LockTable.h"
 #include "../../messages/MessageMaps.h"
+#include "../../logging/Logger.h"
 
 namespace vt_dstm {
 
@@ -59,10 +60,14 @@ void ReadValidationMsg::readValidationHandle(HyflowMessage & msg) {
 			rvmsg->validationResponse = false;
 		}
 	}else {
-		HyflowMessageFuture & cbfmsg = MessageMaps::getMessageFuture(msg.msg_id,
+		HyflowMessageFuture* cbfmsg = MessageMaps::getMessageFuture(msg.msg_id,
 						msg.msg_t);
-		cbfmsg.setBoolResponse(rvmsg->validationResponse);
-		cbfmsg.notifyMessage();
+		if (cbfmsg) {
+			cbfmsg->setBoolResponse(rvmsg->validationResponse);
+			cbfmsg->notifyMessage();
+		}else {
+			Logger::fatal("Can not find Read Validate future for m_id %s\n", msg.msg_id.c_str());
+		}
 	}
 }
 
