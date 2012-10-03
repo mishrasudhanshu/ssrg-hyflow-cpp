@@ -10,6 +10,7 @@
 #include <iostream>
 #include <string>
 #include <signal.h>
+#include <stdint.h>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/thread/locks.hpp>
@@ -36,6 +37,7 @@ std::vector<zmq::socket_t*> ZMQNetwork::clientSockets;
 std::vector<boost::mutex*> ZMQNetwork::socketMutexs;
 std::vector<zmq::socket_t*> ZMQNetwork::serverSockets;
 std::vector<pthread_t> ZMQNetwork::serverThreads;
+std::vector<int*> ZMQNetwork::serverThreadIds;
 
 ZMQNetwork::ZMQNetwork() {
 	if (!isInit) {
@@ -60,7 +62,10 @@ ZMQNetwork::ZMQNetwork() {
 			serverStr<<"tcp://"<<NetworkManager::getNodeIP()<<":"<<NetworkManager::getBasePort()+nodeId*nodeCount +i;
 			serverSocket->bind(serverStr.str().c_str());
 			pthread_t serverThread;
-			pthread_create(&serverThread,NULL,ZMQNetwork::serverExecute,(void*)i);
+			int *threadId = new int();
+			*threadId = i;
+			serverThreadIds.push_back(threadId);
+			pthread_create(&serverThread,NULL,ZMQNetwork::serverExecute,(void*)threadId);
 			serverThreads.push_back(serverThread);
 			LOG_DEBUG("ZMQ : Server started on %s\n", serverStr.str().c_str());
 		}
@@ -82,6 +87,7 @@ ZMQNetwork::~ZMQNetwork() {
 	for (int i=0 ; i <nodeCount;i++) {
 		pthread_kill(serverThreads[i],SIGINT);
 		pthread_join(serverThreads[i], NULL);
+		delete serverThreadIds[i];
 	}
 	for (int i=0 ; i <nodeCount;i++) {
 		if (serverSockets[i]) {
@@ -207,7 +213,8 @@ void ZMQNetwork::callbackHandler(zmq::message_t & msg){
 }
 
 void* ZMQNetwork::serverExecute(void *param) {
-	int id = (int)param;
+	int id = *((int*)param);
+	ThreadMeta::threadInit(id, DISPATCHER_THREAD);
 	s_catch_signals();
 	LOG_DEBUG("ZMQ Server started\n");
 	boost::posix_time::seconds sleepTime(0.0001);
@@ -220,7 +227,7 @@ void* ZMQNetwork::serverExecute(void *param) {
 			if (hyflowShutdown)
 				break;
 			else {
-				throw;
+				throw e;
 			}
 		}
 		if (defaultHandler(request)) {
@@ -230,7 +237,7 @@ void* ZMQNetwork::serverExecute(void *param) {
 				if (hyflowShutdown)
 					break;
 				else {
-					throw;
+					throw e;
 				}
 			}
 		} else { // If we receive a non callback message return dummy reply
@@ -249,7 +256,7 @@ void* ZMQNetwork::serverExecute(void *param) {
 				if (hyflowShutdown)
 					break;
 				else {
-					throw;
+					throw e;
 				}
 			}
 		}

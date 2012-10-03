@@ -30,6 +30,7 @@ class ZMQNetwork: public AbstractNetwork {
 	static std::vector<zmq::socket_t*> clientSockets;
 	static std::vector<zmq::socket_t*> serverSockets;
 	static std::vector<pthread_t> serverThreads;
+	static std::vector<int*> serverThreadIds;
 
 	static bool isInit;
 
