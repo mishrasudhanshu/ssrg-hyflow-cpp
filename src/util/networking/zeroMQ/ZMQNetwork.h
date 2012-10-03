@@ -9,8 +9,8 @@
 #define ZMQNETWORK_H_
 
 #include <vector>
+#include <pthread.h>
 #include "zmq.hpp"
-#include "boost/thread/thread.hpp"
 #include "boost/thread/mutex.hpp"
 #include "../AbstractNetwork.h"
 
@@ -23,12 +23,13 @@ class ZMQNetwork: public AbstractNetwork {
 	static int nodeCount;
 
 	static volatile bool hyflowShutdown;
+	static int lingerTime;
 
 	zmq::context_t* context;
 	static std::vector<boost::mutex*> socketMutexs;
 	static std::vector<zmq::socket_t*> clientSockets;
 	static std::vector<zmq::socket_t*> serverSockets;
-	static std::vector<boost::thread*> serverThreads;
+	static std::vector<pthread_t> serverThreads;
 
 	static bool isInit;
 
@@ -42,10 +43,14 @@ public:
 	virtual ~ZMQNetwork();
 
 	void networkInit();
+	void networkShutdown();
 	void sendMessage(int nodeId, HyflowMessage & Message);
 	void sendCallbackMessage(int nodeId, HyflowMessage & Message, HyflowMessageFuture & fu);
-	static void serverExecute(int id);
+	static void* serverExecute(void *param);
 	static void connectClient(int nodeId);
+
+	static void s_catch_signals();
+	static void s_signal_handler(int signal_value);
 };
 
 } /* namespace vt_dstm */

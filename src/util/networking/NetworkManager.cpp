@@ -56,6 +56,15 @@ void NetworkManager::NetworkInit() {
 	sleep(2);
 }
 
+void NetworkManager::NetworkShutdown() {
+	LOG_DEBUG("Shutting Down the Network!!!\n");
+	// Allow network library to do clean up
+	network->networkShutdown();
+	AbstractNetwork *saveNetwork = network;
+	network = NULL;
+	delete saveNetwork;
+}
+
 void NetworkManager::initNode() {
 	if (nodeId == -1) {
 		nodeId = atoi(ConfigFile::Value(NODE_ID).c_str());

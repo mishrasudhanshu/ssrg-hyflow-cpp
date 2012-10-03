@@ -41,6 +41,7 @@ public:
 
 	static int getThreadCount();
 	static void NetworkInit();
+	static void NetworkShutdown();
 	static void sendMessage(int nodeId, HyflowMessage Message);
 	static void sendCallbackMessage(int nodeId, HyflowMessage Message, HyflowMessageFuture & fu);
 //	static void registerHandler(HyMessageType msg_t, void (*handlerFunc)(HyflowMessage &));

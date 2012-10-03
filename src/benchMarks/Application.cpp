@@ -54,11 +54,15 @@ int main(int argc, char *argv[], char *envp[]) {
 	LOG_DEBUG("APP :....\n");
 	sleep(2);
 	BenchmarkExecutor::executeThreads();
+
+	sleep(2);
+	// TODO: Add similar shutdown functions for directory and context manager
+	NetworkManager::NetworkShutdown();
+
 //	char* dum = new char[10];	// Used to detect any heap corruption
 	LOG_DEBUG("APP :All Done !!!\n");
 
 	// Just to make sure any last time message are printed: for debugging
 	std::cerr<<"...."<<std::endl;
-	sleep(2);
 	return 0;
 }

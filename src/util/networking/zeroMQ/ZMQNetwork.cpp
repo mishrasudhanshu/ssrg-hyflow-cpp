@@ -9,6 +9,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <string>
+#include <signal.h>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/thread/locks.hpp>
@@ -26,6 +27,7 @@ int ZMQNetwork::basePort = -1;
 int ZMQNetwork::nodeCount = 0;
 
 volatile bool ZMQNetwork::hyflowShutdown = false;
+int ZMQNetwork::lingerTime = 0;
 
 bool ZMQNetwork::isInit = false;
 int ZMQNetwork::threadCount = 0;
@@ -33,7 +35,7 @@ int ZMQNetwork::threadCount = 0;
 std::vector<zmq::socket_t*> ZMQNetwork::clientSockets;
 std::vector<boost::mutex*> ZMQNetwork::socketMutexs;
 std::vector<zmq::socket_t*> ZMQNetwork::serverSockets;
-std::vector<boost::thread*> ZMQNetwork::serverThreads;
+std::vector<pthread_t> ZMQNetwork::serverThreads;
 
 ZMQNetwork::ZMQNetwork() {
 	if (!isInit) {
@@ -44,17 +46,22 @@ ZMQNetwork::ZMQNetwork() {
 
 		context = new zmq::context_t(1);
 		for (int i=0 ; i < nodeCount ; i++) {
-			clientSockets.push_back(new zmq::socket_t(*context, ZMQ_REQ));
+			zmq::socket_t *clientSocket = new zmq::socket_t(*context, ZMQ_REQ);
+			clientSocket->setsockopt(ZMQ_LINGER, &lingerTime, sizeof lingerTime);
+			clientSockets.push_back(clientSocket);
 			socketMutexs.push_back(new boost::mutex());
 		}
 		// Create server sockets we need to create the lock-up pair of sockets
 		for (int i=0 ; i <nodeCount ; i++ ) {
 			zmq::socket_t *serverSocket = new zmq::socket_t(*context, ZMQ_REP);
+			serverSocket->setsockopt(ZMQ_LINGER, &lingerTime, sizeof lingerTime);
 			serverSockets.push_back(serverSocket);
 			std::stringstream serverStr;
 			serverStr<<"tcp://"<<NetworkManager::getNodeIP()<<":"<<NetworkManager::getBasePort()+nodeId*nodeCount +i;
 			serverSocket->bind(serverStr.str().c_str());
-			serverThreads.push_back(new boost::thread(serverExecute, i));
+			pthread_t serverThread;
+			pthread_create(&serverThread,NULL,ZMQNetwork::serverExecute,(void*)i);
+			serverThreads.push_back(serverThread);
 			LOG_DEBUG("ZMQ : Server started on %s\n", serverStr.str().c_str());
 		}
 
@@ -70,25 +77,30 @@ ZMQNetwork::ZMQNetwork() {
 }
 
 ZMQNetwork::~ZMQNetwork() {
-	for (unsigned int i = 0; i < clientSockets.size();i++) {
-		zmq::socket_t* saveSocket = clientSockets[i];
-		clientSockets[i] = NULL;
-		delete saveSocket;
-	}
 	hyflowShutdown = true;
+	// SetUp server thread for SIGINT
+	for (int i=0 ; i <nodeCount;i++) {
+		pthread_kill(serverThreads[i],SIGINT);
+		pthread_join(serverThreads[i], NULL);
+	}
 	for (int i=0 ; i <nodeCount;i++) {
 		if (serverSockets[i]) {
 			zmq::socket_t* saveSocket = serverSockets[i];
 			serverSockets[i] = NULL;
 			delete saveSocket;
 		}
-		serverThreads[i]->join();
+	}
+	for (unsigned int i = 0; i < clientSockets.size();i++) {
+		zmq::socket_t* saveSocket = clientSockets[i];
+		clientSockets[i] = NULL;
+		delete saveSocket;
 	}
 	if (context) {
 		zmq::context_t* saveContext = context;
 		context = NULL;
 		delete saveContext;
 	}
+	LOG_DEBUG("Shutting Down ZeroMQ\n");
 }
 
 void ZMQNetwork::networkInit(){
@@ -97,6 +109,10 @@ void ZMQNetwork::networkInit(){
 	for (int i=1; (i < nodeCount) && nodeId; i++) {
 		connectClient(i);
 	}
+}
+
+void ZMQNetwork::networkShutdown(){
+	// Nothing is required to be done, we do clean up in destructor call
 }
 
 void ZMQNetwork::connectClient(int toNodeId) {
@@ -190,15 +206,33 @@ void ZMQNetwork::callbackHandler(zmq::message_t & msg){
 	}
 }
 
-void ZMQNetwork::serverExecute(int id) {
+void* ZMQNetwork::serverExecute(void *param) {
+	int id = (int)param;
+	s_catch_signals();
 	LOG_DEBUG("ZMQ Server started\n");
 	boost::posix_time::seconds sleepTime(0.0001);
 
 	while (!hyflowShutdown) {
 		zmq::message_t request;
-		serverSockets[id]->recv(&request);
+		try {
+			serverSockets[id]->recv(&request);
+		} catch(zmq::error_t & e) {
+			if (hyflowShutdown)
+				break;
+			else {
+				throw;
+			}
+		}
 		if (defaultHandler(request)) {
-			serverSockets[id]->send(request);
+			try {
+				serverSockets[id]->send(request);
+			} catch(zmq::error_t & e) {
+				if (hyflowShutdown)
+					break;
+				else {
+					throw;
+				}
+			}
 		} else { // If we receive a non callback message return dummy reply
 			HyflowMessage hmsg;
 			hmsg.msg_t = MSG_TYPE_INVALID;
@@ -209,9 +243,32 @@ void ZMQNetwork::serverExecute(int id) {
 
 			request.rebuild(omsg.size());
 			memcpy(request.data(), omsg.c_str(), omsg.size());
-			serverSockets[id]->send(request);
+			try {
+				serverSockets[id]->send(request);
+			} catch(zmq::error_t & e) {
+				if (hyflowShutdown)
+					break;
+				else {
+					throw;
+				}
+			}
 		}
 	}
+	LOG_DEBUG("ZMQ Server Exiting\n");
+	return NULL;
+}
+
+void ZMQNetwork::s_catch_signals() {
+    struct sigaction action;
+    action.sa_handler = s_signal_handler;
+    action.sa_flags = 0;
+    sigemptyset (&action.sa_mask);
+    sigaction (SIGINT, &action, NULL);
+    sigaction (SIGTERM, &action, NULL);
+}
+
+void ZMQNetwork::s_signal_handler(int signal_value) {
+	LOG_DEBUG("ZMQ Server Thread Signalled!!\n");
 }
 
 } /* namespace vt_dstm */

@@ -55,21 +55,7 @@ MSCNetwork::MSCNetwork() {
 }
 
 MSCNetwork::~MSCNetwork() {
-	if (messenger) {
-		MsgConnect::MCMessenger* saveMessager = messenger;
-		messenger = NULL;
-		delete saveMessager;
-	}
-	if (queue) {
-		MsgConnect::MCQueue* saveQueue = queue;
-		queue = NULL;
-		delete saveQueue;
-	}
-	if (socket) {
-		MsgConnect::MCSocketTransport* saveSocket = socket;
-		socket = NULL;
-		delete saveSocket;
-	}
+	LOG_DEBUG("Shutting Down MsgConnect\n");
 	hyflowShutdown = true;
 	for (int i=0 ; i < threadCount; i++ ) {
 		dispatchThread[i]->join();
@@ -78,6 +64,22 @@ MSCNetwork::~MSCNetwork() {
 		boost::thread **dp = dispatchThread;
 		dispatchThread = NULL;
 		delete dp;
+	}
+	if (socket) {
+		MsgConnect::MCSocketTransport* saveSocket = socket;
+		socket->Shutdown(true);
+		socket = NULL;
+		delete saveSocket;
+	}
+	if (queue) {
+		MsgConnect::MCQueue* saveQueue = queue;
+		queue = NULL;
+		delete saveQueue;
+	}
+	if (messenger) {
+		MsgConnect::MCMessenger* saveMessager = messenger;
+		messenger = NULL;
+		delete saveMessager;
 	}
 }
 
@@ -116,6 +118,10 @@ void MSCNetwork::networkInit(){
 	LOG_DEBUG("Setup socket for ip %s : port %d : queue %s\n", ipS.c_str(), port, qString.c_str());
 }
 
+void MSCNetwork::networkShutdown() {
+	// Nothing is required to be done, we do clean up in destructor call
+}
+
 void MSCNetwork::sendMessage(int nodeId, HyflowMessage & message){
 	std::stringstream destStr;
 	destStr << "Socket:" << NetworkManager::getIp(nodeId) << ":" << basePort+nodeId << "|" << nodeId  <<"-queue";
@@ -127,6 +133,7 @@ void MSCNetwork::sendMessage(int nodeId, HyflowMessage & message){
 	oa << message;
 	std::string msg = ostream.str();
 
+	//Put all the messages on heap
 	MsgConnect::MCMessage mcmsg;
 	mcmsg.MsgCode = 1;
 	mcmsg.Param1 = 0;
@@ -182,7 +189,7 @@ void MSCNetwork::defaultHandler(void* UserData, void* Sender,
 		oa << req;
 		std::string omsg = odata_stream.str();
 
-		char *buffer = new char[omsg.size()];
+		void *buffer = MsgConnect::MCMemAlloc(omsg.size());
 		memcpy(buffer, omsg.c_str(), omsg.size());
 
 		//Do it safely Delete buffer pointing to older message

@@ -48,6 +48,7 @@ public:
 	virtual ~MSCNetwork();
 
 	void networkInit();
+	void networkShutdown();
 	void sendMessage(int nodeId, HyflowMessage & Message);
 	void sendCallbackMessage(int nodeId, HyflowMessage & Message, HyflowMessageFuture & fu);
 };
