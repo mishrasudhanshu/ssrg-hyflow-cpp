@@ -83,7 +83,7 @@ ZMQNetwork::ZMQNetwork() {
 
 ZMQNetwork::~ZMQNetwork() {
 	hyflowShutdown = true;
-	// SetUp server thread for SIGINT
+
 	for (int i=0 ; i <nodeCount;i++) {
 		pthread_kill(serverThreads[i],SIGINT);
 		pthread_join(serverThreads[i], NULL);
@@ -113,7 +113,7 @@ void ZMQNetwork::networkInit(){
 	// After first synchronization all IPs are available now connect to all nodes
 	// For Node zero all connection are made on registration itself
 	for (int i=1; (i < nodeCount) && nodeId; i++) {
-		connectClient(i);
+		NetworkManager::registerNode(i);
 	}
 }
 
@@ -121,9 +121,9 @@ void ZMQNetwork::networkShutdown(){
 	// Nothing is required to be done, we do clean up in destructor call
 }
 
-void ZMQNetwork::connectClient(int toNodeId) {
+void ZMQNetwork::registerNode(int toNodeId) {
 	std::stringstream clientStr;
-	clientStr<<"tcp://"<<NetworkManager::getIp(0)<<":"<<NetworkManager::getBasePort()+toNodeId*nodeCount+nodeId;
+	clientStr<<"tcp://"<<NetworkManager::getIp(toNodeId)<<":"<<NetworkManager::getBasePort()+toNodeId*nodeCount+nodeId;
 	clientSockets[toNodeId]->connect(clientStr.str().c_str());
 }
 

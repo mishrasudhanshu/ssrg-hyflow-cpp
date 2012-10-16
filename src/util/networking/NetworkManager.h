@@ -42,8 +42,8 @@ public:
 	static int getThreadCount();
 	static void NetworkInit();
 	static void NetworkShutdown();
-	static void sendMessage(int nodeId, HyflowMessage Message);
-	static void sendCallbackMessage(int nodeId, HyflowMessage Message, HyflowMessageFuture & fu);
+	static void sendMessage(int nodeId, HyflowMessage & Message);
+	static void sendCallbackMessage(int nodeId, HyflowMessage & Message, HyflowMessageFuture & fu);
 //	static void registerHandler(HyMessageType msg_t, void (*handlerFunc)(HyflowMessage &));
 
 	static void initNode();
@@ -63,6 +63,7 @@ public:
 	static void waitTillSynchronized(int rqNo);
 	static void notifyCluster(int rqNo);
 	static void registerNode(int nodeId, std::string & ipAddress);
+	static void registerNode(int nodeId);
 	static void registerCluster(std::map<int, std::string> & nodeMap);
 	static std::string getNodeIP();
 

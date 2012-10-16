@@ -1,12 +1,12 @@
 /*
- * ZMQNetwork.h
+ * ZMQNetworkAsync.h
  *
- *  Created on: Sep 29, 2012
+ *  Created on: Oct 5, 2012
  *      Author: mishras[at]vt.edu
  */
 
-#ifndef ZMQNETWORK_H_
-#define ZMQNETWORK_H_
+#ifndef ZMQNETWORKASYNC_H_
+#define ZMQNETWORKASYNC_H_
 
 #include <vector>
 #include <pthread.h>
@@ -16,7 +16,7 @@
 
 namespace vt_dstm {
 
-class ZMQNetwork: public AbstractNetwork {
+class ZMQNetworkAsync: public vt_dstm::AbstractNetwork {
 	static int nodeId;
 	static int basePort;
 	static int threadCount;
@@ -26,11 +26,18 @@ class ZMQNetwork: public AbstractNetwork {
 	static int lingerTime;
 
 	zmq::context_t* context;
-	static std::vector<boost::mutex*> socketMutexs;
-	static std::vector<zmq::socket_t*> clientSockets;
-	static std::vector<zmq::socket_t*> serverSockets;
-	static std::vector<pthread_t> serverThreads;
-	static std::vector<int*> serverThreadIds;
+	/*
+	 * Router Socket provided to each thread to route its message to desired
+	 * node
+	 */
+	static std::vector<zmq::socket_t*> threadRouterSockets;
+	/*
+	 * Dealer sockets which wait for incoming messages to process.
+	 */
+	static std::vector<zmq::socket_t*> recieverDealerSockets;
+
+	static std::vector<pthread_t> dealerThreads;
+	static std::vector<int*> dealerThreadIds;
 
 	static bool isInit;
 
@@ -40,15 +47,16 @@ class ZMQNetwork: public AbstractNetwork {
 	static bool defaultHandler(zmq::message_t & msg);
 	static void callbackHandler(zmq::message_t & msg);
 public:
-	ZMQNetwork();
-	virtual ~ZMQNetwork();
+	ZMQNetworkAsync();
+	virtual ~ZMQNetworkAsync();
 
 	void networkInit();
 	void networkShutdown();
 	void sendMessage(int nodeId, HyflowMessage & Message);
 	void sendCallbackMessage(int nodeId, HyflowMessage & Message, HyflowMessageFuture & fu);
-	static void* serverExecute(void *param);
-	void registerNode(int nodeId);
+	static void* dealerExecute(void *param);
+	static void connectClient(int nodeId);
+	static void additionalSync();
 
 	static void s_catch_signals();
 	static void s_signal_handler(int signal_value);
@@ -56,4 +64,4 @@ public:
 
 } /* namespace vt_dstm */
 
-#endif /* ZMQNETWORK_H_ */
+#endif /* ZMQNETWORKASYNC_H_ */

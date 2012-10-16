@@ -19,6 +19,7 @@
 #include "msgConnect/MSCNetwork.h"
 #include "msgConnect/MSCtest.h"
 #include "zeroMQ/ZMQNetwork.h"
+#include "zeroMQ/ZMQNetworkAsync.h"
 #include "../messages/MessageHandler.h"
 #include "IPAddressProvider.h"
 
@@ -48,7 +49,8 @@ void NetworkManager::NetworkInit() {
 		HyflowMessage::registerMessageHandlers();
 		synchronizeCluster();
 	}else if (strcmp(ConfigFile::Value(NETWORK).c_str(), ZERO_MQ) == 0) {
-		network = new ZMQNetwork();
+//		network = new ZMQNetwork();
+		network = new ZMQNetworkAsync();
 		HyflowMessage::registerMessageHandlers();
 		synchronizeCluster();
 		network->networkInit();
@@ -156,16 +158,18 @@ void NetworkManager::waitTillSynchronized(int rqNo){
 	}
 }
 
-void NetworkManager::sendMessage(int nodeId, HyflowMessage msg) {
+void NetworkManager::sendMessage(int nodeId, HyflowMessage & msg) {
 	msg.fromNode = NetworkManager::nodeId;
 	msg.toNode = nodeId;
+	msg.isCallback = false;
 
 	network->sendMessage(nodeId, msg);
 }
 
-void NetworkManager::sendCallbackMessage(int targetNodeId, HyflowMessage msg, HyflowMessageFuture & fu) {
+void NetworkManager::sendCallbackMessage(int targetNodeId, HyflowMessage & msg, HyflowMessageFuture & fu) {
 	msg.fromNode = NetworkManager::nodeId;
 	msg.toNode = targetNodeId;
+	msg.isCallback = true;
 
 	fu.setType(msg.msg_t);
 	fu.setForObjectId(msg.getForObjectId());
@@ -221,12 +225,14 @@ std::string NetworkManager::getNodeIP() {
 	return nodeIp;
 }
 
+void NetworkManager::registerNode(int nodeId) {
+	network->registerNode(nodeId);
+}
+
 void NetworkManager::registerNode(int nodeId, std::string & ipAddress) {
     boost::unique_lock<boost::mutex> lock(clsMutex);
 	ipMap[nodeId] = ipAddress;
-	if (strcmp(ConfigFile::Value(NETWORK).c_str(), ZERO_MQ) == 0) {
-		ZMQNetwork::connectClient(nodeId);
-	}
+	network->registerNode(nodeId);
 }
 
 void NetworkManager::registerCluster(std::map<int, std::string> & nodeMap) {

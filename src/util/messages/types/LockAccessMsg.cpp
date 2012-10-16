@@ -12,6 +12,7 @@
 #include <boost/serialization/base_object.hpp>
 
 #include "LockAccessMsg.h"
+#include "../../networking/NetworkManager.h"
 #include "../../../core/context/LockTable.h"
 #include "../../messages/MessageMaps.h"
 #include "../../logging/Logger.h"
@@ -54,6 +55,10 @@ void LockAccessMsg::lockAccessHandler(HyflowMessage& m) {
 			LockTable::tryUnlock(lmsg->objectId,  lmsg->objVersion);
 
 		lmsg->setRequest(false);
+		/* If message not send as callback we need to reply manually*/
+		if (!m.isCallback) {
+			NetworkManager::sendMessage(m.fromNode, m);
+		}
 	} else {
 		LOG_DEBUG ("Got a Lock response: %s for %s\n", lmsg->lock?"lock":"unlock", lmsg->objectId.c_str());
 		if (lmsg->lock) {

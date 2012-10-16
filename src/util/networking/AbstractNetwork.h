@@ -37,6 +37,9 @@ public:
 	 */
 	virtual void sendCallbackMessage(int nodeId,
 			HyflowMessage & Message, HyflowMessageFuture & fu)=0;
+
+	virtual void registerNode(int nodeId) {}
+	virtual void registerCluster(std::map<int, std::string> & nodeMap) {}
 };
 
 }

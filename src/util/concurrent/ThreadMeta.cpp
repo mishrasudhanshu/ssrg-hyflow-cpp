@@ -42,7 +42,7 @@ namespace vt_dstm{
 //			perror("Set affinity transactional thread");
 //		}
 
-		setThreadId(coreId);
+		setThreadId(id);
 
 	   // Causing system to hang
 //	   struct sched_param sp;

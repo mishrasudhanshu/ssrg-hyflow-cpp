@@ -54,6 +54,7 @@ void SynchronizeMsg::synchronizeHandler(HyflowMessage & msg){
 			LOG_DEBUG("SYNC_MSG: Last message from %d\n", msg.fromNode);
 			NetworkManager::replySynchronized(synmsg->requestNo);
 		}
+		/*This message is always send one way */
 	}else{
 		LOG_DEBUG("SYNC_MSG: Got Synchronize response message\n");
 		if ((synmsg->requestNo == 1) && (NetworkManager::getNodeId()!=0)) {

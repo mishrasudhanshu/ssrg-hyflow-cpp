@@ -136,6 +136,7 @@ void TrackerDirectory::registerObjectWait(HyflowObject* object, unsigned long lo
 		} else {
 			//Register the object with tracker
 			RegisterObjectMsg romsg(id, owner, txn);
+			romsg.setWaited(true);
 			HyflowMessage hmsg(id);
 			hmsg.msg_t = MSG_REGISTER_OBJ;	// Not callback by default
 			hmsg.setMsg(&romsg);
