@@ -66,26 +66,26 @@ ZMQNetworkAsync::ZMQNetworkAsync() {
 		std::stringstream idStr;
 		idStr<<nodeId;
 		std::string id = idStr.str();
-		for (int i=0 ; i < nodeCount ; i++ ) {
+		for (int i=0 ; i < nodeCount*threadCount ; i++ ) {
 			zmq::socket_t *recieverDealerSocket = new zmq::socket_t(*context, ZMQ_DEALER);
 			recieverDealerSocket->setsockopt(ZMQ_LINGER, &lingerTime, sizeof lingerTime);
 			recieverDealerSocket->setsockopt(ZMQ_IDENTITY, id.c_str(), id.size());
 			recieverDealerSockets.push_back(recieverDealerSocket);
 		}
 
-		// Connect to Node 0
+		// Connect my node dealers to routers sockets of Node 0
 		for (int i=0; i<threadCount; i++) {
 			std::stringstream baseStr;
 			baseStr<<"tcp://"<<NetworkManager::getIp(0)<<":"<<NetworkManager::getBasePort()+i;
 			std::string baseAddr = baseStr.str();
-			recieverDealerSockets[0]->connect(baseAddr.c_str());
+			recieverDealerSockets[i]->connect(baseAddr.c_str());
 			if ( i == 0) {
 				additionalSync();
 			}
 		}
 
 		if (nodeId == 0) {
-			// As all dealers are connected to required routers start the threads
+			// As all dealers are connected to all node routers, start the threads
 			for (int i=0; i <nodeCount ; i++) {
 				pthread_t dealerThread;
 				int *waitingNodeId = new int();
@@ -155,7 +155,7 @@ void ZMQNetworkAsync::additionalSync(){
 				std::stringstream baseStr;
 				baseStr<<"tcp://"<<senderIp<<":"<<NetworkManager::getBasePort()+sender*threadCount+j;
 				std::string baseAddr = baseStr.str();
-				recieverDealerSockets[sender]->connect(baseAddr.c_str());
+				recieverDealerSockets[sender*threadCount+j]->connect(baseAddr.c_str());
 				LOG_DEBUG("ZMQA :Node 0 dealer %d connect to %s\n", sender, baseAddr.c_str());
 			}
 			sleep(1);
@@ -221,7 +221,7 @@ void ZMQNetworkAsync::connectClient(int toNodeId) {
 	for (int i=0; i<threadCount; i++) {
 		std::stringstream nodeStr;
 		nodeStr<<"tcp://"<<NetworkManager::getIp(toNodeId)<<":"<<NetworkManager::getBasePort()+toNodeId*threadCount+i;
-		recieverDealerSockets[toNodeId]->connect(nodeStr.str().c_str());
+		recieverDealerSockets[toNodeId*threadCount+i]->connect(nodeStr.str().c_str());
 	}
 }
 
@@ -338,23 +338,46 @@ void* ZMQNetworkAsync::dealerExecute(void *param) {
 	LOG_DEBUG("ZMQA Server started\n");
 	boost::posix_time::seconds sleepTime(0.0001);
 
+	/*
+	 * Currently creating one thread to process all incoming message
+	 * from a given node id. nodeSet contains the dealer sockets
+	 * corresponding to all the threads on particular node.
+	 */
+
+	//Create dealSocket poll set and wait
+	zmq::pollitem_t* nodeSet = new zmq::pollitem_t[threadCount];
+	for (int i = 0 ; i<threadCount; i++) {
+		nodeSet[i].socket = *recieverDealerSockets[id*threadCount+i];
+		nodeSet[i].fd = 0;
+		nodeSet[i].events = ZMQ_POLLIN;
+		nodeSet[i].revents = 0;
+	}
+
 	while (!hyflowShutdown) {
 		try {
-			while (1){		// Multipart message checking not required
-				zmq::message_t request;
-				recieverDealerSockets[id]->recv(&request);
-				LOG_DEBUG("ZMQA :Dealer received Message\n");
-			    int64_t more = 1;
-			    size_t more_size = sizeof (more);
-			    recieverDealerSockets[id]->getsockopt(ZMQ_RCVMORE, &more, &more_size);
-			    if (!more) {
-			    	 //  Last message frame
-					if (defaultHandler(request)) {
-						LOG_DEBUG("ZMQA :Sending Callback Message Response\n");
-						recieverDealerSockets[id]->send(request);
+			zmq::poll(nodeSet, threadCount, -1);
+			int socketNo = -1;
+			for (int i = 0 ; i < threadCount; i++) {
+				if (nodeSet[i].revents & ZMQ_POLLIN) {
+					socketNo = i;
+				}
+				while (socketNo >= 0){		// Multipart message checking not required
+					zmq::message_t request;
+					recieverDealerSockets[id*threadCount+socketNo]->recv(&request);
+					LOG_DEBUG("ZMQA :Dealer received Message\n");
+					int64_t more = 1;
+					size_t more_size = sizeof (more);
+					recieverDealerSockets[id*threadCount+socketNo]->getsockopt(ZMQ_RCVMORE, &more, &more_size);
+					if (!more) {
+						 //  Last message frame
+						if (defaultHandler(request)) {
+							LOG_DEBUG("ZMQA :Sending Callback Message Response\n");
+							recieverDealerSockets[id*threadCount+socketNo]->send(request);
+						}
+						break;
 					}
-			        break;
-			    }
+				}
+				socketNo = -1;
 			}
 		} catch(zmq::error_t & e) {
 			if (hyflowShutdown)
