@@ -190,6 +190,7 @@ void ZMQNetworkAsync::additionalSync(){
 		recieverDealerSockets[0]->recv(&rmsg);
 		std::string node0Rep = std::string(static_cast<char*>(rmsg.data()), rmsg.size());
 		LOG_DEBUG("ZMQA :Node 0 replied: %s\n", node0Rep.c_str());
+		sleep(1);
 	}
 }
 
@@ -232,7 +233,7 @@ void ZMQNetworkAsync::sendMessage(int toNodeId, HyflowMessage & message){
 	std::string msgData = ostream.str();
 
 	zmq::message_t zmqmsgBase(msgData.size());
-	memcpy(zmqmsgBase.data(), msgData.c_str(), msgData.size());
+	memcpy(zmqmsgBase.data(), msgData.data(), msgData.size());
 
 	// Add Address message part
 	std::stringstream idStr;
@@ -248,9 +249,6 @@ void ZMQNetworkAsync::sendMessage(int toNodeId, HyflowMessage & message){
 }
 
 void ZMQNetworkAsync::sendCallbackMessage(int toNodeId, HyflowMessage & message, HyflowMessageFuture & fu){
-	// As Async version don't support the callback we send all message one way
-//	message.isCallback = false;
-
 	// Serialize the message
 	std::ostringstream ostream;
 	boost::archive::text_oarchive oa(ostream);
@@ -258,7 +256,7 @@ void ZMQNetworkAsync::sendCallbackMessage(int toNodeId, HyflowMessage & message,
 	std::string msgData = ostream.str();
 
 	zmq::message_t zmqmsg(msgData.size());
-	memcpy(zmqmsg.data(), msgData.c_str(), msgData.size());
+	memcpy(zmqmsg.data(), msgData.data(), msgData.size());
 
 	// Add Address message part
 	std::stringstream idStr;
@@ -274,11 +272,13 @@ void ZMQNetworkAsync::sendCallbackMessage(int toNodeId, HyflowMessage & message,
 	while (1){
 		zmq::message_t zmqReply;
 		threadRouterSockets[threadId]->recv(&zmqReply);
-	    int64_t more;
+		LOG_DEBUG("ZMQA : Got send callback response\n");
+	    int64_t more = 1;
 	    size_t more_size = sizeof (more);
 	    threadRouterSockets[threadId]->getsockopt(ZMQ_RCVMORE, &more, &more_size);
 	    if (!more) {
 			// Pass the last message part to callbackHandler
+	    	LOG_DEBUG("ZMQA : Handling callback response\n");
 			callbackHandler(zmqReply);
 	        break;      //  Last message frame
 	    }
@@ -289,7 +289,7 @@ bool ZMQNetworkAsync::defaultHandler(zmq::message_t & msg) {
 	LOG_DEBUG("ZMQA :Got the Network Event \n");
 	if(msg.data() && (msg.size() > 0)) {
 		// Read Message
-		std::string idata((char*)msg.data(), msg.size());
+		std::string idata(static_cast<char*>(msg.data()), msg.size());
 		std::istringstream idata_stream(idata);
 		boost::archive::text_iarchive ia(idata_stream);
 		vt_dstm::HyflowMessage req;
@@ -319,7 +319,7 @@ bool ZMQNetworkAsync::defaultHandler(zmq::message_t & msg) {
 void ZMQNetworkAsync::callbackHandler(zmq::message_t & msg){
 	LOG_DEBUG("ZMQA :Got the Network Callback\n");
 	if(msg.data() && (msg.size() > 0)) {
-		std::string data((char*)msg.data(), msg.size());
+		std::string data(static_cast<char*>(msg.data()), msg.size());
 		std::istringstream data_stream(data);
 		boost::archive::text_iarchive ia(data_stream);
 		vt_dstm::HyflowMessage req;
@@ -344,12 +344,13 @@ void* ZMQNetworkAsync::dealerExecute(void *param) {
 				zmq::message_t request;
 				recieverDealerSockets[id]->recv(&request);
 				LOG_DEBUG("ZMQA :Dealer received Message\n");
-			    int64_t more;
+			    int64_t more = 1;
 			    size_t more_size = sizeof (more);
 			    recieverDealerSockets[id]->getsockopt(ZMQ_RCVMORE, &more, &more_size);
 			    if (!more) {
 			    	 //  Last message frame
 					if (defaultHandler(request)) {
+						LOG_DEBUG("ZMQA :Sending Callback Message Response\n");
 						recieverDealerSockets[id]->send(request);
 					}
 			        break;

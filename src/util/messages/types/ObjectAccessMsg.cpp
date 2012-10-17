@@ -49,8 +49,10 @@ void ObjectAccessMsg::objectAccessHandler(HyflowMessage & msg) {
 				oamsg->isRead);
 		oamsg->object = obj;
 		LOG_DEBUG("Object_Access: Request Locally got object %s of version %d\n", obj->getId().c_str(), obj->getVersion());
-		if (!msg.isCallback) {
-			NetworkManager::sendMessage(msg.fromNode, msg);
+		if (msg.isCallback) {
+			if (!msg.isCallbackSupported) {
+				NetworkManager::sendMessage(msg.fromNode, msg);
+			}
 		}
 	} else {
 		// Find the MessageFuture created for expected response

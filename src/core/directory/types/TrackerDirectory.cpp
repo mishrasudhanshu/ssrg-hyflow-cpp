@@ -55,7 +55,7 @@ void TrackerDirectory::locateAsync(std::string & id, bool rw, unsigned long long
 			ObjectAccessMsg oam(id, rw);
 			HyflowMessage hmsg(id);
 			hmsg.msg_t = MSG_ACCESS_OBJECT;
-			hmsg.isCallback = true;
+//			hmsg.isCallback = true;
 			hmsg.setMsg(&oam);
 			NetworkManager::sendCallbackMessage(ownerNode,hmsg,fu.getMessageFuture());
 		}
@@ -63,7 +63,7 @@ void TrackerDirectory::locateAsync(std::string & id, bool rw, unsigned long long
 		ObjectTrackerMsg otm(id, rw);
 		HyflowMessage hmsg(id);
 		hmsg.msg_t = MSG_TRK_OBJECT;
-		hmsg.isCallback = true;	// isReplied false by default
+//		hmsg.isCallback = true;	// isReplied false by default
 		hmsg.setMsg(&otm);
 		NetworkManager::sendCallbackMessage(trackerNode,hmsg,fu.getMessageFuture());
 	}
@@ -136,7 +136,7 @@ void TrackerDirectory::registerObjectWait(HyflowObject* object, unsigned long lo
 		} else {
 			//Register the object with tracker
 			RegisterObjectMsg romsg(id, owner, txn);
-			romsg.setWaited(true);
+//			romsg.setWaited(true);
 			HyflowMessage hmsg(id);
 			hmsg.msg_t = MSG_REGISTER_OBJ;	// Not callback by default
 			hmsg.setMsg(&romsg);

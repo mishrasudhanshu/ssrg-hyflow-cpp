@@ -21,14 +21,13 @@ class RegisterObjectMsg: public vt_dstm::BaseMessage {
 	std::string objectId;
 	int owner;
 	bool request;
-	bool waited; // To make sure one way or callback
 
 	friend class boost::serialization::access;
 
     template<class Archive>
     void serialize(Archive & ar, const unsigned int version);
 public:
-    RegisterObjectMsg() {request = true; waited=false;}
+    RegisterObjectMsg() {request = true;}
 	RegisterObjectMsg(std::string id, unsigned long long tid);
 	RegisterObjectMsg(std::string id, int owner, unsigned long long tid);
 	virtual ~RegisterObjectMsg();
@@ -38,14 +37,6 @@ public:
 	bool isRequest() const;
 	void setRequest(bool request);
 	void serializationTest();
-
-	bool isWaited() const {
-		return waited;
-	}
-
-	void setWaited(bool waited) {
-		this->waited = waited;
-	}
 };
 
 } /* namespace vt_dstm */

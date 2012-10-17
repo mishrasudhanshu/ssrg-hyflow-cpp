@@ -40,6 +40,7 @@ class HyflowMessage {
         ar & msg_t;
         ar & msg_id;
         ar & isCallback;
+        ar & isCallbackSupported;
         ar & fromNode;
         ar & toNode;
         ar & fromNodeClock;
@@ -58,9 +59,17 @@ public:
 
 	virtual ~HyflowMessage(){}
 
+	/*
+	 * To specify whether networking library used supports the callback or
+	 * we manually require to send back the reply.
+	 */
+	bool isCallbackSupported;
+	/*
+	 * To specify whether send message will require a reply or not. Used to
+	 * identify the one way message.
+	 */
 	bool isCallback;
 	int fromNode;
-	bool isReplied;
 	int toNode;
 	std::string getForObjectId() const;
 	void setForObjectId(std::string forObjectId);

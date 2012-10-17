@@ -17,7 +17,7 @@
 namespace vt_dstm {
 
 class HyflowMessageFuture {
-	bool isReceived;
+	volatile bool isReceived;
 	std::string msg_id;
 	std::string forObjectId;
 	HyMessageType msg_t;

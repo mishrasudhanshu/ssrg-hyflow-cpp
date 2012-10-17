@@ -23,8 +23,13 @@
 
 namespace vt_dstm{
 
+/*
+ * By Default each message send is a callback, and we assume the
+ * callback is supported in the library. if no reply required
+ * specify explicitly
+ */
 HyflowMessage::HyflowMessage(){
-	isCallback = false; isReplied = false; msg_id = "00";
+	isCallback = true; isCallbackSupported = true; msg_id = "00";
 	fromNodeClock = ContextManager::getClock();
 	forObjectId = "0-0";
 	msg = NULL;
@@ -36,7 +41,7 @@ HyflowMessage::HyflowMessage(){
  * As in few case all the values can be same expect forObjectId
  */
 HyflowMessage::HyflowMessage(const std::string & forObjId){
-	isCallback = false; isReplied = false; msg_id = "00";
+	isCallback = true; isCallbackSupported = true; msg_id = "00";
 	fromNodeClock = ContextManager::getClock();
 	forObjectId = forObjId;
 	msg = NULL;

@@ -51,8 +51,10 @@ void ObjectTrackerMsg::objectTrackerHandler(HyflowMessage & msg) {
 		otmsg->owner = DirectoryManager::getObjectLocation(otmsg->objectId);
 		LOG_DEBUG("Got object Tracker request from %d replied for %s with owner %d\n", msg.fromNode, otmsg->objectId.c_str(), otmsg->owner);
 
-		if (!msg.isCallback) {
-			NetworkManager::sendMessage(msg.fromNode,msg);
+		if (msg.isCallback) {
+			if (!msg.isCallbackSupported) {
+				NetworkManager::sendMessage(msg.fromNode,msg);
+			}
 		}
 	} else{
 

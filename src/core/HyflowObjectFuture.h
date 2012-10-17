@@ -27,7 +27,7 @@ public:
 	/**
 	 * Internal Use only
 	 */
-	HyflowMessageFuture & getMessageFuture() {return messageFuture;}
+	HyflowMessageFuture& getMessageFuture() {return messageFuture;}
 };
 
 } /* namespace vt_dstm */

@@ -102,7 +102,6 @@ void NetworkManager::synchronizeCluster() {
 	HyflowMessage hmsg;
 	hmsg.setMsg(&gJmsg);
 	hmsg.msg_t = MSG_GRP_SYNC;
-	hmsg.isCallback = false;
 	sendMessage(0,hmsg);
 	waitTillSynchronized(rqNo);
 }
@@ -130,7 +129,6 @@ void NetworkManager::replySynchronized(int rqNo){
 		HyflowMessage hmsg;
 		hmsg.setMsg(&gJmsg);
 		hmsg.msg_t = MSG_GRP_SYNC;
-		hmsg.isCallback = false;
 		for (int i=1 ; i < nodeCount; i++) {
 			sendMessage(i,hmsg);
 		}

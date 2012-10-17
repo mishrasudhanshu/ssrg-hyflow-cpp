@@ -26,7 +26,6 @@ RegisterObjectMsg::RegisterObjectMsg(std::string id, unsigned long long tid) {
 	owner = -1;
 	txnId = tid;
 	request = true;
-	waited = false;
 }
 
 RegisterObjectMsg::RegisterObjectMsg(std::string id, int ow, unsigned long long tid) {
@@ -34,7 +33,6 @@ RegisterObjectMsg::RegisterObjectMsg(std::string id, int ow, unsigned long long 
 	owner = ow;
 	txnId = tid;
 	request = true;
-	waited = false;
 }
 
 RegisterObjectMsg::~RegisterObjectMsg() {}
@@ -46,7 +44,6 @@ void RegisterObjectMsg::serialize(Archive & ar, const unsigned int version) {
 	ar & owner;
 	ar & objectId;
 	ar & request;
-	ar & waited;
 }
 
 // FIXME: In List might require forwarding call
@@ -61,9 +58,11 @@ void RegisterObjectMsg::registerObjectHandler(HyflowMessage & msg) {
 			DirectoryManager::unregisterObjectLocally(romsg->objectId,
 					romsg->txnId);
 		romsg->request = false;
-		/* If message not send as callback we need to reply manually*/
-		if (romsg->isWaited()) {
-			if (!msg.isCallback) {
+
+		// If message requires the reply check if network library supports the
+		// callback or we required to send the manual reply
+		if (msg.isCallback) {
+			if (!msg.isCallbackSupported) {
 				NetworkManager::sendMessage(msg.fromNode, msg);
 			}
 		}

@@ -53,6 +53,7 @@ void HyflowMessageFuture::notifyMessage() {
 	{
 	     boost::unique_lock<boost::mutex> lock(msgMutex);
 	     isReceived=true;
+	     LOG_DEBUG("HMF :Set received for m_id %s\n", msg_id.c_str());
 	 }
 	 onReceive.notify_all();
 }
