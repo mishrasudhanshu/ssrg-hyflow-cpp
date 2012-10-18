@@ -21,6 +21,11 @@ class ZMQNetworkAsync: public vt_dstm::AbstractNetwork {
 	static int basePort;
 	static int threadCount;
 	static int nodeCount;
+	/*
+	 * To specify the number of threads required per node to
+	 * handle the incoming messages.
+	 */
+	static int dealerThreadPerNode;
 
 	static volatile bool hyflowShutdown;
 	static int lingerTime;
