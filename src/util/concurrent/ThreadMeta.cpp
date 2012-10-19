@@ -28,8 +28,9 @@ namespace vt_dstm{
 		int threadCount = NetworkManager::getThreadCount();
 		if (T_type == TRANSACTIONAL_THREAD) {
 			coreId = nodeId*threadCount*4 + id;
-		} else {
+		} else {// For dispatch thread default Id should be zero
 			coreId = nodeId*threadCount*4 + threadCount + id;
+			id = 0;
 		}
 
 		// Leave two additional cores for Msgconnect server listener and worker thread

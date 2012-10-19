@@ -24,7 +24,7 @@
 #include "../../concurrent/ThreadMeta.h"
 
 namespace vt_dstm {
-
+//TODO: Create node socket and don't use socket 0 for communication
 int ZMQNetworkAsync::nodeId = -1;
 int ZMQNetworkAsync::basePort = -1;
 int ZMQNetworkAsync::nodeCount = 0;
@@ -87,7 +87,7 @@ ZMQNetworkAsync::ZMQNetworkAsync() {
 		}
 
 		if (nodeId == 0) {
-			// As all dealers are connected to all node routers, start the threads
+			// As all node 0 dealers are connected to all nodes routers, start the dealer threads for node 0
 			for (int i=0; i <nodeCount ; i++) {
 				if (dealerThreadPerNode > 1) {
 					for(int msgThread = 0; msgThread < dealerThreadPerNode; msgThread++) {
@@ -129,9 +129,9 @@ ZMQNetworkAsync::ZMQNetworkAsync() {
 				pthread_create(&dealerThread,NULL,ZMQNetworkAsync::dealerExecute,(void*)waitingNodeId);
 				dealerThreads.push_back(dealerThread);
 			}
-
 		}
 
+		// After this much boiler code all nodes are able to communicate the synchronization messages
 		isInit = true;
 	}
 }
@@ -229,14 +229,23 @@ void ZMQNetworkAsync::networkInit(){
 	for (int i=1; (i < nodeCount) && (nodeId !=0); i++) {
 		connectClient(i);
 
-		for(int msgThread = 0; msgThread < dealerThreadPerNode; msgThread++) {
-			// Create threads to receive any incoming message from Node 0
+		if (dealerThreadPerNode > 1) {
+			// Create threads to receive any incoming message from Node i
+			for(int msgThread = 0; msgThread < dealerThreadPerNode; msgThread++) {
+				pthread_t dealerThread;
+				int *dealerThreadArgs = new int[2];
+				dealerThreadArgs[0] = i;
+				dealerThreadArgs[1] = msgThread;
+				dealerThreadIds.push_back(dealerThreadArgs);
+				pthread_create(&dealerThread,NULL,ZMQNetworkAsync::dealerExecute,(void*)dealerThreadArgs);
+				dealerThreads.push_back(dealerThread);
+			}
+		}else {
 			pthread_t dealerThread;
-			int *dealerThreadArgs = new int[2];
-			dealerThreadArgs[0] = i;
-			dealerThreadArgs[1] = msgThread;
-			dealerThreadIds.push_back(dealerThreadArgs);
-			pthread_create(&dealerThread,NULL,ZMQNetworkAsync::dealerExecute,(void*)dealerThreadArgs);
+			int *waitingNodeId = new int();
+			*waitingNodeId = i;
+			dealerThreadIds.push_back(waitingNodeId);
+			pthread_create(&dealerThread,NULL,ZMQNetworkAsync::dealerExecute,(void*)waitingNodeId);
 			dealerThreads.push_back(dealerThread);
 		}
 	}
