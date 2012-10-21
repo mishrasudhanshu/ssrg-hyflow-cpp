@@ -37,7 +37,7 @@ class BenchmarkExecutor {
 	static boost::mutex execMutex;
 
 	static bool* transactionType;
-	static std::string** argsArray;
+	static std::string*** threadArgsArray;
 	static std::string* ids;
 
 

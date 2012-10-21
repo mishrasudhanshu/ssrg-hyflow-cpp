@@ -52,6 +52,7 @@ void NetworkManager::NetworkInit() {
 //		network = new ZMQNetwork();
 		network = new ZMQNetworkAsync();
 		HyflowMessage::registerMessageHandlers();
+		sleep(4);
 		synchronizeCluster();
 		network->networkInit();
 	}

@@ -36,7 +36,7 @@ int BenchmarkExecutor::retryCount = 0;
 
 HyflowBenchmark* BenchmarkExecutor::benchmark = NULL;
 bool* BenchmarkExecutor::transactionType = NULL;
-std::string** BenchmarkExecutor::argsArray = NULL;
+std::string*** BenchmarkExecutor::threadArgsArray = NULL;
 std::string* BenchmarkExecutor::ids = NULL;
 boost::thread_specific_ptr<HyInteger> BenchmarkExecutor::tries;
 boost::thread** BenchmarkExecutor::benchmarkThreads = NULL;
@@ -92,21 +92,28 @@ void BenchmarkExecutor::createObjects(){
 }
 
 void BenchmarkExecutor::prepareArgs() {
-	argsArray = new std::string*[transactions];
+	threadArgsArray = new std::string**[threadCount];
 	transactionType = new bool[transactions];
 
 	int argsCount = benchmark->getOperandsCount();
-	for (int i=0; i < transactions ; i++ ) {
-		argsArray[i] = new std::string[argsCount];
-		RandomIdProvider rIdPro(objectsCount);
-		for (int j=0; j < argsCount; j++ ) {
-			int index = (rIdPro.getNext()) %objectsCount;
-			argsArray[i][j] = ids[index];
+	for(int k=0 ; k < threadCount; k++) {
+		threadArgsArray[k] = new std::string*[transactions];
+		for (int i=0; i < transactions ; i++ ) {
+			threadArgsArray[k][i] = new std::string[argsCount];
+			RandomIdProvider rIdPro(objectsCount);
+			for (int j=0; j < argsCount; j++ ) {
+				int index = (rIdPro.getNext()) %objectsCount;
+				threadArgsArray[k][i][j] = ids[index];
+			}
 		}
+	}
+
+	for (int i=0; i < transactions ; i++ ) {
 		if ( i < (transactions*readPercent/100))
 			transactionType[i] = true;
 		else
 			transactionType[i] = false;
+
 	}
 
 	// Shuffle the transaction array
@@ -124,9 +131,10 @@ void BenchmarkExecutor::execute(int id){
 	int argsCount = benchmark->getOperandsCount();
 	LOG_DEBUG("BNCH_EXE %d:------------------------------>\n", id);
 	unsigned long long start = getTime();
+	std::string** argsArray = threadArgsArray[id];
 	for(int i=0; i < transactions; i++) {
 		int pos = (i + id) % transactions;
-		if (transactionType[i]) {
+		if (transactionType[pos]) {
 			benchmark->readOperation(argsArray[pos], argsCount);
 		} else {
 			benchmark->writeOperation(argsArray[pos], argsCount);
