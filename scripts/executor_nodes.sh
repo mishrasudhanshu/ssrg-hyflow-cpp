@@ -12,13 +12,13 @@ fi
 
 echo "---Nodes Config---"
 echo "txns=$txns, objs=$objs, reads 0..100..20 threads 1, nodes=1..24" 
-for nodes in 1 2 4 8 12
+for exp in {1..3}
 do
-    echo "For reads = $read"
-    for read in {0..100..20}
+    echo "For experiment = $exp"
+    for nodes in 1 2 4 8 12
     do
         echo "    For nodes = $nodes"
-        for exp in {1..3} 
+	for read in {0..100..20}
         do
             echo "        For experiment $exp, read $read and nodes $nodes"
             for (( nodeId=0 ; nodeId < $nodes ; nodeId++ ))

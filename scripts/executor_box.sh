@@ -14,10 +14,10 @@ echo "nodeId=$nodeId, txns=$txns, objs=$objs, reads 0..100..20 threads 1...24"
 
 for exp in {1..3}
 do
-    echo "For reads = $read"
+    echo "For experiment = $exp"
     for read in {0..100..20}
     do
-        echo "    For threads = $threads"
+  	echo "    For reads = $read"
        	for threads in 1 2 4 8 12 16
         do
             echo "        For experiment $exp, read $read and threads $threads"

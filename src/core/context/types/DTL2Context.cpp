@@ -245,13 +245,14 @@ void DTL2Context::commit(){
 		std::map<std::string, HyflowObject*, ObjectIdComparator>::reverse_iterator ri;
 		for ( ri = readMap.rbegin() ; ri != readMap.rend() ; ri++) {
 			if (!validateObject(ri->second)) {
-				LOG_DEBUG("Commit: Unable to validate for %s, version %d with txn %d\n", ri->first.c_str(), ri->second->getVersion(), tnxClock);
+				LOG_DEBUG("Commit: Unable to validate for %s, version %d with txn %ull\n", ri->first.c_str(), ri->second->getVersion(), txnId);
 				TransactionException readValidationFail("Commit: Unable to validate for "+ri->first+"\n");
 				throw readValidationFail;
 			}
 		}
 	} catch (TransactionException& e) {
 		// Free all acquired locks
+		LOG_DEBUG("Commit: Transaction failed, freeing the locks\n");
 		std::vector<HyflowObject *>::iterator vi;
 		for ( vi = lockedObjects.begin(); vi != lockedObjects.end(); vi++)
 			unlockObjectOnFail(*vi);

@@ -85,13 +85,26 @@ bool LockTable::isLocked(std::string & objId, int32_t obVer, unsigned long long 
 	int32_t versionLock = a->second.getLockVersion();
 	// Object is registered in lock table
 	if (versionLock & LOCK) {	// Object is locked
-		if (txnId == a->second.getOwnerTxnId()) { // If transaction is owner return false
-			LOG_DEBUG("LockTable :  %s is locked for version %d by same transaction\n", objId.c_str(), obVer);
+		if ( (versionLock & UNLOCK) > obVer) {	// Some one already locked for newer version of object
+			LOG_DEBUG("LockTable : checking lock for older version %d of %s\n", obVer, objId.c_str());
+			return true;
+		} else if((versionLock & UNLOCK) == obVer) {	// Some one locked for same version
+			if (txnId == a->second.getOwnerTxnId()) { // Did this transaction locked for same version
+				LOG_DEBUG("LockTable :  %s is locked for version %d by same transaction\n", objId.c_str(), obVer);
+				return false;
+			}
+			LOG_DEBUG("LockTable :  %s already locked for version %d by txn %ull \n", objId.c_str(), obVer, a->second.getOwnerTxnId());
+			return true;
+		}else {
+			LOG_DEBUG("LockTable : Older version %d of lock exist\n", versionLock & UNLOCK);
 			return false;
 		}
-		LOG_DEBUG("LockTable :  %s already locked for version %d\n", objId.c_str(), obVer);
-		return true;
 	} else {	// Object is unlock
+		/*
+		 * Higher version unlocked object will exist only if a higher version copy already exist in
+		 * local cache, from which we all already compare for object verification. Therefore no need
+		 * compare as in the case of tryLock function.
+		 */
 		if ( versionLock > obVer) {	// User is requesting lock validation for older version of object
 			LOG_DEBUG("LockTable : Object version increase %d to %d since last read\n", obVer, versionLock);
 			return true;

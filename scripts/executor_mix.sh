@@ -13,15 +13,16 @@ echo "---Mix Config---"
 echo "txns=$txns, objs=$objs, reads 0..100..20 threads 1..8, nodes=1..24" 
 for exp in {1..3} 
 do
-    echo "For reads = $read"
+    echo "For experiments = $exp"
     for read in {0..100..20}
     do
-        echo "    For nodes = $nodes"
+  	echo "    For reads = $read"
         for threads in 1 2 4 
         do
+	    echo "         For threads = $threads"
             for nodes in 1 2 4
             do
-                echo "        For experiment $exp, read $read, threads $threads and nodes $nodes"
+                echo "             For experiment $exp, read $read, threads $threads and nodes $nodes"
                 for (( nodeId=0 ; nodeId < $nodes ; nodeId++ ))
                 do
                     echo "launching $nodeId in $nodes"
