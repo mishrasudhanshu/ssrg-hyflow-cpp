@@ -15,21 +15,23 @@ int32_t LockTable::REMOTE = 1 << 31;
 int32_t LockTable::LOCK = 1 << 30;
 int32_t LockTable::UNLOCK = ~LOCK;
 
-tbb::concurrent_hash_map<std::string, int32_t>	LockTable::lockmap;
+tbb::concurrent_hash_map<std::string, LockValue>	LockTable::lockmap;
 
 LockTable::LockTable() {}
 
 LockTable::~LockTable() {}
 
 //FIXME: Update once concurrentHashMap is fixed
-bool LockTable::tryLock(std::string & objId, int32_t obVer) {
-	tbb::concurrent_hash_map<std::string, int32_t>::accessor a;
+bool LockTable::tryLock(std::string & objId, int32_t obVer, unsigned long long txnId) {
+	tbb::concurrent_hash_map<std::string, LockValue>::accessor a;
 	if (lockmap.insert(a, objId)) {		// Object does not exist in lock table
-		a->second = obVer | LOCK;
+		int32_t ver = obVer | LOCK;
+		LockValue lv(ver, txnId);
+		a->second = lv;
 		LOG_DEBUG("LockTable : new lock created for %s version %d\n", objId.c_str(), obVer);
 		return true;
 	} else {						// Object exit in lock Table
-		int32_t versionLock = a->second;
+		int32_t versionLock = a->second.getLockVersion();
 		// Object is registered in lock table
 		if (versionLock & LOCK) {	// Object is locked
 			if ( (versionLock & UNLOCK) >= obVer) {	// Some one already locked same or newer version of object
@@ -42,7 +44,9 @@ bool LockTable::tryLock(std::string & objId, int32_t obVer) {
 					LOG_DEBUG("LockTable: Object version increased on owner node to %d\n", nodeVersion);
 					return false;
 				} else {
-					a->second = obVer | LOCK;
+					int32_t ver = obVer | LOCK;
+					LockValue lv(ver, txnId);
+					a->second = lv;
 					LOG_DEBUG("LockTable : older Lock exist - locked successfully version %d\n", obVer);
 					return true;
 				}
@@ -60,37 +64,51 @@ bool LockTable::tryLock(std::string & objId, int32_t obVer) {
 					// Unlock now in concurrent implementation
 				}
 			}
-			a->second = obVer | LOCK;
+			int32_t ver = obVer | LOCK;
+			LockValue lv(ver, txnId);
+			a->second = lv;
 			LOG_DEBUG("LockTable :  %s locked successfully version %d\n", objId.c_str(), obVer);
 			return true;
 		}
 	}
 }
 
-
-// TODO: Remove it, should not be required
-bool LockTable::isLocked(std::string & objId, int32_t obVer) {
-	tbb::concurrent_hash_map<std::string, int32_t>::const_accessor a;
+/*
+ * This function is used to verify the object status, returns false if object is unlocked
+ * for given or older version or object is locked by same transaction
+ */
+bool LockTable::isLocked(std::string & objId, int32_t obVer, unsigned long long txnId) {
+	tbb::concurrent_hash_map<std::string, LockValue>::const_accessor a;
 	if (!lockmap.find(a, objId)) {
 		return false;
 	}
-	int32_t versionLock = a->second;
+	int32_t versionLock = a->second.getLockVersion();
 	// Object is registered in lock table
-	if (versionLock & LOCK) {
-		if ((versionLock & UNLOCK) == obVer) {
+	if (versionLock & LOCK) {	// Object is locked
+		if (txnId == a->second.getOwnerTxnId()) { // If transaction is owner return false
+			LOG_DEBUG("LockTable :  %s is locked for version %d by same transaction\n", objId.c_str(), obVer);
+			return false;
+		}
+		LOG_DEBUG("LockTable :  %s already locked for version %d\n", objId.c_str(), obVer);
+		return true;
+	} else {	// Object is unlock
+		if ( versionLock > obVer) {	// User is requesting lock validation for older version of object
+			LOG_DEBUG("LockTable : Object version increase %d to %d since last read\n", obVer, versionLock);
 			return true;
+		} else {
+			return false;
 		}
 	}
-	return false;
+	return true;
 }
 
-void LockTable::tryUnlock(std::string & objId, int32_t obVer) {
-	tbb::concurrent_hash_map<std::string, int32_t>::accessor a;
+void LockTable::tryUnlock(std::string & objId, int32_t obVer, unsigned long long txnId) {
+	tbb::concurrent_hash_map<std::string, LockValue>::accessor a;
 	if ( lockmap.insert(a, objId)) {
 		Logger::fatal("LockTable : on unlock call for %s not found\n", objId.c_str());
 		return;
 	}
-	int32_t versionLock = a->second;
+	int32_t versionLock = a->second.getLockVersion();
 	// Object is registered in lock table
 	if (versionLock & LOCK) {
 		if ( (versionLock & UNLOCK) > obVer) {
@@ -100,7 +118,7 @@ void LockTable::tryUnlock(std::string & objId, int32_t obVer) {
 			Logger::fatal("LockTable : Impossible request Unlock %s of version %d of future\n",objId.c_str(), obVer);
 			return;
 		}
-		a->second = versionLock & UNLOCK;
+		a->second.setLockVersion(versionLock & UNLOCK);
 		LOG_DEBUG("LockTable : Unlock successful for %s\n", objId.c_str());
 		return;
 	}

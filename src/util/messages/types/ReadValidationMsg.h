@@ -23,6 +23,7 @@ class ReadValidationMsg: public vt_dstm::BaseMessage {
 	int32_t objectVersion;
 	bool validationResponse;
 	bool request;
+	unsigned long long txnId;
 
 	friend class boost::serialization::access;
 
@@ -30,7 +31,7 @@ class ReadValidationMsg: public vt_dstm::BaseMessage {
     void serialize(Archive & ar, const unsigned int version);
 public:
 	ReadValidationMsg();
-	ReadValidationMsg(std::string objectId, int32_t obVer);
+	ReadValidationMsg(std::string objectId, int32_t obVer, bool isRequest, unsigned long long tid);
 	virtual ~ReadValidationMsg();
 	std::string getObjectId() const;
 	void setObjectId(std::string objectId);

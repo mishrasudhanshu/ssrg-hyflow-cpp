@@ -27,11 +27,12 @@ ReadValidationMsg::ReadValidationMsg() {
 	request = false;
 }
 
-ReadValidationMsg::ReadValidationMsg(std::string objId, int32_t obVer) {
+ReadValidationMsg::ReadValidationMsg(std::string objId, int32_t obVer, bool isRequest, unsigned long long tid) {
 	validationResponse = false;
-	request = false;
+	request = isRequest;
 	objectId = objId;
 	objectVersion = obVer;
+	txnId = tid;
 }
 
 std::string ReadValidationMsg::getObjectId() const {
@@ -54,10 +55,18 @@ void ReadValidationMsg::readValidationHandle(HyflowMessage & msg) {
 	if (rvmsg->request) {
 		HyflowObject* rObj = DirectoryManager::getObjectLocally(rvmsg->objectId,true);
 		// If object is locked it means object might have been moved to some other owner
-		if ((rObj->getVersion() == rvmsg->objectVersion) && !LockTable::isLocked(rvmsg->objectId, 0)) {
+		if ((rObj->getVersion() == rvmsg->objectVersion) && !LockTable::isLocked(rvmsg->objectId, rvmsg->objectVersion, rvmsg->txnId)) {
+			LOG_DEBUG("RVM : Validation passed for %s version %d\n", rvmsg->objectId.c_str(), rvmsg->objectVersion);
 			rvmsg->validationResponse = true;
 		} else {
+			LOG_DEBUG("RVM : Validation failed for %s version %d\n", rvmsg->objectId.c_str(), rvmsg->objectVersion);
 			rvmsg->validationResponse = false;
+		}
+		rvmsg->request = false;
+		if (msg.isCallback) {
+			if (!msg.isCallbackSupported) {
+				NetworkManager::sendMessage(msg.fromNode, msg);
+			}
 		}
 	}else {
 		HyflowMessageFuture* cbfmsg = MessageMaps::getMessageFuture(msg.msg_id,
@@ -79,6 +88,8 @@ void ReadValidationMsg::serialize(Archive & ar, const unsigned int version) {
 	ar & validationResponse;
 	ar & objectId;
 	ar & objectVersion;
+	ar & request;
+	ar & txnId;
 }
 
 void ReadValidationMsg::serializationTest(){
@@ -86,7 +97,7 @@ void ReadValidationMsg::serializationTest(){
 	std::ofstream ofs("/tmp/ObjectTrackerMsgReq", std::ios::out);
 
 	// create class instance
-	ReadValidationMsg res("3-0",5);
+	ReadValidationMsg res("3-0", 5, true, 0);
 
 	// save data to archive
 	{

@@ -35,6 +35,10 @@ class LockAccessMsg: public vt_dstm::BaseMessage {
 	 * Object version
 	 */
 	int32_t objVersion;
+	/*
+	 * To save the transaction Id who has requested the lock
+	 */
+	unsigned long long txnId;
 
 	friend class boost::serialization::access;
 
@@ -47,9 +51,10 @@ public:
 		request = false;
 		objectId = "x-x";
 		objVersion = -1;
+		txnId = 0;
 	};
 
-	LockAccessMsg(std::string objId, int32_t obVer);
+	LockAccessMsg(std::string objId, int32_t obVer, unsigned long long txnId);
 	virtual ~LockAccessMsg();
 
 	std::string getObjectId() const;
@@ -63,6 +68,14 @@ public:
 	void setLocked(bool locked);
 	bool isRequest() const;
 	void setRequest(bool request);
+
+	unsigned long long getTxnId() const {
+		return txnId;
+	}
+
+	void setTxnId(unsigned long long txnId) {
+		this->txnId = txnId;
+	}
 }
 ;
 

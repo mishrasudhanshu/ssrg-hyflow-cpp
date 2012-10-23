@@ -30,11 +30,12 @@ HyflowMessageFuture::~HyflowMessageFuture() {
 			Logger::fatal("%s\n",s.c_str());
 			throw s;
 		}
-		if (dataResponse) {
-			HyflowObject* saveData = dataResponse;
-			dataResponse = NULL;
-			delete saveData;
-		}
+//		if (dataResponse) {
+//			HyflowObject* saveData = dataResponse;
+//			dataResponse = NULL;
+//			// TODO: cleanup: Object is deleted on context destructor call
+//			delete saveData;
+//		}
 	}
 }
 

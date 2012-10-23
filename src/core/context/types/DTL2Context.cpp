@@ -10,6 +10,7 @@
 #include "../../directory/DirectoryManager.h"
 #include "../../../util/messages/HyflowMessageFuture.h"
 #include "../../../util/messages/types/LockAccessMsg.h"
+#include "../../../util/messages/types/ReadValidationMsg.h"
 #include "../../../util/networking/NetworkManager.h"
 #include "../../../util/logging/Logger.h"
 #include "../LockTable.h"
@@ -25,30 +26,51 @@ DTL2Context::DTL2Context() {
 }
 
 DTL2Context::~DTL2Context() {
-	//TODO: Adjust interfaces: currently objects are deleted by object future
-//	for (std::map<std::string, HyflowObject*>::iterator i= readMap.begin(); i != readMap.end(); i++ ) {
-//		if (i->second) delete i->second;
-//	}
-//
-//	for (std::map<std::string, HyflowObject*>::iterator i= writeMap.begin(); i != writeMap.end(); i++ ) {
-//		if (i->second) delete i->second;
-//	}
-//
-//	for (std::map<std::string, HyflowObject*>::iterator i= publishMap.begin(); i != publishMap.end(); i++ ) {
-//		if (i->second) delete i->second;
-//	}
-//
-//	for (std::map<std::string, HyflowObject*>::iterator i= deleteMap.begin(); i != deleteMap.end(); i++ ) {
-//		if (i->second) delete i->second;
-//	}
+	//Delete all heap objects created temporarily
+	for (std::map<std::string, HyflowObject*>::iterator i= readMap.begin(); i != readMap.end(); i++ ) {
+		if (i->second) {
+			HyflowObject* saveData = i->second;
+			i->second = NULL;
+			delete saveData;
+		}
+	}
+
+	for (std::map<std::string, HyflowObject*>::iterator i= writeMap.begin(); i != writeMap.end(); i++ ) {
+		if (i->second){
+			HyflowObject* saveData = i->second;
+			i->second = NULL;
+			delete saveData;
+		}
+	}
+
+	for (std::map<std::string, HyflowObject*>::iterator i= publishMap.begin(); i != publishMap.end(); i++ ) {
+		if (i->second) {
+			HyflowObject* saveData = i->second;
+			i->second = NULL;
+			delete saveData;
+		}
+	}
+
+	for (std::map<std::string, HyflowObject*>::iterator i= deleteMap.begin(); i != deleteMap.end(); i++ ) {
+		if (i->second) {
+			HyflowObject* saveData = i->second;
+			i->second = NULL;
+			delete saveData;
+		}
+	}
 }
 
+/*
+ * Add the given object copy in read set. No need to create a copy for read set as
+ * it will not manipulate the original object
+ */
 void DTL2Context::beforeReadAccess(HyflowObject *obj) {
 	// Perform early validation step : Not required though
 	forward(highestSenderClock);
 
 	std::string id = obj->getId();
-	// check if object is already part of read set
+
+	// check if object is already part of read set, if not add to read set
 	std::map<std::string, HyflowObject*>::iterator i = readMap.find(id);
 	if ( i == readMap.end())
 		readMap[id] = obj;
@@ -85,9 +107,7 @@ void DTL2Context::forward(int senderClock) {
 }
 
 HyflowObject* DTL2Context::onReadAccess(HyflowObject *obj){
-	// Verify in write set whether we are recent value
-	// Actually current following is not required as both set points to same
-	// object in local cache, still will be useful in nesting etc.
+	// Verify in write set whether we have recent value
 	std::string id = obj->getId();
 	std::map<std::string, HyflowObject*>::iterator i = writeMap.find(id);
 	if ( i == writeMap.end())
@@ -95,13 +115,18 @@ HyflowObject* DTL2Context::onReadAccess(HyflowObject *obj){
 	return writeMap.at(id);
 }
 
+/*
+ * Save the copy of object in write set and return copy to transaction to manipulate
+ */
 HyflowObject* DTL2Context::onWriteAccess(HyflowObject *obj){
 	if (getStatus() != TXN_ABORTED) {
 		std::string id = obj->getId();
+		HyflowObject *writeSetCopy = NULL;
 		std::map<std::string, HyflowObject*>::iterator i = writeMap.find(id);
 		if ( i == writeMap.end()) {
-			writeMap[id] = obj;
-			return obj;
+			obj->getClone(&writeSetCopy);
+			writeMap[id] = writeSetCopy;
+			return writeSetCopy;
 		}
 		return writeMap.at(id);
 	}
@@ -112,13 +137,13 @@ bool DTL2Context::lockObject(HyflowObject* obj) {
 	int myNode = NetworkManager::getNodeId();
 	if (myNode == obj->getOwnerNode()) {
 		LOG_DEBUG("DTL : Local Lock available for %s\n", obj->getId().c_str());
-		return LockTable::tryLock(obj->getId(), obj->getVersion());
+		return LockTable::tryLock(obj->getId(), obj->getVersion(), txnId);
 	}else {
 		const std::string & objId = obj->getId();
 		HyflowMessageFuture mFu;
 		HyflowMessage hmsg(objId);
 		hmsg.init(MSG_LOCK_ACCESS, true);
-		LockAccessMsg lamsg(objId, obj->getVersion());
+		LockAccessMsg lamsg(objId, obj->getVersion(), txnId);
 		lamsg.setLock(true);
 		lamsg.setRequest(true);
 		hmsg.setMsg(&lamsg);
@@ -137,12 +162,12 @@ void  DTL2Context::unlockObjectOnFail(HyflowObject *obj) {
 	int myNode = NetworkManager::getNodeId();
 	if (myNode == obj->getOwnerNode()) {
 		LOG_DEBUG("DTL : Local Unlock available for %s\n", obj->getId().c_str());
-		LockTable::tryUnlock(obj->getId(), obj->getVersion());
+		LockTable::tryUnlock(obj->getId(), obj->getVersion(), txnId);
 	}else {
 		const std::string & objId = obj->getId();
 		HyflowMessage hmsg(objId);
 		hmsg.init(MSG_LOCK_ACCESS, false);
-		LockAccessMsg lamsg(objId, obj->getVersion());
+		LockAccessMsg lamsg(objId, obj->getVersion(), txnId);
 		lamsg.setLock(false);
 		lamsg.setRequest(true);
 		hmsg.setMsg(&lamsg);
@@ -158,12 +183,37 @@ void  DTL2Context::unlockObjectOnFail(HyflowObject *obj) {
  */
 void DTL2Context::unlockObject(HyflowObject* obj) {
 	if (obj->getOldOwnerNode() == obj->getOwnerNode()) {
-		LockTable::tryUnlock(obj->getId(), obj->getOldHyVersion());
+		LockTable::tryUnlock(obj->getId(), obj->getOldHyVersion(), txnId);
 	}
 }
 
 bool DTL2Context::validateObject(HyflowObject* obj)	{
-	return !(obj->getVersion() > tnxClock);
+	/*
+	 * Here we don't try to get the object owner first and then compare object
+	 * version. We send the validation request to owner known to object itself.
+	 * Even if object owner is changed, we will either see locked object or
+	 * update object version, allowing us to rollback transaction
+	 */
+	int owner = obj->getOwnerNode();
+	if (owner == NetworkManager::getNodeId()) {
+		// If I am the owner verify the object state locally
+		HyflowObject* currentObject  = DirectoryManager::getObjectLocally(obj->getId(), false);
+		if ( (obj->getVersion() == currentObject->getVersion()) && !LockTable::isLocked(obj->getId(), obj->getVersion(), txnId)) {
+			return true;
+		}
+		return false;
+	}else {
+		HyflowMessageFuture mFu;
+		HyflowMessage hmsg(obj->getId());
+		hmsg.msg_t = MSG_READ_VALIDATE;
+		ReadValidationMsg rvmsg(obj->getId(), obj->getVersion(), true, txnId);
+		hmsg.setMsg(&rvmsg);
+		LOG_DEBUG("DTL : Requesting validation for %s from %d of version %d\n", obj->getId().c_str(), owner, obj->getVersion());
+		NetworkManager::sendCallbackMessage(owner, hmsg, mFu);
+		mFu.waitOnFuture();
+		return mFu.isBoolResponse();
+	}
+	return false;
 }
 
 void DTL2Context::commit(){
@@ -185,7 +235,7 @@ void DTL2Context::commit(){
 			}
 			lockedObjects.push_back(wi->second);
 		}
-
+		LOG_DEBUG("Commit : Lock Acquisition complete, verifying read Set\n");
 		// Perform context
 		forward(highestSenderClock);
 		// Try to verify read versions of all the objects.

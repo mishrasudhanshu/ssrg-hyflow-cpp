@@ -20,12 +20,13 @@
 
 namespace vt_dstm {
 
-LockAccessMsg::LockAccessMsg(std::string objId, int32_t obVer) {
+LockAccessMsg::LockAccessMsg(std::string objId, int32_t obVer, unsigned long long tid) {
 	lock = false;
 	locked = false;
 	request = false;
 	objectId = objId;
 	objVersion = obVer;
+	txnId = tid;
 }
 
 template<class Archive>
@@ -36,6 +37,7 @@ void LockAccessMsg::serialize(Archive & ar, const unsigned int version) {
 	ar & request;
 	ar & objectId;
 	ar & objVersion;
+	ar & txnId;
 }
 
 std::string LockAccessMsg::getObjectId() const {
@@ -50,9 +52,9 @@ void LockAccessMsg::lockAccessHandler(HyflowMessage& m) {
 	if (lmsg->request) {
 		LOG_DEBUG ("Got a Lock request: %s for %s from %d for version%d\n", lmsg->lock?"lock":"unlock", lmsg->objectId.c_str(), m.fromNode, lmsg->objVersion);
 		if (lmsg->lock)
-			lmsg->locked = LockTable::tryLock(lmsg->objectId, lmsg->objVersion);
+			lmsg->locked = LockTable::tryLock(lmsg->objectId, lmsg->objVersion, lmsg->txnId);
 		else
-			LockTable::tryUnlock(lmsg->objectId,  lmsg->objVersion);
+			LockTable::tryUnlock(lmsg->objectId,  lmsg->objVersion, lmsg->txnId);
 
 		lmsg->setRequest(false);
 		/* If message as callback and network library don't support the callback, we need to reply manually*/
@@ -108,7 +110,7 @@ void LockAccessMsg::serializationTest(){
 	std::ofstream ofs("/tmp/ObjectTrackerMsgReq", std::ios::out);
 
 	// create class instance
-	LockAccessMsg res("3-0",0);
+	LockAccessMsg res("3-0",0, 0);
 
 	// save data to archive
 	{
