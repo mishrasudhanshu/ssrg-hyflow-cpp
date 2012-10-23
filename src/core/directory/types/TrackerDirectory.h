@@ -19,8 +19,8 @@
 namespace vt_dstm {
 
 class TrackerDirectory: public vt_dstm::HyflowDirectory {
-	static tbb::concurrent_hash_map<std::string, int> directory;
-	static LocalCacheTbb local;
+	tbb::concurrent_hash_map<std::string, int>* directory;
+	LocalCacheTbb* local;
 	void updateObjectToLocal(HyflowObject* obj);
 	void updateObjectToDirectory(HyflowObject* obj);
 	int getTracker(std::string & objectId);

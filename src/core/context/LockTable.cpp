@@ -15,7 +15,7 @@ int32_t LockTable::REMOTE = 1 << 31;
 int32_t LockTable::LOCK = 1 << 30;
 int32_t LockTable::UNLOCK = ~LOCK;
 
-tbb::concurrent_hash_map<std::string, LockValue>	LockTable::lockmap;
+tbb::concurrent_hash_map<std::string, LockValue> LockTable::lockmap(16384);
 
 LockTable::LockTable() {}
 

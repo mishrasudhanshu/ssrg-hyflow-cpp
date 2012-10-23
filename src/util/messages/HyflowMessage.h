@@ -47,6 +47,7 @@ class HyflowMessage {
         ar & forObjectId;
     }
     std::string forObjectId;
+    static bool isMessageInit;
 public:
 	int size;
 	HyMessageType msg_t;

@@ -14,16 +14,18 @@
 
 namespace vt_dstm {
 class MessageMaps {
-	static tbb::concurrent_hash_map<HyMessageType, void (*)(HyflowMessage &)> handlerMap;
-	static tbb::concurrent_hash_map<std::string, HyflowMessageFuture*> trackerCallbackMap;
-	static tbb::concurrent_hash_map<std::string, HyflowMessageFuture*> objCallbackMap;
-	static tbb::concurrent_hash_map<std::string, HyflowMessageFuture*> syncCallbackMap;
-	static tbb::concurrent_hash_map<std::string, HyflowMessageFuture*> lockCallbackMap;
-	static tbb::concurrent_hash_map<std::string, HyflowMessageFuture*> readValidCallbackMap;
-	static tbb::concurrent_hash_map<std::string, HyflowMessageFuture*> registerCallbackMap;
-public:
+	tbb::concurrent_hash_map<HyMessageType, void (*)(HyflowMessage &)>* handlerMap;
+	tbb::concurrent_hash_map<std::string, HyflowMessageFuture*>* trackerCallbackMap;
+	tbb::concurrent_hash_map<std::string, HyflowMessageFuture*>* objCallbackMap;
+	tbb::concurrent_hash_map<std::string, HyflowMessageFuture*>* syncCallbackMap;
+	tbb::concurrent_hash_map<std::string, HyflowMessageFuture*>* lockCallbackMap;
+	tbb::concurrent_hash_map<std::string, HyflowMessageFuture*>* readValidCallbackMap;
+	tbb::concurrent_hash_map<std::string, HyflowMessageFuture*>* registerCallbackMap;
+	static MessageMaps* instance;
 	MessageMaps();
+public:
 	virtual ~MessageMaps();
+	static void MessageMapsInit();
 
 	static void registerHandler(HyMessageType msg_t, void (*handlerFunc)(HyflowMessage &));
 	static void(*getMessageHandler(HyMessageType type))(HyflowMessage & hmsg);

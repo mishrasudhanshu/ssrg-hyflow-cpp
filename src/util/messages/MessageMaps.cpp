@@ -10,29 +10,42 @@
 #include "../logging/Logger.h"
 
 namespace vt_dstm {
+MessageMaps* MessageMaps::instance = NULL;
 
-tbb::concurrent_hash_map<HyMessageType, void (*)(HyflowMessage &)> MessageMaps::handlerMap;
-tbb::concurrent_hash_map<std::string, HyflowMessageFuture *> MessageMaps::trackerCallbackMap;
-tbb::concurrent_hash_map<std::string, HyflowMessageFuture *> MessageMaps::objCallbackMap;
-tbb::concurrent_hash_map<std::string, HyflowMessageFuture *> MessageMaps::syncCallbackMap;
-tbb::concurrent_hash_map<std::string, HyflowMessageFuture *> MessageMaps::lockCallbackMap;
-tbb::concurrent_hash_map<std::string, HyflowMessageFuture *> MessageMaps::readValidCallbackMap;
-tbb::concurrent_hash_map<std::string, HyflowMessageFuture *> MessageMaps::registerCallbackMap;
+MessageMaps::MessageMaps() {
+	handlerMap = new tbb::concurrent_hash_map<HyMessageType, void (*)(HyflowMessage &)>(16);
+	trackerCallbackMap = new tbb::concurrent_hash_map<std::string, HyflowMessageFuture *>(1024);
+	objCallbackMap = new tbb::concurrent_hash_map<std::string, HyflowMessageFuture *>(1024);
+	syncCallbackMap = new tbb::concurrent_hash_map<std::string, HyflowMessageFuture *>(16);
+	lockCallbackMap = new tbb::concurrent_hash_map<std::string, HyflowMessageFuture *>(1024);
+	readValidCallbackMap = new tbb::concurrent_hash_map<std::string, HyflowMessageFuture *>(1024);
+	registerCallbackMap = new tbb::concurrent_hash_map<std::string, HyflowMessageFuture *>(1024);
+}
 
-MessageMaps::MessageMaps() {}
-
-MessageMaps::~MessageMaps() {}
+MessageMaps::~MessageMaps() {
+	delete handlerMap;
+	delete trackerCallbackMap;
+	delete objCallbackMap;
+	delete syncCallbackMap;
+	delete lockCallbackMap;
+	delete readValidCallbackMap;
+	delete registerCallbackMap;
+}
 
 void MessageMaps::registerHandler(HyMessageType msg_t, void (*handlerFunc)(HyflowMessage &)){
 	tbb::concurrent_hash_map<HyMessageType, void (*)(HyflowMessage &)>::accessor a;
-	handlerMap.insert(a, msg_t);
+	instance->handlerMap->insert(a, msg_t);
 	a->second = handlerFunc;
 }
 
+void MessageMaps::MessageMapsInit() {
+	if(!instance)
+		instance = new MessageMaps();
+}
 
 void (*MessageMaps::getMessageHandler(HyMessageType msg_t))(HyflowMessage & hmsg) {
 	tbb::concurrent_hash_map<HyMessageType, void (*)(HyflowMessage &)>::const_accessor a;
-	if (handlerMap.find(a,msg_t)) {
+	if (instance->handlerMap->find(a,msg_t)) {
 		return a->second;
 	} else{
 		throw "No Handler found for this message type " + msg_t ;
@@ -47,42 +60,42 @@ void MessageMaps::registerMessageFuture(const std::string & m_id, HyMessageType 
 	switch (t)
 	{
 	case MSG_TRK_OBJECT:
-		if (!trackerCallbackMap.insert(a, m_id)) {
+		if (!instance->trackerCallbackMap->insert(a, m_id)) {
 			Logger::fatal("TrackerCallback already exist with same m_id %s\n",m_id.c_str());
 		}else {
 			a->second = &fu;
 		}
 		break;
 	case MSG_ACCESS_OBJECT:
-		if (!objCallbackMap.insert(a, m_id)) {
+		if (!instance->objCallbackMap->insert(a, m_id)) {
 			Logger::fatal("ObjectCallback already exist with same m_id %s\n",m_id.c_str());
 		}else {
 			a->second = &fu;
 		}
 		break;
 	case MSG_GRP_SYNC:
-		if (!syncCallbackMap.insert(a, m_id)) {
+		if (!instance->syncCallbackMap->insert(a, m_id)) {
 			Logger::fatal("SyncCallback already exist with same m_id %s\n",m_id.c_str());
 		}else {
 			a->second = &fu;
 		}
 		break;
 	case MSG_LOCK_ACCESS:
-		if (!lockCallbackMap.insert(a, m_id)) {
+		if (!instance->lockCallbackMap->insert(a, m_id)) {
 			Logger::fatal("LockCallback already exist with same m_id %s\n",m_id.c_str());
 		}else {
 			a->second = &fu;
 		}
 		break;
 	case MSG_READ_VALIDATE:
-		if (!readValidCallbackMap.insert(a, m_id)) {
+		if (!instance->readValidCallbackMap->insert(a, m_id)) {
 			Logger::fatal("ReadValidateCallback already exist with same m_id %s\n",m_id.c_str());
 		}else {
 			a->second = &fu;
 		}
 		break;
 	case MSG_REGISTER_OBJ:
-		if (!registerCallbackMap.insert(a, m_id)) {
+		if (!instance->registerCallbackMap->insert(a, m_id)) {
 			Logger::fatal("RegisterCallback already exist with same m_id %s\n",m_id.c_str());
 		}else {
 			a->second = &fu;
@@ -103,42 +116,42 @@ HyflowMessageFuture* MessageMaps::getMessageFuture(const std::string & m_id, HyM
 	switch (t)
 	{
 	case MSG_TRK_OBJECT:
-		if (trackerCallbackMap.find(a, m_id)) {
+		if (instance->trackerCallbackMap->find(a, m_id)) {
 			future = a->second;
 		}else {
 			Logger::fatal("Future don't exist for trackerCallbackMap m_id %s\n",m_id.c_str());
 		}
 		break;
 	case MSG_ACCESS_OBJECT:
-		if (objCallbackMap.find(a, m_id)) {
+		if (instance->objCallbackMap->find(a, m_id)) {
 			future = a->second;
 		}else {
 			Logger::fatal("Future don't exist for ObjectCallbackMap m_id %s\n",m_id.c_str());
 		}
 		break;
 	case MSG_GRP_SYNC:
-		if (syncCallbackMap.find(a, m_id)) {
+		if (instance->syncCallbackMap->find(a, m_id)) {
 			future = a->second;
 		}else {
 			Logger::fatal("Future don't exist for SyncCallbackMap m_id %s\n",m_id.c_str());
 		}
 		break;
 	case MSG_LOCK_ACCESS:
-		if (lockCallbackMap.find(a, m_id)) {
+		if (instance->lockCallbackMap->find(a, m_id)) {
 			future = a->second;
 		}else {
 			Logger::fatal("Future don't exist for LockCallbackMap m_id %s\n",m_id.c_str());
 		}
 		break;
 	case MSG_READ_VALIDATE:
-		if (readValidCallbackMap.find(a, m_id)) {
+		if (instance->readValidCallbackMap->find(a, m_id)) {
 			future = a->second;
 		}else {
 			Logger::fatal("Future don't exist for ReadValidCallbackMap m_id %s\n",m_id.c_str());
 		}
 		break;
 	case MSG_REGISTER_OBJ:
-		if (registerCallbackMap.find(a, m_id)) {
+		if (instance->registerCallbackMap->find(a, m_id)) {
 			future = a->second;
 		}else {
 			Logger::fatal("Future don't exist for RegisterCallbackMap m_id %s\n",m_id.c_str());
@@ -156,27 +169,27 @@ HyflowMessageFuture* MessageMaps::getMessageFuture(const std::string & m_id, HyM
 void MessageMaps::removeMessageFuture(const std::string & m_id, HyMessageType t) {
 	switch(t){
 	case MSG_TRK_OBJECT:
-		if (!trackerCallbackMap.erase(m_id))
+		if (!instance->trackerCallbackMap->erase(m_id))
 			Logger::fatal("Tracker Object already deleted for m_id %s\n",m_id.c_str());
 		break;
 	case MSG_ACCESS_OBJECT:
-		if (!objCallbackMap.erase(m_id))
+		if (!instance->objCallbackMap->erase(m_id))
 			Logger::fatal("Object Access already deleted for m_id %s\n",m_id.c_str());
 		break;
 	case MSG_GRP_SYNC:
-		if (!syncCallbackMap.erase(m_id))
+		if (!instance->syncCallbackMap->erase(m_id))
 			Logger::fatal("Sync Callback already deleted for m_id %s\n",m_id.c_str());
 		break;
 	case MSG_LOCK_ACCESS:
-		if(!lockCallbackMap.erase(m_id))
+		if(!instance->lockCallbackMap->erase(m_id))
 			Logger::fatal("Lock Callback already deleted for m_id %s\n",m_id.c_str());
 		break;
 	case MSG_READ_VALIDATE:
-		if (!readValidCallbackMap.erase(m_id))
+		if (!instance->readValidCallbackMap->erase(m_id))
 			Logger::fatal("Read Validate already deleted for m_id %s\n",m_id.c_str());
 		break;
 	case MSG_REGISTER_OBJ:
-		if(!registerCallbackMap.erase(m_id))
+		if(!instance->registerCallbackMap->erase(m_id))
 			Logger::fatal("Register Callback already deleted for m_id %s\n",m_id.c_str());
 		break;
 	case MSG_TYPE_INVALID:

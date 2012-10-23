@@ -5,6 +5,9 @@
  *      Author: mishras[at]vt.edu
  */
 
+#include <cstdlib>
+#include "../../../util/Definitions.h"
+#include "../../../util/parser/ConfigFile.h"
 #include "TrackerDirectory.h"
 #include "../../../util/networking/NetworkManager.h"
 #include "../../../util/messages/types/ObjectTrackerMsg.h"
@@ -15,12 +18,21 @@
 #include "../../context/ContextManager.h"
 
 namespace vt_dstm {
-tbb::concurrent_hash_map<std::string, int> TrackerDirectory::directory;
-LocalCacheTbb TrackerDirectory::local;
+//tbb::concurrent_hash_map<std::string, int> TrackerDirectory::directory;
+//LocalCacheTbb TrackerDirectory::local;
 
-TrackerDirectory::TrackerDirectory() {}
+TrackerDirectory::TrackerDirectory() {
+	int objectsCount = atoi(ConfigFile::Value(OBJECTS).c_str());
+	int nodeCount = NetworkManager::getNodeCount();
+	int directorySize = objectsCount*2/nodeCount;
+	directory = new tbb::concurrent_hash_map<std::string, int>(directorySize);
+	local = new LocalCacheTbb(objectsCount);
+}
 
-TrackerDirectory::~TrackerDirectory() {}
+TrackerDirectory::~TrackerDirectory() {
+	delete directory;
+	delete local;
+}
 
 int TrackerDirectory::getTracker(std::string & objectId) {
 	int end = objectId.find('-');
@@ -152,7 +164,7 @@ void TrackerDirectory::registerObjectWait(HyflowObject* object, unsigned long lo
 
 void TrackerDirectory::registerObjectLocally(std::string & objId, int owner, unsigned long long txn) {
 	tbb::concurrent_hash_map<std::string, int>::accessor a;
-	directory.insert(a,objId);
+	directory->insert(a,objId);
 	a->second = owner;
 }
 
@@ -172,23 +184,23 @@ void TrackerDirectory::unregisterObject(HyflowObject* object, unsigned long long
 
 // TODO: Proper clean up will require object to be deleted from all local caches
 void TrackerDirectory::unregisterObjectLocally(std::string & objId, unsigned long long txn) {
-	directory.erase(objId);
+	directory->erase(objId);
 }
 
 /*
  * This function returns a heap copy of object
  */
 HyflowObject* TrackerDirectory::getObjectLocally(std::string & id, bool rw){
-	return local.getObject(id);
+	return local->getObject(id);
 }
 
 void TrackerDirectory::updateObjectLocally(HyflowObject* obj){
-	local.updateObject(obj);
+	local->updateObject(obj);
 }
 
 int TrackerDirectory::getObjectLocation(std::string & id){
 	tbb::concurrent_hash_map<std::string, int>::const_accessor a;
-	if (directory.find(a,id)) {
+	if (directory->find(a,id)) {
 		return a->second;
 	} else {
 		throw "No Object Found!!";
@@ -197,6 +209,6 @@ int TrackerDirectory::getObjectLocation(std::string & id){
 }
 
 int32_t TrackerDirectory::getObjectVersion(std::string & objId) {
-	return local.getObjectVersion(objId);
+	return local->getObjectVersion(objId);
 }
 } /* namespace vt_dstm */

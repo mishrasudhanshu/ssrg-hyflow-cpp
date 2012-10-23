@@ -15,7 +15,6 @@
 namespace vt_dstm {
 
 class MessageHandler {
-
 public:
 	MessageHandler();
 	virtual ~MessageHandler();

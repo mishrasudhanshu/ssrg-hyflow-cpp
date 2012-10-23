@@ -16,10 +16,15 @@
 namespace vt_dstm {
 
 class LocalCacheTbb {
-	tbb::concurrent_hash_map<std::string, HyflowObject*> map;
+	tbb::concurrent_hash_map<std::string, HyflowObject*>* map;
 public:
-	LocalCacheTbb() {}
-	virtual ~LocalCacheTbb() {}
+	LocalCacheTbb(int cacheSize) {
+		map = new tbb::concurrent_hash_map<std::string, HyflowObject*>(cacheSize);
+	}
+
+	virtual ~LocalCacheTbb() {
+		delete map;
+	}
 
 	/*
 	 * Creates new copy of object on heap and saves its pointer in cache
@@ -30,7 +35,7 @@ public:
 		object->getClone(&objectCopy);
 		{
 			tbb::concurrent_hash_map<std::string, HyflowObject*>::accessor a;
-			if (!map.insert(a,objId)) {
+			if (!map->insert(a,objId)) {
 				HyflowObject *saveObject = a->second;
 				a->second = NULL;
 				delete saveObject;
@@ -47,7 +52,7 @@ public:
 		HyflowObject* obj=NULL;
 		{
 			tbb::concurrent_hash_map<std::string, HyflowObject*>::const_accessor a;
-			if (map.find(a,objId)) {
+			if (map->find(a,objId)) {
 				obj = a->second;
 				if(!obj) {
 					throw "NULL Object Found!!";
@@ -67,7 +72,7 @@ public:
 	int32_t  getObjectVersion(const std::string & objId) {
 		HyflowObject* obj=NULL;
 		tbb::concurrent_hash_map<std::string, HyflowObject*>::const_accessor a;
-		if (map.find(a,objId)) {
+		if (map->find(a,objId)) {
 			obj = a->second;
 			if(!obj) {
 				throw "NULL Object Found!!";

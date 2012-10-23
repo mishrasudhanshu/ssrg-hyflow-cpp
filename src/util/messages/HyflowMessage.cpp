@@ -23,6 +23,7 @@
 
 namespace vt_dstm{
 
+bool HyflowMessage::isMessageInit = false;
 /*
  * By Default each message send is a callback, and we assume the
  * callback is supported in the library. if no reply required
@@ -48,12 +49,16 @@ HyflowMessage::HyflowMessage(const std::string & forObjId){
 }
 
 void HyflowMessage::registerMessageHandlers()	{
-	MessageMaps::registerHandler(MSG_GRP_SYNC, &SynchronizeMsg::synchronizeHandler);
-	MessageMaps::registerHandler(MSG_TRK_OBJECT, &ObjectTrackerMsg::objectTrackerHandler);
-	MessageMaps::registerHandler(MSG_ACCESS_OBJECT, &ObjectAccessMsg::objectAccessHandler);
-	MessageMaps::registerHandler(MSG_REGISTER_OBJ, &RegisterObjectMsg::registerObjectHandler);
-	MessageMaps::registerHandler(MSG_LOCK_ACCESS, &LockAccessMsg::lockAccessHandler);
-	MessageMaps::registerHandler(MSG_READ_VALIDATE, &ReadValidationMsg::readValidationHandle);
+	if (!isMessageInit) {
+		MessageMaps::MessageMapsInit();
+		MessageMaps::registerHandler(MSG_GRP_SYNC, &SynchronizeMsg::synchronizeHandler);
+		MessageMaps::registerHandler(MSG_TRK_OBJECT, &ObjectTrackerMsg::objectTrackerHandler);
+		MessageMaps::registerHandler(MSG_ACCESS_OBJECT, &ObjectAccessMsg::objectAccessHandler);
+		MessageMaps::registerHandler(MSG_REGISTER_OBJ, &RegisterObjectMsg::registerObjectHandler);
+		MessageMaps::registerHandler(MSG_LOCK_ACCESS, &LockAccessMsg::lockAccessHandler);
+		MessageMaps::registerHandler(MSG_READ_VALIDATE, &ReadValidationMsg::readValidationHandle);
+		isMessageInit = true;
+	}
 }
 
 template<class Archive>

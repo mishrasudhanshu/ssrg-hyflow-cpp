@@ -1,5 +1,8 @@
 src/core/directory/types/TrackerDirectory.d: \
  ../src/core/directory/types/TrackerDirectory.cpp \
+ ../src/core/directory/types/../../../util/Definitions.h \
+ ../src/core/directory/types/../../../util/parser/ConfigFile.h \
+ ../src/core/directory/types/../../../util/parser/../Definitions.h \
  ../src/core/directory/types/TrackerDirectory.h \
  ../src/core/directory/types/../HyflowDirectory.h \
  ../src/core/directory/types/../../HyflowObject.h \
@@ -32,6 +35,12 @@ src/core/directory/types/TrackerDirectory.d: \
  ../src/core/directory/types/../../context/../exceptions/types/TransactionException.h \
  ../src/core/directory/types/../../context/../exceptions/types/../HyflowException.h \
  ../src/core/directory/types/../../context/../../util/concurrent/ConcurrentHashMap.h
+
+../src/core/directory/types/../../../util/Definitions.h:
+
+../src/core/directory/types/../../../util/parser/ConfigFile.h:
+
+../src/core/directory/types/../../../util/parser/../Definitions.h:
 
 ../src/core/directory/types/TrackerDirectory.h:
 
