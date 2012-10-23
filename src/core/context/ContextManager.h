@@ -17,7 +17,7 @@
 namespace vt_dstm {
 
 class ContextManager {
-	static tbb::concurrent_hash_map<unsigned long long, HyflowContext*> contextMap;
+	static tbb::concurrent_hash_map<unsigned long long, HyflowContext*>* contextMap;
 
 	static tbb::atomic<int> localNodeClock;
 	static unsigned long long createTid();

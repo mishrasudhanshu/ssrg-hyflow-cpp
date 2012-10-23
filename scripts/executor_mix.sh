@@ -11,15 +11,15 @@ fi
 
 echo "---Mix Config---"
 echo "txns=$txns, objs=$objs, reads 0..100..20 threads 1..8, nodes=1..24" 
-for read in {0..100..20}
+for exp in {1..3} 
 do
     echo "For reads = $read"
-    for nodes in 1 2 4
+    for read in {0..100..20}
     do
         echo "    For nodes = $nodes"
         for threads in 1 2 4 
         do
-            for exp in {1..3} 
+            for nodes in 1 2 4
             do
                 echo "        For experiment $exp, read $read, threads $threads and nodes $nodes"
                 for (( nodeId=0 ; nodeId < $nodes ; nodeId++ ))

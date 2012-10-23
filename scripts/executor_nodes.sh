@@ -12,10 +12,10 @@ fi
 
 echo "---Nodes Config---"
 echo "txns=$txns, objs=$objs, reads 0..100..20 threads 1, nodes=1..24" 
-for read in {0..100..20}
+for nodes in 1 2 4 8 12
 do
     echo "For reads = $read"
-    for nodes in 1 2 4 8 12
+    for read in {0..100..20}
     do
         echo "    For nodes = $nodes"
         for exp in {1..3} 

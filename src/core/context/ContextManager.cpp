@@ -18,7 +18,7 @@
 
 namespace vt_dstm {
 
-tbb::concurrent_hash_map<unsigned long long, HyflowContext*> ContextManager::contextMap;
+tbb::concurrent_hash_map<unsigned long long, HyflowContext*>* ContextManager::contextMap;
 tbb::atomic<int> ContextManager::localNodeClock;
 
 ContextManager::ContextManager() {}
@@ -28,6 +28,7 @@ ContextManager::~ContextManager() {}
 void ContextManager::ContextManagerInit() {
 // LESSON: As version starts from 0, even after first commit updated version will be 0 i.e. txnClock
 	localNodeClock.store(1);
+	contextMap = new tbb::concurrent_hash_map<unsigned long long, HyflowContext*>(1024);
 }
 
 //TODO: create unique transaction Id, independent of time
@@ -60,13 +61,13 @@ void ContextManager::cleanInstance(HyflowContext **c) {
 
 void ContextManager::registerContext(HyflowContext *c) {
 	tbb::concurrent_hash_map<unsigned long long, HyflowContext*>::accessor a;
-	if (!contextMap.insert(a,c->getTxnId()))
+	if (!contextMap->insert(a,c->getTxnId()))
 		throw "Context with same id already exist"+c->getTxnId();
 	a->second = c;
 }
 
 void ContextManager::unregisterContext(HyflowContext *c) {
-	if (!contextMap.erase(c->getTxnId()))
+	if (!contextMap->erase(c->getTxnId()))
 		throw "Context already Unregistered"+c->getTxnId();
 }
 
@@ -74,7 +75,7 @@ HyflowContext* ContextManager::findContext(const unsigned long long tid) {
 	HyflowContext* context = NULL;
 	{
 		tbb::concurrent_hash_map<unsigned long long, HyflowContext*>::const_accessor a;
-		if (contextMap.find(a,tid)) {
+		if (contextMap->find(a,tid)) {
 			context = a->second;
 			if(!context) {
 				throw "NULL Context Found!!";

@@ -11,13 +11,14 @@ fi
 
 echo "---Box Config---"
 echo "nodeId=$nodeId, txns=$txns, objs=$objs, reads 0..100..20 threads 1...24" 
-for read in {0..100..20}
+
+for exp in {1..3}
 do
     echo "For reads = $read"
-    for threads in 1 2 4 8 12 16
+    for read in {0..100..20}
     do
         echo "    For threads = $threads"
-        for exp in {1..3}
+       	for threads in 1 2 4 8 12 16
         do
             echo "        For experiment $exp, read $read and threads $threads"
             nodes=1 objects=$objs transactions=$txns nodeId=0 reads=$read threads=$threads $build/ssrg-hyflow-cpp

@@ -98,7 +98,8 @@ void DTL2Context::forward(int senderClock) {
 			if ( version > senderClock) {
 				LOG_DEBUG("Forward : Aborting version %d < senderClock %d\n", version, senderClock);
 //				abort();
-				throw *(new TransactionException("Forward : Aborting on version "));
+				TransactionException forwardingFailed("Forward : Aborting on version\n");
+				throw forwardingFailed;
 			}
 		}
 		LOG_DEBUG("Forward : context from %d to %d\n", tnxClock, senderClock);
@@ -221,7 +222,8 @@ void DTL2Context::commit(){
 
 	if (getStatus() == TXN_ABORTED) {
 		LOG_DEBUG ("Commit : transaction is already aborted\n");
-		throw *(new TransactionException("Commit: Transaction Already aborted by forwarding\n"));
+		TransactionException alreadyAborted("Commit: Transaction Already aborted by forwarding\n");
+		throw alreadyAborted;
 	}
 
 	try {
@@ -231,7 +233,8 @@ void DTL2Context::commit(){
 		for( wi = writeMap.rbegin() ; wi != writeMap.rend() ; wi++ ) {
 			if (!lockObject(wi->second)) {
 				LOG_DEBUG("Commit: Unable to get WriteLock for %s\n", wi->first.c_str());
-				throw new TransactionException("Commit: Unable to get WriteLock for "+wi->first + "\n");
+				TransactionException unableToWriteLock("Commit: Unable to get WriteLock for "+wi->first + "\n");
+				throw unableToWriteLock;
 			}
 			lockedObjects.push_back(wi->second);
 		}
@@ -243,15 +246,16 @@ void DTL2Context::commit(){
 		for ( ri = readMap.rbegin() ; ri != readMap.rend() ; ri++) {
 			if (!validateObject(ri->second)) {
 				LOG_DEBUG("Commit: Unable to validate for %s, version %d with txn %d\n", ri->first.c_str(), ri->second->getVersion(), tnxClock);
-				throw new TransactionException("Commit: Unable to validate for "+ri->first+"\n");
+				TransactionException readValidationFail("Commit: Unable to validate for "+ri->first+"\n");
+				throw readValidationFail;
 			}
 		}
-	} catch (TransactionException* e) {
+	} catch (TransactionException& e) {
 		// Free all acquired locks
 		std::vector<HyflowObject *>::iterator vi;
 		for ( vi = lockedObjects.begin(); vi != lockedObjects.end(); vi++)
 			unlockObjectOnFail(*vi);
-		throw *e;
+		throw;
 	}
 
 	// Transaction Completed Successfully
