@@ -27,9 +27,10 @@ namespace vt_dstm{
 		int nodeId = NetworkManager::getNodeId();
 		int threadCount = NetworkManager::getThreadCount();
 		if (T_type == TRANSACTIONAL_THREAD) {
-			coreId = nodeId*threadCount*4 + id;
-		} else {// For dispatch thread default Id should be zero
-			coreId = nodeId*threadCount*4 + threadCount + id;
+			coreId = nodeId*threadCount + id;
+		} else {
+			coreId = nodeId*threadCount + threadCount + id;
+			// For dispatch thread default Id should be zero
 			id = 0;
 		}
 
