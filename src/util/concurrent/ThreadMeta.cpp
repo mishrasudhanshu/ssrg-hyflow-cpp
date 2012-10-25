@@ -29,7 +29,7 @@ namespace vt_dstm{
 		if (T_type == TRANSACTIONAL_THREAD) {
 			coreId = nodeId*threadCount + id;
 		} else {
-			coreId = nodeId*threadCount + threadCount + id;
+			coreId = nodeId*threadCount + id;
 			// For dispatch thread default Id should be zero
 			id = 0;
 		}

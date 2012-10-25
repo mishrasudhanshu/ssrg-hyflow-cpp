@@ -23,7 +23,7 @@ for (( macNodeId=0 ; macNodeId < $perMachine ; macNodeId++ ))
 do
     nodeId=$((perMachine*machine+macNodeId))
     echo "launching $nodeId in $nodes"
-    parentIP=10.1.1.30 machines=$machines nodes=$nodes objects=$objs transactions=$txns nodeId=$nodeId reads=$read threads=$threads $build/ssrg-hyflow-cpp $nodeId -&
+    parentIP=10.1.1.30 machines=$machines nodes=$nodes objects=$objs transactions=$txns nodeId=$nodeId reads=$reads threads=$threads $build/ssrg-hyflow-cpp $nodeId -&
     p=`ps -ef|grep "$build/ssrg-hyflow-cpp $nodeId -"| grep -v 'grep'|awk '{print $2}'`
     echo taskset -c -p $nodeId $p
     coreId=$((nodeId*9))-$((nodeId*9+8)) 

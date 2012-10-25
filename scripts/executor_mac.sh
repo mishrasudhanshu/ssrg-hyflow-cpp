@@ -13,7 +13,7 @@ then
 fi
 
 echo "---Multi Machine Config---"
-echo "txns=$txns, objs=$objs, reads=$reads threads=$threads, nodes=$nodes, machines=$machines" 
+echo "txns=$txns, objs=$objs, reads=20..100..30 threads=4..72..4, nodes=2..2..1, machines=$machines" 
 
 for exp in {1..2..1} 
 do
@@ -26,30 +26,30 @@ do
         echo "         For threads = $threads"
             for nodes in {2..2..1}
             do
-		perMachine=$((nodes/machines))
+                perMachine=$((nodes/machines))
                 echo "             For experiment $exp, read $read, threads $threads and nodes $nodes"
                 for (( machine=0 ; machine < $machines ; machine++ ))
                 do
                     if [[ $machine -eq 0 ]]; then 
                         echo "launching lost for machine $machine"
-			cd /home/users/mishra/hyflowCpp/ssrg-hyflow-cpp/
-			bash scripts/executor_launch.sh $reads $threads $nodes $machines $machine $perMachine $build & 
-			sleep 4
+                        cd /home/users/mishra/hyflowCpp/ssrg-hyflow-cpp/
+                        bash scripts/executor_launch.sh $reads $threads $nodes $machines $machine $perMachine $build & 
+                        sleep 4
                     elif [[ $machine -eq 1 ]]; then
                         echo "launching graham for machine $machine"
-			ssh graham "cd /home/users/mishra/hyflowCpp/ssrg-hyflow-cpp/;nohup bash scripts/executor_launch.sh $reads $threads $nodes $machines $machine $perMachine $build 2>&1 | tee >log/mac_$machine" &
-			sleep 4
+                        ssh graham "cd /home/users/mishra/hyflowCpp/ssrg-hyflow-cpp/;nohup bash scripts/executor_launch.sh $reads $threads $nodes $machines $machine $perMachine $build 2>&1 | tee >log/mac_$machine" &
+                        sleep 4
                     elif [[ $mchine -eq 2 ]]; then
                         echo "lauching rosella for machine $machine"
-			ssh rosella "cd /home/users/mishra/hyflowCpp/ssrg-hyflow-cpp/;nohup bash scripts/executor_launch.sh $reads $threads $nodes $machines $machine $perMachine $build 2>&1 | tee >log/mac_$machine" &
-			sleep 4
+                        ssh rosella "cd /home/users/mishra/hyflowCpp/ssrg-hyflow-cpp/;nohup bash scripts/executor_launch.sh $reads $threads $nodes $machines $machine $perMachine $build 2>&1 | tee >log/mac_$machine" &
+                        sleep 4
                     else 
                         echo "Incorrect machine No"
                     fi
                 done
-		echo "Waiting for process to end"
+                echo "Waiting for process to end"
                 wait
-		sleep 4
+                sleep 4
                 bash scripts/kill_ipcs.sh
                 sleep 2
             done

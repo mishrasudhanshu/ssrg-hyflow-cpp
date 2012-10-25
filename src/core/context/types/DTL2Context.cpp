@@ -237,6 +237,14 @@ void DTL2Context::commit(){
 				throw unableToWriteLock;
 			}
 			lockedObjects.push_back(wi->second);
+			// Remove same object from readSet as we use version locks
+			std::map<std::string, HyflowObject*, ObjectIdComparator>::iterator itr = readMap.find(wi->first) ;
+			if ( itr != readMap.end()) {
+				HyflowObject *readObject = itr->second;
+				itr->second = NULL;
+				readMap.erase(itr);
+				delete readObject;
+			}
 		}
 		LOG_DEBUG("Commit : Lock Acquisition complete, verifying read Set\n");
 		// Perform context
