@@ -21,25 +21,19 @@ class ZMQNetworkAsync: public vt_dstm::AbstractNetwork {
 	static int basePort;
 	static int threadCount;
 	static int nodeCount;
-	/*
-	 * To specify the number of threads required per node to
-	 * handle the incoming messages.
-	 */
-	static int dealerThreadPerNode;
 
 	static volatile bool hyflowShutdown;
 	static int lingerTime;
+	static std::string* nodeIPs;
 
-	zmq::context_t* context;
+	static zmq::context_t* context;
 	/*
 	 * Router Socket provided to each thread to route its message to desired
 	 * node
 	 */
 	static std::vector<zmq::socket_t*> threadRouterSockets;
-	/*
-	 * Dealer sockets which wait for incoming messages to process.
-	 */
-	static std::vector<zmq::socket_t*> recieverDealerSockets;
+
+	static zmq::socket_t* nodeInitSocket;
 
 	static std::vector<pthread_t> dealerThreads;
 	static std::vector<int*> dealerThreadIds;
@@ -51,6 +45,11 @@ class ZMQNetworkAsync: public vt_dstm::AbstractNetwork {
 	 */
 	static bool defaultHandler(zmq::message_t & msg);
 	static void callbackHandler(zmq::message_t & msg);
+	static void* dealerExecute(void *param);
+	static void additionalSync();
+
+	static void s_catch_signals();
+	static void s_signal_handler(int signal_value);
 public:
 	ZMQNetworkAsync();
 	virtual ~ZMQNetworkAsync();
@@ -59,12 +58,6 @@ public:
 	void networkShutdown();
 	void sendMessage(int nodeId, HyflowMessage & Message);
 	void sendCallbackMessage(int nodeId, HyflowMessage & Message, HyflowMessageFuture & fu);
-	static void* dealerExecute(void *param);
-	static void connectClient(int nodeId);
-	static void additionalSync();
-
-	static void s_catch_signals();
-	static void s_signal_handler(int signal_value);
 };
 
 } /* namespace vt_dstm */

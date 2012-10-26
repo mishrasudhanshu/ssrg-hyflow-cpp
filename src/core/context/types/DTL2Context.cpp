@@ -237,6 +237,7 @@ void DTL2Context::commit(){
 				throw unableToWriteLock;
 			}
 			lockedObjects.push_back(wi->second);
+			// FIXME: Redirect all the locate call of object through context
 			// Remove same object from readSet as we use version locks
 			std::map<std::string, HyflowObject*, ObjectIdComparator>::iterator itr = readMap.find(wi->first) ;
 			if ( itr != readMap.end()) {
