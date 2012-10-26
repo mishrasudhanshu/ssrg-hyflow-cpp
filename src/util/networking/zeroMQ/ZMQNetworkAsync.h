@@ -12,6 +12,7 @@
 #include <pthread.h>
 #include "zmq.hpp"
 #include "boost/thread/mutex.hpp"
+#include "boost/thread/condition_variable.hpp"
 #include "../AbstractNetwork.h"
 
 namespace vt_dstm {
@@ -23,6 +24,10 @@ class ZMQNetworkAsync: public vt_dstm::AbstractNetwork {
 	static int nodeCount;
 
 	static volatile bool hyflowShutdown;
+	static volatile bool nodeReady;
+	static boost::condition nodeReadyCondition;
+	static boost::mutex nodeReadyMutex;
+
 	static int lingerTime;
 	static std::string* nodeIPs;
 

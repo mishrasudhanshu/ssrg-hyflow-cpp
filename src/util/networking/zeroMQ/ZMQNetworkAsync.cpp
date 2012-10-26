@@ -38,6 +38,10 @@ int ZMQNetworkAsync::threadCount = 0;
 zmq::socket_t* ZMQNetworkAsync::nodeInitSocket = NULL;
 zmq::context_t* ZMQNetworkAsync::context=NULL;
 
+volatile bool ZMQNetworkAsync::nodeReady = false;
+boost::condition ZMQNetworkAsync::nodeReadyCondition;
+boost::mutex ZMQNetworkAsync::nodeReadyMutex;
+
 std::vector<zmq::socket_t*> ZMQNetworkAsync::threadRouterSockets;
 std::vector<pthread_t> ZMQNetworkAsync::dealerThreads;
 std::vector<int*> ZMQNetworkAsync::dealerThreadIds;
@@ -88,15 +92,22 @@ ZMQNetworkAsync::ZMQNetworkAsync() {
 		additionalSync();
 
 		// Launch all the dealerExecutors
-		for (int i=0; i<threadCount; i++) {
+		for (int i=0; (i<threadCount) && nodeId; i++) {
 			pthread_t dealerThread;
 			int *waitingThreadId = new int();
 			*waitingThreadId = i;
 			dealerThreadIds.push_back(waitingThreadId);
 			pthread_create(&dealerThread,NULL,ZMQNetworkAsync::dealerExecute,(void*)waitingThreadId);
 			dealerThreads.push_back(dealerThread);
+			sleep(1);
 		}
 
+		// Wait until last dealer thread is created and stabilised
+		if (nodeId) {
+			boost::unique_lock<boost::mutex> lock(nodeReadyMutex);
+			while ( !nodeReady )
+				nodeReadyCondition.wait(nodeReadyMutex);
+		}
 		// After this much boiler code all nodes are able to communicate the synchronization messages
 		isInit = true;
 	}
@@ -145,6 +156,25 @@ void ZMQNetworkAsync::additionalSync(){
 			int sender = atoi(senderId.c_str());
 			nodeIPs[sender] = senderIp;
 		}
+
+		// As node zero has all IPs let it connect its dealer to all node routers
+		for (int i=0; i<threadCount ; i++) {
+			pthread_t dealerThread;
+			int *waitingThreadId = new int();
+			*waitingThreadId = i;
+			dealerThreadIds.push_back(waitingThreadId);
+			pthread_create(&dealerThread,NULL,ZMQNetworkAsync::dealerExecute,(void*)waitingThreadId);
+			dealerThreads.push_back(dealerThread);
+			sleep(1);		// Give time to dealer thread to stabilise
+		}
+
+		{// Wait for last thread to notify
+			LOG_DEBUG("ZMQA : Waiting for all thread to notify\n");
+			boost::unique_lock<boost::mutex> lock(nodeReadyMutex);
+			while (!nodeReady)
+				nodeReadyCondition.wait(nodeReadyMutex);
+		}
+
 		// Prepare reply for nodes
 		std::stringstream ipsStr;
 		for (int i=0; i<nodeCount ; i++ ) {
@@ -152,11 +182,11 @@ void ZMQNetworkAsync::additionalSync(){
 		}
 
 		std::string reply = ipsStr.str();
-		zmq::message_t zmqmsgBase(reply.size());
-		memcpy(zmqmsgBase.data(), reply.data(), reply.size());
 
 		// Reply the sender nodes to continue
 		for (int i=1; i<nodeCount ; i++) {
+			zmq::message_t zmqmsgBase(reply.size());
+			memcpy(zmqmsgBase.data(), reply.data(), reply.size());
 			// Add Address message part
 			std::stringstream idStr;
 			idStr<<i;
@@ -337,8 +367,16 @@ void* ZMQNetworkAsync::dealerExecute(void *param) {
 		nodeSet[i].fd = 0;
 		nodeSet[i].events = ZMQ_POLLIN;
 		nodeSet[i].revents = 0;
+	}
 
-		sleep(2);
+	sleep(2);
+
+	// Last thread synchronization
+	if (waitThread == threadCount-1) {
+	    boost::unique_lock<boost::mutex> lock(nodeReadyMutex);
+	    nodeReady = true;
+	    LOG_DEBUG("ZMQA : Last Thread Notifying the nodeReady\n");
+	    nodeReadyCondition.notify_one();
 	}
 
 	while (!hyflowShutdown) {
