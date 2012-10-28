@@ -10,6 +10,7 @@
 
 #include <cstdlib>
 #include "../../util/logging/Logger.h"
+#include "../../core/HyflowObject.h"
 
 namespace vt_dstm {
 
@@ -18,38 +19,49 @@ enum Hyflow_NestingModel {
 	HYFLOW_NESTING_CLOSED,
 	HYFLOW_NESTING_OPEN
 };
-
-template <class T>
+/*
+ * Other way to do it can be using explicit overloading void type for Atomic class
+ */
+template <class ReturnType>
 class Atomic {
-	Hyflow_NestingModel nestingModel = HYFLOW_NESTING_FLAT ;
+	Hyflow_NestingModel nestingModel;
 	bool m_hasOnCommit;
 	bool m_hasOnAbort;
 
-	void defaultOnCommit(std::string selfID, void* args, HyflowContext* context) {}
-	void defaultOnAbort(std::string selfID, void* args, HyflowContext* context) {}
+	static void defaultOnCommit(HyflowObject* self, void* args, HyflowContext* context) {}
+	static void defaultOnAbort(HyflowObject* self, void* args, HyflowContext* context) {}
 public:
-	T (*atomically)(std::string selfID, void* args, HyflowContext* context);
+	void (*atomically)(HyflowObject* self, void* args, HyflowContext* context, ReturnType* rt);
 
-	void (*onCommit)(std::string selfID, void* args, HyflowContext* context);
-	void (*onAbort)(std::string selfID, void* args, HyflowContext* context);
+	void (*onCommit)(HyflowObject* self, void* args, HyflowContext* context);
+	void (*onAbort)(HyflowObject* self, void* args, HyflowContext* context);
 
 	Atomic(){
 		m_hasOnCommit = false;
 		m_hasOnAbort = false;
 		atomically = NULL;
+		onCommit = Atomic::defaultOnCommit;
+		onAbort = Atomic::defaultOnAbort;
+		nestingModel = HYFLOW_NESTING_FLAT ;
+	}
+
+	Atomic(Hyflow_NestingModel model) {
+		m_hasOnCommit = false;
+		m_hasOnAbort = false;
+		atomically = NULL;
 		onCommit = defaultOnCommit;
 		onAbort = defaultOnAbort;
+		nestingModel = model;
 	}
 
 	virtual ~Atomic() {}
 
-	T execute(std::string selfID, void* args) {
-		T retValue;
+	void execute(HyflowObject* self, void* args, ReturnType* retValue) {
 		for (int i = 0; i < 0x7fffffff; i++) {
 			bool commit = true;
 			HyflowContext* c = ContextManager::getInstance();
 			try {
-				atomically(selfID, args, c);
+				atomically(self, args, c, retValue);
 			}catch (...) {
 				try {
 					ContextManager::cleanInstance(&c);
@@ -59,7 +71,7 @@ public:
 					commit = false;
 				} catch (std::string & s) {
 					Logger::fatal("%s\n",s.c_str());
-					return retValue;
+					return;
 				}
 			}
 			if (commit) {
@@ -67,7 +79,7 @@ public:
 					c->commit();
 					LOG_DEBUG("++++++++++Transaction Successful ++++++++++\n");
 					ContextManager::cleanInstance(&c);
-					return retValue;
+					return;
 				} catch(...) {
 					try{
 						ContextManager::cleanInstance(&c);
@@ -77,7 +89,7 @@ public:
 						continue;
 					} catch (std::string & s) {
 						Logger::fatal("%s\n",s.c_str());
-						return retValue;
+						return;
 					}
 				}
 			}
@@ -94,7 +106,8 @@ public:
 	}
 
 	static void test() {
-		Atomic<bool> * testAtomic = new Atomic<bool>();
+		Atomic<bool>* testBool = new Atomic<bool>();
+		Atomic<uint64_t>* testUint64 = new Atomic<uint64_t>();
 	}
 
 };

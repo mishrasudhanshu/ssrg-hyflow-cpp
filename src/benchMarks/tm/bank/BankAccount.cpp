@@ -13,6 +13,7 @@
 #include "../../../core/context/ContextManager.h"
 #include "../../../core/HyflowObjectFuture.h"
 #include "../../../core/directory/DirectoryManager.h"
+#include "../../../core/helper/Atomic.h"
 #include "../../../util/logging/Logger.h"
 #include "../../../util/networking/NetworkManager.h"
 #include "../../BenchmarkExecutor.h"
@@ -50,9 +51,12 @@ uint64_t BankAccount::checkBalance() {
 	return amount;
 }
 
-uint64_t BankAccount::checkBalance(HyflowContext* context) {
-	context->beforeReadAccess(this);
-	BankAccount* ba = (BankAccount*)context->onReadAccess(this);
+uint64_t BankAccount::checkBalance(std::string id, HyflowContext* context) {
+	BankAccount* account = (BankAccount*)DirectoryManager::locate(id, true, context->getTxnId());
+	LOG_DEBUG("BANK : Account %s amount %llu version %d\n", account->hyId.c_str(), account->amount, account->getVersion());
+	context->beforeReadAccess(account);
+
+	BankAccount* ba = (BankAccount*)context->onReadAccess(account);
 	return ba->checkBalance();
 }
 
@@ -60,10 +64,14 @@ void BankAccount::deposit(uint64_t money) {
 	amount += money;
 }
 
-void BankAccount::deposit(uint64_t money, HyflowContext* context) {
-	context->beforeReadAccess(this);
-	BankAccount* baCurrent = (BankAccount*)context->onReadAccess(this);
-	BankAccount* ba = (BankAccount*)context->onWriteAccess(this);
+void BankAccount::deposit(std::string id, uint64_t money, HyflowContext* context) {
+	BankAccount* account = (BankAccount*)DirectoryManager::locate(id, true, context->getTxnId());
+	LOG_DEBUG("BANK : Account %s amount %llu version %d\n", account->hyId.c_str(), account->amount, account->getVersion());
+	context->beforeReadAccess(account);
+
+	BankAccount* baCurrent = (BankAccount*)context->onReadAccess(account);
+	BankAccount* ba = (BankAccount*)context->onWriteAccess(account);
+
 	ba->setAmount(baCurrent->amount);
 	ba->deposit(money);
 }
@@ -72,91 +80,53 @@ void BankAccount::withdraw(uint64_t money) {
 	amount -= money;
 }
 
-void BankAccount::withdraw(uint64_t money, HyflowContext* context) {
-	context->beforeReadAccess(this);
-	BankAccount* baCurrent = (BankAccount*)context->onReadAccess(this);
-	BankAccount* ba = (BankAccount*)context->onWriteAccess(this);
+void BankAccount::withdraw(std::string id, uint64_t money, HyflowContext* context) {
+	BankAccount* account = (BankAccount*)DirectoryManager::locate(id, true, context->getTxnId());
+	LOG_DEBUG("BANK : Account %s amount %llu version %d\n", account->hyId.c_str(), account->amount, account->getVersion());
+	context->beforeReadAccess(account);
+
+	BankAccount* baCurrent = (BankAccount*)context->onReadAccess(account);
+	BankAccount* ba = (BankAccount*)context->onWriteAccess(account);
+
 	ba->setAmount(baCurrent->amount);
 	ba->withdraw(money);
 }
 
-uint64_t BankAccount::totalBalance(std::string id1, std::string id2, HyflowContext* c) {
+void BankAccount::totalBalanceAtomically(HyflowObject* self, void* bankArgs, HyflowContext* c, uint64_t* balance) {
+	BankArgs* args= (BankArgs*)bankArgs;
 	try{
-		long balance = 0;
-		BankAccount* account1 = NULL;
-		account1 = (BankAccount*)DirectoryManager::locate(id1, true, c->getTxnId());
-		balance += account1->checkBalance(c);
-
+		*balance = 0;
+		*balance += BankAccount::checkBalance(args->id1, c);
 		try {
-			BankAccount* account2 = (BankAccount*)DirectoryManager::locate(id2, true, c->getTxnId());
-			balance += account2->checkBalance(c);
+			*balance += BankAccount::checkBalance(args->id2, c);
 		}catch(TransactionException & e){
 			throw e;
 		} catch (...) {
 			throw;
 		}
-		return balance;
+		return;
 	} catch(TransactionException & e){
 		throw e;
 	} catch (...) {
 		throw;
 	}
-	return 0;
 }
 
 uint64_t BankAccount::totalBalance(std::string id1, std::string id2) {
-	uint64_t result = 0;
-	for (int i = 0; i < 0x7fffffff; i++) {
-		bool commit = true;
-		HyflowContext* c = ContextManager::getInstance();
-		try {
-			result = totalBalance(id1, id2, c);
-		} catch (...) {
-			try {
-				ContextManager::cleanInstance(&c);
-				throw;
-			}catch (TransactionException & ex) {
-				ex.print();
-				commit = false;
-			} catch (std::string & s) {
-				Logger::fatal("%s\n",s.c_str());
-				throw;
-			}
-		}
-		if (commit) {
-			try {
-				c->commit();
-				LOG_DEBUG("++++++++++Transaction Successful ++++++++++\n");
-				ContextManager::cleanInstance(&c);
-			} catch(...) {
-				try{
-					ContextManager::cleanInstance(&c);
-					throw;
-				}catch (TransactionException & ex) {
-					ex.print();
-					continue;
-				} catch (std::string & s) {
-					Logger::fatal("%s\n",s.c_str());
-				}
-			}
-			return result;
-		}
-	}
-	throw new TransactionException("Failed to commit the transaction in the defined retries.");
-	return 0;
+	uint64_t balance;
+	Atomic<uint64_t> atomicBalance;
+	atomicBalance.atomically = BankAccount::totalBalanceAtomically;
+	BankArgs baArgs(0, id1, id2);
+	atomicBalance.execute(NULL, &baArgs, &balance);
+	return balance;
 }
 
-void BankAccount::transfer(std::string id1, std::string id2,
-		uint64_t money, HyflowContext* c) {
+void BankAccount::transferAtomically(HyflowObject* self, void* bankArgs, HyflowContext* c, void* ignore) {
+	BankArgs* args= (BankArgs*)bankArgs;
 	try{
-		BankAccount* account1 = (BankAccount*)DirectoryManager::locate(id1, true, c->getTxnId());
-		LOG_DEBUG("BANK : Account %s amount %llu version %d\n", account1->hyId.c_str(), account1->amount, account1->getVersion());
-		account1->withdraw(money, c);
-
+		BankAccount::withdraw(args->id1, args->money, c);
 		try {
-			BankAccount* account2 = (BankAccount*)DirectoryManager::locate(id2, true, c->getTxnId());
-			LOG_DEBUG("BANK : Account %s amount %llu version %d\n", account2->hyId.c_str(), account2->amount, account2->getVersion());
-			account2->deposit(money, c);
+			BankAccount::deposit(args->id2, args->money, c);
 		}catch(TransactionException & e){
 			throw e;
 		} catch (...) {
@@ -171,45 +141,12 @@ void BankAccount::transfer(std::string id1, std::string id2,
 	return;
 }
 
-
 void BankAccount::transfer(std::string id1, std::string id2,
 		uint64_t money) {
-	for (int i = 0; i < 0x7fffffff; i++) {
-		bool commit = true;
-		HyflowContext* c = ContextManager::getInstance();
-		try {
-			transfer(id1, id2, money, c);
-		}catch (...) {
-			try {
-				ContextManager::cleanInstance(&c);
-				throw;
-			} catch (TransactionException & ex) {
-				ex.print();
-				commit = false;
-			} catch (std::string & s) {
-				Logger::fatal("%s\n",s.c_str());
-			}
-		}
-		if (commit) {
-			try {
-				c->commit();
-				LOG_DEBUG("++++++++++Transaction Successful ++++++++++\n");
-				ContextManager::cleanInstance(&c);
-			} catch(...) {
-				try{
-					ContextManager::cleanInstance(&c);
-					throw;
-				} catch (TransactionException & ex) {
-					ex.print();
-					continue;
-				} catch (std::string & s) {
-					Logger::fatal("%s\n",s.c_str());
-				}
-			}
-			return;
-		}
-	}
-	throw new TransactionException("Failed to commit the transaction in the defined retries.");
+	Atomic<void> atomicTransfer;
+	atomicTransfer.atomically = BankAccount::transferAtomically;
+	BankArgs baArgs(money, id1, id2);
+	atomicTransfer.execute(NULL, &baArgs, NULL);
 }
 
 void BankAccount::print(){

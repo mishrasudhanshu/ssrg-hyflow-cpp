@@ -16,6 +16,9 @@ src/benchMarks/tm/bank/BankAccount.d: \
  ../src/benchMarks/tm/bank/../../../core/directory/../HyflowObject.h \
  ../src/benchMarks/tm/bank/../../../core/directory/HyflowDirectory.h \
  ../src/benchMarks/tm/bank/../../../core/directory/../HyflowObjectFuture.h \
+ ../src/benchMarks/tm/bank/../../../core/helper/Atomic.h \
+ ../src/benchMarks/tm/bank/../../../core/helper/../../util/logging/Logger.h \
+ ../src/benchMarks/tm/bank/../../../core/helper/../../core/HyflowObject.h \
  ../src/benchMarks/tm/bank/../../../util/logging/Logger.h \
  ../src/benchMarks/tm/bank/../../../util/networking/NetworkManager.h \
  ../src/benchMarks/tm/bank/../../../util/networking/AbstractNetwork.h \
@@ -69,6 +72,12 @@ src/benchMarks/tm/bank/BankAccount.d: \
 ../src/benchMarks/tm/bank/../../../core/directory/HyflowDirectory.h:
 
 ../src/benchMarks/tm/bank/../../../core/directory/../HyflowObjectFuture.h:
+
+../src/benchMarks/tm/bank/../../../core/helper/Atomic.h:
+
+../src/benchMarks/tm/bank/../../../core/helper/../../util/logging/Logger.h:
+
+../src/benchMarks/tm/bank/../../../core/helper/../../core/HyflowObject.h:
 
 ../src/benchMarks/tm/bank/../../../util/logging/Logger.h:
 
