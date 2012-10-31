@@ -17,10 +17,20 @@ enum TxnStatus {
 	TXN_ACTIVE, TXN_BUSY, TXN_ABORTED,
 };
 
+enum Hyflow_NestingModel {
+	HYFLOW_NESTING_FLAT,
+	HYFLOW_NESTING_CLOSED,
+	HYFLOW_NESTING_OPEN
+};
+
 class HyflowContext {
 protected:
 	TxnStatus status;
 	unsigned long long txnId;
+	Hyflow_NestingModel nestingModel;
+	const HyflowContext* parentContext;
+	HyflowContext* rootContext;
+	int contextExecutionDepth;
 public:
 	HyflowContext() {
 		status = TXN_ACTIVE;
@@ -44,6 +54,7 @@ public:
 		this->txnId = txnId;
 	}
 
+	virtual void contextInit() = 0;
 	//TODO: Do a field level locking in place of object level, Use some STM library
 	/**
 	 * Throw (TransactionException) if failed on before read-write call for context
@@ -51,12 +62,15 @@ public:
 	virtual void beforeReadAccess(HyflowObject *obj) = 0;
 	/**
 	 * Throw (TransactionException) if failed on read call for context
+	 * Returns a read-only copy of object to user
 	 */
-	virtual HyflowObject* onReadAccess(HyflowObject *obj) = 0;
+	virtual const HyflowObject* onReadAccess(HyflowObject *obj) = 0;
+	virtual const HyflowObject* onReadAccess(std::string id) = 0;
 	/**
 	 * Throw (TransactionException) if failed on write call for context
 	 */
 	virtual HyflowObject* onWriteAccess(HyflowObject *obj) = 0;
+	virtual HyflowObject* onWriteAccess(std::string id) = 0;
 	/*
 	 * Throw (TransactionException) if commit Request is failed.
 	 */
@@ -70,6 +84,46 @@ public:
 	 * Forwarding the context in DTL
 	 */
 	virtual void forward(int senderClock) = 0;
+	/*
+	 * Fetch Object for this context and adds to readSet
+	 */
+	virtual void fetchObject(std::string objId) = 0;
+	/*
+	 * Fetch Objects for this context
+	 */
+	virtual void fetchObjects(std::string objIds[], int objCount) = 0;
+
+	int getContextExecutionDepth() const {
+		return contextExecutionDepth;
+	}
+
+	void setContextExecutionDepth(int contextExecutionDepth) {
+		this->contextExecutionDepth = contextExecutionDepth;
+	}
+
+	void increaseContextExecutionDepth() {
+		contextExecutionDepth++;
+	}
+
+	void decreaseContextExecutionDepth() {
+		contextExecutionDepth--;
+	}
+
+	const HyflowContext* getParentContext() const {
+		return parentContext;
+	}
+
+	void setParentContext(const HyflowContext* parentContext) {
+		this->parentContext = parentContext;
+	}
+
+	HyflowContext* getRootContext() const {
+		return rootContext;
+	}
+
+	void setRootContext(HyflowContext* rootContext) {
+		this->rootContext = rootContext;
+	}
 };
 
 } /* namespace vt_dstm */

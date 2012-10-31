@@ -25,6 +25,7 @@ public:
 	int money;
 	std::string id1;
 	std::string id2;
+
 	BankArgs(int m, std::string i1, std::string i2) {
 		money= m;
 		id1 = i1;
@@ -44,14 +45,15 @@ class BankAccount: public HyflowObject {
 	uint64_t amount;
 
 	void setAmount(uint64_t amount);
+
 	uint64_t checkBalance();
-	static uint64_t checkBalance(std::string id, HyflowContext* c);
-
 	void deposit(uint64_t money);
-	static void deposit(std::string id, uint64_t money, HyflowContext* c);
-
 	void withdraw(uint64_t money);
-	static void withdraw(std::string id, uint64_t money, HyflowContext* c);
+
+	static void checkBalanceAtomic(HyflowObject* self, void *args, HyflowContext* c, uint64_t* balance);
+	static void depositAtomic(HyflowObject* self, void* args, HyflowContext* c, uint64_t* ignore);
+	static void withdrawAtomic(HyflowObject* self, void* args, HyflowContext* c, uint64_t* ignore);
+
 	static void totalBalanceAtomically(HyflowObject* self, void* args, HyflowContext* c, uint64_t* balance);
 	static void transferAtomically(HyflowObject* self, void* args, HyflowContext* c, void* ignore);
 public:

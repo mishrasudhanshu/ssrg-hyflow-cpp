@@ -21,6 +21,7 @@ src/benchMarks/Application.d: ../src/benchMarks/Application.cpp \
  ../src/benchMarks/../core/context/ContextManager.h \
  ../src/benchMarks/../core/context/HyflowContext.h \
  ../src/benchMarks/../core/context/../HyflowObject.h \
+ ../src/benchMarks/../core/context/HyflowContextFactory.h \
  ../src/benchMarks/../core/context/../exceptions/types/TransactionException.h \
  ../src/benchMarks/../core/context/../exceptions/types/../HyflowException.h \
  ../src/benchMarks/../core/context/../../util/concurrent/ConcurrentHashMap.h \
@@ -83,6 +84,8 @@ src/benchMarks/Application.d: ../src/benchMarks/Application.cpp \
 ../src/benchMarks/../core/context/HyflowContext.h:
 
 ../src/benchMarks/../core/context/../HyflowObject.h:
+
+../src/benchMarks/../core/context/HyflowContextFactory.h:
 
 ../src/benchMarks/../core/context/../exceptions/types/TransactionException.h:
 

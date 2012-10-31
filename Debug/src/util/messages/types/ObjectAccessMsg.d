@@ -39,6 +39,7 @@ src/util/messages/types/ObjectAccessMsg.d: \
  ../src/util/messages/types/../../../core/directory/../HyflowObjectFuture.h \
  ../src/util/messages/types/../../../core/context/ContextManager.h \
  ../src/util/messages/types/../../../core/context/HyflowContext.h \
+ ../src/util/messages/types/../../../core/context/HyflowContextFactory.h \
  ../src/util/messages/types/../../../core/context/../exceptions/types/TransactionException.h \
  ../src/util/messages/types/../../../core/context/../exceptions/types/../HyflowException.h \
  ../src/util/messages/types/../../../core/context/../../util/concurrent/ConcurrentHashMap.h
@@ -120,6 +121,8 @@ src/util/messages/types/ObjectAccessMsg.d: \
 ../src/util/messages/types/../../../core/context/ContextManager.h:
 
 ../src/util/messages/types/../../../core/context/HyflowContext.h:
+
+../src/util/messages/types/../../../core/context/HyflowContextFactory.h:
 
 ../src/util/messages/types/../../../core/context/../exceptions/types/TransactionException.h:
 

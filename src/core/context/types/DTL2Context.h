@@ -44,17 +44,25 @@ class DTL2Context: public vt_dstm::HyflowContext {
 	void unlockObjectOnFail(HyflowObject *obj);
 	void unlockObject(HyflowObject *obj);
 	bool validateObject(HyflowObject* obj);
+	void tryCommit();
+	void reallyCommit();
+	void cleanAllMaps();
 public:
 	DTL2Context();
 	virtual ~DTL2Context();
 
+	void contextInit();
 	void forward(int senderClock);
 	void beforeReadAccess(HyflowObject *obj);
-	HyflowObject* onReadAccess(HyflowObject *obj);
+	const HyflowObject* onReadAccess(HyflowObject *obj);
+	const HyflowObject* onReadAccess(std::string id);
 	HyflowObject* onWriteAccess(HyflowObject *obj);
+	HyflowObject* onWriteAccess(std::string id);
 	void commit();
 	void abort();
 	void updateClock(int c);
+	void fetchObject(std::string id);
+	void fetchObjects(std::string ids[], int objCount);
 };
 
 } /* namespace vt_dstm */

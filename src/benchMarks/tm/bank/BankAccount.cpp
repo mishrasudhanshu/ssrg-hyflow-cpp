@@ -51,65 +51,66 @@ uint64_t BankAccount::checkBalance() {
 	return amount;
 }
 
-uint64_t BankAccount::checkBalance(std::string id, HyflowContext* context) {
-	BankAccount* account = (BankAccount*)DirectoryManager::locate(id, true, context->getTxnId());
-	LOG_DEBUG("BANK : Account %s amount %llu version %d\n", account->hyId.c_str(), account->amount, account->getVersion());
-	context->beforeReadAccess(account);
-
-	BankAccount* ba = (BankAccount*)context->onReadAccess(account);
-	return ba->checkBalance();
-}
-
 void BankAccount::deposit(uint64_t money) {
 	amount += money;
-}
-
-void BankAccount::deposit(std::string id, uint64_t money, HyflowContext* context) {
-	BankAccount* account = (BankAccount*)DirectoryManager::locate(id, true, context->getTxnId());
-	LOG_DEBUG("BANK : Account %s amount %llu version %d\n", account->hyId.c_str(), account->amount, account->getVersion());
-	context->beforeReadAccess(account);
-
-	BankAccount* baCurrent = (BankAccount*)context->onReadAccess(account);
-	BankAccount* ba = (BankAccount*)context->onWriteAccess(account);
-
-	ba->setAmount(baCurrent->amount);
-	ba->deposit(money);
 }
 
 void BankAccount::withdraw(uint64_t money) {
 	amount -= money;
 }
 
-void BankAccount::withdraw(std::string id, uint64_t money, HyflowContext* context) {
-	BankAccount* account = (BankAccount*)DirectoryManager::locate(id, true, context->getTxnId());
-	LOG_DEBUG("BANK : Account %s amount %llu version %d\n", account->hyId.c_str(), account->amount, account->getVersion());
-	context->beforeReadAccess(account);
+void BankAccount::checkBalanceAtomic(HyflowObject* self, void *args, HyflowContext* context, uint64_t* balance) {
+	std::string* id = (std::string*) args;
+	context->fetchObject(*id);
 
-	BankAccount* baCurrent = (BankAccount*)context->onReadAccess(account);
-	BankAccount* ba = (BankAccount*)context->onWriteAccess(account);
+	BankAccount* ba = (BankAccount*)context->onReadAccess(*id);
+	*balance = ba->checkBalance();
+}
+
+void BankAccount::depositAtomic(HyflowObject* self, void* args, HyflowContext* context, uint64_t* ignore) {
+	int money = ((BankArgs*)args)->money;
+	std::string id = ((BankArgs*)args)->id2;
+
+	context->fetchObject(id);
+
+	BankAccount* baCurrent = (BankAccount*)context->onReadAccess(id);
+	BankAccount* ba = (BankAccount*)context->onWriteAccess(id);
+
+	ba->setAmount(baCurrent->amount);
+	ba->deposit(money);
+}
+
+void BankAccount::withdrawAtomic(HyflowObject* self, void* args, HyflowContext* context, uint64_t* ignore) {
+	int money = ((BankArgs*)args)->money;
+	std::string id = ((BankArgs*)args)->id1;
+
+	context->fetchObject(id);
+
+	BankAccount* baCurrent = (BankAccount*)context->onReadAccess(id);
+	BankAccount* ba = (BankAccount*)context->onWriteAccess(id);
 
 	ba->setAmount(baCurrent->amount);
 	ba->withdraw(money);
 }
 
 void BankAccount::totalBalanceAtomically(HyflowObject* self, void* bankArgs, HyflowContext* c, uint64_t* balance) {
+	Atomic<uint64_t> atomicCheckBalance1, atomicCheckBalance2;
 	BankArgs* args= (BankArgs*)bankArgs;
-	try{
-		*balance = 0;
-		*balance += BankAccount::checkBalance(args->id1, c);
-		try {
-			*balance += BankAccount::checkBalance(args->id2, c);
-		}catch(TransactionException & e){
-			throw e;
-		} catch (...) {
-			throw;
-		}
-		return;
-	} catch(TransactionException & e){
-		throw e;
-	} catch (...) {
-		throw;
-	}
+	atomicCheckBalance1.atomically = BankAccount::checkBalanceAtomic;
+	atomicCheckBalance1.execute(NULL, &args->id1, balance);
+
+	atomicCheckBalance2.atomically = BankAccount::checkBalanceAtomic;
+	atomicCheckBalance2.execute(NULL, &args->id2, balance);
+}
+
+void BankAccount::transferAtomically(HyflowObject* self, void* bankArgs, HyflowContext* c, void* ignore) {
+	Atomic<uint64_t> atomicWithdraw, atomicDeposit;
+
+	atomicWithdraw.atomically = BankAccount::withdrawAtomic;
+	atomicWithdraw.execute(NULL, bankArgs, NULL);
+
+	atomicDeposit.atomically = BankAccount::depositAtomic;
+	atomicDeposit.execute(NULL, bankArgs, NULL);
 }
 
 uint64_t BankAccount::totalBalance(std::string id1, std::string id2) {
@@ -119,26 +120,6 @@ uint64_t BankAccount::totalBalance(std::string id1, std::string id2) {
 	BankArgs baArgs(0, id1, id2);
 	atomicBalance.execute(NULL, &baArgs, &balance);
 	return balance;
-}
-
-void BankAccount::transferAtomically(HyflowObject* self, void* bankArgs, HyflowContext* c, void* ignore) {
-	BankArgs* args= (BankArgs*)bankArgs;
-	try{
-		BankAccount::withdraw(args->id1, args->money, c);
-		try {
-			BankAccount::deposit(args->id2, args->money, c);
-		}catch(TransactionException & e){
-			throw e;
-		} catch (...) {
-			throw;
-		}
-		return;
-	} catch(TransactionException & e){
-		throw e;
-	} catch (...) {
-		throw;
-	}
-	return;
 }
 
 void BankAccount::transfer(std::string id1, std::string id2,
@@ -162,8 +143,9 @@ void BankAccount::getClone(HyflowObject **obj){
 
 void BankAccount::checkSanity(std::string* ids, int objectCount) {
 	uint64_t balance = 0;
+	HyflowContext *c = ContextManager::getInstance();
 	if (NetworkManager::getNodeId() == 0) {
-		HyflowContext *c = ContextManager::getInstance();
+		c->contextInit();
 		for(int i=0; i <objectCount ; i++ ) {
 			BankAccount* ba = (BankAccount*)DirectoryManager::locate(ids[i], true, c->getTxnId());
 			balance += ba->checkBalance();

@@ -3,6 +3,7 @@ src/benchMarks/tm/bank/BankAccount.d: \
  ../src/benchMarks/tm/bank/../../../core/context/ContextManager.h \
  ../src/benchMarks/tm/bank/../../../core/context/HyflowContext.h \
  ../src/benchMarks/tm/bank/../../../core/context/../HyflowObject.h \
+ ../src/benchMarks/tm/bank/../../../core/context/HyflowContextFactory.h \
  ../src/benchMarks/tm/bank/../../../core/context/../exceptions/types/TransactionException.h \
  ../src/benchMarks/tm/bank/../../../core/context/../exceptions/types/../HyflowException.h \
  ../src/benchMarks/tm/bank/../../../core/context/../../util/concurrent/ConcurrentHashMap.h \
@@ -46,6 +47,8 @@ src/benchMarks/tm/bank/BankAccount.d: \
 ../src/benchMarks/tm/bank/../../../core/context/HyflowContext.h:
 
 ../src/benchMarks/tm/bank/../../../core/context/../HyflowObject.h:
+
+../src/benchMarks/tm/bank/../../../core/context/HyflowContextFactory.h:
 
 ../src/benchMarks/tm/bank/../../../core/context/../exceptions/types/TransactionException.h:
 

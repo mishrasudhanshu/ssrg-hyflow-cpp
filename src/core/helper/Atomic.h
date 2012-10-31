@@ -14,11 +14,6 @@
 
 namespace vt_dstm {
 
-enum Hyflow_NestingModel {
-	HYFLOW_NESTING_FLAT,
-	HYFLOW_NESTING_CLOSED,
-	HYFLOW_NESTING_OPEN
-};
 /*
  * Other way to do it can be using explicit overloading void type for Atomic class
  */
@@ -57,9 +52,10 @@ public:
 	virtual ~Atomic() {}
 
 	void execute(HyflowObject* self, void* args, ReturnType* retValue) {
+		HyflowContext* c = ContextManager::getInstance();
 		for (int i = 0; i < 0x7fffffff; i++) {
+			c->contextInit();
 			bool commit = true;
-			HyflowContext* c = ContextManager::getInstance();
 			try {
 				atomically(self, args, c, retValue);
 			}catch (...) {

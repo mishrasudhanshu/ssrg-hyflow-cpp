@@ -213,6 +213,10 @@ void ConfigFile::UpdateMap() {
 	value = getenv(TIMEOUT);
 	if (value)
 		Update(TIMEOUT, value);
+
+	value = getenv(NESTING_MODEL);
+	if (value)
+		Update(NESTING_MODEL, value);
 }
 
 void ConfigFile::test() {
@@ -247,6 +251,7 @@ void ConfigFile::test() {
 	std::string tr;
 	std::string trl;
 	std::string to;
+	std::string nM;
 
 	try {
 		directoryManager = Value(DIRECTORY_MANAGER);
@@ -276,6 +281,7 @@ void ConfigFile::test() {
 		tr = Value(TRANSACTIONS);
 		trl = Value(TRANSACTIONS_LENGTH);
 		to = Value(TIMEOUT);
+		nM = Value(NESTING_MODEL);
 	} catch (const char *x) {
 		std::cerr << "Can not find " << x << "\n\n!!!FAILED!!!\n" << std::endl;
 	}
@@ -306,6 +312,7 @@ void ConfigFile::test() {
 	std::cout << TRANSACTIONS <<": " << tr << std::endl;
 	std::cout << TRANSACTIONS_LENGTH <<": " << trl << std::endl;
 	std::cout << TIMEOUT <<": " << to << std::endl;
+	std::cout << NESTING_MODEL <<": " << nM << std::endl;
 
 }
 

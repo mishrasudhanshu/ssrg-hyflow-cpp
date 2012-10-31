@@ -1,6 +1,7 @@
 src/core/context/ContextManager.d: ../src/core/context/ContextManager.cpp \
  ../src/core/context/ContextManager.h ../src/core/context/HyflowContext.h \
  ../src/core/context/../HyflowObject.h \
+ ../src/core/context/HyflowContextFactory.h \
  ../src/core/context/../exceptions/types/TransactionException.h \
  ../src/core/context/../exceptions/types/../HyflowException.h \
  ../src/core/context/../../util/concurrent/ConcurrentHashMap.h \
@@ -43,6 +44,8 @@ src/core/context/ContextManager.d: ../src/core/context/ContextManager.cpp \
 ../src/core/context/HyflowContext.h:
 
 ../src/core/context/../HyflowObject.h:
+
+../src/core/context/HyflowContextFactory.h:
 
 ../src/core/context/../exceptions/types/TransactionException.h:
 

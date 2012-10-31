@@ -32,6 +32,7 @@ src/core/directory/types/TrackerDirectory.d: \
  ../src/core/directory/types/../../context/ContextManager.h \
  ../src/core/directory/types/../../context/HyflowContext.h \
  ../src/core/directory/types/../../context/../HyflowObject.h \
+ ../src/core/directory/types/../../context/HyflowContextFactory.h \
  ../src/core/directory/types/../../context/../exceptions/types/TransactionException.h \
  ../src/core/directory/types/../../context/../exceptions/types/../HyflowException.h \
  ../src/core/directory/types/../../context/../../util/concurrent/ConcurrentHashMap.h
@@ -99,6 +100,8 @@ src/core/directory/types/TrackerDirectory.d: \
 ../src/core/directory/types/../../context/HyflowContext.h:
 
 ../src/core/directory/types/../../context/../HyflowObject.h:
+
+../src/core/directory/types/../../context/HyflowContextFactory.h:
 
 ../src/core/directory/types/../../context/../exceptions/types/TransactionException.h:
 

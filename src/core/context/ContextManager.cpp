@@ -18,8 +18,10 @@
 
 namespace vt_dstm {
 
+boost::thread_specific_ptr<HyflowContextFactory> ContextManager::threadContextFactory;
 tbb::concurrent_hash_map<unsigned long long, HyflowContext*>* ContextManager::contextMap;
 tbb::atomic<int> ContextManager::localNodeClock;
+Hyflow_NestingModel ContextManager::nestingModel;
 
 ContextManager::ContextManager() {}
 
@@ -29,6 +31,16 @@ void ContextManager::ContextManagerInit() {
 // LESSON: As version starts from 0, even after first commit updated version will be 0 i.e. txnClock
 	localNodeClock.store(1);
 	contextMap = new tbb::concurrent_hash_map<unsigned long long, HyflowContext*>(1024);
+	if (ConfigFile::Value(NESTING_MODEL).compare(NESTING_FLAT) == 0) {
+		nestingModel = HYFLOW_NESTING_FLAT ;
+	} else if (ConfigFile::Value(NESTING_MODEL).compare(NESTING_CLOSED) == 0) {
+		nestingModel = HYFLOW_NESTING_CLOSED;
+	} else if (ConfigFile::Value(NESTING_MODEL).compare(NESTING_OPEN) == 0) {
+		nestingModel = HYFLOW_NESTING_OPEN;
+	} else {
+		Logger::fatal("CM : Unknown Nesting Model\n");
+	}
+	LOG_DEBUG("CM : Nesting Model %d\n", nestingModel);
 }
 
 //TODO: create unique transaction Id, independent of time
@@ -39,24 +51,33 @@ unsigned long long ContextManager::createTid() {
 }
 
 HyflowContext* ContextManager::getInstance() {
+	HyflowContextFactory *contextFactory = threadContextFactory.get();
+	if (!contextFactory) {
+		contextFactory = new HyflowContextFactory();
+		threadContextFactory.reset(contextFactory);
+	}
+	return contextFactory->getContextInstance();
+}
+
+HyflowContext* ContextManager::createContext() {
 	HyflowContext *context = NULL;
-	// Create correct context and register it
+
 	if (ConfigFile::Value(CONTEXT).compare(DTL2) == 0 ) {
 		context = new DTL2Context();
 	}
-	context->setTxnId(createTid());
-	registerContext(context);
+
 	return context;
 }
 
 void ContextManager::cleanInstance(HyflowContext **c) {
 	BenchmarkExecutor::increaseRetries();
-	if (*c) {
-		unregisterContext(*c);
-		HyflowContext* saveContext = *c;
-		*c = NULL;
-		delete saveContext;
-	}
+	// Done as part of contextInit
+//	if (*c) {
+//		unregisterContext(*c);
+//		HyflowContext* saveContext = *c;
+//		*c = NULL;
+//		delete saveContext;
+//	}
 }
 
 void ContextManager::registerContext(HyflowContext *c) {
@@ -101,6 +122,14 @@ bool ContextManager::atomicUpdateClock(int newClock, int oldClock) {
 
 void ContextManager::atomicIncreaseClock() {
 	localNodeClock++;
+}
+
+Hyflow_NestingModel ContextManager::getNestingModel() {
+	return nestingModel;
+}
+
+void ContextManager::setNestingModel(Hyflow_NestingModel nM) {
+	nestingModel = nM;
 }
 
 int ContextManager::getClock() {

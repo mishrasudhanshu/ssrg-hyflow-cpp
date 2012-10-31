@@ -23,9 +23,18 @@ DTL2Context::DTL2Context() {
 	status = TXN_ACTIVE;
 	highestSenderClock = 0;
 	tnxClock = ContextManager::getClock();
+	txnId = 0;
+	nestingModel = ContextManager::getNestingModel();
+	parentContext = NULL;
+	rootContext = NULL;
+	contextExecutionDepth = -1;
 }
 
 DTL2Context::~DTL2Context() {
+	cleanAllMaps();
+}
+
+void DTL2Context::cleanAllMaps(){
 	//Delete all heap objects created temporarily
 	for (std::map<std::string, HyflowObject*>::iterator i= readMap.begin(); i != readMap.end(); i++ ) {
 		if (i->second) {
@@ -34,6 +43,7 @@ DTL2Context::~DTL2Context() {
 			delete saveData;
 		}
 	}
+	readMap.clear();
 
 	for (std::map<std::string, HyflowObject*>::iterator i= writeMap.begin(); i != writeMap.end(); i++ ) {
 		if (i->second){
@@ -42,6 +52,7 @@ DTL2Context::~DTL2Context() {
 			delete saveData;
 		}
 	}
+	writeMap.clear();
 
 	for (std::map<std::string, HyflowObject*>::iterator i= publishMap.begin(); i != publishMap.end(); i++ ) {
 		if (i->second) {
@@ -50,6 +61,7 @@ DTL2Context::~DTL2Context() {
 			delete saveData;
 		}
 	}
+	publishMap.clear();
 
 	for (std::map<std::string, HyflowObject*>::iterator i= deleteMap.begin(); i != deleteMap.end(); i++ ) {
 		if (i->second) {
@@ -57,6 +69,29 @@ DTL2Context::~DTL2Context() {
 			i->second = NULL;
 			delete saveData;
 		}
+	}
+	deleteMap.clear();
+}
+
+void DTL2Context::contextInit(){
+	if (contextExecutionDepth > 0) {
+		LOG_DEBUG("DTL : Context already initialize\n");
+	} else{
+		cleanAllMaps();
+		lockSet.clear();
+
+		status = TXN_ACTIVE;
+		highestSenderClock = 0;
+		tnxClock = ContextManager::getClock();
+
+		//Unregister old txnId, generate new transaction Id and register that
+		if( txnId!=0 ) {	// Unregister only if we are using old context
+			ContextManager::unregisterContext(this);
+		}
+		txnId = ContextManager::createTid();
+		ContextManager::registerContext(this);
+
+		LOG_DEBUG("DTL : context initialize with id %llu\n", txnId);
 	}
 }
 
@@ -107,9 +142,17 @@ void DTL2Context::forward(int senderClock) {
 	}
 }
 
-HyflowObject* DTL2Context::onReadAccess(HyflowObject *obj){
+const HyflowObject* DTL2Context::onReadAccess(HyflowObject *obj){
 	// Verify in write set whether we have recent value
 	std::string id = obj->getId();
+	std::map<std::string, HyflowObject*>::iterator i = writeMap.find(id);
+	if ( i == writeMap.end())
+		return readMap.at(id);
+	return writeMap.at(id);
+}
+
+const HyflowObject* DTL2Context::onReadAccess(std::string id){
+	// Verify in write set whether we have recent value
 	std::map<std::string, HyflowObject*>::iterator i = writeMap.find(id);
 	if ( i == writeMap.end())
 		return readMap.at(id);
@@ -126,6 +169,20 @@ HyflowObject* DTL2Context::onWriteAccess(HyflowObject *obj){
 		std::map<std::string, HyflowObject*>::iterator i = writeMap.find(id);
 		if ( i == writeMap.end()) {
 			obj->getClone(&writeSetCopy);
+			writeMap[id] = writeSetCopy;
+			return writeSetCopy;
+		}
+		return writeMap.at(id);
+	}
+	return NULL;
+}
+
+HyflowObject* DTL2Context::onWriteAccess(std::string id){
+	if (getStatus() != TXN_ABORTED) {
+		HyflowObject *writeSetCopy = NULL;
+		std::map<std::string, HyflowObject*>::iterator i = writeMap.find(id);
+		if ( i == writeMap.end()) {
+			readMap.at(id)->getClone(&writeSetCopy);
 			writeMap[id] = writeSetCopy;
 			return writeSetCopy;
 		}
@@ -217,7 +274,7 @@ bool DTL2Context::validateObject(HyflowObject* obj)	{
 	return false;
 }
 
-void DTL2Context::commit(){
+void DTL2Context::tryCommit() {
 	std::vector<HyflowObject *> lockedObjects;
 
 	if (getStatus() == TXN_ABORTED) {
@@ -267,7 +324,9 @@ void DTL2Context::commit(){
 			unlockObjectOnFail(*vi);
 		throw;
 	}
+}
 
+void DTL2Context::reallyCommit() {
 	// Transaction Completed Successfully
 	// Increase the Node clock
 	ContextManager::atomicIncreaseClock();
@@ -303,6 +362,26 @@ void DTL2Context::commit(){
 	}
 }
 
+void DTL2Context::commit(){
+	if (ContextManager::getNestingModel() == HYFLOW_NESTING_FLAT) {
+		if (getContextExecutionDepth() > 0) {
+			// If not top context do nothing, just return reduce execution depth
+			decreaseContextExecutionDepth();
+			LOG_DEBUG("DTL : FLAT Context Call, actual commit postponed\n");
+			return;
+		}
+		tryCommit();
+		reallyCommit();
+		decreaseContextExecutionDepth();
+	}else if (ContextManager::getNestingModel() == HYFLOW_NESTING_CLOSED) {
+		Logger::fatal("DTL : Close nesting not supported currently\n");
+	}else if (ContextManager::getNestingModel() == HYFLOW_NESTING_OPEN) {
+		Logger::fatal("DTL : Open nesting not supported currently\n");
+	}else {
+		Logger::fatal("DTL : Invalid Nesting Model\n");
+	}
+}
+
 void DTL2Context::abort() {
 	setStatus(TXN_ABORTED);
 }
@@ -310,6 +389,28 @@ void DTL2Context::abort() {
 void DTL2Context::updateClock(int c) {
 	if (highestSenderClock < c) {
 		highestSenderClock = c;
+	}
+}
+/*
+ * TODO: Provide a method to revive fresh copies
+ * Object fetching and beforeRead step combined
+ */
+void DTL2Context::fetchObject(std::string id) {
+	// check if object is already part of read set, if not fetch add to read set
+	std::map<std::string, HyflowObject*>::iterator i = readMap.find(id);
+	if ( i == readMap.end()) {
+		HyflowObject* obj = DirectoryManager::locate(id, true, txnId);
+		LOG_DEBUG("DTL : Fetched object %s\n", obj->getId().c_str());
+		readMap[id] = obj;
+	}
+
+	// Perform early validation step : Not required though
+	forward(highestSenderClock);
+}
+
+void DTL2Context::fetchObjects(std::string ids[], int objCount) {
+	for(int i=0; i < objCount; i++) {
+		fetchObject(ids[i]);
 	}
 }
 

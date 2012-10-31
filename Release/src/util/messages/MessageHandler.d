@@ -11,6 +11,7 @@ src/util/messages/MessageHandler.d: \
  ../src/util/messages/../../core/context/ContextManager.h \
  ../src/util/messages/../../core/context/HyflowContext.h \
  ../src/util/messages/../../core/context/../HyflowObject.h \
+ ../src/util/messages/../../core/context/HyflowContextFactory.h \
  ../src/util/messages/../../core/context/../exceptions/types/TransactionException.h \
  ../src/util/messages/../../core/context/../exceptions/types/../HyflowException.h \
  ../src/util/messages/../../core/context/../../util/concurrent/ConcurrentHashMap.h
@@ -38,6 +39,8 @@ src/util/messages/MessageHandler.d: \
 ../src/util/messages/../../core/context/HyflowContext.h:
 
 ../src/util/messages/../../core/context/../HyflowObject.h:
+
+../src/util/messages/../../core/context/HyflowContextFactory.h:
 
 ../src/util/messages/../../core/context/../exceptions/types/TransactionException.h:
 
