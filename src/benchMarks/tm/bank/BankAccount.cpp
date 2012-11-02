@@ -97,20 +97,24 @@ void BankAccount::totalBalanceAtomically(HyflowObject* self, void* bankArgs, Hyf
 	Atomic<uint64_t> atomicCheckBalance1, atomicCheckBalance2;
 	BankArgs* args= (BankArgs*)bankArgs;
 	atomicCheckBalance1.atomically = BankAccount::checkBalanceAtomic;
-	atomicCheckBalance1.execute(NULL, &args->id1, balance);
+	for(int i=0 ; i < BenchmarkExecutor::getCalls(); i++)
+		atomicCheckBalance1.execute(NULL, &args->id1, balance);
 
 	atomicCheckBalance2.atomically = BankAccount::checkBalanceAtomic;
-	atomicCheckBalance2.execute(NULL, &args->id2, balance);
+	for(int i=0 ; i < BenchmarkExecutor::getCalls(); i++)
+		atomicCheckBalance2.execute(NULL, &args->id2, balance);
 }
 
 void BankAccount::transferAtomically(HyflowObject* self, void* bankArgs, HyflowContext* c, void* ignore) {
 	Atomic<uint64_t> atomicWithdraw, atomicDeposit;
 
 	atomicWithdraw.atomically = BankAccount::withdrawAtomic;
-	atomicWithdraw.execute(NULL, bankArgs, NULL);
+	for(int i=0 ; i < BenchmarkExecutor::getCalls(); i++)
+		atomicWithdraw.execute(NULL, bankArgs, NULL);
 
 	atomicDeposit.atomically = BankAccount::depositAtomic;
-	atomicDeposit.execute(NULL, bankArgs, NULL);
+	for(int i=0 ; i < BenchmarkExecutor::getCalls(); i++)
+		atomicDeposit.execute(NULL, bankArgs, NULL);
 }
 
 uint64_t BankAccount::totalBalance(std::string id1, std::string id2) {

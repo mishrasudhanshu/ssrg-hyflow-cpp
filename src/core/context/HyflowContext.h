@@ -28,7 +28,7 @@ protected:
 	TxnStatus status;
 	unsigned long long txnId;
 	Hyflow_NestingModel nestingModel;
-	const HyflowContext* parentContext;
+	HyflowContext* parentContext;
 	HyflowContext* rootContext;
 	int contextExecutionDepth;
 public:
@@ -55,6 +55,7 @@ public:
 	}
 
 	virtual void contextInit() = 0;
+	virtual void contextDeinit() = 0;
 	//TODO: Do a field level locking in place of object level, Use some STM library
 	/**
 	 * Throw (TransactionException) if failed on before read-write call for context
@@ -75,7 +76,15 @@ public:
 	 * Throw (TransactionException) if commit Request is failed.
 	 */
 	virtual void commit() = 0;
-	virtual void abort() = 0;
+	/*
+	 * forces the transaction to rollback
+	 */
+	virtual void rollback()=0;
+	/*
+	 * Suggests whether current transaction should continue or throw transaction
+	 * exception of higher level of transaction
+	 */
+	virtual bool checkParent() = 0;
 	/*
 	 * Required for DTL
 	 */
@@ -109,15 +118,15 @@ public:
 		contextExecutionDepth--;
 	}
 
-	const HyflowContext* getParentContext() const {
+	HyflowContext* getParentContext() {
 		return parentContext;
 	}
 
-	void setParentContext(const HyflowContext* parentContext) {
+	void setParentContext(HyflowContext* parentContext) {
 		this->parentContext = parentContext;
 	}
 
-	HyflowContext* getRootContext() const {
+	HyflowContext* getRootContext() {
 		return rootContext;
 	}
 

@@ -69,6 +69,8 @@ public:
     static void executeThreads();
 	static void increaseRetries();
 
+	static int getCalls() {	return calls; }
+
 	bool isSanity() const {
 		return sanity;
 	}

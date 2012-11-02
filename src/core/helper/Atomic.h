@@ -58,35 +58,20 @@ public:
 			bool commit = true;
 			try {
 				atomically(self, args, c, retValue);
-			}catch (...) {
-				try {
-					ContextManager::cleanInstance(&c);
-					throw;
-				} catch (TransactionException & ex) {
-					ex.print();
-					commit = false;
-				} catch (std::string & s) {
-					Logger::fatal("%s\n",s.c_str());
-					return;
-				}
+			} catch (TransactionException & ex) {
+				ex.print();
+				commit = false;
 			}
 			if (commit) {
 				try {
 					c->commit();
 					LOG_DEBUG("++++++++++Transaction Successful ++++++++++\n");
-					ContextManager::cleanInstance(&c);
+					ContextManager::releaseInstance(&c);
 					return;
-				} catch(...) {
-					try{
-						ContextManager::cleanInstance(&c);
-						throw;
-					} catch (TransactionException & ex) {
-						ex.print();
-						continue;
-					} catch (std::string & s) {
-						Logger::fatal("%s\n",s.c_str());
-						return;
-					}
+				} catch (TransactionException & ex) {
+					ContextManager::releaseInstance(&c);
+					ex.print();
+					continue;
 				}
 			}
 		}

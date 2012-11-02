@@ -32,7 +32,8 @@ public:
 	static unsigned long long createTid();
 	static HyflowContext* getInstance();
 	static HyflowContext* createContext();
-	static void cleanInstance(HyflowContext **c);
+	static void deleteContext(HyflowContext **c);
+	static void releaseInstance(HyflowContext **c);
 
 	static void registerContext(HyflowContext * c);
 	static void unregisterContext(HyflowContext *c);

@@ -17,11 +17,13 @@ class HyflowContextFactory {
 	std::vector<HyflowContext*> contextStack;
 	int contextStackIndex;
 	HyflowContext* getContextFromStack();
+	HyflowContext* getFreshContext();
 public:
 	HyflowContextFactory();
 	virtual ~HyflowContextFactory();
 
 	HyflowContext* getContextInstance();
+	void releaseContextInstance();
 };
 
 } /* namespace vt_dstm */

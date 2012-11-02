@@ -59,25 +59,32 @@ HyflowContext* ContextManager::getInstance() {
 	return contextFactory->getContextInstance();
 }
 
+void ContextManager::releaseInstance(HyflowContext **c) {
+	BenchmarkExecutor::increaseRetries();
+	if (*c) {
+//		unregisterContext(*c);
+		(*c)->contextDeinit();
+		*c = NULL;
+	}
+	HyflowContextFactory *contextFactory = threadContextFactory.get();
+	// We will the context using the contextFactory reference
+	contextFactory->releaseContextInstance();
+}
+
 HyflowContext* ContextManager::createContext() {
 	HyflowContext *context = NULL;
-
 	if (ConfigFile::Value(CONTEXT).compare(DTL2) == 0 ) {
 		context = new DTL2Context();
 	}
-
 	return context;
 }
 
-void ContextManager::cleanInstance(HyflowContext **c) {
-	BenchmarkExecutor::increaseRetries();
-	// Done as part of contextInit
-//	if (*c) {
-//		unregisterContext(*c);
-//		HyflowContext* saveContext = *c;
-//		*c = NULL;
-//		delete saveContext;
-//	}
+void ContextManager::deleteContext(HyflowContext **c) {
+	if (*c) {
+		HyflowContext* saveContext = *c;
+		*c = NULL;
+		delete saveContext;
+	}
 }
 
 void ContextManager::registerContext(HyflowContext *c) {
