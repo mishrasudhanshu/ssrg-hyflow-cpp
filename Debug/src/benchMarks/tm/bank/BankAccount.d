@@ -20,6 +20,7 @@ src/benchMarks/tm/bank/BankAccount.d: \
  ../src/benchMarks/tm/bank/../../../core/helper/Atomic.h \
  ../src/benchMarks/tm/bank/../../../core/helper/../../util/logging/Logger.h \
  ../src/benchMarks/tm/bank/../../../core/helper/../../core/HyflowObject.h \
+ ../src/benchMarks/tm/bank/../../../core/helper/../../core/context/ContextManager.h \
  ../src/benchMarks/tm/bank/../../../util/logging/Logger.h \
  ../src/benchMarks/tm/bank/../../../util/networking/NetworkManager.h \
  ../src/benchMarks/tm/bank/../../../util/networking/AbstractNetwork.h \
@@ -81,6 +82,8 @@ src/benchMarks/tm/bank/BankAccount.d: \
 ../src/benchMarks/tm/bank/../../../core/helper/../../util/logging/Logger.h:
 
 ../src/benchMarks/tm/bank/../../../core/helper/../../core/HyflowObject.h:
+
+../src/benchMarks/tm/bank/../../../core/helper/../../core/context/ContextManager.h:
 
 ../src/benchMarks/tm/bank/../../../util/logging/Logger.h:
 

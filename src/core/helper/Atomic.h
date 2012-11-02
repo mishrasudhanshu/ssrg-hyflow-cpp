@@ -11,6 +11,7 @@
 #include <cstdlib>
 #include "../../util/logging/Logger.h"
 #include "../../core/HyflowObject.h"
+#include "../../core/context/ContextManager.h"
 
 namespace vt_dstm {
 
@@ -37,7 +38,7 @@ public:
 		atomically = NULL;
 		onCommit = Atomic::defaultOnCommit;
 		onAbort = Atomic::defaultOnAbort;
-		nestingModel = HYFLOW_NESTING_FLAT ;
+		nestingModel = ContextManager::getNestingModel() ;
 	}
 
 	Atomic(Hyflow_NestingModel model) {
@@ -69,10 +70,15 @@ public:
 					ContextManager::releaseInstance(&c);
 					return;
 				} catch (TransactionException & ex) {
+					LOG_DEBUG("XXX-----Transaction Failed Post Validation------XXX\n");
 					ContextManager::releaseInstance(&c);
 					ex.print();
 					continue;
 				}
+			}else {
+				LOG_DEBUG("XXX-----Transaction Failed Early Validation------XXX\n");
+				ContextManager::releaseInstance(&c);
+				continue;
 			}
 		}
 		throw new TransactionException("Failed to commit the transaction in the defined retries.");

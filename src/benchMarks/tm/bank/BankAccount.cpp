@@ -96,10 +96,13 @@ void BankAccount::withdrawAtomic(HyflowObject* self, void* args, HyflowContext* 
 void BankAccount::totalBalanceAtomically(HyflowObject* self, void* bankArgs, HyflowContext* c, uint64_t* balance) {
 	Atomic<uint64_t> atomicCheckBalance1, atomicCheckBalance2;
 	BankArgs* args= (BankArgs*)bankArgs;
+
+	LOG_DEBUG("BANK : Call check Balance1\n");
 	atomicCheckBalance1.atomically = BankAccount::checkBalanceAtomic;
 	for(int i=0 ; i < BenchmarkExecutor::getCalls(); i++)
 		atomicCheckBalance1.execute(NULL, &args->id1, balance);
 
+	LOG_DEBUG("BANK : Call check Balance2\n");
 	atomicCheckBalance2.atomically = BankAccount::checkBalanceAtomic;
 	for(int i=0 ; i < BenchmarkExecutor::getCalls(); i++)
 		atomicCheckBalance2.execute(NULL, &args->id2, balance);
@@ -108,10 +111,12 @@ void BankAccount::totalBalanceAtomically(HyflowObject* self, void* bankArgs, Hyf
 void BankAccount::transferAtomically(HyflowObject* self, void* bankArgs, HyflowContext* c, void* ignore) {
 	Atomic<uint64_t> atomicWithdraw, atomicDeposit;
 
+	LOG_DEBUG("BANK :Call Withdraw\n");
 	atomicWithdraw.atomically = BankAccount::withdrawAtomic;
 	for(int i=0 ; i < BenchmarkExecutor::getCalls(); i++)
 		atomicWithdraw.execute(NULL, bankArgs, NULL);
 
+	LOG_DEBUG("BANK :Call Deposit\n");
 	atomicDeposit.atomically = BankAccount::depositAtomic;
 	for(int i=0 ; i < BenchmarkExecutor::getCalls(); i++)
 		atomicDeposit.execute(NULL, bankArgs, NULL);

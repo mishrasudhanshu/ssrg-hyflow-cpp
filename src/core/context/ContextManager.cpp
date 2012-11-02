@@ -62,9 +62,14 @@ HyflowContext* ContextManager::getInstance() {
 void ContextManager::releaseInstance(HyflowContext **c) {
 	BenchmarkExecutor::increaseRetries();
 	if (*c) {
-//		unregisterContext(*c);
 		(*c)->contextDeinit();
-		*c = NULL;
+		// Following part is just for debugging, can be commented
+		if ((*c)->getStatus() != TXN_ABORTED) {
+			LOG_DEBUG("CM : Transaction committed, reset context pointer to NULL\n");
+			*c = NULL;
+		}else {
+			LOG_DEBUG("CM : Transaction aborted, not resetting context pointer to NULL\n");
+		}
 	}
 	HyflowContextFactory *contextFactory = threadContextFactory.get();
 	// We will the context using the contextFactory reference

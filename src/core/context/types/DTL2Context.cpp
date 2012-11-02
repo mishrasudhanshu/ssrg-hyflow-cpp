@@ -31,10 +31,12 @@ DTL2Context::DTL2Context() {
 }
 
 DTL2Context::~DTL2Context() {
+	LOG_DEBUG("DTL : Destroying Context\n");
 	cleanAllMaps();
 }
 
 void DTL2Context::cleanAllMaps(){
+	LOG_DEBUG("DTL : Cleaning Up context Maps\n");
 	//Delete all heap objects created temporarily
 	for (std::map<std::string, HyflowObject*>::iterator i= readMap.begin(); i != readMap.end(); i++ ) {
 		if (i->second) {
@@ -146,50 +148,32 @@ void DTL2Context::forward(int senderClock) {
 			tnxClock = senderClock;
 		}
 	}else if (ContextManager::getNestingModel() == HYFLOW_NESTING_CLOSED) {
-		// Collect all the contexts for this leaf context
-		std::vector<HyflowContext*> contextBranch;
-		for (HyflowContext* current = this; current != NULL; current = current->getParentContext()) {
-			contextBranch.push_back(current);
-		}
-
-		// TODO: Think about merging all validation request for same node into one
-		// Perform all local validation first from top to bottom, as messaging is costly
-		int myNodeId = NetworkManager::getNodeId();
-		bool isAborting = false;
-		for (int contextIndex = contextBranch.size()-1 ; contextIndex >= 0; contextIndex-- ) {
-			DTL2Context* context = (DTL2Context*) contextBranch[contextIndex];
-			if (!isAborting && (context->getStatus() != TXN_ABORTED)) {
-				for (std::map<std::string, HyflowObject*>::iterator i= context->readMap.begin(); i != context->readMap.end(); i++ ) {
-					HyflowObject* obj = i->second;
-					if (obj->getOwnerNode() == myNodeId) {
-						if (!validateObject(obj)) {
-							isAborting = true;
-							LOG_DEBUG("Forward : Aborting version %d < senderClock %d\n", obj->getVersion(), senderClock);
-							context->setStatus(TXN_ABORTED);
-							break;
-						}
-					}
-				}
-			} else {
-				if (!isAborting) {
-					isAborting = true;
-				} else {
-					context->setStatus(TXN_ABORTED);
-				}
+		if (tnxClock < senderClock) {
+			// Collect all the contexts for this leaf context
+			std::vector<HyflowContext*> contextBranch;
+			for (HyflowContext* current = this; current != NULL; current =
+					current->getParentContext()) {
+				contextBranch.push_back(current);
 			}
-		}
 
-		//If still not aborting try validating the remote objects
-		if (!isAborting) {
-			for (int contextIndex = contextBranch.size()-1 ; contextIndex >= 0; contextIndex-- ) {
-				DTL2Context* context = (DTL2Context*) contextBranch[contextIndex];
+			// TODO: Think about merging all validation request for same node into one
+			// Perform all local validation first from top to bottom, as messaging is costly
+			int myNodeId = NetworkManager::getNodeId();
+			bool isAborting = false;
+			for (int contextIndex = contextBranch.size() - 1; contextIndex >= 0;
+					contextIndex--) {
+				DTL2Context* context =
+						(DTL2Context*) contextBranch[contextIndex];
 				if (!isAborting && (context->getStatus() != TXN_ABORTED)) {
-					for (std::map<std::string, HyflowObject*>::iterator i= context->readMap.begin(); i != context->readMap.end(); i++ ) {
+					for (std::map<std::string, HyflowObject*>::iterator i =
+							context->readMap.begin();
+							i != context->readMap.end(); i++) {
 						HyflowObject* obj = i->second;
-						if (obj->getOwnerNode() != myNodeId) {
+						if (obj->getOwnerNode() == myNodeId) {
 							if (!validateObject(obj)) {
 								isAborting = true;
-								LOG_DEBUG("Forward : Aborting version %d < senderClock %d\n", obj->getVersion(), senderClock);
+								LOG_DEBUG(
+										"Forward : Aborting version %d < senderClock %d\n", obj->getVersion(), senderClock);
 								context->setStatus(TXN_ABORTED);
 								break;
 							}
@@ -203,15 +187,48 @@ void DTL2Context::forward(int senderClock) {
 					}
 				}
 			}
-		}
 
-		if (isAborting) {
-			TransactionException forwardingFailed("Forward : Aborting on version\n");
-			throw forwardingFailed;
-		}
+			//If still not aborting try validating the remote objects
+			if (!isAborting) {
+				for (int contextIndex = contextBranch.size() - 1;
+						contextIndex >= 0; contextIndex--) {
+					DTL2Context* context =
+							(DTL2Context*) contextBranch[contextIndex];
+					if (!isAborting && (context->getStatus() != TXN_ABORTED)) {
+						for (std::map<std::string, HyflowObject*>::iterator i =
+								context->readMap.begin();
+								i != context->readMap.end(); i++) {
+							HyflowObject* obj = i->second;
+							if (obj->getOwnerNode() != myNodeId) {
+								if (!validateObject(obj)) {
+									isAborting = true;
+									LOG_DEBUG(
+											"Forward : Aborting version %d < senderClock %d\n", obj->getVersion(), senderClock);
+									context->setStatus(TXN_ABORTED);
+									break;
+								}
+							}
+						}
+					} else {
+						if (!isAborting) {
+							isAborting = true;
+						} else {
+							context->setStatus(TXN_ABORTED);
+						}
+					}
+				}
+			}
 
-		LOG_DEBUG("Forward : context from %d to %d\n", tnxClock, senderClock);
-		tnxClock = senderClock;
+			if (isAborting) {
+				TransactionException forwardingFailed(
+						"Forward : Aborting on version\n");
+				throw forwardingFailed;
+			}
+
+			LOG_DEBUG(
+					"Forward : context from %d to %d\n", tnxClock, senderClock);
+			tnxClock = senderClock;
+		}
 	}else if (ContextManager::getNestingModel() == HYFLOW_NESTING_OPEN) {
 		Logger::fatal("DTL : Open nesting not supported currently\n");
 	}else {
@@ -443,20 +460,61 @@ void DTL2Context::reallyCommit() {
 
 void DTL2Context::mergeIntoParents() {
 	//Copy read set
+	DTL2Context* pContext = (DTL2Context*) parentContext;
 	for (std::map<std::string, HyflowObject*>::iterator i= readMap.begin(); i != readMap.end(); i++ ) {
-		((DTL2Context*)parentContext)->readMap[i->first] = i->second;
+		HyflowObject *objCopy = NULL;
+		i->second->getClone(&objCopy);
+		std::map<std::string, HyflowObject*>::iterator pi =pContext->readMap.find(i->first);
+		if (pi == pContext->readMap.end()) {
+			pContext->readMap[i->first] = objCopy;
+		}else {
+			HyflowObject *pCopy = pi->second;
+			//Over write the child object copy
+			pContext->readMap[i->first] = objCopy;
+			delete pCopy;
+		}
 	}
 	//Copy write set
 	for (std::map<std::string, HyflowObject*>::iterator i= writeMap.begin(); i != writeMap.end(); i++ ) {
-		((DTL2Context*)parentContext)->writeMap[i->first] = i->second;
+		HyflowObject *objCopy = NULL;
+		i->second->getClone(&objCopy);
+		std::map<std::string, HyflowObject*>::iterator pi =pContext->writeMap.find(i->first);
+		if (pi == pContext->writeMap.end()) {
+			pContext->writeMap[i->first] = objCopy;
+		}else {
+			HyflowObject *pCopy = pi->second;
+			//Over write the child object copy
+			pContext->writeMap[i->first] = objCopy;
+			delete pCopy;
+		}
 	}
 	//Copy publish set
 	for (std::map<std::string, HyflowObject*>::iterator i= publishMap.begin(); i != publishMap.end(); i++ ) {
-		((DTL2Context*)parentContext)->publishMap[i->first] = i->second;
+		HyflowObject *objCopy = NULL;
+		i->second->getClone(&objCopy);
+		std::map<std::string, HyflowObject*>::iterator pi =pContext->publishMap.find(i->first);
+		if (pi == pContext->publishMap.end()) {
+			pContext->publishMap[i->first] = objCopy;
+		}else {
+			HyflowObject *pCopy = pi->second;
+			//Over write the child object copy
+			pContext->publishMap[i->first] = objCopy;
+			delete pCopy;
+		}
 	}
 	//Copy delete set
 	for (std::map<std::string, HyflowObject*>::iterator i= deleteMap.begin(); i != deleteMap.end(); i++ ) {
-		((DTL2Context*)parentContext)->deleteMap[i->first] = i->second;
+		HyflowObject *objCopy = NULL;
+		i->second->getClone(&objCopy);
+		std::map<std::string, HyflowObject*>::iterator pi =pContext->deleteMap.find(i->first);
+		if (pi == pContext->deleteMap.end()) {
+			pContext->deleteMap[i->first] = objCopy;
+		}else {
+			HyflowObject *pCopy = pi->second;
+			//Over write the child object copy
+			pContext->deleteMap[i->first] = objCopy;
+			delete pCopy;
+		}
 	}
 }
 
@@ -495,17 +553,27 @@ void DTL2Context::rollback() {
 bool DTL2Context::checkParent() {
 	if (ContextManager::getNestingModel() == HYFLOW_NESTING_FLAT) {
 		if (getContextExecutionDepth() > 0) {
+			LOG_DEBUG("DTL : check Parent throwing exception\n");
 			return true;
-		} else {	// Top context commit here
+		} else {	// Top context retry here
+			LOG_DEBUG("DTL : check Parent not throwing exception\n");
 			return false;
 		}
 	}else if (ContextManager::getNestingModel() == HYFLOW_NESTING_CLOSED) {
 		if (!parentContext) {	// Top context commit here
+			LOG_DEBUG("DTL : check Parent not throwing exception\n");
 			return false;
 		} else {
-			// If you are sub transaction throw exception, if will propagate till
-			// the highest aborted transaction.
-			return true;
+			// If parent transaction is also aborted then we can not
+			// retry on same level therefore throw exception
+			if (parentContext->getStatus() == TXN_ABORTED) {
+				LOG_DEBUG("DTL : check Parent throwing exception\n");
+				return true;
+			} else {
+				// if my parent is not aborted then I should keep retrying on my level
+				LOG_DEBUG("DTL : check Parent not throwing exception as parent Active\n");
+				return false;
+			}
 		}
 	}else if (ContextManager::getNestingModel() == HYFLOW_NESTING_OPEN) {
 		Logger::fatal("DTL : Open nesting not supported currently\n");
@@ -527,15 +595,31 @@ void DTL2Context::updateClock(int c) {
 void DTL2Context::fetchObject(std::string id) {
 	// check if object is already part of read set, if not fetch add to read set
 	std::map<std::string, HyflowObject*>::iterator i = readMap.find(id);
-	if ( i == readMap.end()) {
-		HyflowObject* obj = DirectoryManager::locate(id, true, txnId);
-		// Perform early validation step, always use highestSendClock, it is update by objectAccessMessage
-		// First do forwarding on current readSet then add new object to it
-		forward(highestSenderClock);
-		LOG_DEBUG("DTL : Fetched object %s\n", obj->getId().c_str());
-		readMap[id] = obj;
+	if ( i != readMap.end()) {
+		// We already have object in transactions read set nothing to do return
+		return;
 	}
 
+	//Check if object copy is available in any of parent transaction
+	for (DTL2Context* current= (DTL2Context*)parentContext; current != NULL; current = (DTL2Context*)current->parentContext) {
+		std::map<std::string, HyflowObject*>::iterator pi = current->readMap.find(id);
+		if (pi != current->readMap.end()) {
+			// We got object in parent transaction
+			HyflowObject* pCopy = NULL;
+			pi->second->getClone(&pCopy);
+			// Copy to this transaction readSet
+			readMap[id] = pCopy;
+			return ;
+		}
+	}
+
+	// Go over network and fetch the object
+	HyflowObject* obj = DirectoryManager::locate(id, true, txnId);
+	// Perform early validation step, always use highestSendClock, it is update by objectAccessMessage
+	// First do forwarding on current readSet then add new object to it
+	forward(highestSenderClock);
+	LOG_DEBUG("DTL : Fetched object %s\n", obj->getId().c_str());
+	readMap[id] = obj;
 }
 
 void DTL2Context::fetchObjects(std::string ids[], int objCount) {
