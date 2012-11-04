@@ -118,7 +118,9 @@ void DTL2Context::beforeReadAccess(HyflowObject *obj) {
  * stale object aborts the transaction.
  */
 void DTL2Context::forward(int senderClock) {
-	if (nestingModel == HYFLOW_NESTING_FLAT) {
+	if ((nestingModel == HYFLOW_NESTING_FLAT)||
+			(nestingModel == HYFLOW_NO_NESTING)||
+				(nestingModel == HYFLOW_CHECKPOINTING)) {
 		if (tnxClock < senderClock) {
 			std::map<std::string, HyflowObject*>::iterator i;
 			for (i = readMap.begin(); i != readMap.end(); i++) {
@@ -135,7 +137,7 @@ void DTL2Context::forward(int senderClock) {
 				 */
 //			int32_t version = i->second->getVersion();
 //			if ( version > senderClock) {
-				if (!validateObject(i->second)) {
+			if (!validateObject(i->second)) {
 					LOG_DEBUG(
 							"Forward : Aborting version %d < senderClock %d\n", i->second->getVersion(), senderClock);
 					setStatus(TXN_ABORTED);
@@ -230,9 +232,9 @@ void DTL2Context::forward(int senderClock) {
 			tnxClock = senderClock;
 		}
 	}else if (ContextManager::getNestingModel() == HYFLOW_NESTING_OPEN) {
-		Logger::fatal("DTL : Open nesting not supported currently\n");
+		Logger::fatal("FORWARD : Open nesting not supported currently\n");
 	}else {
-		Logger::fatal("DTL : Invalid Nesting Model\n");
+		Logger::fatal("FORWARD : Invalid Nesting Model\n");
 	}
 }
 
@@ -519,7 +521,11 @@ void DTL2Context::mergeIntoParents() {
 }
 
 void DTL2Context::commit(){
-	if (ContextManager::getNestingModel() == HYFLOW_NESTING_FLAT) {
+	if (ContextManager::getNestingModel() == HYFLOW_NO_NESTING) {
+		// Top context commit here
+		tryCommit();
+		reallyCommit();
+	}else if (ContextManager::getNestingModel() == HYFLOW_NESTING_FLAT) {
 		if (getContextExecutionDepth() > 0) {
 			// If not top context do nothing
 			LOG_DEBUG("DTL : FLAT Context Call, actual commit postponed\n");
@@ -537,7 +543,9 @@ void DTL2Context::commit(){
 		}
 	}else if (ContextManager::getNestingModel() == HYFLOW_NESTING_OPEN) {
 		Logger::fatal("DTL : Open nesting not supported currently\n");
-	}else {
+	}else if (ContextManager::getNestingModel() == HYFLOW_CHECKPOINTING) {
+		Logger::fatal("DTL : CheckPointing not supported currently\n");
+	}else{
 		Logger::fatal("DTL : Invalid Nesting Model\n");
 	}
 }

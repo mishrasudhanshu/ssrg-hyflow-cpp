@@ -76,10 +76,13 @@ namespace vt_dstm
 #define TRANSACTIONS "transactions"
 #define TRANSACTIONS_LENGTH "transactionLength"
 #define TIMEOUT "timeout"
+
 #define NESTING_MODEL "nestingModel"
+#define NESTING_NO "no_nesting"
 #define NESTING_FLAT "flat"
 #define NESTING_CLOSED "closed"
 #define NESTING_OPEN "open"
+#define NESTING_CHECKPOINT "checkPointing"
 
 #define TRUE "true"
 #define FALSE "false"

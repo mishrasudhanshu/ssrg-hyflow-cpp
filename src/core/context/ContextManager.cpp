@@ -31,13 +31,17 @@ void ContextManager::ContextManagerInit() {
 // LESSON: As version starts from 0, even after first commit updated version will be 0 i.e. txnClock
 	localNodeClock.store(1);
 	contextMap = new tbb::concurrent_hash_map<unsigned long long, HyflowContext*>(1024);
-	if (ConfigFile::Value(NESTING_MODEL).compare(NESTING_FLAT) == 0) {
+	if (ConfigFile::Value(NESTING_MODEL).compare(NESTING_NO) == 0) {
+		nestingModel = HYFLOW_NO_NESTING ;
+	}else if (ConfigFile::Value(NESTING_MODEL).compare(NESTING_FLAT) == 0) {
 		nestingModel = HYFLOW_NESTING_FLAT ;
 	} else if (ConfigFile::Value(NESTING_MODEL).compare(NESTING_CLOSED) == 0) {
 		nestingModel = HYFLOW_NESTING_CLOSED;
 	} else if (ConfigFile::Value(NESTING_MODEL).compare(NESTING_OPEN) == 0) {
 		nestingModel = HYFLOW_NESTING_OPEN;
-	} else {
+	} else if (ConfigFile::Value(NESTING_MODEL).compare(NESTING_CHECKPOINT) == 0) {
+		nestingModel = HYFLOW_CHECKPOINTING ;
+	} else{
 		Logger::fatal("CM : Unknown Nesting Model\n");
 	}
 	LOG_DEBUG("CM : Nesting Model %d\n", nestingModel);
@@ -92,6 +96,13 @@ void ContextManager::deleteContext(HyflowContext **c) {
 	}
 }
 
+bool ContextManager::isContextInit() {
+	HyflowContextFactory *contextFactory = threadContextFactory.get();
+	if (!contextFactory) {
+		return false;
+	}
+	return contextFactory->isContextInit();
+}
 void ContextManager::registerContext(HyflowContext *c) {
 	tbb::concurrent_hash_map<unsigned long long, HyflowContext*>::accessor a;
 	if (!contextMap->insert(a,c->getTxnId()))

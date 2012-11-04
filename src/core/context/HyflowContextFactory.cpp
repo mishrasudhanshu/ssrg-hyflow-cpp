@@ -19,9 +19,19 @@ HyflowContextFactory::HyflowContextFactory() {
 
 HyflowContextFactory::~HyflowContextFactory() {}
 
+bool HyflowContextFactory::isContextInit() {
+	return (contextStackIndex != -1);
+}
+
 HyflowContext* HyflowContextFactory::getContextInstance() {
 	HyflowContext* context = NULL;
-	if (ContextManager::getNestingModel() == HYFLOW_NESTING_FLAT) {
+	if  (ContextManager::getNestingModel() == HYFLOW_NO_NESTING) {
+		if( contextStackIndex==-1 ) {
+			context = getFreshContext();
+		}else {
+			context = contextStack.at(contextStackIndex);
+		}
+	}else if (ContextManager::getNestingModel() == HYFLOW_NESTING_FLAT) {
 		if( contextStackIndex==-1 ) {
 			context = getContextFromStack();
 		}else {
@@ -45,11 +55,19 @@ HyflowContext* HyflowContextFactory::getContextInstance() {
 	return context;
 }
 
+/*
+ *  Perform all cleanUp and free the heap Memory, if required
+ */
 void HyflowContextFactory::releaseContextInstance(){
 	bool throwException = false;
-
-	// Perform all cleanUp and free the heap Memory
-	if (ContextManager::getNestingModel() == HYFLOW_NESTING_FLAT) {
+	if  (ContextManager::getNestingModel() == HYFLOW_NO_NESTING) {
+		HyflowContext* context = contextStack[0];
+		if (context->getStatus() != TXN_ABORTED) {
+			contextStackIndex--;
+			contextStack.clear();
+			ContextManager::deleteContext(&context);
+		}
+	}else if (ContextManager::getNestingModel() == HYFLOW_NESTING_FLAT) {
 		HyflowContext* context = contextStack[0];
 		// If releasing a instance of aborted transaction, check if we require
 		// to throw transaction exception, after context clean-up
@@ -57,7 +75,7 @@ void HyflowContextFactory::releaseContextInstance(){
 				LOG_DEBUG("HCF :Performing the checkParent\n");
 				throwException = context->checkParent();
 				if (throwException) {
-					//if we are throwing exception then we should decrease execution depth
+					// if we are throwing exception then we should decrease execution depth
 					// and stackIndex as control will reach to next level
 					context->decreaseContextExecutionDepth();
 					contextStackIndex--;

@@ -22,6 +22,7 @@ public:
 	HyflowContextFactory();
 	virtual ~HyflowContextFactory();
 
+	bool isContextInit();
 	HyflowContext* getContextInstance();
 	void releaseContextInstance();
 };

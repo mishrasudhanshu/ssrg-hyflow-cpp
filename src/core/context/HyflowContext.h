@@ -18,9 +18,11 @@ enum TxnStatus {
 };
 
 enum Hyflow_NestingModel {
+	HYFLOW_NO_NESTING,
 	HYFLOW_NESTING_FLAT,
 	HYFLOW_NESTING_CLOSED,
-	HYFLOW_NESTING_OPEN
+	HYFLOW_NESTING_OPEN,
+	HYFLOW_CHECKPOINTING
 };
 
 class HyflowContext {

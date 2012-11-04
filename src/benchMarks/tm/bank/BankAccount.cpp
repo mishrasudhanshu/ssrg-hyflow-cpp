@@ -17,6 +17,7 @@
 #include "../../../util/logging/Logger.h"
 #include "../../../util/networking/NetworkManager.h"
 #include "../../BenchmarkExecutor.h"
+#include "../../../core/helper/CheckPointProvider.h"
 #include "BankAccount.h"
 
 namespace vt_dstm {
@@ -64,7 +65,7 @@ void BankAccount::checkBalanceAtomic(HyflowObject* self, void *args, HyflowConte
 	context->fetchObject(*id);
 
 	BankAccount* ba = (BankAccount*)context->onReadAccess(*id);
-	*balance = ba->checkBalance();
+	(*balance) += ba->checkBalance();
 }
 
 void BankAccount::depositAtomic(HyflowObject* self, void* args, HyflowContext* context, uint64_t* ignore) {
@@ -124,19 +125,53 @@ void BankAccount::transferAtomically(HyflowObject* self, void* bankArgs, HyflowC
 
 uint64_t BankAccount::totalBalance(std::string id1, std::string id2) {
 	uint64_t balance;
-	Atomic<uint64_t> atomicBalance;
-	atomicBalance.atomically = BankAccount::totalBalanceAtomically;
 	BankArgs baArgs(0, id1, id2);
-	atomicBalance.execute(NULL, &baArgs, &balance);
+	// We can not use atomically instrumented class for checkPointing as
+	// stack would have unwounded for atomic call.
+	if (ContextManager::getNestingModel() == HYFLOW_CHECKPOINTING) {
+		HYFLOW_ATOMIC_START {
+			HYFLOW_CHECKPOINT_INIT;
+			LOG_DEBUG("BANK :Call Withdraw\n");
+			for(int i=0 ; i < BenchmarkExecutor::getCalls(); i++) {
+				totalBalanceAtomically(NULL, &baArgs.id1, __context__, &balance);
+			}
+			HYFLOW_CHECKPOINT_HERE;
+			LOG_DEBUG("BANK :Call Deposit\n");
+			for(int i=0 ; i < BenchmarkExecutor::getCalls(); i++) {
+				totalBalanceAtomically(NULL, &baArgs.id2, __context__, &balance);
+			}
+		}HYFLOW_ATOMIC_END;
+	}else {
+		Atomic<uint64_t> atomicBalance;
+		atomicBalance.atomically = BankAccount::totalBalanceAtomically;
+		atomicBalance.execute(NULL, &baArgs, &balance);
+	}
 	return balance;
 }
 
 void BankAccount::transfer(std::string id1, std::string id2,
 		uint64_t money) {
-	Atomic<void> atomicTransfer;
-	atomicTransfer.atomically = BankAccount::transferAtomically;
 	BankArgs baArgs(money, id1, id2);
-	atomicTransfer.execute(NULL, &baArgs, NULL);
+	// We can not use atomically instrumented class for checkPointing as
+	// stack would have unwounded for atomic call.
+	if (ContextManager::getNestingModel() == HYFLOW_CHECKPOINTING) {
+		HYFLOW_ATOMIC_START {
+			HYFLOW_CHECKPOINT_INIT;
+			LOG_DEBUG("BANK :Call Withdraw\n");
+			for(int i=0 ; i < BenchmarkExecutor::getCalls(); i++) {
+				withdrawAtomic(NULL, &baArgs, __context__, NULL);
+			}
+			HYFLOW_CHECKPOINT_HERE;
+			LOG_DEBUG("BANK :Call Deposit\n");
+			for(int i=0 ; i < BenchmarkExecutor::getCalls(); i++) {
+				depositAtomic(NULL, &baArgs, __context__, NULL);
+			}
+		}HYFLOW_ATOMIC_END;
+	}else {
+		Atomic<void> atomicTransfer;
+		atomicTransfer.atomically = BankAccount::transferAtomically;
+		atomicTransfer.execute(NULL, &baArgs, NULL);
+	}
 }
 
 void BankAccount::print(){

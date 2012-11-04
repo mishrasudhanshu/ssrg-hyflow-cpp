@@ -27,6 +27,7 @@ class HyflowObject {
     	ar & ownerNode;
     	ar & oldOwnerNode;
     	ar & oldHyVersion;
+    	ar & accessCheckPoint;
     }
 protected:
 	HyflowObject(const std::string & Id, int v) {
@@ -35,6 +36,7 @@ protected:
 		hyVersion = v;
 		ownerNode = -1;
 		oldOwnerNode = -1;
+		accessCheckPoint = -1;
 	}
 
 	std::string hyId;
@@ -48,9 +50,10 @@ protected:
 	unsigned long long ownerTrnx;
 	int ownerNode;
 	int oldOwnerNode;
+	int accessCheckPoint;
 public:
 
-	HyflowObject() { ownerNode = -1; oldOwnerNode = -1; }
+	HyflowObject() { ownerNode = -1; oldOwnerNode = -1; accessCheckPoint = -1;}
 	virtual ~HyflowObject(){}
 
 	virtual void setId(const std::string & Id) {hyId = Id;};
@@ -69,6 +72,14 @@ public:
 	 * delete once removed from local cache, mostly in local cache update call
 	 */
 	virtual void getClone(HyflowObject **obj)=0;
+
+	int getAccessCheckPoint() const {
+		return accessCheckPoint;
+	}
+
+	void setAccessCheckPoint(int accessCheckPoint) {
+		this->accessCheckPoint = accessCheckPoint;
+	}
 
 	int32_t getOldHyVersion() const {
 		return oldHyVersion;
@@ -105,6 +116,7 @@ public:
 		obj->oldOwnerNode = oldOwnerNode;
 		obj->ownerTrnx = ownerTrnx;
 		obj->oldHyVersion = oldHyVersion;
+		obj->accessCheckPoint = accessCheckPoint;
 	}
 };
 

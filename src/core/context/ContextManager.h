@@ -34,7 +34,10 @@ public:
 	static HyflowContext* createContext();
 	static void deleteContext(HyflowContext **c);
 	static void releaseInstance(HyflowContext **c);
-
+	/*
+	 * Used to verify if context is created for given thread or not
+	 */
+	static bool isContextInit();
 	static void registerContext(HyflowContext * c);
 	static void unregisterContext(HyflowContext *c);
 	static HyflowContext* findContext(unsigned long long tid);

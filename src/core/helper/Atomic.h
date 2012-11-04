@@ -13,6 +13,40 @@
 #include "../../core/HyflowObject.h"
 #include "../../core/context/ContextManager.h"
 
+#define HYFLOW_ATOMIC_START \
+HyflowContext* __context__ = ContextManager::getInstance(); \
+for (int i = 0; i < 0x7fffffff; i++) { \
+	__context__->contextInit(); \
+	bool commit = true; \
+	try { \
+
+#define HYFLOW_ATOMIC_END \
+		} catch (TransactionException & ex) { \
+		ex.print();\
+		commit = false;\
+	}\
+	if (commit) {\
+		try {\
+			__context__->commit();\
+			LOG_DEBUG("++++++++++Transaction Successful ++++++++++\n");\
+			ContextManager::releaseInstance(&__context__);\
+			break;\
+		} catch (TransactionException & ex) {\
+			LOG_DEBUG("XXX-----Transaction Failed Post Validation------XXX\n");\
+			ContextManager::releaseInstance(&__context__);\
+			ex.print();\
+			continue;\
+		}\
+	}else {\
+		LOG_DEBUG("XXX-----Transaction Failed Early Validation------XXX\n");\
+		ContextManager::releaseInstance(&__context__);\
+		continue;\
+	}\
+	if ( i == 0x7fffffff -1) {\
+		throw new TransactionException("Failed to commit the transaction in the defined retries.");\
+	}\
+}\
+
 namespace vt_dstm {
 
 /*
@@ -53,35 +87,17 @@ public:
 	virtual ~Atomic() {}
 
 	void execute(HyflowObject* self, void* args, ReturnType* retValue) {
-		HyflowContext* c = ContextManager::getInstance();
-		for (int i = 0; i < 0x7fffffff; i++) {
-			c->contextInit();
-			bool commit = true;
-			try {
-				atomically(self, args, c, retValue);
-			} catch (TransactionException & ex) {
-				ex.print();
-				commit = false;
-			}
-			if (commit) {
-				try {
-					c->commit();
-					LOG_DEBUG("++++++++++Transaction Successful ++++++++++\n");
-					ContextManager::releaseInstance(&c);
-					return;
-				} catch (TransactionException & ex) {
-					LOG_DEBUG("XXX-----Transaction Failed Post Validation------XXX\n");
-					ContextManager::releaseInstance(&c);
-					ex.print();
-					continue;
-				}
-			}else {
-				LOG_DEBUG("XXX-----Transaction Failed Early Validation------XXX\n");
-				ContextManager::releaseInstance(&c);
-				continue;
-			}
+		// LESSON: Don't increase __context__ scope to function level
+		// Execute sub-transactions non-atomically if using check pointing or no nesting
+		if ((ContextManager::isContextInit()) && ((ContextManager::getNestingModel() == HYFLOW_NO_NESTING) ||
+					(ContextManager::getNestingModel() == HYFLOW_CHECKPOINTING))) {
+			HyflowContext* __context__ = ContextManager::getInstance();
+			atomically(self, args, __context__, retValue);
+		}else {
+			HYFLOW_ATOMIC_START {
+					atomically(self, args, __context__, retValue);
+			}HYFLOW_ATOMIC_END;
 		}
-		throw new TransactionException("Failed to commit the transaction in the defined retries.");
 	}
 
 	bool hasOnCommit() {
