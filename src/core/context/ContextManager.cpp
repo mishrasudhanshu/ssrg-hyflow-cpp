@@ -15,6 +15,7 @@
 #include "../../util/networking/NetworkManager.h"
 #include "../../util/concurrent/ThreadMeta.h"
 #include "../../benchMarks/BenchmarkExecutor.h"
+#include "../helper/CheckPointProvider.h"
 
 namespace vt_dstm {
 
@@ -41,6 +42,7 @@ void ContextManager::ContextManagerInit() {
 		nestingModel = HYFLOW_NESTING_OPEN;
 	} else if (ConfigFile::Value(NESTING_MODEL).compare(NESTING_CHECKPOINT) == 0) {
 		nestingModel = HYFLOW_CHECKPOINTING ;
+		CheckPointProvider::checkPointProviderInit();
 	} else{
 		Logger::fatal("CM : Unknown Nesting Model\n");
 	}
@@ -48,10 +50,10 @@ void ContextManager::ContextManagerInit() {
 }
 
 //TODO: create unique transaction Id, independent of time
-unsigned long long ContextManager::createTid() {
+unsigned long long ContextManager::createTid(HyflowContext *c) {
 	timeval tv;
 	gettimeofday(&tv, NULL);
-	return (tv.tv_sec%100000000000 + tv.tv_usec)*10000 + 100*NetworkManager::getNodeId() + ThreadMeta::getThreadId();
+	return (tv.tv_sec%100000000000 + tv.tv_usec+c->getSubTxnIndex())*10000 + 100*NetworkManager::getNodeId() + ThreadMeta::getThreadId();
 }
 
 HyflowContext* ContextManager::getInstance() {
@@ -105,14 +107,18 @@ bool ContextManager::isContextInit() {
 }
 void ContextManager::registerContext(HyflowContext *c) {
 	tbb::concurrent_hash_map<unsigned long long, HyflowContext*>::accessor a;
-	if (!contextMap->insert(a,c->getTxnId()))
+	if (!contextMap->insert(a,c->getTxnId())) {
+		Logger::fatal("Context with same id already exist %llu \n",c->getTxnId());
 		throw "Context with same id already exist"+c->getTxnId();
+	}
 	a->second = c;
 }
 
 void ContextManager::unregisterContext(HyflowContext *c) {
-	if (!contextMap->erase(c->getTxnId()))
+	if (!contextMap->erase(c->getTxnId())) {
+		Logger::fatal("Context already Unregistered %llu \n",c->getTxnId());
 		throw "Context already Unregistered"+c->getTxnId();
+	}
 }
 
 HyflowContext* ContextManager::findContext(const unsigned long long tid) {

@@ -16,6 +16,10 @@ namespace vt_dstm {
 class HyflowContextFactory {
 	std::vector<HyflowContext*> contextStack;
 	int contextStackIndex;
+	/*
+	 * Required to create unique txnId
+	 */
+	int txnIndex;
 	HyflowContext* getContextFromStack();
 	HyflowContext* getFreshContext();
 public:
@@ -25,6 +29,10 @@ public:
 	bool isContextInit();
 	HyflowContext* getContextInstance();
 	void releaseContextInstance();
+
+	int getTxnIndex() const {
+		return txnIndex;
+	}
 };
 
 } /* namespace vt_dstm */

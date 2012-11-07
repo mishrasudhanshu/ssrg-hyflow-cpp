@@ -4,45 +4,101 @@
  *  Created on: Nov 3, 2012
  *      Author: mishras[at]vt.edu
  */
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
 
 #include "CheckPointProvider.h"
+#include "../../util/networking/NetworkManager.h"
+#include "../../util/concurrent/ThreadMeta.h"
+#include "../../util/logging/Logger.h"
 
 namespace vt_dstm {
-volatile bool CheckPointProvider::isTransactionComplete = false;
-std::vector<ucontext_t *> CheckPointProvider::checkPoints;
-volatile int CheckPointProvider::checkPointIndex = -1;
+volatile bool* CheckPointProvider::isTransactionComplete = NULL;
+std::vector<ucontext_t *>** CheckPointProvider::checkPoints = NULL;
+volatile int* CheckPointProvider::checkPointIndex = NULL;
+bool CheckPointProvider::checkPointingEnabled = false;
 
 CheckPointProvider::CheckPointProvider() {}
 
 CheckPointProvider::~CheckPointProvider() {}
 
-void CheckPointProvider::startCheckPoint(int checkPointIndex) {
-	if (checkPointIndex > (checkPoints.size()-1)) {
-		// Log error and throw exception
-		printf("Beyond checkpoint\n");
-		return;
-	}
-
-	ucontext_t * restartPoint = NULL;
-	for (int i=checkPoints.size()-1 ; i >= 0; i--) {
-		if(checkPointIndex < i) {
-			restartPoint = checkPoints[i];
-			checkPoints.pop_back();
-			delete restartPoint;
-			printf("Deleted checkpoint %d\n", i);
-			restartPoint = NULL;
-		}else if(checkPointIndex == i) {
-			restartPoint = checkPoints[i];
-			break;
-		} else {
-			printf("Should have broken out\n");
+// TODO: Add some way to free up memory, currently just leaking
+void CheckPointProvider::checkPointProviderInit() {
+	if (!checkPointingEnabled) {
+		int threadCount = NetworkManager::getThreadCount();
+		isTransactionComplete = new volatile bool[threadCount] ;
+		checkPointIndex = new volatile int[threadCount];
+		checkPoints = new std::vector<ucontext_t*>*[threadCount];
+		for (int i=0; i<threadCount ; i++) {
+			checkPoints[i] = new std::vector<ucontext_t *>();
 		}
 	}
+	checkPointingEnabled = true;
+}
 
-	printf("Restarting checkPoint\n");
-	setcontext(restartPoint);
+void CheckPointProvider::checkPointInit() {
+	if (checkPointingEnabled) {
+		int threadId = ThreadMeta::getThreadId();
+		isTransactionComplete[threadId] = false;
+		checkPointIndex[threadId] = 0;
+		for (unsigned int i=0 ; i<checkPoints[threadId]->size() ; i++ )
+			delete checkPoints[threadId]->at(i);
+		checkPoints[threadId]->clear();
+	}
+}
+
+void CheckPointProvider::increaseCheckPointIndex() {
+	if (checkPointingEnabled) {
+		checkPointIndex[ThreadMeta::getThreadId()]++;
+	}
+}
+
+int CheckPointProvider::getCheckPointIndex() {
+	if (checkPointingEnabled) {
+		return checkPointIndex[ThreadMeta::getThreadId()];
+	}
+	return 0;
+}
+void CheckPointProvider::setCheckPointIndex(int cpi) {
+	if (checkPointingEnabled) {
+		checkPointIndex[ThreadMeta::getThreadId()] = cpi;
+	}
+}
+
+void CheckPointProvider::startCheckPoint(int checkPointIndex) {
+	if (checkPointingEnabled) {
+		int threadId = ThreadMeta::getThreadId();
+		if (checkPointIndex > (checkPoints[threadId]->size()-1)) {
+			Logger::fatal("CPP : Beyond checkpoint\n");
+			return;
+		}
+
+		ucontext_t * restartPoint = NULL;
+		for (int i=checkPoints[threadId]->size()-1 ; i >= 0; i--) {
+			if(checkPointIndex < i) {
+				restartPoint = checkPoints[threadId]->at(i);
+				checkPoints[threadId]->pop_back();
+				delete restartPoint;
+				LOG_DEBUG("CPP : Deleted checkpoint %d\n", i);
+				restartPoint = NULL;
+			}else if(checkPointIndex == i) {
+				restartPoint = checkPoints[threadId]->at(i);
+				break;
+			} else {
+				Logger::fatal("CPP : CheckPoint loop should have broken out\n");
+			}
+		}
+
+		LOG_DEBUG("CPP : Restarting checkPoint\n");
+		setcontext(restartPoint);
+	}
+}
+
+void CheckPointProvider::saveCheckPoint(ucontext_t* checkPoint) {
+	if (checkPointingEnabled) {
+		int threadId = ThreadMeta::getThreadId();
+		checkPoints[threadId]->push_back(checkPoint);
+	}
 }
 
 void CheckPointProvider::test(){

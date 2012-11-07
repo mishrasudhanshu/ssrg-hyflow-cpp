@@ -133,12 +133,12 @@ uint64_t BankAccount::totalBalance(std::string id1, std::string id2) {
 			HYFLOW_CHECKPOINT_INIT;
 			LOG_DEBUG("BANK :Call Withdraw\n");
 			for(int i=0 ; i < BenchmarkExecutor::getCalls(); i++) {
-				totalBalanceAtomically(NULL, &baArgs.id1, __context__, &balance);
+				checkBalanceAtomic(NULL, &baArgs.id1, __context__, &balance);
 			}
 			HYFLOW_CHECKPOINT_HERE;
 			LOG_DEBUG("BANK :Call Deposit\n");
 			for(int i=0 ; i < BenchmarkExecutor::getCalls(); i++) {
-				totalBalanceAtomically(NULL, &baArgs.id2, __context__, &balance);
+				checkBalanceAtomic(NULL, &baArgs.id2, __context__, &balance);
 			}
 		}HYFLOW_ATOMIC_END;
 	}else {

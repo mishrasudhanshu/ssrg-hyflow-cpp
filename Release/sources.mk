@@ -35,6 +35,7 @@ src/util/messages \
 src/util/logging \
 src/util/logging/Basic \
 src/util/concurrent \
+src/core/helper \
 src/core/exceptions/types \
 src/core/directory/types \
 src/core/directory \

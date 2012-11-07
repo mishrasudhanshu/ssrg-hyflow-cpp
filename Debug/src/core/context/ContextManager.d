@@ -37,7 +37,9 @@ src/core/context/ContextManager.d: ../src/core/context/ContextManager.cpp \
  ../src/core/context/../../benchMarks/tm/list/../../../core/context/HyflowContext.h \
  ../src/core/context/../../benchMarks/tm/list/../../../core/HyflowObjectFuture.h \
  ../src/core/context/../../benchMarks/tm/list/../../HyflowBenchmark.h \
- ../src/core/context/../../benchMarks/../util/concurrent/HyInteger.h
+ ../src/core/context/../../benchMarks/../util/concurrent/HyInteger.h \
+ ../src/core/context/../helper/CheckPointProvider.h \
+ ../src/core/context/../helper/../context/ContextManager.h
 
 ../src/core/context/ContextManager.h:
 
@@ -118,3 +120,7 @@ src/core/context/ContextManager.d: ../src/core/context/ContextManager.cpp \
 ../src/core/context/../../benchMarks/tm/list/../../HyflowBenchmark.h:
 
 ../src/core/context/../../benchMarks/../util/concurrent/HyInteger.h:
+
+../src/core/context/../helper/CheckPointProvider.h:
+
+../src/core/context/../helper/../context/ContextManager.h:

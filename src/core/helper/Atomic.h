@@ -89,13 +89,14 @@ public:
 	void execute(HyflowObject* self, void* args, ReturnType* retValue) {
 		// LESSON: Don't increase __context__ scope to function level
 		// Execute sub-transactions non-atomically if using check pointing or no nesting
-		if ((ContextManager::isContextInit()) && ((ContextManager::getNestingModel() == HYFLOW_NO_NESTING) ||
+		if ((ContextManager::isContextInit()) &&
+				((ContextManager::getNestingModel() == HYFLOW_NO_NESTING) ||
 					(ContextManager::getNestingModel() == HYFLOW_CHECKPOINTING))) {
 			HyflowContext* __context__ = ContextManager::getInstance();
 			atomically(self, args, __context__, retValue);
 		}else {
 			HYFLOW_ATOMIC_START {
-					atomically(self, args, __context__, retValue);
+				atomically(self, args, __context__, retValue);
 			}HYFLOW_ATOMIC_END;
 		}
 	}

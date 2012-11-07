@@ -40,11 +40,17 @@ class DTL2Context: public vt_dstm::HyflowContext {
 	int tnxClock;
 	int highestSenderClock;
 
+	/*
+	 * Used by checkPoint Model to count restarts
+	 */
+	int restartCount;
 	bool lockObject(HyflowObject *obj);
 	void unlockObjectOnFail(HyflowObject *obj);
 	void unlockObject(HyflowObject *obj);
 	bool validateObject(HyflowObject* obj);
+	void validateObjectCP(HyflowObject* obj);
 	void tryCommit();
+	void tryCommitCP();
 	void reallyCommit();
 	void cleanAllMaps();
 	void mergeIntoParents();
@@ -64,8 +70,8 @@ public:
 	void rollback();
 	bool checkParent();
 	void updateClock(int c);
-	void fetchObject(std::string id);
-	void fetchObjects(std::string ids[], int objCount);
+	void fetchObject(std::string id, bool isRead);
+	void fetchObjects(std::string ids[], int objCount, bool isRead);
 };
 
 } /* namespace vt_dstm */

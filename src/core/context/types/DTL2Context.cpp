@@ -8,6 +8,7 @@
 #include <vector>
 #include "DTL2Context.h"
 #include "../../directory/DirectoryManager.h"
+#include "../../helper/CheckPointProvider.h"
 #include "../../../util/messages/HyflowMessageFuture.h"
 #include "../../../util/messages/types/LockAccessMsg.h"
 #include "../../../util/messages/types/ReadValidationMsg.h"
@@ -28,6 +29,8 @@ DTL2Context::DTL2Context() {
 	parentContext = NULL;
 	rootContext = NULL;
 	contextExecutionDepth = -1;
+	restartCount = 0;
+	subTxnIndex = 0;
 }
 
 DTL2Context::~DTL2Context() {
@@ -86,7 +89,7 @@ void DTL2Context::contextInit(){
 		highestSenderClock = 0;
 		tnxClock = ContextManager::getClock();
 
-		txnId = ContextManager::createTid();
+		txnId = ContextManager::createTid(this);
 		ContextManager::registerContext(this);
 
 		LOG_DEBUG("DTL : context initialize with id %llu\n", txnId);
@@ -109,9 +112,12 @@ void DTL2Context::beforeReadAccess(HyflowObject *obj) {
 	std::string id = obj->getId();
 
 	// check if object is already part of read set, if not add to read set
+	// and update checkPoint access point
 	std::map<std::string, HyflowObject*>::iterator i = readMap.find(id);
-	if ( i == readMap.end())
+	if ( i == readMap.end()) {
+		obj->setAccessCheckPoint(CheckPointProvider::getCheckPointIndex());
 		readMap[id] = obj;
+	}
 }
 /*
  * Performs the early validation of object at before read time itself and on finding
@@ -119,8 +125,7 @@ void DTL2Context::beforeReadAccess(HyflowObject *obj) {
  */
 void DTL2Context::forward(int senderClock) {
 	if ((nestingModel == HYFLOW_NESTING_FLAT)||
-			(nestingModel == HYFLOW_NO_NESTING)||
-				(nestingModel == HYFLOW_CHECKPOINTING)) {
+			(nestingModel == HYFLOW_NO_NESTING)) {
 		if (tnxClock < senderClock) {
 			std::map<std::string, HyflowObject*>::iterator i;
 			for (i = readMap.begin(); i != readMap.end(); i++) {
@@ -149,7 +154,7 @@ void DTL2Context::forward(int senderClock) {
 			LOG_DEBUG("Forward : context from %d to %d\n", tnxClock, senderClock);
 			tnxClock = senderClock;
 		}
-	}else if (ContextManager::getNestingModel() == HYFLOW_NESTING_CLOSED) {
+	}else if (nestingModel == HYFLOW_NESTING_CLOSED) {
 		if (tnxClock < senderClock) {
 			// Collect all the contexts for this leaf context
 			std::vector<HyflowContext*> contextBranch;
@@ -227,12 +232,89 @@ void DTL2Context::forward(int senderClock) {
 				throw forwardingFailed;
 			}
 
-			LOG_DEBUG(
-					"Forward : context from %d to %d\n", tnxClock, senderClock);
+			LOG_DEBUG("Forward : context from %d to %d\n", tnxClock, senderClock);
 			tnxClock = senderClock;
 		}
-	}else if (ContextManager::getNestingModel() == HYFLOW_NESTING_OPEN) {
+	}else if (nestingModel == HYFLOW_NESTING_OPEN) {
 		Logger::fatal("FORWARD : Open nesting not supported currently\n");
+	}else if (nestingModel == HYFLOW_CHECKPOINTING) {
+		if (tnxClock < senderClock) {
+			int availableCheckPoint = CheckPointProvider::getCheckPointIndex()+1;
+			// Try to verify read versions of all the objects.
+			std::map<std::string, HyflowObject*, ObjectIdComparator>::reverse_iterator rev_ri = readMap.rbegin();
+			while(rev_ri != readMap.rend()) {
+				int objectsCheckPoint = rev_ri->second->getAccessCheckPoint();
+				if ( objectsCheckPoint >= availableCheckPoint) {
+					// As this object was access in to be aborted part of transaction don't validate
+					HyflowObject *saveObject = rev_ri->second;
+					LOG_DEBUG("ValidateCP :Object %s Copy found in read set with accessIndex %d\n", rev_ri->first.c_str(), objectsCheckPoint);
+					rev_ri++;
+					readMap.erase(saveObject->getId());
+					delete saveObject;
+					continue;
+				}
+
+				//TODO: Think if we need to remove the same object from write and pull down available
+				// check point as tryCommit() : Don't make much sense doing read after write to object
+				if (!validateObject(rev_ri->second)) {
+					LOG_DEBUG("ValidateCP :Unable to validate for %s, version %d accessIndex %d with txn %ull\n", rev_ri->first.c_str(), objectsCheckPoint, rev_ri->second->getVersion(), txnId);
+
+					if (objectsCheckPoint > 0) {
+						availableCheckPoint = objectsCheckPoint;
+						LOG_DEBUG("ValidateCP: Got a valid checkPoint %d\n", objectsCheckPoint);
+					} else { // No check point available throw exception
+						setStatus(TXN_ABORTED);
+						TransactionException readValidationFail("Commit: Unable to validate for "+rev_ri->first+"\n");
+						throw readValidationFail;
+					}
+				}
+				rev_ri++;
+			}
+
+			//Clean Up the write set too
+			std::map<std::string, HyflowObject*, ObjectIdComparator>::iterator wi = writeMap.begin();
+			while(wi != writeMap.end()) {
+				int objectAccessIndex = wi->second->getAccessCheckPoint();
+				if ( objectAccessIndex >= availableCheckPoint) {
+					// clean-up and delete
+					LOG_DEBUG(" CommitCPva: Got write object %s of accessIndex %d inconsistent\n", wi->first.c_str(), objectAccessIndex);
+					HyflowObject *saveObject = wi->second;
+					writeMap.erase(wi++);
+					delete saveObject;
+					continue;
+				}else{
+					wi++;
+				}
+			}
+
+			// If we reach till here it means we have a valid checkpoint to restore transaction
+			std::map<std::string, HyflowObject*, ObjectIdComparator>::iterator  ri = readMap.begin();
+			while(ri != readMap.end()) {
+				int objectAccessIndex = ri->second->getAccessCheckPoint();
+				if (objectAccessIndex >= availableCheckPoint) {
+					// clean-up and delete
+					LOG_DEBUG(" CommitCPva: Got read object %s of accessIndex %d inconsistent\n", wi->first.c_str(), objectAccessIndex);
+					HyflowObject *saveObject = ri->second;
+					readMap.erase(ri++);
+					delete saveObject;
+					continue;
+				}else{
+					ri++;
+				}
+			}
+
+			if (availableCheckPoint < 1) {
+				Logger::fatal("Error in CheckPointing: Transaction must have been aborted\n");
+			}else {
+				if (availableCheckPoint == CheckPointProvider::getCheckPointIndex()+1) {
+					LOG_DEBUG("Forward : context from %d to %d\n", tnxClock, senderClock);
+					tnxClock = senderClock;
+				}else {
+					LOG_DEBUG("Restarting from checkpoint %d in commit phase\n", availableCheckPoint);
+					CheckPointProvider::startCheckPoint(availableCheckPoint);
+				}
+			}
+		}
 	}else {
 		Logger::fatal("FORWARD : Invalid Nesting Model\n");
 	}
@@ -242,8 +324,10 @@ const HyflowObject* DTL2Context::onReadAccess(HyflowObject *obj){
 	// Verify in write set whether we have recent value
 	std::string id = obj->getId();
 	std::map<std::string, HyflowObject*>::iterator i = writeMap.find(id);
-	if ( i == writeMap.end())
+	if ( i == writeMap.end()) {
+		LOG_DEBUG("DTL : Getting object %s from readSet\n", id.c_str());
 		return readMap.at(id);
+	}
 	return writeMap.at(id);
 }
 
@@ -402,8 +486,8 @@ void DTL2Context::tryCommit() {
 			}
 		}
 		LOG_DEBUG("Commit : Lock Acquisition complete, verifying read Set\n");
-		// Perform context
-		forward(highestSenderClock);
+		// FIXME: Don't Perform context forwarding here
+//		forward(highestSenderClock);
 		// Try to verify read versions of all the objects.
 		std::map<std::string, HyflowObject*, ObjectIdComparator>::reverse_iterator ri;
 		for ( ri = readMap.rbegin() ; ri != readMap.rend() ; ri++) {
@@ -412,6 +496,184 @@ void DTL2Context::tryCommit() {
 				LOG_DEBUG("Commit: Unable to validate for %s, version %d with txn %ull\n", ri->first.c_str(), ri->second->getVersion(), txnId);
 				TransactionException readValidationFail("Commit: Unable to validate for "+ri->first+"\n");
 				throw readValidationFail;
+			}
+		}
+	} catch (TransactionException& e) {
+		// Free all acquired locks
+		LOG_DEBUG("Commit: Transaction failed, freeing the locks\n");
+		std::vector<HyflowObject *>::iterator vi;
+		for ( vi = lockedObjects.begin(); vi != lockedObjects.end(); vi++)
+			unlockObjectOnFail(*vi);
+		throw;
+	}
+}
+
+//FIXME: Fix it for publish and delete set too!!!!!!
+void DTL2Context::tryCommitCP() {
+	std::vector<HyflowObject *> lockedObjects;
+
+	if (getStatus() == TXN_ABORTED) {
+		LOG_DEBUG ("CommitCP : transaction is already aborted\n");
+		TransactionException alreadyAborted("Commit: Transaction Already aborted by forwarding\n");
+		throw alreadyAborted;
+	}
+
+	try {
+		// Try to acquire the locks on object in lazy fashion
+		// TODO: Make it asynchronous
+		int availableCheckPoint = CheckPointProvider::getCheckPointIndex()+1;
+		// LESSON: Make sure iterator don't get invalidated from erase
+		std::map<std::string, HyflowObject*, ObjectIdComparator>::reverse_iterator rev_wi = writeMap.rbegin();
+		while(rev_wi != writeMap.rend()) {
+			int objectsCheckPoint = rev_wi->second->getAccessCheckPoint();
+
+			// Remove same object from readSet as we use version locks
+			int readCopyAccessCheckPoint = 0;
+			std::map<std::string, HyflowObject*, ObjectIdComparator>::iterator itr = readMap.find(rev_wi->first) ;
+			if ( itr != readMap.end()) {
+				HyflowObject *readObject = itr->second;
+				readCopyAccessCheckPoint = itr->second->getAccessCheckPoint();
+				LOG_DEBUG("CommitCP : Object %s Copy found in read set with accessIndex %d\n", itr->first.c_str(), readCopyAccessCheckPoint);
+				itr->second = NULL;
+				readMap.erase(itr);
+				delete readObject;
+			}
+
+			// Check if taking lock on object can be useful
+			if ( objectsCheckPoint >= availableCheckPoint) {
+				// Pull down the available checkpoint to readCopy level as version have changed or locked
+				if (availableCheckPoint > readCopyAccessCheckPoint) {
+					availableCheckPoint = readCopyAccessCheckPoint;
+					LOG_DEBUG("CommitCP : Pulling down the availableCheckPoint to %d\n", readCopyAccessCheckPoint);
+				}
+
+				// As this object was access in to be aborted part of transaction don't get a lock
+				// Remove from write set and clean up memory
+				HyflowObject *saveObject = rev_wi->second;
+				rev_wi++;
+				writeMap.erase(saveObject->getId());
+				delete saveObject;
+				continue;
+			}
+
+			// If we are good to take write lock, set the objectCheckPoint to its readCopy so that
+			// on failure to get lock we can directly got back to object read time checkPoint
+			if(readCopyAccessCheckPoint < objectsCheckPoint) {
+				objectsCheckPoint = readCopyAccessCheckPoint;
+			}
+
+			if (!lockObject(rev_wi->second)) {
+				LOG_DEBUG("CommitCP: Unable to get WriteLock for %s\n", rev_wi->first.c_str());
+
+				// Check if we have any checkPoint available after this lock failure
+				if (objectsCheckPoint > 0) {
+					LOG_DEBUG("CommitCP: Got a valid checkPoint %d to come down from %d\n", objectsCheckPoint, availableCheckPoint);
+					availableCheckPoint = objectsCheckPoint;
+				} else { // No check point available throw exception
+					setStatus(TXN_ABORTED);
+					TransactionException unableToWriteLock("CommitCP: Unable to get WriteLock for "+rev_wi->first + "\n");
+					throw unableToWriteLock;
+				}
+			}else {
+				lockedObjects.push_back(rev_wi->second);
+			}
+			rev_wi++;
+		}
+
+		// Now check if in write set have any object with higher accessCheckPointIndex
+		// if so remove it from write set and unlock : It is possible because available
+		// checkPointIndex dropping after getting lock on given object
+		std::map<std::string, HyflowObject*, ObjectIdComparator>::iterator wi = writeMap.begin();
+		while(wi != writeMap.end()) {
+			if (wi->second->getAccessCheckPoint() >= availableCheckPoint) {
+				LOG_DEBUG("CommitCP : Found writeSet object %s of aborted part %d, while availableCheckPoint %d\n", wi->first.c_str(), wi->second->getAccessCheckPoint(), availableCheckPoint);
+				// Unlock and remove from locks marker
+				std::vector<HyflowObject *>::iterator vi;
+				for ( vi = lockedObjects.begin(); vi != lockedObjects.end(); vi++) {
+					if (wi->first.compare((*vi)->getId())==0) {
+						LOG_DEBUG("CommitCP : WriteSet object %s unlock as it was partially aborted\n",wi->first.c_str());
+						unlockObjectOnFail(*vi);
+						lockedObjects.erase(vi);
+						break;
+					}
+				}
+				// clean-up and delete
+				HyflowObject *saveObject = wi->second;
+				writeMap.erase(wi++);
+				delete saveObject;
+				continue;
+			}else{
+				wi++;
+			}
+		}
+
+		LOG_DEBUG("CommitCP : Lock Acquisition complete, verifying read Set\n");
+		// FIXME :Don't Perform context forwarding
+//		forward(highestSenderClock);
+		// Try to verify read versions of all the objects.
+		std::map<std::string, HyflowObject*, ObjectIdComparator>::reverse_iterator rev_ri = readMap.rbegin();
+		while (rev_ri != readMap.rend()) {
+			int objectsCheckPoint = rev_ri->second->getAccessCheckPoint();
+			if ( objectsCheckPoint >= availableCheckPoint) {
+				// As this object was access in to be aborted part of transaction don't validate
+				LOG_DEBUG("CommitCP : readMap object %s is of aborted checkPoint %d\n", rev_ri->first.c_str(), objectsCheckPoint);
+				HyflowObject *saveObject = rev_ri->second;
+				rev_ri++;
+				readMap.erase(saveObject->getId());
+				delete saveObject;
+				continue;
+			}
+
+			if (!validateObject(rev_ri->second)) {
+				LOG_DEBUG("CommitCP: Unable to validate for %s, version %d with txn %ull\n", rev_ri->first.c_str(), rev_ri->second->getVersion(), txnId);
+
+				if (objectsCheckPoint > 0) {
+					availableCheckPoint = objectsCheckPoint;
+					LOG_DEBUG("CommitCP: Got a valid checkPoint %d\n", objectsCheckPoint);
+				} else { // No check point available throw exception
+					setStatus(TXN_ABORTED);
+					TransactionException readValidationFail("Commit: Unable to validate for "+rev_ri->first+"\n");
+					throw readValidationFail;
+				}
+			}
+			rev_ri++;
+		}
+
+		// If we reach till here it means we have a valid checkpoint to restore transaction
+		std::map<std::string, HyflowObject*, ObjectIdComparator>::iterator ri;
+		ri = readMap.begin();
+		while(ri != readMap.end()) {
+			if (ri->second->getAccessCheckPoint() >= availableCheckPoint) {
+				// clean-up and delete
+				LOG_DEBUG("Commit CP : readMap had an invalid object %s\n", ri->first.c_str());
+				HyflowObject *saveObject = ri->second;
+				readMap.erase(ri++);
+				delete saveObject;
+				continue;
+			}else {
+				ri++;
+			}
+		}
+
+		if (availableCheckPoint < 1) {
+			Logger::fatal("Error in CheckPointing: Transaction must have been aborted\n");
+		}else {
+			if (availableCheckPoint == CheckPointProvider::getCheckPointIndex()+1) {
+				LOG_DEBUG("CommitCP: No partial Abort required \n");
+			}else {
+				//LESSON: Due to possible unordered lock grabbing a liveLock can be created, check if
+				// transaction is aborted 3+ times, if so don't restart but abort
+				// FIXME: Provide abort threshold as a configuration able option
+				if (restartCount > 3) {
+					LOG_DEBUG("CommitCP: Too many restarts aborting %ull\n", txnId);
+					setStatus(TXN_ABORTED);
+					TransactionException tooManyRestarts("CommitCP : Too many restarts\n");
+					throw tooManyRestarts;
+				}else {
+					LOG_DEBUG("CommitCP: Restarting from checkpoint %d in commit phase\n", availableCheckPoint);
+					restartCount++;
+					CheckPointProvider::startCheckPoint(availableCheckPoint);
+				}
 			}
 		}
 	} catch (TransactionException& e) {
@@ -544,7 +806,8 @@ void DTL2Context::commit(){
 	}else if (ContextManager::getNestingModel() == HYFLOW_NESTING_OPEN) {
 		Logger::fatal("DTL : Open nesting not supported currently\n");
 	}else if (ContextManager::getNestingModel() == HYFLOW_CHECKPOINTING) {
-		Logger::fatal("DTL : CheckPointing not supported currently\n");
+		tryCommitCP();
+		reallyCommit();
 	}else{
 		Logger::fatal("DTL : Invalid Nesting Model\n");
 	}
@@ -600,11 +863,12 @@ void DTL2Context::updateClock(int c) {
  * TODO: Provide a method to revive fresh copies
  * Object fetching and beforeRead step combined
  */
-void DTL2Context::fetchObject(std::string id) {
+void DTL2Context::fetchObject(std::string id, bool isRead=true) {
 	// check if object is already part of read set, if not fetch add to read set
 	std::map<std::string, HyflowObject*>::iterator i = readMap.find(id);
 	if ( i != readMap.end()) {
 		// We already have object in transactions read set nothing to do return
+		LOG_DEBUG("DTL : Object %s already available in ReadSet\n", id.c_str());
 		return;
 	}
 
@@ -615,8 +879,13 @@ void DTL2Context::fetchObject(std::string id) {
 			// We got object in parent transaction
 			HyflowObject* pCopy = NULL;
 			pi->second->getClone(&pCopy);
-			// Copy to this transaction readSet
-			readMap[id] = pCopy;
+			// Update checkPoint access index and Copy to this transaction readSet
+			pCopy->setAccessCheckPoint(CheckPointProvider::getCheckPointIndex());
+			if (isRead) {
+				readMap[id] = pCopy;
+			}else {
+				writeMap[id] = pCopy;
+ 			}
 			return ;
 		}
 	}
@@ -627,12 +896,19 @@ void DTL2Context::fetchObject(std::string id) {
 	// First do forwarding on current readSet then add new object to it
 	forward(highestSenderClock);
 	LOG_DEBUG("DTL : Fetched object %s\n", obj->getId().c_str());
-	readMap[id] = obj;
+	obj->setAccessCheckPoint(CheckPointProvider::getCheckPointIndex());
+	if (isRead) {
+		LOG_DEBUG("DTL : Adding fetched object %s to readSet\n", id.c_str());
+		readMap[id] = obj;
+	}else {
+		LOG_DEBUG("DTL : Adding fetched object %s to writeSet\n", id.c_str());
+		writeMap[id] = obj;
+	}
 }
 
-void DTL2Context::fetchObjects(std::string ids[], int objCount) {
+void DTL2Context::fetchObjects(std::string ids[], int objCount, bool isRead=true) {
 	for(int i=0; i < objCount; i++) {
-		fetchObject(ids[i]);
+		fetchObject(ids[i], isRead);
 	}
 }
 

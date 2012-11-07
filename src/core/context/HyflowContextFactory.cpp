@@ -15,6 +15,7 @@ namespace vt_dstm {
 
 HyflowContextFactory::HyflowContextFactory() {
 	contextStackIndex = -1;
+	txnIndex = -1;
 }
 
 HyflowContextFactory::~HyflowContextFactory() {}
@@ -40,6 +41,7 @@ HyflowContext* HyflowContextFactory::getContextInstance() {
 		}
 		context->setContextExecutionDepth(contextStackIndex);
 	}else if (ContextManager::getNestingModel() == HYFLOW_NESTING_CLOSED) {
+		txnIndex++;
 		// In close nesting we don't check execution depth instead check parent NULL
 		// except in context.Init() which checks its depth
 		context = getFreshContext();
@@ -49,6 +51,12 @@ HyflowContext* HyflowContextFactory::getContextInstance() {
 		// Otherwise for top context parent is set to be NULL by default
 	}else if (ContextManager::getNestingModel() == HYFLOW_NESTING_OPEN) {
 		Logger::fatal("HCF : Open nesting not supported currently\n");
+	}else if (ContextManager::getNestingModel() == HYFLOW_CHECKPOINTING) {
+		if( contextStackIndex==-1 ) {
+			context = getFreshContext();
+		}else {
+			context = contextStack.at(contextStackIndex);
+		}
 	}else {
 		Logger::fatal("HCF : Invalid Nesting Model\n");
 	}
@@ -107,9 +115,19 @@ void HyflowContextFactory::releaseContextInstance(){
 			contextStack.pop_back();
 			contextStackIndex--;
 			ContextManager::deleteContext(&context);
+			if (contextStackIndex == -1) {
+				txnIndex = 0;
+			}
 		}
 	}else if (ContextManager::getNestingModel() == HYFLOW_NESTING_OPEN) {
 		Logger::fatal("HCF : Open nesting not supported currently\n");
+	}else if (ContextManager::getNestingModel() == HYFLOW_CHECKPOINTING) {
+		HyflowContext* context = contextStack[0];
+		if (context->getStatus() != TXN_ABORTED) {
+			contextStackIndex--;
+			contextStack.clear();
+			ContextManager::deleteContext(&context);
+		}
 	}else {
 		Logger::fatal("HCF : Invalid Nesting Model\n");
 	}
@@ -131,6 +149,7 @@ HyflowContext* HyflowContextFactory::getContextFromStack() {
 
 HyflowContext* HyflowContextFactory::getFreshContext() {
 	HyflowContext* context = ContextManager::createContext();
+	context->setSubTxnIndex(txnIndex);
 	contextStack.push_back(context);
 	contextStackIndex++;
 	LOG_DEBUG("HCF : Providing fresh context\n");

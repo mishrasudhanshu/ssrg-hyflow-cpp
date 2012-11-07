@@ -29,7 +29,7 @@ public:
 	virtual ~ContextManager();
 
 	static void ContextManagerInit();
-	static unsigned long long createTid();
+	static unsigned long long createTid(HyflowContext* c);
 	static HyflowContext* getInstance();
 	static HyflowContext* createContext();
 	static void deleteContext(HyflowContext **c);

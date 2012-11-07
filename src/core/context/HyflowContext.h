@@ -33,6 +33,7 @@ protected:
 	HyflowContext* parentContext;
 	HyflowContext* rootContext;
 	int contextExecutionDepth;
+	int subTxnIndex;
 public:
 	HyflowContext() {
 		status = TXN_ACTIVE;
@@ -67,12 +68,12 @@ public:
 	 * Throw (TransactionException) if failed on read call for context
 	 * Returns a read-only copy of object to user
 	 */
-	virtual const HyflowObject* onReadAccess(HyflowObject *obj) = 0;
-	virtual const HyflowObject* onReadAccess(std::string id) = 0;
+	const virtual HyflowObject* onReadAccess(HyflowObject* obj) = 0;
+	const virtual HyflowObject* onReadAccess(std::string id) = 0;
 	/**
 	 * Throw (TransactionException) if failed on write call for context
 	 */
-	virtual HyflowObject* onWriteAccess(HyflowObject *obj) = 0;
+	virtual HyflowObject* onWriteAccess(HyflowObject* obj) = 0;
 	virtual HyflowObject* onWriteAccess(std::string id) = 0;
 	/*
 	 * Throw (TransactionException) if commit Request is failed.
@@ -81,7 +82,7 @@ public:
 	/*
 	 * forces the transaction to rollback
 	 */
-	virtual void rollback()=0;
+	virtual void rollback() = 0;
 	/*
 	 * Suggests whether current transaction should continue or throw transaction
 	 * exception of higher level of transaction
@@ -98,11 +99,20 @@ public:
 	/*
 	 * Fetch Object for this context and adds to readSet
 	 */
-	virtual void fetchObject(std::string objId) = 0;
+	virtual void fetchObject(std::string objId, bool isRead = true) = 0;
 	/*
 	 * Fetch Objects for this context
 	 */
-	virtual void fetchObjects(std::string objIds[], int objCount) = 0;
+	virtual void fetchObjects(std::string objIds[], int objCount, bool isRead =
+			true) = 0;
+
+	int getSubTxnIndex() const {
+		return subTxnIndex;
+	}
+
+	void setSubTxnIndex(int subTxnIndex) {
+		this->subTxnIndex = subTxnIndex;
+	}
 
 	int getContextExecutionDepth() const {
 		return contextExecutionDepth;

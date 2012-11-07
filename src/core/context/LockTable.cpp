@@ -35,8 +35,13 @@ bool LockTable::tryLock(std::string & objId, int32_t obVer, unsigned long long t
 		// Object is registered in lock table
 		if (versionLock & LOCK) {	// Object is locked
 			if ( (versionLock & UNLOCK) >= obVer) {	// Some one already locked same or newer version of object
-				LOG_DEBUG("LockTable :  %s already locked for version %d\n", objId.c_str(), obVer);
-				return false;
+				if (txnId == a->second.getOwnerTxnId()){ // Check if self locked
+					LOG_DEBUG("LockTable : This transaction is already owner of %s\n", objId.c_str());
+					return true;
+				}else {
+					LOG_DEBUG("LockTable :  %s already locked for version %d\n", objId.c_str(), obVer);
+					return false;
+				}
 			} else {		// Some one had locked older version of object
 				int nodeVersion = DirectoryManager::getObjectVersion(objId);
 				if ((obVer&UNLOCK) < nodeVersion) {
