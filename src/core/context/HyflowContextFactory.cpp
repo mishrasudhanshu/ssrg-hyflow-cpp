@@ -140,7 +140,8 @@ void HyflowContextFactory::releaseContextInstance(){
 }
 
 HyflowContext* HyflowContextFactory::getContextFromStack() {
-	if (contextStack.size() > contextStackIndex) {
+	int size = contextStack.size();
+	if ( size > contextStackIndex) {
 		LOG_DEBUG("HCF : Providing already created context\n");
 		return contextStack.at(contextStackIndex++);
 	}
