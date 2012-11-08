@@ -41,7 +41,9 @@ class ZMQNetworkAsync: public vt_dstm::AbstractNetwork {
 	static zmq::socket_t* nodeInitSocket;
 
 	static std::vector<pthread_t> dealerThreads;
+	static std::vector<pthread_t> workerThreads;
 	static std::vector<int*> dealerThreadIds;
+	static pthread_t distributerThread;
 
 	static bool isInit;
 
@@ -52,6 +54,8 @@ class ZMQNetworkAsync: public vt_dstm::AbstractNetwork {
 	static void callbackHandler(zmq::message_t & msg);
 	static void* dealerExecute(void *param);
 	static void additionalSync();
+	static void* workLoadDistributer(void *param);
+	static void* workLoadProcessor(void *param);
 
 	static void s_catch_signals();
 	static void s_signal_handler(int signal_value);

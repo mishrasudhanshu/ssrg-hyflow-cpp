@@ -23,6 +23,8 @@
 #include "../../messages/MessageHandler.h"
 #include "../../concurrent/ThreadMeta.h"
 
+#define WORKER_STR "worker"
+
 namespace vt_dstm {
 
 int ZMQNetworkAsync::nodeId = -1;
@@ -44,6 +46,8 @@ boost::mutex ZMQNetworkAsync::nodeReadyMutex;
 
 std::vector<zmq::socket_t*> ZMQNetworkAsync::threadRouterSockets;
 std::vector<pthread_t> ZMQNetworkAsync::dealerThreads;
+std::vector<pthread_t> ZMQNetworkAsync::workerThreads;
+pthread_t ZMQNetworkAsync::distributerThread;
 std::vector<int*> ZMQNetworkAsync::dealerThreadIds;
 
 ZMQNetworkAsync::ZMQNetworkAsync() {
@@ -88,6 +92,27 @@ ZMQNetworkAsync::ZMQNetworkAsync() {
 			nodeInitSocket->connect(threadAddr.c_str());
 		}
 
+
+		// Create workDistributer thread for this node
+		pthread_create(&distributerThread,NULL,ZMQNetworkAsync::workLoadDistributer, NULL);
+		sleep(4);	// Make sure distributor is initiated
+		// Create workProcessor Threads for this node
+		for(int workerCount=0 ; workerCount < threadCount ; workerCount++){
+			pthread_t workerThread;
+			pthread_create(&workerThread, NULL, workLoadProcessor, (void*)workerCount);
+			workerThreads.push_back(workerThread);
+		}
+
+		// Wait for last worker thread to signal back
+		{
+			boost::unique_lock<boost::mutex> lock(nodeReadyMutex);
+			while ( !nodeReady )
+				nodeReadyCondition.wait(nodeReadyMutex);
+		}
+		nodeReady = false;
+		sleep(2);
+
+
 		sleep(2);
 		additionalSync();
 
@@ -115,11 +140,22 @@ ZMQNetworkAsync::ZMQNetworkAsync() {
 
 ZMQNetworkAsync::~ZMQNetworkAsync() {
 	hyflowShutdown = true;
-
 	for (unsigned int i=0 ; i <dealerThreads.size();i++) {
 		pthread_kill(dealerThreads[i],SIGINT);
 		pthread_join(dealerThreads[i], NULL);
 	}
+	LOG_DEBUG("ZMQA : Dealer Executor threads killed\n");
+
+	for (unsigned int workerCount=0 ; workerCount < workerThreads.size(); workerCount++) {
+		pthread_kill(workerThreads[workerCount],SIGINT);
+		pthread_join(workerThreads[workerCount], NULL);
+	}
+	LOG_DEBUG("ZMQA : Dealer Worker threads killed\n");
+
+	sleep(2);
+	pthread_kill(distributerThread, SIGINT);
+	pthread_join(distributerThread, NULL);
+	LOG_DEBUG("ZMQA : Distributor thread killed\n");
 
 	for (unsigned int i = 0; i < threadRouterSockets.size();i++) {
 		zmq::socket_t* saveSocket = threadRouterSockets[i];
@@ -348,7 +384,7 @@ void* ZMQNetworkAsync::dealerExecute(void *param) {
 	std::vector<zmq::socket_t*> dealerSockets;
 
 	//Create dealSockets and poll set and wait
-	zmq::pollitem_t* nodeSet = new zmq::pollitem_t[nodeCount];
+	zmq::pollitem_t* nodeSet = new zmq::pollitem_t[nodeCount+1];
 	std::stringstream idStr;
 	idStr<<nodeId;
 	std::string id = idStr.str();
@@ -369,45 +405,92 @@ void* ZMQNetworkAsync::dealerExecute(void *param) {
 		nodeSet[i].revents = 0;
 	}
 
+	// Create socket to talk with WorkLoad Distributor
+	std::stringstream distStr;
+	distStr<<waitThread<<"-distro";
+	std::string waiterId = distStr.str();
+	zmq::socket_t distTalker(*context, ZMQ_DEALER);
+	distTalker.setsockopt(ZMQ_LINGER, &lingerTime, sizeof lingerTime);
+	distTalker.setsockopt(ZMQ_IDENTITY, waiterId.c_str(), waiterId.size());
+	distTalker.connect("inproc://workLoadReceiver");
+
+	nodeSet[nodeCount].socket = distTalker;
+	nodeSet[nodeCount].fd = 0;
+	nodeSet[nodeCount].events = ZMQ_POLLIN;
+	nodeSet[nodeCount].revents = 0;
+
 	sleep(2);
 
 	// Last thread synchronization
 	if (waitThread == threadCount-1) {
 	    boost::unique_lock<boost::mutex> lock(nodeReadyMutex);
 	    nodeReady = true;
-	    LOG_DEBUG("ZMQA : Last Thread Notifying the nodeReady\n");
+	    LOG_DEBUG("ZMQA : Last Dealer Notifying the nodeReady\n");
 	    nodeReadyCondition.notify_one();
 	}
 
 	while (!hyflowShutdown) {
 		try {
-			zmq::poll(nodeSet, nodeCount, -1);
-			for (int i = 0 ; i< nodeCount ; i++) {
+			zmq::poll(nodeSet, nodeCount+1, -1);
+			for (int i = 0 ; i<= nodeCount ; i++) {
 				if (nodeSet[i].revents & ZMQ_POLLIN) {
-					while (1) {		// MultiPart message checking not required
-						zmq::message_t request;
-						zmq::socket_t *socket = dealerSockets[i];
-						socket->recv(&request);
-						LOG_DEBUG("ZMQA :Dealer received Message\n");
+					zmq::socket_t *socket = dealerSockets[i];
+					if ( i == nodeCount) {
+						zmq::message_t metaMsg, workLoadResp;
+						distTalker.recv(&metaMsg);
 						int64_t more = 1;
 						size_t more_size = sizeof (more);
-						socket->getsockopt(ZMQ_RCVMORE, &more, &more_size);
+						distTalker.getsockopt(ZMQ_RCVMORE, &more, &more_size);
 						if (!more) {
-							 //  Last message frame
-							if (defaultHandler(request)) {
-								LOG_DEBUG("ZMQA :Sending Callback Message Response\n");
-								socket->send(request);
+							Logger::fatal("ZMQA : Message from distTalker ended Unexpectedly\n");
+						}else {
+							distTalker.recv(&workLoadResp);
+							int64_t more1 = 1;
+							size_t more1_size = sizeof (more1);
+							distTalker.getsockopt(ZMQ_RCVMORE, &more1, &more1_size);
+							if (more1) {
+								Logger::fatal("ZMQA : Unexpectedly long message from distTalker to dealer\n");
+							}else {
+								// Reply back to requester
+								std::string requesterIndex(static_cast<char*>(metaMsg.data()), metaMsg.size());
+								int requester = atoi(requesterIndex.c_str());
+								zmq::socket_t* requestSocket = dealerSockets[requester];
+								requestSocket->send(workLoadResp);
+								LOG_DEBUG("ZMQA : DealExecutor replied callback Message to %d\n", requester);
 							}
-							break;
+						}
+					}else {
+						while (1) {		// MultiPart message checking not required
+							zmq::message_t request;
+							socket->recv(&request);
+							LOG_DEBUG("ZMQA :Dealer received Message\n");
+							int64_t more = 1;
+							size_t more_size = sizeof (more);
+							socket->getsockopt(ZMQ_RCVMORE, &more, &more_size);
+							if (!more) {
+								 //  Last message frame, create msgMetaData
+								std::stringstream metaStr;
+								metaStr<<i;
+								std::string metaData = metaStr.str();
+								zmq::message_t metaMsg(metaData.size());
+								memcpy(metaMsg.data(), metaData.data(), metaData.size());
+
+								//Forward received work load to distributor
+								distTalker.send(metaMsg, ZMQ_SNDMORE);
+								distTalker.send(request);
+								LOG_DEBUG("ZMQA : Dealer Executor send WorkLoad Message to distributor\n");
+								break;
+							}
 						}
 					}
 					//Check on other sockets.
 				}
 			}
 		} catch(zmq::error_t & e) {
-			if (hyflowShutdown)
+			if (hyflowShutdown) {
+				LOG_DEBUG("ZMQA : Dealer Executor %d exiting\n", waitThread);
 				break;
-			else {
+			}else {
 				throw e;
 			}
 		}
@@ -419,7 +502,256 @@ void* ZMQNetworkAsync::dealerExecute(void *param) {
 		delete saveSocket;
 	}
 
-	LOG_DEBUG("ZMQA Server Exiting for %d\n", waitThread);
+	return NULL;
+}
+
+void* ZMQNetworkAsync::workLoadDistributer(void *param) {
+	ThreadMeta::threadInit(0, DISPATCHER_THREAD);
+	s_catch_signals();
+
+	// Create front end Router socket which talk to all dealer Executors
+	zmq::socket_t workLoadReceiver(*context, ZMQ_ROUTER);
+	workLoadReceiver.setsockopt(ZMQ_LINGER, &lingerTime, sizeof lingerTime);
+	workLoadReceiver.bind("inproc://workLoadReceiver");
+
+	// Create back end Router socket which will distribute the work to available worker
+	zmq::socket_t workLoadSender(*context, ZMQ_ROUTER);
+	workLoadSender.setsockopt(ZMQ_LINGER, &lingerTime, sizeof lingerTime);
+	workLoadSender.bind("inproc://workLoadSender");
+
+	sleep(2);
+	LOG_DEBUG("ZMQA : workLoadDistributer created and initiated\n");
+	while (!hyflowShutdown) {
+		try {
+			// Wait for any incoming workload or workLoad Response
+			int part = 1;
+			bool isRequest=true;
+			zmq::message_t inProcSender, workLoadMeta, workLoad, requestSender;
+			while (1) { // MultiPart message checking
+				if (part == 1) {
+					// This part will contain the dealer Id, which we don't want
+					isRequest = true;
+					LOG_DEBUG("Distributor is waiting\n");
+					workLoadReceiver.recv(&inProcSender);
+					LOG_DEBUG("ZMQA :Distributor received in process Sender Address\n");
+					int64_t more = 1;
+					size_t more_size = sizeof(more);
+					std::string senderName(static_cast<char*>(inProcSender.data()), inProcSender.size());
+					if (senderName.substr(0,6).compare(WORKER_STR) == 0) {
+						LOG_DEBUG("ZMQA :Distributor Message Type: workLoad response from %s\n", senderName.c_str());
+						isRequest = false;
+					}
+					workLoadReceiver.getsockopt(ZMQ_RCVMORE, &more, &more_size);
+					if (!more) {
+						Logger::fatal("ZMQA :Distributor part 1 Message: %s ended unexpectedly\n", senderName.c_str());
+					}else {
+						part++;
+					}
+				}else if (part == 2) {
+					if (isRequest) {
+						workLoadReceiver.recv(&workLoadMeta);
+						LOG_DEBUG("ZMQA :Distributor received SenderMeta data\n");
+						int64_t more = 1;
+						size_t more_size = sizeof(more);
+						workLoadReceiver.getsockopt(ZMQ_RCVMORE, &more, &more_size);
+						if (!more) {
+							Logger::fatal("ZMQA :Distributor Message from dealer ended unexpectedly\n");
+						}
+						part++;
+						continue;
+					}else {
+						workLoadReceiver.recv(&requestSender);
+						LOG_DEBUG("ZMQA :Distributor received request sender thread Address\n");
+						int64_t more = 1;
+						size_t more_size = sizeof(more);
+						workLoadReceiver.getsockopt(ZMQ_RCVMORE, &more, &more_size);
+						if (!more) {
+							Logger::fatal("ZMQA :Distributor part 2 Message from worker ended unexpectedly\n");
+						}
+						part++;
+						continue;
+					}
+				}else if (part == 3) {
+					if (isRequest) {
+							//  Last message frame
+							workLoadReceiver.recv(&workLoad);
+							LOG_DEBUG("ZMQA :Distributor received WorkLoad\n");
+							int64_t more = 1;
+							size_t more_size = sizeof(more);
+							workLoadReceiver.getsockopt(ZMQ_RCVMORE, &more, &more_size);
+							if (more) {
+								Logger::fatal("ZMQA :Distributor Message part 3 from dealer unexpectedly long\n");
+							}
+							part=1;
+							break;
+					} else {
+						//  Actual sender Meta
+						workLoadReceiver.recv(&workLoadMeta);
+						LOG_DEBUG("ZMQA :Distributor received WorkLoad requester sender MetaData\n");
+						int64_t more = 1;
+						size_t more_size = sizeof(more);
+						workLoadReceiver.getsockopt(ZMQ_RCVMORE, &more, &more_size);
+						if (!more) {
+							Logger::fatal("ZMQA :Distributor Message part 3 from worker 2 ended unexpectedly\n");
+						}
+						part++;
+					}
+				}else if (part ==4 ) {
+					if (isRequest) {
+						Logger::fatal("ZMQA : BUG - control should not reach here\n");
+					}else {
+						//  Last message frame, work load Response
+						workLoadReceiver.recv(&workLoad);
+						LOG_DEBUG("ZMQA :Distributor received WorkLoad Response\n");
+						int64_t more = 1;
+						size_t more_size = sizeof(more);
+						workLoadReceiver.getsockopt(ZMQ_RCVMORE, &more, &more_size);
+						if (more) {
+							Logger::fatal("ZMQA :Message from worker unexpectedly long\n");
+						}
+						part = 1;
+						break;
+					}
+				}
+			}
+
+			if (isRequest) {
+				// Wait for any work thread to show up for requesting workload
+				zmq::message_t availableWorkerAddr, workerMsg;
+				int64_t more = 1;
+				size_t more_size = sizeof(more);
+				workLoadSender.recv(&availableWorkerAddr);
+				workLoadSender.getsockopt(ZMQ_RCVMORE, &more, &more_size);
+				if (!more) {
+					Logger::fatal("ZMQA :Message ended unexpectedly\n");
+				}else {
+					workLoadSender.recv(&workerMsg);
+					int64_t more1 = 1;
+					size_t more1_size = sizeof(more1);
+					workLoadSender.getsockopt(ZMQ_RCVMORE, &more1, &more1_size);
+					if (more1) {
+						Logger::fatal("ZMQA :Message unexpectedly long\n");
+					}
+				}
+				workLoadSender.send(availableWorkerAddr, ZMQ_SNDMORE);
+				workLoadSender.send(inProcSender, ZMQ_SNDMORE);
+				workLoadSender.send(workLoadMeta, ZMQ_SNDMORE);
+				workLoadSender.send(workLoad);
+				LOG_DEBUG("ZMQA : WorkLoad Request given to worker\n");
+			} else {
+				// Some workload got process lets send it back
+				workLoadReceiver.send(requestSender, ZMQ_SNDMORE);
+				workLoadReceiver.send(workLoadMeta, ZMQ_SNDMORE);
+				workLoadReceiver.send(workLoad);
+				LOG_DEBUG("ZMQA :Distributor workLoad Response send to requester\n");
+			}
+		}catch(zmq::error_t & e) {
+			if (hyflowShutdown){
+				LOG_DEBUG("ZMQA : WorkLoad Distributor Exiting\n");
+				break;
+			}else {
+				throw e;
+			}
+		}
+	}
+
+	return NULL;
+}
+
+void* ZMQNetworkAsync::workLoadProcessor(void *param) {
+	ThreadMeta::threadInit(0, DISPATCHER_THREAD);
+	s_catch_signals();
+
+	int workerId = (int)param;
+	std::stringstream idStr;
+	idStr<<WORKER_STR<<"-"<<workerId;
+	std::string id = idStr.str();
+
+	zmq::socket_t workLoadReceiver(*context, ZMQ_DEALER);
+	workLoadReceiver.setsockopt(ZMQ_LINGER, &lingerTime, sizeof lingerTime);
+	workLoadReceiver.setsockopt(ZMQ_IDENTITY, id.c_str(), id.size());
+	workLoadReceiver.connect("inproc://workLoadSender");
+
+	zmq::socket_t workLoadSender(*context, ZMQ_DEALER);
+	workLoadSender.setsockopt(ZMQ_LINGER, &lingerTime, sizeof lingerTime);
+	workLoadSender.setsockopt(ZMQ_IDENTITY, id.c_str(), id.size());
+	workLoadSender.connect("inproc://workLoadReceiver");
+
+	sleep(2);
+	LOG_DEBUG("ZMQA : WorkLoad Processor %d started\n", workerId);
+
+	// Last thread synchronization
+	if (workerId == threadCount-1) {
+		boost::unique_lock<boost::mutex> lock(nodeReadyMutex);
+		nodeReady = true;
+		LOG_DEBUG("ZMQA : Last Worker Notifying the nodeReady\n");
+		nodeReadyCondition.notify_one();
+	}
+
+	while(!hyflowShutdown) {
+		try {
+			LOG_DEBUG("ZMQA :Worker Asking for work\n");
+			std::string workerString("Give Me some Work");
+			zmq::message_t workerMessage(workerString.size());
+			memcpy(workerMessage.data(), workerString.data(), workerString.size());
+			//Send Request to WorkDistributer requesting work
+			workLoadReceiver.send(workerMessage);
+
+			//Wait for workLoad from Distributor
+			int part=1;
+			zmq::message_t inProcSender, workLoadMeta, workLoad;
+			while (1) { // MultiPart message checking
+				if (part == 1) {
+					// This part will contain the dealer Id, which we don't want
+					workLoadReceiver.recv(&inProcSender);
+					LOG_DEBUG("ZMQA :Worker received in process Sender Address\n");
+					int64_t more = 1;
+					size_t more_size = sizeof(more);
+					workLoadReceiver.getsockopt(ZMQ_RCVMORE, &more, &more_size);
+					if (!more) {
+						Logger::fatal("ZMQA : Worker Message part 1 ended unexpectedly\n");
+					}
+					part++;
+				}else if (part == 2) {
+					workLoadReceiver.recv(&workLoadMeta);
+					LOG_DEBUG("ZMQA :Worker received SenderMeta data\n");
+					int64_t more = 1;
+					size_t more_size = sizeof(more);
+					workLoadReceiver.getsockopt(ZMQ_RCVMORE, &more, &more_size);
+					if (!more) {
+						Logger::fatal("ZMQA :Message part 2 ended unexpectedly\n");
+					}
+					part++;
+				}else if (part == 3) {
+					//  Last message frame
+					workLoadReceiver.recv(&workLoad);
+					LOG_DEBUG("ZMQA :Worker received WorkLoad\n");
+					int64_t more = 1;
+					size_t more_size = sizeof(more);
+					workLoadReceiver.getsockopt(ZMQ_RCVMORE, &more, &more_size);
+					if (more) {
+						Logger::fatal("ZMQA : Worker Message part 3 unexpectedly long\n");
+					}
+					if (defaultHandler(workLoad)) {
+						LOG_DEBUG("ZMQA : Worker sending Callback Message Response\n");
+						workLoadSender.send(inProcSender, ZMQ_SNDMORE);
+						workLoadSender.send(workLoadMeta, ZMQ_SNDMORE);
+						workLoadSender.send(workLoad);
+					}
+					part=1;
+					break;
+				}
+			}
+		}catch(zmq::error_t & e) {
+			if (hyflowShutdown){
+				LOG_DEBUG("ZMQA : Worker Processor %d exiting\n", workerId);
+				break;
+			}else {
+				throw e;
+			}
+		}
+	}
+
 	return NULL;
 }
 
