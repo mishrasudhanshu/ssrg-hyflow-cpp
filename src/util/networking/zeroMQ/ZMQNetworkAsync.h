@@ -43,6 +43,7 @@ class ZMQNetworkAsync: public vt_dstm::AbstractNetwork {
 	static std::vector<pthread_t> dealerThreads;
 	static std::vector<pthread_t> workerThreads;
 	static std::vector<int*> dealerThreadIds;
+	static std::vector<int*> workerThreadIds;
 	static pthread_t distributerThread;
 
 	static bool isInit;

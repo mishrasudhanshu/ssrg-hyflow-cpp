@@ -49,6 +49,7 @@ std::vector<pthread_t> ZMQNetworkAsync::dealerThreads;
 std::vector<pthread_t> ZMQNetworkAsync::workerThreads;
 pthread_t ZMQNetworkAsync::distributerThread;
 std::vector<int*> ZMQNetworkAsync::dealerThreadIds;
+std::vector<int*> ZMQNetworkAsync::workerThreadIds;
 
 ZMQNetworkAsync::ZMQNetworkAsync() {
 	if (!isInit) {
@@ -99,8 +100,11 @@ ZMQNetworkAsync::ZMQNetworkAsync() {
 		// Create workProcessor Threads for this node
 		for(int workerCount=0 ; workerCount < threadCount ; workerCount++){
 			pthread_t workerThread;
-			pthread_create(&workerThread, NULL, workLoadProcessor, (void*)workerCount);
+			int* workerId = new int();
+			*workerId = workerCount;
+			pthread_create(&workerThread, NULL, workLoadProcessor, workerId);
 			workerThreads.push_back(workerThread);
+			workerThreadIds.push_back(workerId);
 		}
 
 		// Wait for last worker thread to signal back
@@ -662,7 +666,7 @@ void* ZMQNetworkAsync::workLoadProcessor(void *param) {
 	ThreadMeta::threadInit(0, DISPATCHER_THREAD);
 	s_catch_signals();
 
-	int workerId = (int)param;
+	int workerId = *((int*)param);
 	std::stringstream idStr;
 	idStr<<WORKER_STR<<"-"<<workerId;
 	std::string id = idStr.str();
