@@ -23,7 +23,7 @@ HyflowMessageFuture::HyflowMessageFuture() {
 }
 
 HyflowMessageFuture::~HyflowMessageFuture() {
-	if (msg_t != MSG_TYPE_INVALID) {
+	if (msg_t != MSG_TYPE_DUMMY) {
 		try {
 			MessageMaps::removeMessageFuture(msg_id, msg_t);
 		} catch(std::string & s) {

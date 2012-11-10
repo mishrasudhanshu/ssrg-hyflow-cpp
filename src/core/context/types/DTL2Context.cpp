@@ -31,15 +31,16 @@ DTL2Context::DTL2Context() {
 	contextExecutionDepth = -1;
 	restartCount = 0;
 	subTxnIndex = 0;
+	isWrite = false;
 }
 
 DTL2Context::~DTL2Context() {
-	LOG_DEBUG("DTL : Destroying Context\n");
+	LOG_DEBUG("DTL :Destroying Context\n");
 	cleanAllMaps();
 }
 
 void DTL2Context::cleanAllMaps(){
-	LOG_DEBUG("DTL : Cleaning Up context Maps\n");
+	LOG_DEBUG("DTL :Cleaning Up context Maps\n");
 	//Delete all heap objects created temporarily
 	for (std::map<std::string, HyflowObject*>::iterator i= readMap.begin(); i != readMap.end(); i++ ) {
 		if (i->second) {
@@ -80,7 +81,7 @@ void DTL2Context::cleanAllMaps(){
 
 void DTL2Context::contextInit(){
 	if (contextExecutionDepth > 0) {
-		LOG_DEBUG("DTL : Context already initialize\n");
+		LOG_DEBUG("DTL :Context already initialize\n");
 	} else{
 		cleanAllMaps();
 		lockSet.clear();
@@ -92,7 +93,7 @@ void DTL2Context::contextInit(){
 		txnId = ContextManager::createTid(this);
 		ContextManager::registerContext(this);
 
-		LOG_DEBUG("DTL : context initialize with id %llu\n", txnId);
+		LOG_DEBUG("DTL :Context initialize with id %llu\n", txnId);
 	}
 }
 
@@ -119,6 +120,15 @@ void DTL2Context::beforeReadAccess(HyflowObject *obj) {
 		readMap[id] = obj;
 	}
 }
+
+void DTL2Context::addToPublish(HyflowObject *newObject) {
+	publishMap[newObject->getId()] = newObject;
+}
+
+void DTL2Context::addToDelete(HyflowObject *deleteObject) {
+	deleteMap[deleteObject->getId()] = deleteObject;
+}
+
 /*
  * Performs the early validation of object at before read time itself and on finding
  * stale object aborts the transaction.
@@ -144,14 +154,14 @@ void DTL2Context::forward(int senderClock) {
 //			if ( version > senderClock) {
 			if (!validateObject(i->second)) {
 					LOG_DEBUG(
-							"Forward : Aborting version %d < senderClock %d\n", i->second->getVersion(), senderClock);
+							"Forward :Aborting version %d < senderClock %d\n", i->second->getVersion(), senderClock);
 					setStatus(TXN_ABORTED);
 					TransactionException forwardingFailed(
-							"Forward : Aborting on version\n");
+							"Forward :Aborting on version\n");
 					throw forwardingFailed;
 				}
 			}
-			LOG_DEBUG("Forward : context from %d to %d\n", tnxClock, senderClock);
+			LOG_DEBUG("Forward :Context from %d to %d\n", tnxClock, senderClock);
 			tnxClock = senderClock;
 		}
 	}else if (nestingModel == HYFLOW_NESTING_CLOSED) {
@@ -180,7 +190,7 @@ void DTL2Context::forward(int senderClock) {
 							if (!validateObject(obj)) {
 								isAborting = true;
 								LOG_DEBUG(
-										"Forward : Aborting version %d < senderClock %d\n", obj->getVersion(), senderClock);
+										"Forward :Aborting version %d < senderClock %d\n", obj->getVersion(), senderClock);
 								context->setStatus(TXN_ABORTED);
 								break;
 							}
@@ -210,7 +220,7 @@ void DTL2Context::forward(int senderClock) {
 								if (!validateObject(obj)) {
 									isAborting = true;
 									LOG_DEBUG(
-											"Forward : Aborting version %d < senderClock %d\n", obj->getVersion(), senderClock);
+											"Forward :Aborting version %d < senderClock %d\n", obj->getVersion(), senderClock);
 									context->setStatus(TXN_ABORTED);
 									break;
 								}
@@ -228,15 +238,15 @@ void DTL2Context::forward(int senderClock) {
 
 			if (isAborting) {
 				TransactionException forwardingFailed(
-						"Forward : Aborting on version\n");
+						"Forward :Aborting on version\n");
 				throw forwardingFailed;
 			}
 
-			LOG_DEBUG("Forward : context from %d to %d\n", tnxClock, senderClock);
+			LOG_DEBUG("Forward :Context from %d to %d\n", tnxClock, senderClock);
 			tnxClock = senderClock;
 		}
 	}else if (nestingModel == HYFLOW_NESTING_OPEN) {
-		Logger::fatal("FORWARD : Open nesting not supported currently\n");
+		Logger::fatal("FORWARD :Open nesting not supported currently\n");
 	}else if (nestingModel == HYFLOW_CHECKPOINTING) {
 		if (tnxClock < senderClock) {
 			int availableCheckPoint = CheckPointProvider::getCheckPointIndex()+1;
@@ -261,10 +271,10 @@ void DTL2Context::forward(int senderClock) {
 
 					if (objectsCheckPoint > 0) {
 						availableCheckPoint = objectsCheckPoint;
-						LOG_DEBUG("ValidateCP: Got a valid checkPoint %d\n", objectsCheckPoint);
+						LOG_DEBUG("ValidateCP :Got a valid checkPoint %d\n", objectsCheckPoint);
 					} else { // No check point available throw exception
 						setStatus(TXN_ABORTED);
-						TransactionException readValidationFail("Commit: Unable to validate for "+rev_ri->first+"\n");
+						TransactionException readValidationFail("Commit :Unable to validate for "+rev_ri->first+"\n");
 						throw readValidationFail;
 					}
 				}
@@ -277,7 +287,7 @@ void DTL2Context::forward(int senderClock) {
 				int objectAccessIndex = wi->second->getAccessCheckPoint();
 				if ( objectAccessIndex >= availableCheckPoint) {
 					// clean-up and delete
-					LOG_DEBUG(" CommitCPva: Got write object %s of accessIndex %d inconsistent\n", wi->first.c_str(), objectAccessIndex);
+					LOG_DEBUG(" CommitCPva :Got write object %s of accessIndex %d inconsistent\n", wi->first.c_str(), objectAccessIndex);
 					HyflowObject *saveObject = wi->second;
 					writeMap.erase(wi++);
 					delete saveObject;
@@ -293,7 +303,7 @@ void DTL2Context::forward(int senderClock) {
 				int objectAccessIndex = ri->second->getAccessCheckPoint();
 				if (objectAccessIndex >= availableCheckPoint) {
 					// clean-up and delete
-					LOG_DEBUG(" CommitCPva: Got read object %s of accessIndex %d inconsistent\n", wi->first.c_str(), objectAccessIndex);
+					LOG_DEBUG(" CommitCPva :Got read object %s of accessIndex %d inconsistent\n", wi->first.c_str(), objectAccessIndex);
 					HyflowObject *saveObject = ri->second;
 					readMap.erase(ri++);
 					delete saveObject;
@@ -304,10 +314,10 @@ void DTL2Context::forward(int senderClock) {
 			}
 
 			if (availableCheckPoint < 1) {
-				Logger::fatal("Error in CheckPointing: Transaction must have been aborted\n");
+				Logger::fatal("Error in CheckPointing :Transaction must have been aborted\n");
 			}else {
 				if (availableCheckPoint == CheckPointProvider::getCheckPointIndex()+1) {
-					LOG_DEBUG("Forward : context from %d to %d\n", tnxClock, senderClock);
+					LOG_DEBUG("Forward :Context from %d to %d\n", tnxClock, senderClock);
 					tnxClock = senderClock;
 				}else {
 					LOG_DEBUG("Restarting from checkpoint %d in commit phase\n", availableCheckPoint);
@@ -316,7 +326,7 @@ void DTL2Context::forward(int senderClock) {
 			}
 		}
 	}else {
-		Logger::fatal("FORWARD : Invalid Nesting Model\n");
+		Logger::fatal("FORWARD :Invalid Nesting Model\n");
 	}
 }
 
@@ -325,7 +335,7 @@ const HyflowObject* DTL2Context::onReadAccess(HyflowObject *obj){
 	std::string id = obj->getId();
 	std::map<std::string, HyflowObject*>::iterator i = writeMap.find(id);
 	if ( i == writeMap.end()) {
-		LOG_DEBUG("DTL : Getting object %s from readSet\n", id.c_str());
+		LOG_DEBUG("DTL :Getting object %s from readSet\n", id.c_str());
 		return readMap.at(id);
 	}
 	return writeMap.at(id);
@@ -374,7 +384,7 @@ HyflowObject* DTL2Context::onWriteAccess(std::string id){
 bool DTL2Context::lockObject(HyflowObject* obj) {
 	int myNode = NetworkManager::getNodeId();
 	if (myNode == obj->getOwnerNode()) {
-		LOG_DEBUG("DTL : Local Lock available for %s\n", obj->getId().c_str());
+		LOG_DEBUG("DTL :Local Lock available for %s\n", obj->getId().c_str());
 		return LockTable::tryLock(obj->getId(), obj->getVersion(), txnId);
 	}else {
 		const std::string & objId = obj->getId();
@@ -386,7 +396,7 @@ bool DTL2Context::lockObject(HyflowObject* obj) {
 		lamsg.setRequest(true);
 		hmsg.setMsg(&lamsg);
 		int owner = obj->getOwnerNode();
-		LOG_DEBUG("DTL : Requesting lock for %s from %d of version %d\n", obj->getId().c_str(), owner, obj->getVersion());
+		LOG_DEBUG("DTL :Requesting lock for %s from %d of version %d\n", obj->getId().c_str(), owner, obj->getVersion());
 		NetworkManager::sendCallbackMessage(owner, hmsg, mFu);
 		mFu.waitOnFuture();
 		return mFu.isBoolResponse();
@@ -399,7 +409,7 @@ bool DTL2Context::lockObject(HyflowObject* obj) {
 void  DTL2Context::unlockObjectOnFail(HyflowObject *obj) {
 	int myNode = NetworkManager::getNodeId();
 	if (myNode == obj->getOwnerNode()) {
-		LOG_DEBUG("DTL : Local Unlock available for %s\n", obj->getId().c_str());
+		LOG_DEBUG("DTL :Local Unlock available for %s\n", obj->getId().c_str());
 		LockTable::tryUnlock(obj->getId(), obj->getVersion(), txnId);
 	}else {
 		const std::string & objId = obj->getId();
@@ -446,7 +456,7 @@ bool DTL2Context::validateObject(HyflowObject* obj)	{
 		hmsg.msg_t = MSG_READ_VALIDATE;
 		ReadValidationMsg rvmsg(obj->getId(), obj->getVersion(), true, txnId);
 		hmsg.setMsg(&rvmsg);
-		LOG_DEBUG("DTL : Requesting validation for %s from %d of version %d\n", obj->getId().c_str(), owner, obj->getVersion());
+		LOG_DEBUG("DTL :Requesting validation for %s from %d of version %d\n", obj->getId().c_str(), owner, obj->getVersion());
 		NetworkManager::sendCallbackMessage(owner, hmsg, mFu);
 		mFu.waitOnFuture();
 		return mFu.isBoolResponse();
@@ -458,8 +468,8 @@ void DTL2Context::tryCommit() {
 	std::vector<HyflowObject *> lockedObjects;
 
 	if (getStatus() == TXN_ABORTED) {
-		LOG_DEBUG ("Commit : transaction is already aborted\n");
-		TransactionException alreadyAborted("Commit: Transaction Already aborted by forwarding\n");
+		LOG_DEBUG ("Commit :Transaction is already aborted\n");
+		TransactionException alreadyAborted("Commit :Transaction Already aborted by forwarding\n");
 		throw alreadyAborted;
 	}
 
@@ -468,10 +478,11 @@ void DTL2Context::tryCommit() {
 		// Try to acquire the locks on object in lazy fashion
 		// TODO: Make it asynchronous
 		for( wi = writeMap.rbegin() ; wi != writeMap.rend() ; wi++ ) {
+			isWrite = true;
 			if (!lockObject(wi->second)) {
 				setStatus(TXN_ABORTED);
-				LOG_DEBUG("Commit: Unable to get WriteLock for %s\n", wi->first.c_str());
-				TransactionException unableToWriteLock("Commit: Unable to get WriteLock for "+wi->first + "\n");
+				LOG_DEBUG("Commit :Unable to get WriteLock for %s\n", wi->first.c_str());
+				TransactionException unableToWriteLock("Commit :Unable to get WriteLock for "+wi->first + "\n");
 				throw unableToWriteLock;
 			}
 			lockedObjects.push_back(wi->second);
@@ -485,7 +496,7 @@ void DTL2Context::tryCommit() {
 				delete readObject;
 			}
 		}
-		LOG_DEBUG("Commit : Lock Acquisition complete, verifying read Set\n");
+		LOG_DEBUG("Commit :Lock Acquisition complete, verifying read Set\n");
 		// FIXME: Don't Perform context forwarding here
 //		forward(highestSenderClock);
 		// Try to verify read versions of all the objects.
@@ -493,14 +504,14 @@ void DTL2Context::tryCommit() {
 		for ( ri = readMap.rbegin() ; ri != readMap.rend() ; ri++) {
 			if (!validateObject(ri->second)) {
 				setStatus(TXN_ABORTED);
-				LOG_DEBUG("Commit: Unable to validate for %s, version %d with txn %ull\n", ri->first.c_str(), ri->second->getVersion(), txnId);
-				TransactionException readValidationFail("Commit: Unable to validate for "+ri->first+"\n");
+				LOG_DEBUG("Commit :Unable to validate for %s, version %d with txn %ull\n", ri->first.c_str(), ri->second->getVersion(), txnId);
+				TransactionException readValidationFail("Commit :Unable to validate for "+ri->first+"\n");
 				throw readValidationFail;
 			}
 		}
 	} catch (TransactionException& e) {
 		// Free all acquired locks
-		LOG_DEBUG("Commit: Transaction failed, freeing the locks\n");
+		LOG_DEBUG("Commit :Transaction failed, freeing the locks\n");
 		std::vector<HyflowObject *>::iterator vi;
 		for ( vi = lockedObjects.begin(); vi != lockedObjects.end(); vi++)
 			unlockObjectOnFail(*vi);
@@ -513,8 +524,8 @@ void DTL2Context::tryCommitCP() {
 	std::vector<HyflowObject *> lockedObjects;
 
 	if (getStatus() == TXN_ABORTED) {
-		LOG_DEBUG ("CommitCP : transaction is already aborted\n");
-		TransactionException alreadyAborted("Commit: Transaction Already aborted by forwarding\n");
+		LOG_DEBUG ("CommitCP :Transaction is already aborted\n");
+		TransactionException alreadyAborted("Commit :Transaction Already aborted by forwarding\n");
 		throw alreadyAborted;
 	}
 
@@ -533,7 +544,7 @@ void DTL2Context::tryCommitCP() {
 			if ( itr != readMap.end()) {
 				HyflowObject *readObject = itr->second;
 				readCopyAccessCheckPoint = itr->second->getAccessCheckPoint();
-				LOG_DEBUG("CommitCP : Object %s Copy found in read set with accessIndex %d\n", itr->first.c_str(), readCopyAccessCheckPoint);
+				LOG_DEBUG("CommitCP :Object %s Copy found in read set with accessIndex %d\n", itr->first.c_str(), readCopyAccessCheckPoint);
 				itr->second = NULL;
 				readMap.erase(itr);
 				delete readObject;
@@ -544,7 +555,7 @@ void DTL2Context::tryCommitCP() {
 				// Pull down the available checkpoint to readCopy level as version have changed or locked
 				if (availableCheckPoint > readCopyAccessCheckPoint) {
 					availableCheckPoint = readCopyAccessCheckPoint;
-					LOG_DEBUG("CommitCP : Pulling down the availableCheckPoint to %d\n", readCopyAccessCheckPoint);
+					LOG_DEBUG("CommitCP :Pulling down the availableCheckPoint to %d\n", readCopyAccessCheckPoint);
 				}
 
 				// As this object was access in to be aborted part of transaction don't get a lock
@@ -563,15 +574,15 @@ void DTL2Context::tryCommitCP() {
 			}
 
 			if (!lockObject(rev_wi->second)) {
-				LOG_DEBUG("CommitCP: Unable to get WriteLock for %s\n", rev_wi->first.c_str());
+				LOG_DEBUG("CommitCP :Unable to get WriteLock for %s\n", rev_wi->first.c_str());
 
 				// Check if we have any checkPoint available after this lock failure
 				if (objectsCheckPoint > 0) {
-					LOG_DEBUG("CommitCP: Got a valid checkPoint %d to come down from %d\n", objectsCheckPoint, availableCheckPoint);
+					LOG_DEBUG("CommitCP :Got a valid checkPoint %d to come down from %d\n", objectsCheckPoint, availableCheckPoint);
 					availableCheckPoint = objectsCheckPoint;
 				} else { // No check point available throw exception
 					setStatus(TXN_ABORTED);
-					TransactionException unableToWriteLock("CommitCP: Unable to get WriteLock for "+rev_wi->first + "\n");
+					TransactionException unableToWriteLock("CommitCP :Unable to get WriteLock for "+rev_wi->first + "\n");
 					throw unableToWriteLock;
 				}
 			}else {
@@ -586,12 +597,12 @@ void DTL2Context::tryCommitCP() {
 		std::map<std::string, HyflowObject*, ObjectIdComparator>::iterator wi = writeMap.begin();
 		while(wi != writeMap.end()) {
 			if (wi->second->getAccessCheckPoint() >= availableCheckPoint) {
-				LOG_DEBUG("CommitCP : Found writeSet object %s of aborted part %d, while availableCheckPoint %d\n", wi->first.c_str(), wi->second->getAccessCheckPoint(), availableCheckPoint);
+				LOG_DEBUG("CommitCP :Found writeSet object %s of aborted part %d, while availableCheckPoint %d\n", wi->first.c_str(), wi->second->getAccessCheckPoint(), availableCheckPoint);
 				// Unlock and remove from locks marker
 				std::vector<HyflowObject *>::iterator vi;
 				for ( vi = lockedObjects.begin(); vi != lockedObjects.end(); vi++) {
 					if (wi->first.compare((*vi)->getId())==0) {
-						LOG_DEBUG("CommitCP : WriteSet object %s unlock as it was partially aborted\n",wi->first.c_str());
+						LOG_DEBUG("CommitCP :WriteSet object %s unlock as it was partially aborted\n",wi->first.c_str());
 						unlockObjectOnFail(*vi);
 						lockedObjects.erase(vi);
 						break;
@@ -607,7 +618,7 @@ void DTL2Context::tryCommitCP() {
 			}
 		}
 
-		LOG_DEBUG("CommitCP : Lock Acquisition complete, verifying read Set\n");
+		LOG_DEBUG("CommitCP :Lock Acquisition complete, verifying read Set\n");
 		// FIXME :Don't Perform context forwarding
 //		forward(highestSenderClock);
 		// Try to verify read versions of all the objects.
@@ -616,7 +627,7 @@ void DTL2Context::tryCommitCP() {
 			int objectsCheckPoint = rev_ri->second->getAccessCheckPoint();
 			if ( objectsCheckPoint >= availableCheckPoint) {
 				// As this object was access in to be aborted part of transaction don't validate
-				LOG_DEBUG("CommitCP : readMap object %s is of aborted checkPoint %d\n", rev_ri->first.c_str(), objectsCheckPoint);
+				LOG_DEBUG("CommitCP :ReadMap object %s is of aborted checkPoint %d\n", rev_ri->first.c_str(), objectsCheckPoint);
 				HyflowObject *saveObject = rev_ri->second;
 				rev_ri++;
 				readMap.erase(saveObject->getId());
@@ -625,14 +636,14 @@ void DTL2Context::tryCommitCP() {
 			}
 
 			if (!validateObject(rev_ri->second)) {
-				LOG_DEBUG("CommitCP: Unable to validate for %s, version %d with txn %ull\n", rev_ri->first.c_str(), rev_ri->second->getVersion(), txnId);
+				LOG_DEBUG("CommitCP :Unable to validate for %s, version %d with txn %ull\n", rev_ri->first.c_str(), rev_ri->second->getVersion(), txnId);
 
 				if (objectsCheckPoint > 0) {
 					availableCheckPoint = objectsCheckPoint;
-					LOG_DEBUG("CommitCP: Got a valid checkPoint %d\n", objectsCheckPoint);
+					LOG_DEBUG("CommitCP :Got a valid checkPoint %d\n", objectsCheckPoint);
 				} else { // No check point available throw exception
 					setStatus(TXN_ABORTED);
-					TransactionException readValidationFail("Commit: Unable to validate for "+rev_ri->first+"\n");
+					TransactionException readValidationFail("Commit :Unable to validate for "+rev_ri->first+"\n");
 					throw readValidationFail;
 				}
 			}
@@ -645,7 +656,7 @@ void DTL2Context::tryCommitCP() {
 		while(ri != readMap.end()) {
 			if (ri->second->getAccessCheckPoint() >= availableCheckPoint) {
 				// clean-up and delete
-				LOG_DEBUG("Commit CP : readMap had an invalid object %s\n", ri->first.c_str());
+				LOG_DEBUG("CommitCP :ReadMap had an invalid object %s\n", ri->first.c_str());
 				HyflowObject *saveObject = ri->second;
 				readMap.erase(ri++);
 				delete saveObject;
@@ -659,18 +670,18 @@ void DTL2Context::tryCommitCP() {
 			Logger::fatal("Error in CheckPointing: Transaction must have been aborted\n");
 		}else {
 			if (availableCheckPoint == CheckPointProvider::getCheckPointIndex()+1) {
-				LOG_DEBUG("CommitCP: No partial Abort required \n");
+				LOG_DEBUG("CommitCP :No partial Abort required \n");
 			}else {
 				//LESSON: Due to possible unordered lock grabbing a liveLock can be created, check if
 				// transaction is aborted 3+ times, if so don't restart but abort
 				// FIXME: Provide abort threshold as a configuration able option
 				if (restartCount > 3) {
-					LOG_DEBUG("CommitCP: Too many restarts aborting %ull\n", txnId);
+					LOG_DEBUG("CommitCP :Too many restarts aborting %ull\n", txnId);
 					setStatus(TXN_ABORTED);
 					TransactionException tooManyRestarts("CommitCP : Too many restarts\n");
 					throw tooManyRestarts;
 				}else {
-					LOG_DEBUG("CommitCP: Restarting from checkpoint %d in commit phase\n", availableCheckPoint);
+					LOG_DEBUG("CommitCP :Restarting from checkpoint %d in commit phase\n", availableCheckPoint);
 					restartCount++;
 					CheckPointProvider::startCheckPoint(availableCheckPoint);
 				}
@@ -678,7 +689,7 @@ void DTL2Context::tryCommitCP() {
 		}
 	} catch (TransactionException& e) {
 		// Free all acquired locks
-		LOG_DEBUG("Commit: Transaction failed, freeing the locks\n");
+		LOG_DEBUG("Commit :Transaction failed, freeing the locks\n");
 		std::vector<HyflowObject *>::iterator vi;
 		for ( vi = lockedObjects.begin(); vi != lockedObjects.end(); vi++)
 			unlockObjectOnFail(*vi);
@@ -689,7 +700,9 @@ void DTL2Context::tryCommitCP() {
 void DTL2Context::reallyCommit() {
 	// Transaction Completed Successfully
 	// Increase the Node clock
-	ContextManager::atomicIncreaseClock();
+	if (isWrite) {
+		ContextManager::atomicIncreaseClock();
+	}
 
 	// Register yourself as owner of write set objects
 	std::map<std::string, HyflowObject*, ObjectIdComparator>::reverse_iterator wi;
@@ -790,7 +803,7 @@ void DTL2Context::commit(){
 	}else if (ContextManager::getNestingModel() == HYFLOW_NESTING_FLAT) {
 		if (getContextExecutionDepth() > 0) {
 			// If not top context do nothing
-			LOG_DEBUG("DTL : FLAT Context Call, actual commit postponed\n");
+			LOG_DEBUG("DTL :FLAT Context Call, actual commit postponed\n");
 		} else {	// Top context commit here
 			tryCommit();
 			reallyCommit();
@@ -800,16 +813,16 @@ void DTL2Context::commit(){
 			tryCommit();
 			reallyCommit();
 		} else {
-			LOG_DEBUG("DTL : CLOSED Context Call, merging sets to parent\n");
+			LOG_DEBUG("DTL :CLOSED Context Call, merging sets to parent\n");
 			mergeIntoParents();
 		}
 	}else if (ContextManager::getNestingModel() == HYFLOW_NESTING_OPEN) {
-		Logger::fatal("DTL : Open nesting not supported currently\n");
+		Logger::fatal("DTL :Open nesting not supported currently\n");
 	}else if (ContextManager::getNestingModel() == HYFLOW_CHECKPOINTING) {
 		tryCommitCP();
 		reallyCommit();
 	}else{
-		Logger::fatal("DTL : Invalid Nesting Model\n");
+		Logger::fatal("DTL :Invalid Nesting Model\n");
 	}
 }
 
@@ -824,32 +837,32 @@ void DTL2Context::rollback() {
 bool DTL2Context::checkParent() {
 	if (ContextManager::getNestingModel() == HYFLOW_NESTING_FLAT) {
 		if (getContextExecutionDepth() > 0) {
-			LOG_DEBUG("DTL : check Parent throwing exception\n");
+			LOG_DEBUG("DTL :Check Parent throwing exception\n");
 			return true;
 		} else {	// Top context retry here
-			LOG_DEBUG("DTL : check Parent not throwing exception\n");
+			LOG_DEBUG("DTL :Check Parent not throwing exception\n");
 			return false;
 		}
 	}else if (ContextManager::getNestingModel() == HYFLOW_NESTING_CLOSED) {
 		if (!parentContext) {	// Top context commit here
-			LOG_DEBUG("DTL : check Parent not throwing exception\n");
+			LOG_DEBUG("DTL :Check Parent not throwing exception\n");
 			return false;
 		} else {
 			// If parent transaction is also aborted then we can not
 			// retry on same level therefore throw exception
 			if (parentContext->getStatus() == TXN_ABORTED) {
-				LOG_DEBUG("DTL : check Parent throwing exception\n");
+				LOG_DEBUG("DTL :Check Parent throwing exception\n");
 				return true;
 			} else {
 				// if my parent is not aborted then I should keep retrying on my level
-				LOG_DEBUG("DTL : check Parent not throwing exception as parent Active\n");
+				LOG_DEBUG("DTL :Check Parent not throwing exception as parent Active\n");
 				return false;
 			}
 		}
 	}else if (ContextManager::getNestingModel() == HYFLOW_NESTING_OPEN) {
-		Logger::fatal("DTL : Open nesting not supported currently\n");
+		Logger::fatal("DTL :Open nesting not supported currently\n");
 	}else {
-		Logger::fatal("DTL : Invalid Nesting Model\n");
+		Logger::fatal("DTL :Invalid Nesting Model\n");
 	}
 	return false;
 }
@@ -868,7 +881,7 @@ void DTL2Context::fetchObject(std::string id, bool isRead=true) {
 	std::map<std::string, HyflowObject*>::iterator i = readMap.find(id);
 	if ( i != readMap.end()) {
 		// We already have object in transactions read set nothing to do return
-		LOG_DEBUG("DTL : Object %s already available in ReadSet\n", id.c_str());
+		LOG_DEBUG("DTL :Object %s already available in ReadSet\n", id.c_str());
 		return;
 	}
 
@@ -895,13 +908,13 @@ void DTL2Context::fetchObject(std::string id, bool isRead=true) {
 	// Perform early validation step, always use highestSendClock, it is update by objectAccessMessage
 	// First do forwarding on current readSet then add new object to it
 	forward(highestSenderClock);
-	LOG_DEBUG("DTL : Fetched object %s\n", obj->getId().c_str());
+	LOG_DEBUG("DTL :Fetched object %s\n", obj->getId().c_str());
 	obj->setAccessCheckPoint(CheckPointProvider::getCheckPointIndex());
 	if (isRead) {
-		LOG_DEBUG("DTL : Adding fetched object %s to readSet\n", id.c_str());
+		LOG_DEBUG("DTL :Adding fetched object %s to readSet\n", id.c_str());
 		readMap[id] = obj;
 	}else {
-		LOG_DEBUG("DTL : Adding fetched object %s to writeSet\n", id.c_str());
+		LOG_DEBUG("DTL :Adding fetched object %s to writeSet\n", id.c_str());
 		writeMap[id] = obj;
 	}
 }

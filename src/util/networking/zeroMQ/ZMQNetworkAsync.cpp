@@ -341,8 +341,8 @@ bool ZMQNetworkAsync::defaultHandler(zmq::message_t & msg) {
 		vt_dstm::HyflowMessage req;
 		ia >> req;
 
-		if (req.msg_t != MSG_TYPE_INVALID)
-			MessageHandler::msgHandler(req);
+//		if (req.msg_t != MSG_TYPE_INVALID)
+		MessageHandler::msgHandler(req);
 
 		if (req.isCallback) {
 			// Pack handled message
@@ -372,8 +372,8 @@ void ZMQNetworkAsync::callbackHandler(zmq::message_t & msg){
 		ia >> req;
 
 		LOG_DEBUG("ZMQA : Callback from node %d\n", req.toNode);
-		if (req.msg_t != MSG_TYPE_INVALID)
-			MessageHandler::callbackHandler(req);
+//		if (req.msg_t != MSG_TYPE_DUMMY)
+		MessageHandler::callbackHandler(req);
 	}
 }
 

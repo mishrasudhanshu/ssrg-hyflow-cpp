@@ -36,6 +36,14 @@ TrackerDirectory::~TrackerDirectory() {
 
 int TrackerDirectory::getTracker(std::string & objectId) {
 	int end = objectId.find('-');
+	if (end == std::string::npos) {
+		if (objectId.compare("HEAD") == 0) {
+			return 0;
+		}else {
+			Logger::fatal("DIR :Invalid type of object Id: %s", objectId.c_str());
+			return -1;
+		}
+	}
 	return atoi((objectId.substr(0,end)).c_str());
 }
 
@@ -50,7 +58,7 @@ void TrackerDirectory::locateAsync(std::string & id, bool rw, unsigned long long
 	int myNode = NetworkManager::getNodeId();
 	// Set type to invalid so no remove call is made
 	// If some messaging is done type will be overwritten
-	fu.getMessageFuture().setType(MSG_TYPE_INVALID);
+	fu.getMessageFuture().setType(MSG_TYPE_DUMMY);
 
 	// Directly send the object request to owner
 	if (trackerNode == myNode) {
@@ -80,7 +88,6 @@ void TrackerDirectory::locateAsync(std::string & id, bool rw, unsigned long long
 		hmsg.setMsg(&otm);
 		NetworkManager::sendCallbackMessage(trackerNode,hmsg,fu.getMessageFuture());
 	}
-
 }
 
 /*

@@ -19,6 +19,7 @@
 #include "types/RegisterObjectMsg.h"
 #include "types/LockAccessMsg.h"
 #include "types/ReadValidationMsg.h"
+#include "types/DummyTestMsg.h"
 #include "../../core/context/ContextManager.h"
 
 namespace vt_dstm{
@@ -57,6 +58,7 @@ void HyflowMessage::registerMessageHandlers()	{
 		MessageMaps::registerHandler(MSG_REGISTER_OBJ, &RegisterObjectMsg::registerObjectHandler);
 		MessageMaps::registerHandler(MSG_LOCK_ACCESS, &LockAccessMsg::lockAccessHandler);
 		MessageMaps::registerHandler(MSG_READ_VALIDATE, &ReadValidationMsg::readValidationHandle);
+		MessageMaps::registerHandler(MSG_TYPE_DUMMY, &DummyTestMsg::DummyTestMsgHandler);
 		isMessageInit = true;
 	}
 }
@@ -69,6 +71,7 @@ void HyflowMessage::registerMessageTypes(Archive & ar){
 	ar.register_type(static_cast<RegisterObjectMsg*>(NULL));
 	ar.register_type(static_cast<LockAccessMsg*>(NULL));
 	ar.register_type(static_cast<ReadValidationMsg*>(NULL));
+	ar.register_type(static_cast<DummyTestMsg*>(NULL));
 }
 
 void  HyflowMessage::syncClocks()	{

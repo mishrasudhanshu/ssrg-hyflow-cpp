@@ -176,7 +176,7 @@ bool ZMQNetwork::defaultHandler(zmq::message_t & msg) {
 		vt_dstm::HyflowMessage req;
 		ia >> req;
 
-		if (req.msg_t != MSG_TYPE_INVALID)
+		if (req.msg_t != MSG_TYPE_DUMMY)
 			MessageHandler::msgHandler(req);
 
 		if (req.isCallback) {
@@ -207,7 +207,7 @@ void ZMQNetwork::callbackHandler(zmq::message_t & msg){
 		ia >> req;
 
 		LOG_DEBUG("ZMQ : Callback from node %d\n", req.toNode);
-		if (req.msg_t != MSG_TYPE_INVALID)
+		if (req.msg_t != MSG_TYPE_DUMMY)
 			MessageHandler::callbackHandler(req);
 	}
 }
@@ -242,7 +242,7 @@ void* ZMQNetwork::serverExecute(void *param) {
 			}
 		} else { // If we receive a non callback message return dummy reply
 			HyflowMessage hmsg;
-			hmsg.msg_t = MSG_TYPE_INVALID;
+			hmsg.msg_t = MSG_TYPE_DUMMY;
 			std::ostringstream odata_stream;
 			boost::archive::text_oarchive oa(odata_stream);
 			oa << hmsg;

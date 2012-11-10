@@ -27,6 +27,7 @@ RM := rm -rf
 -include src/core/context/types/subdir.mk
 -include src/core/context/subdir.mk
 -include src/core/subdir.mk
+-include src/benchMarks/tm/test/subdir.mk
 -include src/benchMarks/tm/skipList/subdir.mk
 -include src/benchMarks/tm/list/subdir.mk
 -include src/benchMarks/tm/bank/subdir.mk

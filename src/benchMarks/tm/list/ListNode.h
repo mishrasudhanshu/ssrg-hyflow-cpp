@@ -36,6 +36,8 @@ class ListNode: public vt_dstm::HyflowObject {
 	static void findNode(int value, HyflowContext *c);
 public:
 	ListNode();
+	ListNode(int value, int counter);
+	ListNode(int value, std::string id);
 	virtual ~ListNode();
 
 	std::string getNextId() const;

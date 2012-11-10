@@ -76,6 +76,11 @@ public:
 	virtual HyflowObject* onWriteAccess(HyflowObject* obj) = 0;
 	virtual HyflowObject* onWriteAccess(std::string id) = 0;
 	/*
+	 * To publish or delete object
+	 */
+	virtual void addToPublish(HyflowObject *newObject) = 0;
+	virtual void addToDelete(HyflowObject *deleteObject) = 0;
+	/*
 	 * Throw (TransactionException) if commit Request is failed.
 	 */
 	virtual void commit() = 0;

@@ -20,6 +20,7 @@
 #include "msgConnect/MSCtest.h"
 #include "zeroMQ/ZMQNetwork.h"
 #include "zeroMQ/ZMQNetworkAsync.h"
+#include "zeroMQ/ZeroMQAsyncSimple.h"
 #include "../messages/MessageHandler.h"
 #include "IPAddressProvider.h"
 
@@ -50,7 +51,8 @@ void NetworkManager::NetworkInit() {
 		synchronizeCluster();
 	}else if (strcmp(ConfigFile::Value(NETWORK).c_str(), ZERO_MQ) == 0) {
 //		network = new ZMQNetwork();
-		network = new ZMQNetworkAsync();
+		network = new ZMQNetworkAsyncSimple();
+//		network = new ZMQNetworkAsync();
 		HyflowMessage::registerMessageHandlers();
 		sleep(4);
 		synchronizeCluster();

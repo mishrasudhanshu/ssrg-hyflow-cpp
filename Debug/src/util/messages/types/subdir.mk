@@ -4,6 +4,7 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
+../src/util/messages/types/DummyTestMsg.cpp \
 ../src/util/messages/types/LockAccessMsg.cpp \
 ../src/util/messages/types/ObjectAccessMsg.cpp \
 ../src/util/messages/types/ObjectTrackerMsg.cpp \
@@ -12,6 +13,7 @@ CPP_SRCS += \
 ../src/util/messages/types/SynchronizeMsg.cpp 
 
 OBJS += \
+./src/util/messages/types/DummyTestMsg.o \
 ./src/util/messages/types/LockAccessMsg.o \
 ./src/util/messages/types/ObjectAccessMsg.o \
 ./src/util/messages/types/ObjectTrackerMsg.o \
@@ -20,6 +22,7 @@ OBJS += \
 ./src/util/messages/types/SynchronizeMsg.o 
 
 CPP_DEPS += \
+./src/util/messages/types/DummyTestMsg.d \
 ./src/util/messages/types/LockAccessMsg.d \
 ./src/util/messages/types/ObjectAccessMsg.d \
 ./src/util/messages/types/ObjectTrackerMsg.d \

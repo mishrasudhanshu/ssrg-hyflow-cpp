@@ -42,6 +42,7 @@ src/core/directory \
 src/core/context/types \
 src/core/context \
 src/core \
+src/benchMarks/tm/test \
 src/benchMarks/tm/skipList \
 src/benchMarks/tm/list \
 src/benchMarks/tm/bank \

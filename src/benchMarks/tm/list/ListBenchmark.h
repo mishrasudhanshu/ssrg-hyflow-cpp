@@ -8,12 +8,15 @@
 #ifndef LISTBENCHMARK_H_
 #define LISTBENCHMARK_H_
 
+#include "boost/thread/tss.hpp"
 #include "ListNode.h"
 #include "../../HyflowBenchmark.h"
+#include "../../../util/concurrent/HyInteger.h"
 
 namespace vt_dstm {
 
 class ListBenchmark: public vt_dstm::HyflowBenchmark {
+	static boost::thread_specific_ptr<HyInteger> objectCreated;
 public:
 	ListBenchmark();
 	virtual ~ListBenchmark();
@@ -27,6 +30,7 @@ public:
 	void readOperation(std::string ids[], int size);
 	void writeOperation(std::string ids[], int size);
 	void checkSanity();
+	static int getId();
 	std::string* createLocalObjects(int objCount);
 };
 

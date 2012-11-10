@@ -44,6 +44,7 @@ class DTL2Context: public vt_dstm::HyflowContext {
 	 * Used by checkPoint Model to count restarts
 	 */
 	int restartCount;
+	bool isWrite;
 	bool lockObject(HyflowObject *obj);
 	void unlockObjectOnFail(HyflowObject *obj);
 	void unlockObject(HyflowObject *obj);
@@ -66,6 +67,8 @@ public:
 	const HyflowObject* onReadAccess(std::string id);
 	HyflowObject* onWriteAccess(HyflowObject *obj);
 	HyflowObject* onWriteAccess(std::string id);
+	void addToPublish(HyflowObject* newObject);
+	void addToDelete(HyflowObject* deleteObject);
 	void commit();
 	void rollback();
 	bool checkParent();

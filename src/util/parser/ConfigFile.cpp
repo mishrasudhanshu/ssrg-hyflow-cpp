@@ -174,6 +174,10 @@ void ConfigFile::UpdateMap() {
 	if (value)
 		Update(UNIT_TEST, value);
 
+	value = getenv(BENCHMARK);
+	if (value)
+		Update(BENCHMARK, value);
+
 	value = getenv(NODES);
 	if (value)
 		Update(NODES, value);

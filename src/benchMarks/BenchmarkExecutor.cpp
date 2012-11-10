@@ -65,7 +65,18 @@ void BenchmarkExecutor::writeResults() {
 
 void BenchmarkExecutor::initExecutor(){
 	if ( !isInitiated ) {
-		benchmark = new BankBenchmark();
+		if (ConfigFile::Value(BENCHMARK).compare(BANK) == 0) {
+			LOG_DEBUG("BE :Running Bank\n");
+			benchmark = new BankBenchmark();
+		}else if(ConfigFile::Value(BENCHMARK).compare(LIST) == 0) {
+			LOG_DEBUG("BE :Running List\n");
+			benchmark = new ListBenchmark();
+		}else if(ConfigFile::Value(BENCHMARK).compare(TEST) == 0) {
+			LOG_DEBUG("BE :Running Test\n");
+			benchmark = new TestSpeed();
+		}else {
+			Logger::fatal("BE :Unknown Benchmark\n");
+		}
 		objectsCount = atoi(ConfigFile::Value(OBJECTS).c_str());
 		transactions = atoi(ConfigFile::Value(TRANSACTIONS).c_str());
 		readPercent =  atoi(ConfigFile::Value(READS).c_str());

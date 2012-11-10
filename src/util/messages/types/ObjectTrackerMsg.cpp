@@ -64,7 +64,7 @@ void ObjectTrackerMsg::objectTrackerHandler(HyflowMessage & msg) {
 			// After getting a reference remove for map
 			MessageMaps::removeMessageFuture(msg.msg_id, msg.msg_t);
 			// So at destructor don't try to remove itself if its type not overridden
-			cbfmsg->setType(MSG_TYPE_INVALID);
+			cbfmsg->setType(MSG_TYPE_DUMMY);
 
 			int myNode = NetworkManager::getNodeId();
 			if (myNode == otmsg->owner) {

@@ -77,6 +77,11 @@ namespace vt_dstm
 #define TRANSACTIONS_LENGTH "transactionLength"
 #define TIMEOUT "timeout"
 
+#define BENCHMARK "benchmark"
+#define BANK "bank"
+#define LIST "list"
+#define TEST "test"
+
 #define NESTING_MODEL "nestingModel"
 #define NESTING_NO "no_nesting"
 #define NESTING_FLAT "flat"
