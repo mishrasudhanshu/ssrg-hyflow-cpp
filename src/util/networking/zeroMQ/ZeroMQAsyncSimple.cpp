@@ -97,6 +97,7 @@ ZMQNetworkAsyncSimple::ZMQNetworkAsyncSimple() {
 			dealerThreads.push_back(dealerThread);
 		}
 
+		sleep(2);
 		// After this much boiler code all nodes are able to communicate the synchronization messages
 		isInit = true;
 	}
@@ -152,11 +153,11 @@ void ZMQNetworkAsyncSimple::additionalSync(){
 		}
 
 		std::string reply = ipsStr.str();
-		zmq::message_t zmqmsgBase(reply.size());
-		memcpy(zmqmsgBase.data(), reply.data(), reply.size());
 
 		// Reply the sender nodes to continue
 		for (int i=1; i<nodeCount ; i++) {
+			zmq::message_t zmqmsgBase(reply.size());
+			memcpy(zmqmsgBase.data(), reply.data(), reply.size());
 			// Add Address message part
 			std::stringstream idStr;
 			idStr<<i;
