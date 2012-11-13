@@ -62,15 +62,15 @@ void ListNode::addNode(int value, HyflowContext *c, HyflowObjectFuture & fu) {}
 void ListNode::addNode(int value) {
 	HYFLOW_ATOMIC_START{
 		std::string head="HEAD";
-		__context__->fetchObject(head, false);
+		HYFLOW_FETCH(head, false);
 
-		ListNode* headNodeRead =  (ListNode*)__context__->onReadAccess(head);
+		ListNode* headNodeRead =  (ListNode*)HYFLOW_ON_READ(head);
 		std::string oldNext = headNodeRead->getNextId();
 		ListNode* newNode = new ListNode(value, ListBenchmark::getId());
 		newNode->setNextId(oldNext);
-		__context__->addToPublish(newNode);
+		HYFLOW_PUBLISH_OBJECT(newNode);
 
-		ListNode* headNodeWrite = (ListNode*)__context__->onWriteAccess(head);
+		ListNode* headNodeWrite = (ListNode*)HYFLOW_ON_WRITE(head);
 		headNodeWrite->setId(newNode->getId());
 	} HYFLOW_ATOMIC_END;
 }
@@ -83,20 +83,20 @@ void ListNode::deleteNode(int value) {
 		std::string head("HEAD");
 		std::string prev = head, next;
 		//Fetch the Head Node first, It is just a dummy Node
-		__context__->fetchObject(head, true);
-		targetNode = (ListNode*)__context__->onReadAccess(head);
+		HYFLOW_FETCH(head, true);
+		targetNode = (ListNode*)HYFLOW_ON_READ(head);
 		next = targetNode->getNextId();
 
 		while(next.compare("NULL") != 0) {
-			__context__->fetchObject(next, true);
-			targetNode = (ListNode*)__context__->onReadAccess(next);
+			HYFLOW_FETCH(next, true);
+			targetNode = (ListNode*)HYFLOW_ON_READ(next);
 			int nodeValue = targetNode->getValue();
 			if (nodeValue == value) {
 				LOG_DEBUG("LIST :Got the required value node\n");
-				ListNode* prevNode = (ListNode*)__context__->onWriteAccess(prev);
-				ListNode* currentNode = (ListNode*)__context__->onWriteAccess(next);
+				ListNode* prevNode = (ListNode*)HYFLOW_ON_WRITE(prev);
+				ListNode* currentNode = (ListNode*)HYFLOW_ON_WRITE(next);
 				prevNode->setNextId(currentNode->getNextId());
-				__context__->addToDelete(currentNode);
+				HYFLOW_DELETE_OBJECT(currentNode);
 			}
 			prev = next;
 			next = targetNode->getNextId();
@@ -114,13 +114,13 @@ void ListNode::sumNodes() {
 		std::string prev = head, next;
 		int nodeSum =0 ;
 		//Fetch the Head Node first, It is just a dummy Node
-		__context__->fetchObject(head, true);
-		targetNode = (ListNode*)__context__->onReadAccess(head);
+		HYFLOW_FETCH(head, true);
+		targetNode = (ListNode*)HYFLOW_ON_READ(head);
 		next = targetNode->getNextId();
 
 		while(next.compare("NULL") != 0) {
-			__context__->fetchObject(next, true);
-			targetNode = (ListNode*)__context__->onReadAccess(next);
+			HYFLOW_FETCH(next, true);
+			targetNode = (ListNode*)HYFLOW_ON_READ(next);
 			nodeSum += targetNode->getValue();
 			prev = next;
 			next = targetNode->getNextId();
@@ -140,13 +140,13 @@ void ListNode::findNode(int value) {
 		std::string head("HEAD");
 		std::string prev = head, next;
 		//Fetch the Head Node first, It is just a dummy Node
-		__context__->fetchObject(head, true);
-		targetNode = (ListNode*)__context__->onReadAccess(head);
+		HYFLOW_FETCH(head, true);
+		targetNode = (ListNode*)HYFLOW_ON_READ(head);
 		next = targetNode->getNextId();
 
 		while(next.compare("NULL") != 0) {
-			__context__->fetchObject(next, true);
-			targetNode = (ListNode*)__context__->onReadAccess(next);
+			HYFLOW_FETCH(next, true);
+			targetNode = (ListNode*)HYFLOW_ON_READ(next);
 			int nodeValue = targetNode->getValue();
 			if (nodeValue == value) {
 				isPresent = true;

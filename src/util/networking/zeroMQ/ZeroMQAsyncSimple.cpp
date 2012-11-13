@@ -87,8 +87,8 @@ ZMQNetworkAsyncSimple::ZMQNetworkAsyncSimple() {
 		sleep(2);
 		additionalSync();
 
-		// Launch all the dealerExecutors
-		for (int i=0; i<threadCount; i++) {
+		// Launch all the dealerExecutors on all other nodes
+		for (int i=0; (i<threadCount) && (nodeId); i++) {
 			pthread_t dealerThread;
 			int *waitingThreadId = new int();
 			*waitingThreadId = i;
@@ -97,7 +97,7 @@ ZMQNetworkAsyncSimple::ZMQNetworkAsyncSimple() {
 			dealerThreads.push_back(dealerThread);
 		}
 
-		sleep(2);
+		sleep(6);
 		// After this much boiler code all nodes are able to communicate the synchronization messages
 		isInit = true;
 	}
@@ -153,6 +153,15 @@ void ZMQNetworkAsyncSimple::additionalSync(){
 		}
 
 		std::string reply = ipsStr.str();
+
+		for (int i=0; i<threadCount ; i++) {
+			pthread_t dealerThread;
+			int *waitingThreadId = new int();
+			*waitingThreadId = i;
+			dealerThreadIds.push_back(waitingThreadId);
+			pthread_create(&dealerThread,NULL,ZMQNetworkAsyncSimple::dealerExecute,(void*)waitingThreadId);
+			dealerThreads.push_back(dealerThread);
+		}
 
 		// Reply the sender nodes to continue
 		for (int i=1; i<nodeCount ; i++) {

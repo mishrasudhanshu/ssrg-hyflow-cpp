@@ -47,6 +47,21 @@ for (int i = 0; i < 0x7fffffff; i++) { \
 	}\
 }\
 
+#define HYFLOW_FETCH(ID, ACCESS_TYPE) \
+	__context__->fetchObject(ID, ACCESS_TYPE)
+
+#define HYFLOW_ON_READ(ID) \
+	__context__->onReadAccess(ID)
+
+#define HYFLOW_ON_WRITE(ID) \
+	__context__->onWriteAccess(ID)
+
+#define HYFLOW_PUBLISH_OBJECT(ID) \
+	__context__->addToPublish(ID)
+
+#define HYFLOW_DELETE_OBJECT(ID) \
+	__context__->addToDelete(ID)
+
 namespace vt_dstm {
 
 /*
