@@ -2,6 +2,7 @@
  * ZMQNetworkAsync.cpp
  *	Async Version usages the Dealer and Router model
  *	No sendCallback supported directly.
+ *	Usuages the Distributor thread for work distribution
  *
  *  Created on: Oct 5, 2012
  *      Author: mishras[at]vt.edu

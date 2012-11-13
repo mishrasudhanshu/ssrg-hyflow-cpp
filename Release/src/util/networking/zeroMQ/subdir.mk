@@ -6,16 +6,19 @@
 CPP_SRCS += \
 ../src/util/networking/zeroMQ/ZMQNetwork.cpp \
 ../src/util/networking/zeroMQ/ZMQNetworkAsync.cpp \
+../src/util/networking/zeroMQ/ZMQNetworkAsyncPoll.cpp \
 ../src/util/networking/zeroMQ/ZeroMQAsyncSimple.cpp 
 
 OBJS += \
 ./src/util/networking/zeroMQ/ZMQNetwork.o \
 ./src/util/networking/zeroMQ/ZMQNetworkAsync.o \
+./src/util/networking/zeroMQ/ZMQNetworkAsyncPoll.o \
 ./src/util/networking/zeroMQ/ZeroMQAsyncSimple.o 
 
 CPP_DEPS += \
 ./src/util/networking/zeroMQ/ZMQNetwork.d \
 ./src/util/networking/zeroMQ/ZMQNetworkAsync.d \
+./src/util/networking/zeroMQ/ZMQNetworkAsyncPoll.d \
 ./src/util/networking/zeroMQ/ZeroMQAsyncSimple.d 
 
 

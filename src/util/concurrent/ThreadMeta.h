@@ -16,6 +16,10 @@ namespace vt_dstm {
 
 enum ThreadType {
 	TRANSACTIONAL_THREAD=0,
+	MAIN_THREAD,
+	FORWARDER_THREAD,
+	CATCHER_THREAD,
+	WORKER_THREAD,
 	DISPATCHER_THREAD
 };
 
@@ -26,6 +30,7 @@ public:
 	virtual ~ThreadMeta(){};
 
 	static void threadInit(int id, ThreadType T_type);
+	static void threadDeinit(ThreadType T_type);
 	static void setThreadId(int id);
 	static int getThreadId();
 };

@@ -22,8 +22,11 @@ namespace vt_dstm
 #define TRACKER_DIRECTORY "TrackerDirectory"
 #define CONTROLFLOW_DIRECTORY "ControlFlowDirectory"
 
-#define COMM_MANAGER "communicationManager"
+#define NETWORK "network"
 #define MSG_CONNECT "MsgConnect"
+#define ZERO_MQ "zeroMQ"
+#define ZERO_MQ_TFR "zeroMQTFR"
+#define ZERO_MQ_WFR "zeroMQWFR"
 
 #define LOGGER "logger"
 #define BASIC_LOGGER "Basic"
@@ -63,9 +66,6 @@ namespace vt_dstm
 #define MACHINES "machines"
 #define UNIT_TEST "unitTest"
 
-#define NETWORK "network"
-#define MSG_CONNECT "MsgConnect"
-#define ZERO_MQ "zeroMQ"
 #define NODES "nodes"
 #define NODE_ID "nodeId"
 #define OBJECTS "objects"

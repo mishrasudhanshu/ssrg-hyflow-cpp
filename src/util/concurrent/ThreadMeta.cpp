@@ -23,15 +23,26 @@ namespace vt_dstm{
 	}
 
 	void ThreadMeta::threadInit(int id, ThreadType T_type) {
-		int coreId=0;
-		int nodeId = NetworkManager::getNodeId();
-		int threadCount = NetworkManager::getThreadCount();
+//		int coreId=0;
+//		int nodeId = NetworkManager::getNodeId();
+//		int threadCount = NetworkManager::getThreadCount();
 		if (T_type == TRANSACTIONAL_THREAD) {
-			coreId = nodeId*threadCount + id;
-		} else {
-			coreId = nodeId*threadCount + id;
+//			coreId = nodeId*threadCount + id;
+			setThreadId(id);
+			NetworkManager::threadNetworkInit();
+		}else if (T_type == MAIN_THREAD ) {
+			setThreadId(id);
+		}else if (T_type == DISPATCHER_THREAD ){
+//			coreId = nodeId*threadCount + id;
 			// For dispatch thread default Id should be zero
 			id = 0;
+			setThreadId(id);
+		}else if (T_type == WORKER_THREAD) {
+			id = NetworkManager::getThreadCount() + id + 1;
+			setThreadId(id);
+		}else {
+			id = 0;
+			setThreadId(id);
 		}
 
 		// Leave two additional cores for Msgconnect server listener and worker thread
@@ -44,7 +55,6 @@ namespace vt_dstm{
 //			perror("Set affinity transactional thread");
 //		}
 
-		setThreadId(id);
 
 	   // Causing system to hang
 //	   struct sched_param sp;
@@ -60,6 +70,12 @@ namespace vt_dstm{
 //			  perror("Failure in setting schedulers");
 //		  }
 //	   }
+	}
+
+	void ThreadMeta::threadDeinit(ThreadType T_type) {
+		if (T_type!=DISPATCHER_THREAD ) {
+			NetworkManager::threadNetworkShutdown();
+		}
 	}
 }
 

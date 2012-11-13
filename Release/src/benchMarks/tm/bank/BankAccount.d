@@ -41,6 +41,8 @@ src/benchMarks/tm/bank/BankAccount.d: \
  ../src/benchMarks/tm/bank/../../tm/list/../../../core/HyflowObjectFuture.h \
  ../src/benchMarks/tm/bank/../../tm/list/../../HyflowBenchmark.h \
  ../src/benchMarks/tm/bank/../../tm/list/../../../util/concurrent/HyInteger.h \
+ ../src/benchMarks/tm/bank/../../tm/test/TestSpeed.h \
+ ../src/benchMarks/tm/bank/../../tm/test/../../HyflowBenchmark.h \
  ../src/benchMarks/tm/bank/../../../util/concurrent/HyInteger.h \
  ../src/benchMarks/tm/bank/../../../core/helper/CheckPointProvider.h \
  ../src/benchMarks/tm/bank/../../../core/helper/../context/ContextManager.h \
@@ -127,6 +129,10 @@ src/benchMarks/tm/bank/BankAccount.d: \
 ../src/benchMarks/tm/bank/../../tm/list/../../HyflowBenchmark.h:
 
 ../src/benchMarks/tm/bank/../../tm/list/../../../util/concurrent/HyInteger.h:
+
+../src/benchMarks/tm/bank/../../tm/test/TestSpeed.h:
+
+../src/benchMarks/tm/bank/../../tm/test/../../HyflowBenchmark.h:
 
 ../src/benchMarks/tm/bank/../../../util/concurrent/HyInteger.h:
 

@@ -1,6 +1,6 @@
 /*
  * ZMQNetwork.cpp
- *
+ * Usages the REQ-REP pattern Synchronous design
  *  Created on: Sep 29, 2012
  *      Author: mishras[at]vt.edu
  */

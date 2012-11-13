@@ -21,6 +21,7 @@
 #include "zeroMQ/ZMQNetwork.h"
 #include "zeroMQ/ZMQNetworkAsync.h"
 #include "zeroMQ/ZeroMQAsyncSimple.h"
+#include "zeroMQ/ZMQNetworkAsyncPoll.h"
 #include "../messages/MessageHandler.h"
 #include "IPAddressProvider.h"
 
@@ -51,8 +52,9 @@ void NetworkManager::NetworkInit() {
 		synchronizeCluster();
 	}else if (strcmp(ConfigFile::Value(NETWORK).c_str(), ZERO_MQ) == 0) {
 //		network = new ZMQNetwork();
-		network = new ZMQNetworkAsyncSimple();
+//		network = new ZMQNetworkAsyncSimple();
 //		network = new ZMQNetworkAsync();
+		network = new ZMQNetworkAsyncPoll();
 		HyflowMessage::registerMessageHandlers();
 		sleep(4);
 		synchronizeCluster();
@@ -68,6 +70,14 @@ void NetworkManager::NetworkShutdown() {
 	AbstractNetwork *saveNetwork = network;
 	network = NULL;
 	delete saveNetwork;
+}
+
+void NetworkManager::threadNetworkInit() {
+	network->threadNetworkInit();
+}
+
+void NetworkManager::threadNetworkShutdown() {
+	network->threadNetworkShutdown();
 }
 
 void NetworkManager::initNode() {

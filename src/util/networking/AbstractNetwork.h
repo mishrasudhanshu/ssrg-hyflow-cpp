@@ -27,6 +27,11 @@ public:
 	 * Shutdown the Network
 	 */
 	virtual void networkShutdown() =0;
+	/*
+	 * Initiate thread specific networking settings
+	 */
+	virtual void threadNetworkInit(){};
+	virtual void threadNetworkShutdown(){};
 	/**
 	 * Send a message to given node
 	 */

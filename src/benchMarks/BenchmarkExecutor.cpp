@@ -162,6 +162,8 @@ void BenchmarkExecutor::execute(int id){
 	}
 	addMetaData(thrPut, rtry);
 	LOG_DEBUG("BNC_EXE %d: ThroughPut = %0.2f trxns/sec <----------------------\n", id, thrPut);
+//	sleep(20);
+//	ThreadMeta::threadDeinit(TRANSACTIONAL_THREAD);
 }
 
 void BenchmarkExecutor::increaseRetries() {

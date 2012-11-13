@@ -102,9 +102,17 @@ void ConfigFile::UpdateMap() {
 	if (value)
 		Update(DIRECTORY_MANAGER, value);
 
-	value = getenv(COMM_MANAGER);
+	value = getenv(NETWORK);
 	if (value)
-		Update(COMM_MANAGER, value);
+		Update(NETWORK, value);
+
+	value = getenv(ZERO_MQ_TFR);
+	if (value)
+		Update(ZERO_MQ_TFR, value);
+
+	value = getenv(ZERO_MQ_WFR);
+	if (value)
+		Update(ZERO_MQ_WFR, value);
 
 	value = getenv(CONTEXT);
 	if (value)
@@ -259,7 +267,7 @@ void ConfigFile::test() {
 
 	try {
 		directoryManager = Value(DIRECTORY_MANAGER);
-		comm_manager = Value(COMM_MANAGER);
+		comm_manager = Value(NETWORK);
 		context = Value(CONTEXT);
 		cp = Value(CONTENTION_POLICY);
 		remoteCaller = Value(REMOTE_CALLER);
@@ -290,7 +298,7 @@ void ConfigFile::test() {
 		std::cerr << "Can not find " << x << "\n\n!!!FAILED!!!\n" << std::endl;
 	}
 	std::cout << DIRECTORY_MANAGER <<": " << directoryManager << std::endl;
-	std::cout << COMM_MANAGER <<": " << comm_manager << std::endl;
+	std::cout << NETWORK <<": " << comm_manager << std::endl;
 	std::cout << CONTEXT <<": " << context << std::endl;
 	std::cout << CONTENTION_POLICY <<": " << cp << std::endl;
 	std::cout << REMOTE_CALLER <<": " << remoteCaller << std::endl;

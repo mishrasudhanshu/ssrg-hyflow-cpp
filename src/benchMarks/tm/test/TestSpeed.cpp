@@ -23,7 +23,7 @@ int TestSpeed::getOperandsCount() {
 void TestSpeed::readOperation(std::string ids[], int size) {
 	// Just send dummy messages
 	int nodeCount = NetworkManager::getNodeCount();
-	for (int i=0 ; i < 6 ; i++) {
+	for (int i=0 ; (i < 6) ; i++) {
 		HyflowMessageFuture mFu;
 		std::string id("0-0");
 		HyflowMessage hmsg(id);
@@ -38,7 +38,7 @@ void TestSpeed::readOperation(std::string ids[], int size) {
 }
 void TestSpeed::writeOperation(std::string ids[], int size) {
 	int nodeCount = NetworkManager::getNodeCount();
-	for (int i=0 ; i < 7 ; i++) {
+	for (int i=0 ; (i < 7) ; i++) {
 		HyflowMessageFuture mFu;
 		std::string id("0-0");
 		HyflowMessage hmsg(id);
