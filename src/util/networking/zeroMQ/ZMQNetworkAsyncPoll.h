@@ -27,6 +27,7 @@ class ZMQNetworkAsyncPoll: public vt_dstm::AbstractNetwork {
 	static int zeroMQWFR;
 	static int forwardersNcatchers;
 	static int catcherWorkers;
+	static int socketCount;
 
 	static volatile bool hyflowShutdown;
 	static volatile bool nodeReady;
@@ -42,7 +43,7 @@ class ZMQNetworkAsyncPoll: public vt_dstm::AbstractNetwork {
 	 * Router Socket provided to each thread to route its message to desired
 	 * node, we save a pointer to so that we can clean up at exit time
 	 */
-	static std::vector<zmq::socket_t*> threadRouterSockets;
+	static zmq::socket_t** threadSockets;
 
 	static zmq::socket_t* nodeInitSocket;
 	static zmq::socket_t* mainThreadSocket;

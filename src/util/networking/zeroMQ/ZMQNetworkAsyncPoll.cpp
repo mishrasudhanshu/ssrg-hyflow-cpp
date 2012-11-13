@@ -34,6 +34,7 @@ int ZMQNetworkAsyncPoll::zeroMQTFR = 0;
 int ZMQNetworkAsyncPoll::zeroMQWFR = 0;
 int ZMQNetworkAsyncPoll::forwardersNcatchers= 0;
 int ZMQNetworkAsyncPoll::catcherWorkers = 0;
+int ZMQNetworkAsyncPoll::socketCount = 0;
 
 std::string* ZMQNetworkAsyncPoll::nodeIPs = NULL;
 
@@ -50,7 +51,7 @@ volatile bool ZMQNetworkAsyncPoll::nodeReady = false;
 boost::condition ZMQNetworkAsyncPoll::nodeReadyCondition;
 boost::mutex ZMQNetworkAsyncPoll::nodeReadyMutex;
 
-std::vector<zmq::socket_t*> ZMQNetworkAsyncPoll::threadRouterSockets;
+zmq::socket_t** ZMQNetworkAsyncPoll::threadSockets;
 std::vector<pthread_t> ZMQNetworkAsyncPoll::forwarderThreads;
 std::vector<pthread_t> ZMQNetworkAsyncPoll::catcherThreads;
 pthread_t ZMQNetworkAsyncPoll::ForwarderThread;
@@ -71,6 +72,11 @@ ZMQNetworkAsyncPoll::ZMQNetworkAsyncPoll() {
 		zeroMQWFR = atoi(ConfigFile::Value(ZERO_MQ_WFR).c_str());
 		forwardersNcatchers = threadCount/zeroMQTFR;
 		catcherWorkers = zeroMQWFR;
+		socketCount = threadCount+1+catcherWorkers*forwardersNcatchers;
+		threadSockets = new zmq::socket_t*[socketCount];
+		for (int i=0; i<socketCount ; i++ ) {
+			threadSockets[i] = NULL;
+		}
 		sleep(2);
 
 		// Create Forwarder and Catcher threads for this node
@@ -159,20 +165,19 @@ ZMQNetworkAsyncPoll::~ZMQNetworkAsyncPoll() {
 	LOG_DEBUG("ZMQA :Forwarder threads killed\n");
 	sleep(2);
 
-//	for (unsigned int i = 0; i < threadRouterSockets.size();i++) {
-//		zmq::socket_t* saveSocket = threadRouterSockets[i];
-//		threadRouterSockets[i] = NULL;
-//		delete saveSocket;
-//	}
-
-
 	zmq::socket_t* tempSocket = nodeInitSocket;
 	nodeInitSocket = NULL;
 	delete tempSocket;
 
-	tempSocket = mainThreadSocket;
-	mainThreadSocket = NULL;
-	delete tempSocket;
+	for (int i = 0; i<socketCount ; i++ ) {
+		zmq::socket_t* saveSocket = threadSockets[i];
+		threadSockets[i] = NULL;
+		delete saveSocket;
+	}
+
+//	tempSocket = mainThreadSocket;
+//	mainThreadSocket = NULL;
+//	delete tempSocket;
 
 	if (context) {
 		zmq::context_t* saveContext = context;
@@ -288,9 +293,10 @@ void ZMQNetworkAsyncPoll::threadNetworkShutdown() {
 }
 
 zmq::socket_t* ZMQNetworkAsyncPoll::getThreadSocket() {
-	zmq::socket_t* socket = thread_socket.get();
+//	zmq::socket_t* socket = thread_socket.get();
+	int threadId = ThreadMeta::getThreadId();
+	zmq::socket_t* socket = threadSockets[threadId];
 	if (!socket) {
-		int threadId = ThreadMeta::getThreadId();
 		if (threadId == -1 ) {
 			Logger::fatal("ZMQAP : This thread should not send message\n");
 		}else{
@@ -306,12 +312,12 @@ zmq::socket_t* ZMQNetworkAsyncPoll::getThreadSocket() {
 			socket->setsockopt(ZMQ_IDENTITY, id.c_str(), id.size());
 			socket->connect(forwarderAddr.c_str());
 
-			threadRouterSockets.push_back(socket);
+			threadSockets[threadId] = socket;
 			LOG_DEBUG("ZMQA :Thread %s connected to %s\n", id.c_str(), forwarderAddr.c_str());
-			thread_socket.reset(socket);
-			if(threadId == threadCount) { // Main Thread
-				mainThreadSocket = socket;
-			}
+//			thread_socket.reset(socket);
+//			if(threadId == threadCount) { // Main Thread
+//				mainThreadSocket = socket;
+//			}
 			sleep(2);
 		}
 	}
