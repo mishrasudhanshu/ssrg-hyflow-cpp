@@ -1,0 +1,339 @@
+\documentclass[12pt,english]{report}
+
+\setlength{\textwidth}{6.5in}
+\setlength{\textheight}{8.5in}
+\setlength{\evensidemargin}{0in}
+\setlength{\oddsidemargin}{0in}
+\setlength{\topmargin}{0in}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.1in}
+
+\setcounter{secnumdepth}{3}
+\setcounter{tocdepth}{3}
+
+%% A simple dot to overcome graphicx limitations
+\newcommand{\lyxdot}{.}
+
+% Uncomment for double-spaced document.
+\renewcommand{\baselinestretch}{1}
+
+% \usepackage{epsf}
+\usepackage{graphicx}
+\usepackage{listings}\lstset{
+language=Java,                		% choose the language of the code
+basicstyle=\footnotesize,       % the size of the fonts that are used for the code
+numbers=left,                   % where to put the line-numbers
+numberstyle=\footnotesize,      % the size of the fonts that are used for the line-numbers
+stepnumber=1,                   % the step between two line-numbers. If it's 1 each line will be numbered
+numbersep=5pt,                  % how far the line-numbers are from the code
+showspaces=false,               % show spaces adding particular underscores
+showstringspaces=false,         % underline spaces within strings
+showtabs=false,                 % show tabs within strings adding particular underscores
+%frame=single,	                % adds a frame around the code
+tabsize=4,		                % sets default tabsize to 2 spaces
+captionpos=b,                   % sets the caption-position to bottom
+breaklines=true,                % sets automatic line breaking
+breakatwhitespace=false,        % sets if automatic breaks should only happen at whitespace
+}
+\usepackage{subfigure}
+
+\makeatother
+\usepackage{graphicx}
+\usepackage{epstopdf}
+\usepackage{babel}
+\usepackage{hyperref}
+\hypersetup{
+	colorlinks=true,		% false: boxed links; true: colored links
+	linkcolor=black,          % color of internal links
+    citecolor=black,        % color of links to bibliography
+    filecolor=black,      % color of file links
+    urlcolor=black           % color of external links
+}
+\usepackage{rotating}
+\usepackage{comment}
+%\usepackage{bbding}
+\usepackage{threeparttable}
+
+
+
+
+\begin{document}
+
+\thispagestyle{empty}
+\pagenumbering{roman}
+\begin{center}
+
+% TITLE
+{\Large 
+HyflowCPP : Distributed Transaction Memory framework for C++
+}
+
+\vfill
+
+Sudhanshu Mishra
+
+\vfill
+
+Thesis submitted to the Faculty of the \\
+Virginia Polytechnic Institute and State University \\
+in partial fulfillment of the requirements for the degree of
+
+\vfill
+
+Master of Science \\
+in \\
+Computer Engineering
+
+
+\vfill
+
+Binoy Ravindran, Chair \\
+Robert P. Broadwater \\
+Mark Jones
+
+
+\vfill
+
+December 7, 2012 \\
+Blacksburg, Virginia
+
+\vfill
+
+Keywords: Distributed Software Transaction Memory, Transactional Framework, C++, Concurrency
+\\
+Copyright 2012, Sudhanshu Mishra
+
+\end{center}
+
+\pagebreak
+
+\thispagestyle{empty}
+\begin{center}
+
+{\large
+HyflowCPP : Distributed Transaction Memory framework for C++
+}
+
+\vfill
+
+Sudhanshu Mishra
+
+\vfill
+
+(ABSTRACT)
+
+\vfill
+
+\end{center}
+
+To Be Added
+
+
+
+
+\vfill
+
+% GRANT INFORMATION
+
+% This work was partially supported by the US National Science Foundation.
+
+
+\pagebreak
+
+% Dedication and Acknowledgments are both optional
+\chapter*{Dedication}
+
+\begin{center}
+I dedicate this thesis to my family and friends.
+
+\textit{Without their support this would not have been possible}
+
+\end{center}
+
+
+\chapter*{Acknowledgments}
+
+I would like to thank my advisor, Dr. Binoy Ravindran, for his 
+help and guidance on both technical and personal 
+topics. It has been an honor to work under him and I am highly thankful
+to him for his trust in me.
+
+I would also like to thank Dr. Robert Broadwater and Dr. Mark Jones,
+for serving on my committee and providing their valuable feedback
+and direction. In addition, I would like to thank all of my colleagues
+at the Systems Software Research lab. I would particularly like to thank
+Alex Turcu, Mohd. Saad and Aditya Dhoke for their support and encouragement.
+It was a pleasure to work with them and perform interesting research in area 
+of Distributed Transactional Memory.
+
+Finally, I would like to thank my family and friends for all the
+love and support they have given me, without which this thesis would 
+not have been possible.
+
+All figures in thesis are the work of the author, unless specified otherwise.
+
+\tableofcontents
+\pagebreak
+
+\listoffigures
+\pagebreak
+
+%\listofalgorithms
+%\pagebreak
+
+\listoftables
+\pagebreak
+
+%\printnomenclature
+%\pagebreak
+
+\pagenumbering{arabic}
+\pagestyle{myheadings}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%																									%
+%							CHAPTER 1	:	INTRODUCTION						%
+%																									%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Introduction}\label{chap:intro}
+\markright{Chapter~\ref{chap:intro}.
+Introduction
+\hfill}
+
+To be added
+
+\section{Thesis Contribution}
+
+To be Added
+
+\section{Thesis Organization}
+
+The rest of the thesis is organized as follows: Chapter~\ref{chap:related-work} overviews past and related work in the DSTM space, and contrasts them with the thesis's problem space. Chapter~\ref{chap:programming-interface} illustrates the programming model required to develop benchmarks in our framework. Chapter~\ref{chap:system-architecture} describes our framework architecture and interaction between different components. Chapter~\ref{chap:algorithm} explains the TFA algorithm and its adoption in different transactional models.We report our experimental results in Chapter~\ref{chap:expResults}. Finally, we conclude the thesis in Chapter~\ref{chap:conclusion}.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%																									%
+%							CHAPTER 2	:	Related work						%
+%																									%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Related Work}\label{chap:related-work}
+\markright{Chapter~\ref{chap:related-work}.
+Related Work
+\hfill}
+
+To Be Added
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%																									%
+%							CHAPTER 3	:	Programming Interface						%
+%																									%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Programming Interface}\label{chap:programming-interface}
+\markright{Chapter~\ref{chap:programming-interface}.
+Programming Interface
+\hfill}
+
+To Be Added
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%																									%
+%							CHAPTER 4	:	System Architecture						%
+%																									%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\chapter{System Architecture}\label{chap:system-architecture}
+\markright{Chapter~\ref{chap:system-architecture}.
+System Architecture
+\hfill}
+
+To be Added
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%																									%
+%							CHAPTER 5	:	Algorithms						%
+%																									%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Algorithm}\label{chap:algorithm}
+\markright{Chapter~\ref{chap:algorithm}.
+Algorithm
+\hfill}
+
+To be Added
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%																									%
+%							CHAPTER 6	:	Experiments						%
+%																									%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Experimental Results \& Evaluation}\label{chap:expResults}
+\markright{Chapter~\ref{chap:expResults}.
+Experimental Results \& Evaluation
+\hfill}
+
+In this chapter, the performance of HyflowCPP is compared against other Java STMs using micro-benchmarks and macro-benchmarks.
+
+\section{Test Environment}
+
+To Be Added
+
+\section{Micro-Benchmarks}
+
+To Be Added 
+
+\subsection{Linked List\label{sub:Linked-List}}
+
+To Be Added 
+
+\subsection{Skip List}
+
+To Be Added 
+
+\subsection{Red-Black Tree}
+
+To Be Added 
+
+\section{Macro Benchmarks}
+
+In this section, we evaluate the performance under macro-benchmarks including a Bank application and five applications from the STAMP benchmark suite~\cite{caominh:stamp:iiswc:2008} (Vacation, KMeans, Genome,
+Labyrinth and Intruder).
+
+\subsection{Bank}
+
+To Be Added
+
+\subsection{Vacation}
+
+To Be Added
+
+\subsection{Loan}
+
+To Be Added
+
+\section{Summary}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%																									%
+%							CHAPTER 7	:	Conclusion						%
+%																									%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Conclusion and Future Work}\label{chap:conclusion}
+\markright{Chapter~\ref{chap:conclusion}.
+Conclusion and Future Work
+\hfill}
+
+To be Added
+
+\section{Future Work}
+
+Several directions exist for future work. These include the following:
+
+\newpage
+\markright{Bibliography \hfill}
+
+\bibliographystyle{abbrv}
+\addcontentsline{toc}{chapter}{Bibliography}
+\bibliography{BibTex/all}
+
+\end{document}

@@ -40,6 +40,7 @@ boost::mutex NetworkManager::clsMutex;
 
 AbstractNetwork* NetworkManager::network = NULL;
 bool NetworkManager::islocal = false;
+bool NetworkManager::futureWaitRequired = true;
 std::map<int, int> NetworkManager::syncMap ;
 std::map<int, std::string> NetworkManager::ipMap ;
 
@@ -51,6 +52,7 @@ void NetworkManager::NetworkInit() {
 		HyflowMessage::registerMessageHandlers();
 		synchronizeCluster();
 	}else if (strcmp(ConfigFile::Value(NETWORK).c_str(), ZERO_MQ) == 0) {
+		futureWaitRequired = false;
 //		network = new ZMQNetwork();
 		network = new ZMQNetworkAsyncSimple();
 //		network = new ZMQNetworkAsync();

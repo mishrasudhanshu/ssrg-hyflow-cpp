@@ -35,7 +35,7 @@ TrackerDirectory::~TrackerDirectory() {
 }
 
 int TrackerDirectory::getTracker(std::string & objectId) {
-	int end = objectId.find('-');
+	unsigned int end = objectId.find('-');
 	if (end == std::string::npos) {
 		if (objectId.compare("HEAD") == 0) {
 			return 0;

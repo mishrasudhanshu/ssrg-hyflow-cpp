@@ -26,6 +26,11 @@ class NetworkManager {
 	static std::string nodeIp;
 
 	static bool islocal;
+	/*
+	 * if future wait on object is required, in zeroMQ we any way wait for reply
+	 * so we don't need to use wait and notify mechanism.
+	 */
+	static bool futureWaitRequired;
 //	static int nodesInCluster;
 	static int syncVersion;
 	static boost::condition onCluster;
@@ -34,6 +39,10 @@ class NetworkManager {
 	static std::map<int, std::string> ipMap;
 public:
 	static AbstractNetwork *network;
+
+	static bool isFutureWaitRequired() {
+		return futureWaitRequired;
+	}
 
 	static std::map<int, std::string> & getIpMap() {
 		return ipMap;

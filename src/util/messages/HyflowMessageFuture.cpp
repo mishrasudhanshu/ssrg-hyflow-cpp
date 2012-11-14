@@ -40,9 +40,11 @@ HyflowMessageFuture::~HyflowMessageFuture() {
 }
 
 void HyflowMessageFuture::waitOnFuture(){
-	boost::unique_lock<boost::mutex> lock(msgMutex);
-	while (!isReceived) {
-		onReceive.wait(lock);
+	if (NetworkManager::isFutureWaitRequired()) {
+		boost::unique_lock<boost::mutex> lock(msgMutex);
+		while (!isReceived) {
+			onReceive.wait(lock);
+		}
 	}
 }
 
@@ -51,12 +53,14 @@ bool HyflowMessageFuture::isComplete() {
 }
 
 void HyflowMessageFuture::notifyMessage() {
-	{
-	     boost::unique_lock<boost::mutex> lock(msgMutex);
-	     isReceived=true;
-	     LOG_DEBUG("HMF :Set received for m_id %s\n", msg_id.c_str());
-	 }
-	 onReceive.notify_all();
+	if (NetworkManager::isFutureWaitRequired()) {
+		{
+			 boost::unique_lock<boost::mutex> lock(msgMutex);
+			 isReceived=true;
+			 LOG_DEBUG("HMF :Set received for m_id %s\n", msg_id.c_str());
+		 }
+		 onReceive.notify_all();
+	}
 }
 
 void HyflowMessageFuture::setId(const std::string & id){
