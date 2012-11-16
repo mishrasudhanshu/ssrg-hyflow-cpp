@@ -201,7 +201,7 @@ All figures in thesis are the work of the author, unless specified otherwise.
 Introduction
 \hfill}
 
-To be added
+DSTM provides an alternative to classical lock-based distributed concurrency control for achieving concurrency in a networked environment. 
 
 \section{Thesis Contribution}
 
@@ -209,27 +209,32 @@ To be Added
 
 \section{Thesis Organization}
 
-The rest of the thesis is organized as follows: Chapter~\ref{chap:related-work} overviews past and related work in the DSTM space, and contrasts them with the thesis's problem space. Chapter~\ref{chap:programming-interface} illustrates the programming model required to develop benchmarks in our framework. Chapter~\ref{chap:system-architecture} describes our framework architecture and interaction between different components. Chapter~\ref{chap:algorithm} explains the TFA algorithm and its adoption in different transactional models.We report our experimental results in Chapter~\ref{chap:expResults}. Finally, we conclude the thesis in Chapter~\ref{chap:conclusion}.
+The rest of the thesis is organized as follows: Chapter~\ref{chap:relWork} overviews past and related work in the DSTM space, and contrasts them with the thesis's problem space. Chapter~\ref{chap:progInterface} illustrates the programming model required to develop benchmarks in our framework. Chapter~\ref{chap:sysArch} describes our framework architecture and interaction between different components. Chapter~\ref{chap:algorithm} explains the TFA algorithm and its adoption in different transactional models.We report our experimental results in Chapter~\ref{chap:expResults}. Finally, we conclude the thesis in Chapter~\ref{chap:conclusion}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %																									%
 %							CHAPTER 2	:	Related work						%
 %																									%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{Related Work}\label{chap:related-work}
-\markright{Chapter~\ref{chap:related-work}.
+\chapter{Related Work}\label{chap:relWork}
+\markright{Chapter~\ref{chap:relWork}.
 Related Work
 \hfill}
 
-To Be Added
+Research in DSTM space have been relatively small and recent in comparison to STM. Manassiev~\cite{Manassiev:2006:EDV:1122971.1123002} work based on Distributed Multiversioning(DMV) can be considered one of first paper on DSTM published in 2006. It
+exploited the distributed data versions in order to avoid read-write conflicts. Later,
+...
+For our discussion purpose we will divide the work in DSTM space in two parts:
+1. Strong Memory Consistency
+2. Weak Memory Consistency 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %																									%
 %							CHAPTER 3	:	Programming Interface						%
 %																									%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{Programming Interface}\label{chap:programming-interface}
-\markright{Chapter~\ref{chap:programming-interface}.
+\chapter{Programming Interface}\label{chap:progInterface}
+\markright{Chapter~\ref{chap:progInterface}.
 Programming Interface
 \hfill}
 
@@ -242,8 +247,8 @@ To Be Added
 %																									%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\chapter{System Architecture}\label{chap:system-architecture}
-\markright{Chapter~\ref{chap:system-architecture}.
+\chapter{System Architecture}\label{chap:sysArch}
+\markright{Chapter~\ref{chap:sysArch}.
 System Architecture
 \hfill}
 

@@ -33,6 +33,7 @@ bool BenchmarkExecutor::isInitiated = false;
 double BenchmarkExecutor::throughPut = 0;
 int BenchmarkExecutor::threadCount = 0;
 int BenchmarkExecutor::retryCount = 0;
+std::string BenchmarkExecutor::benchMarkName;
 
 HyflowBenchmark* BenchmarkExecutor::benchmark = NULL;
 bool* BenchmarkExecutor::transactionType = NULL;
@@ -66,17 +67,18 @@ void BenchmarkExecutor::writeResults() {
 void BenchmarkExecutor::initExecutor(){
 	if ( !isInitiated ) {
 		if (ConfigFile::Value(BENCHMARK).compare(BANK) == 0) {
-			LOG_DEBUG("BE :Running Bank\n");
+			benchMarkName = "Bank";
 			benchmark = new BankBenchmark();
 		}else if(ConfigFile::Value(BENCHMARK).compare(LIST) == 0) {
-			LOG_DEBUG("BE :Running List\n");
+			benchMarkName = "List";
 			benchmark = new ListBenchmark();
 		}else if(ConfigFile::Value(BENCHMARK).compare(TEST) == 0) {
-			LOG_DEBUG("BE :Running Test\n");
+			benchMarkName = "Test";
 			benchmark = new TestSpeed();
 		}else {
 			Logger::fatal("BE :Unknown Benchmark\n");
 		}
+		LOG_DEBUG("BE :Running %s\n", benchMarkName.c_str());
 		objectsCount = atoi(ConfigFile::Value(OBJECTS).c_str());
 		transactions = atoi(ConfigFile::Value(TRANSACTIONS).c_str());
 		readPercent =  atoi(ConfigFile::Value(READS).c_str());
@@ -90,7 +92,7 @@ void BenchmarkExecutor::initExecutor(){
 
 void BenchmarkExecutor::writeConfig() {
 	Logger::result("----------%llu------------\n", getTime());
-	Logger::result("Benchmark=bank\n");
+	Logger::result("Benchmark=%s\n", benchMarkName.c_str());
 	Logger::result("Reads=%d%%\n", readPercent);
 	Logger::result("Objects=%d\n", objectsCount);
 	Logger::result("Trnxs=%d\n", transactions);

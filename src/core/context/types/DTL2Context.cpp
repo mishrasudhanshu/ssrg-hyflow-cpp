@@ -121,12 +121,24 @@ void DTL2Context::beforeReadAccess(HyflowObject *obj) {
 	}
 }
 
+/*
+ * Don't object copy here as it is created in transaction should deleted in cleanMaps
+ */
 void DTL2Context::addToPublish(HyflowObject *newObject) {
+	//If checkPointing enabled set the checkPoint Index
+	newObject->setAccessCheckPoint(CheckPointProvider::getCheckPointIndex());
 	publishMap[newObject->getId()] = newObject;
 }
 
+/*
+ * Copy the object clone in delete set as it is also added in write set
+ */
 void DTL2Context::addToDelete(HyflowObject *deleteObject) {
-	deleteMap[deleteObject->getId()] = deleteObject;
+	//If checkPointing enabled set the checkPoint Index
+	deleteObject->setAccessCheckPoint(CheckPointProvider::getCheckPointIndex());
+	HyflowObject* delObject = NULL;
+	deleteObject->getClone(&delObject);
+	deleteMap[deleteObject->getId()] = delObject;
 }
 
 /*
@@ -666,6 +678,37 @@ void DTL2Context::tryCommitCP() {
 			}
 		}
 
+		// Time to remove invalid objects in Publish Set and Delete Set too
+		std::map<std::string, HyflowObject*, ObjectIdComparator>::iterator pi;
+		pi = publishMap.begin();
+		while(pi != publishMap.end()) {
+			if (pi->second->getAccessCheckPoint() >= availableCheckPoint) {
+				// clean-up and delete
+				LOG_DEBUG("CommitCP :PublishMap had an invalid object %s\n", pi->first.c_str());
+				HyflowObject *saveObject = pi->second;
+				publishMap.erase(pi++);
+				delete saveObject;
+				continue;
+			}else {
+				pi++;
+			}
+		}
+
+		std::map<std::string, HyflowObject*, ObjectIdComparator>::iterator di;
+		di = deleteMap.begin();
+		while(di != deleteMap.end()) {
+			if (di->second->getAccessCheckPoint() >= availableCheckPoint) {
+				// clean-up and delete
+				LOG_DEBUG("CommitCP :DeleteMap had an invalid object %s\n", di->first.c_str());
+				HyflowObject *saveObject = di->second;
+				deleteMap.erase(di++);
+				delete saveObject;
+				continue;
+			}else {
+				di++;
+			}
+		}
+
 		if (availableCheckPoint < 1) {
 			Logger::fatal("Error in CheckPointing: Transaction must have been aborted\n");
 		}else {
@@ -905,6 +948,13 @@ void DTL2Context::fetchObject(std::string id, bool isRead=true) {
 
 	// Go over network and fetch the object
 	HyflowObject* obj = DirectoryManager::locate(id, true, txnId);
+	// If object got deleted then throw abort exception
+	if (obj == NULL) {
+		LOG_DEBUG("DTL :Object %s got Deleted, need to delete this transaction\n", id.c_str());
+		status = TXN_ABORTED;
+		TransactionException objectDeleted("DTL :Object got Deleted, need to delete this transaction\n");
+		throw objectDeleted;
+	}
 	// Perform early validation step, always use highestSendClock, it is update by objectAccessMessage
 	// First do forwarding on current readSet then add new object to it
 	forward(highestSenderClock);

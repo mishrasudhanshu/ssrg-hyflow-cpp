@@ -40,6 +40,7 @@ class BenchmarkExecutor {
 	static bool* transactionType;
 	static std::string*** threadArgsArray;
 	static std::string* ids;
+	static std::string benchMarkName;
 
 
 	static void prepareArgs();

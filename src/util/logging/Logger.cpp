@@ -173,4 +173,17 @@ void Logger::test() {
 	Logger::result("Hello to result %s %f %d\n",st.c_str(),db, i);
 //	Logger::LoggerDeinit();
 }
+
+double Logger::getCurrentTime() {
+	timeval tv;
+	gettimeofday(&tv, NULL);
+	return tv.tv_sec + 0.000001 * tv.tv_usec;
+}
+
+unsigned long long Logger::getCurrentMicroSec() {
+	timeval tv;
+	gettimeofday(&tv, NULL);
+	return tv.tv_sec*1000000 + tv.tv_usec;
+}
+
 }

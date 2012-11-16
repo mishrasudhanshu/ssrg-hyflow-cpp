@@ -45,6 +45,8 @@ public:
 	static void result(char const* str,...);
 	static void consoleOut(const char* str,...);
 	static void consoleError(const char* str,...);
+	static double getCurrentTime();
+	static unsigned long long getCurrentMicroSec();
 	static void test();
 };
 

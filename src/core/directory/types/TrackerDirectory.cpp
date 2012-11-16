@@ -72,7 +72,12 @@ void TrackerDirectory::locateAsync(std::string & id, bool rw, unsigned long long
 			// Use optimistic approach don't perform forwarding for local object
 //			c->updateClock(ContextManager::getClock());
 			fu.getMessageFuture().notifyMessage();
-		} else {
+		} else if(ownerNode == -1) {
+			//It means object got deleted
+			LOG_DEBUG("TRK :Object %s got deleted\n", id.c_str());
+			fu.getMessageFuture().setDataResponse(NULL);
+			fu.getMessageFuture().notifyMessage();
+		}else {
 			ObjectAccessMsg oam(id, rw);
 			HyflowMessage hmsg(id);
 			hmsg.msg_t = MSG_ACCESS_OBJECT;
@@ -211,7 +216,7 @@ int TrackerDirectory::getObjectLocation(std::string & id){
 	if (directory->find(a,id)) {
 		return a->second;
 	} else {
-		throw "No Object Found!!";
+		LOG_DEBUG("DIR :Asked Object Got Deleted\n");
 	}
 	return -1;
 }

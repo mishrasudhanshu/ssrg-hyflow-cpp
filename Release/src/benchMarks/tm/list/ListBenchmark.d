@@ -22,7 +22,8 @@ src/benchMarks/tm/list/ListBenchmark.d: \
  ../src/benchMarks/tm/list/../../../core/directory/DirectoryManager.h \
  ../src/benchMarks/tm/list/../../../core/directory/../HyflowObject.h \
  ../src/benchMarks/tm/list/../../../core/directory/HyflowDirectory.h \
- ../src/benchMarks/tm/list/../../../core/directory/../HyflowObjectFuture.h
+ ../src/benchMarks/tm/list/../../../core/directory/../HyflowObjectFuture.h \
+ ../src/benchMarks/tm/list/../../../util/logging/Logger.h
 
 ../src/benchMarks/tm/list/ListBenchmark.h:
 
@@ -69,3 +70,5 @@ src/benchMarks/tm/list/ListBenchmark.d: \
 ../src/benchMarks/tm/list/../../../core/directory/HyflowDirectory.h:
 
 ../src/benchMarks/tm/list/../../../core/directory/../HyflowObjectFuture.h:
+
+../src/benchMarks/tm/list/../../../util/logging/Logger.h:

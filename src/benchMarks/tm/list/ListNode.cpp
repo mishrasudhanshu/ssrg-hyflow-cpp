@@ -31,11 +31,13 @@ ListNode::ListNode(int val, int counter) {
 	int ownerNode = NetworkManager::getNodeId();
 	idStr<<ownerNode<<"-"<<counter;
 	hyId = idStr.str();
+	hyVersion = 0;
 }
 
 ListNode::ListNode(int val, std::string id) {
 	value = val;
 	hyId = id;
+	hyVersion = 0;
 }
 
 std::string ListNode::getNextId() const {
@@ -71,7 +73,8 @@ void ListNode::addNode(int value) {
 		HYFLOW_PUBLISH_OBJECT(newNode);
 
 		ListNode* headNodeWrite = (ListNode*)HYFLOW_ON_WRITE(head);
-		headNodeWrite->setId(newNode->getId());
+		headNodeWrite->setNextId(newNode->getId());
+		LOG_DEBUG("LIST :Set Head next Id to %s\n", newNode->getId().c_str());
 	} HYFLOW_ATOMIC_END;
 }
 
@@ -86,17 +89,19 @@ void ListNode::deleteNode(int value) {
 		HYFLOW_FETCH(head, true);
 		targetNode = (ListNode*)HYFLOW_ON_READ(head);
 		next = targetNode->getNextId();
+		LOG_DEBUG("LIST :First Node is List %s\n", next.c_str());
 
 		while(next.compare("NULL") != 0) {
 			HYFLOW_FETCH(next, true);
 			targetNode = (ListNode*)HYFLOW_ON_READ(next);
 			int nodeValue = targetNode->getValue();
 			if (nodeValue == value) {
-				LOG_DEBUG("LIST :Got the required value node\n");
 				ListNode* prevNode = (ListNode*)HYFLOW_ON_WRITE(prev);
 				ListNode* currentNode = (ListNode*)HYFLOW_ON_WRITE(next);
 				prevNode->setNextId(currentNode->getNextId());
 				HYFLOW_DELETE_OBJECT(currentNode);
+				LOG_DEBUG("LIST :Got the required value in node %s\n", currentNode->getId().c_str());
+				break;
 			}
 			prev = next;
 			next = targetNode->getNextId();
@@ -117,6 +122,7 @@ void ListNode::sumNodes() {
 		HYFLOW_FETCH(head, true);
 		targetNode = (ListNode*)HYFLOW_ON_READ(head);
 		next = targetNode->getNextId();
+		LOG_DEBUG("LIST :First Node is List %s\n", next.c_str());
 
 		while(next.compare("NULL") != 0) {
 			HYFLOW_FETCH(next, true);
@@ -125,7 +131,9 @@ void ListNode::sumNodes() {
 			prev = next;
 			next = targetNode->getNextId();
 			//TODO: Think about removing previous->previous node from read write set
+			LOG_DEBUG("LIST :Got value %d in %s with next %s\n", targetNode->getValue(), targetNode->getId().c_str(), next.c_str());
 		}
+		LOG_DEBUG("LIST :Sum Value=%d\n", nodeSum);
 	} HYFLOW_ATOMIC_END;
 }
 
@@ -143,6 +151,7 @@ void ListNode::findNode(int value) {
 		HYFLOW_FETCH(head, true);
 		targetNode = (ListNode*)HYFLOW_ON_READ(head);
 		next = targetNode->getNextId();
+		LOG_DEBUG("LIST :First Node is List %s\n", next.c_str());
 
 		while(next.compare("NULL") != 0) {
 			HYFLOW_FETCH(next, true);
@@ -150,6 +159,7 @@ void ListNode::findNode(int value) {
 			int nodeValue = targetNode->getValue();
 			if (nodeValue == value) {
 				isPresent = true;
+				LOG_DEBUG("LIST :Found Value %d in %s\n", nodeValue, targetNode->getId().c_str());
 				break;
 			}
 			prev = next;
@@ -164,7 +174,11 @@ void ListNode::print() {
 }
 
 void ListNode::getClone(HyflowObject **obj) {
-
+	ListNode *ln = new ListNode();
+	ln->nextId = nextId;
+	ln->value = value;
+	this->baseClone(ln);
+	*obj = ln;
 }
 
 void ListNode::test() {

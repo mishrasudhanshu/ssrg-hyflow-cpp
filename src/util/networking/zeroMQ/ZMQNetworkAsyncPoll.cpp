@@ -23,6 +23,14 @@
 #include "../../parser/ConfigFile.h"
 #include "../../Definitions.h"
 
+//#define HYFLOW_DEBUG_NETWORKING
+
+#ifdef HYFLOW_DEBUG_NETWORKING
+#define LOG_DEBUG_NETWORK(...) LOG_DEBUG(__VA_ARGS__)
+#else
+#define LOG_DEBUG_NETWORK(...) do{}while(0)
+#endif
+
 #define WORKER_STR "worker"
 
 namespace vt_dstm {
@@ -482,10 +490,11 @@ void* ZMQNetworkAsyncPoll::forwarderThread(void *param) {
 	    nodeReadyCondition.notify_one();
 	}
 
-
+//	int runs=0;	double time=0;
 	while (!hyflowShutdown) {
 		try {
 			zmq::poll(nodeSet, 2, -1);
+//			double start=Logger::getCurrentTime();
 			if (nodeSet[0].revents & ZMQ_POLLIN) {
 				// Got Message from threads to send to threads
 				// We will get 2 frame one for sender, other for workLoad
@@ -497,14 +506,14 @@ void* ZMQNetworkAsyncPoll::forwarderThread(void *param) {
 				if (!more) {
 					Logger::fatal("ZMQAP :Message from thread ended Unexpectedly\n");
 				} else {
-					LOG_DEBUG("ZMQAP :Forwarder received senderMeta\n");
+					LOG_DEBUG_NETWORK("ZMQAP :Forwarder received senderMeta\n");
 					int64_t more1 = 1;
 					fromThreadSocket.recv(&toNodeMeta);
 					fromThreadSocket.getsockopt(ZMQ_RCVMORE, &more1, &more_size);
 					if (!more1) {
 						Logger::fatal("ZMQAP :Message from thread ended Unexpectedly2\n");
 					} else {
-						LOG_DEBUG("ZMQAP :Forwarder received toNodeMeta\n");
+						LOG_DEBUG_NETWORK("ZMQAP :Forwarder received toNodeMeta\n");
 						int64_t more2 = 1;
 						fromThreadSocket.recv(&workLoad);
 						fromThreadSocket.getsockopt(ZMQ_RCVMORE, &more2, &more_size);
@@ -518,10 +527,10 @@ void* ZMQNetworkAsyncPoll::forwarderThread(void *param) {
 							toNodesSocket.send(toNodeMeta, ZMQ_SNDMORE);
 							toNodesSocket.send(senderMeta, ZMQ_SNDMORE);
 							toNodesSocket.send(workLoad);
-							LOG_DEBUG("ZMQAP :Forwarder send Message\n");
-							LOG_DEBUG("ZMQAP :%s\n", toNode.c_str());
-							LOG_DEBUG("ZMQAP :%s\n", sender.c_str());
-							LOG_DEBUG("ZMQAP :%s\n", work.c_str());
+							LOG_DEBUG_NETWORK("ZMQAP :Forwarder send Message\n");
+							LOG_DEBUG_NETWORK("ZMQAP :%s\n", toNode.c_str());
+							LOG_DEBUG_NETWORK("ZMQAP :%s\n", sender.c_str());
+							LOG_DEBUG_NETWORK("ZMQAP :%s\n", work.c_str());
 						}
 					}
 				}
@@ -555,8 +564,10 @@ void* ZMQNetworkAsyncPoll::forwarderThread(void *param) {
 				}
 
 			}
+//			time+=Logger::getCurrentTime() - start; runs++;
 		} catch(zmq::error_t & e) {
 			if (hyflowShutdown) {
+//				Logger::fatal("Forwarder time spent=%f sec in %d runs\n",time, runs);
 				LOG_DEBUG("ZMQAP :Forwarder %d exiting\n", forwarderId);
 				break;
 			}else {
@@ -673,9 +684,11 @@ void* ZMQNetworkAsyncPoll::catcherThread(void *param) {
 	nodeSet[1].events = ZMQ_POLLIN;
 	nodeSet[1].revents = 0;
 
+//	int runs=0;	double time=0;
 	while (!hyflowShutdown) {
 		try {
 			zmq::poll(nodeSet, 2, -1);
+//			double start=Logger::getCurrentTime();
 			if (nodeSet[0].revents & ZMQ_POLLIN) {
 				// Got Message from Nodes to send to worker
 				// We will get 2 frame one for sender, other for workLoad
@@ -760,8 +773,10 @@ void* ZMQNetworkAsyncPoll::catcherThread(void *param) {
 					}
 				}
 			}
+//			time+=Logger::getCurrentTime() - start; runs++;
 		} catch(zmq::error_t & e) {
 			if (hyflowShutdown) {
+//				Logger::fatal("Catcher time spent=%f sec in %d runs\n",time, runs);
 				for( int i=0 ; i<catcherWorkers ; i++ ) {
 					pthread_t worker = workers.at(i);
 					pthread_kill(worker, SIGINT);
@@ -821,6 +836,7 @@ void* ZMQNetworkAsyncPoll::workLoadProcessor(void *param) {
 	forCatcherMessagingSocket.send(readyMsg);
 	LOG_DEBUG("ZMQAP :Worker send message to catcher %s\n", wcAddrId.c_str());
 
+//	int runs=0;	double time=0;
 	while(!hyflowShutdown) {
 		try {
 			LOG_DEBUG("ZMQA :Worker Asking for work by sending its load socket Id\n");
@@ -832,6 +848,7 @@ void* ZMQNetworkAsyncPoll::workLoadProcessor(void *param) {
 			//Wait for workLoad from Catcher
 			zmq::message_t forwarderMeta, senderMeta, workLoad;
 			forCatcherMessagingSocket.recv(&forwarderMeta);
+//			double start=Logger::getCurrentTime();
 			LOG_DEBUG("ZMQA :Worker received forwarder Address\n");
 			int64_t more = 1;
 			size_t more_size = sizeof(more);
@@ -840,7 +857,7 @@ void* ZMQNetworkAsyncPoll::workLoadProcessor(void *param) {
 				Logger::fatal("ZMQA : Worker Message part 1 ended unexpectedly\n");
 			}else {
 				forCatcherMessagingSocket.recv(&senderMeta);
-				LOG_DEBUG("ZMQA :Worker received SenderMeta data\n");
+				LOG_DEBUG_NETWORK("ZMQA :Worker received SenderMeta data\n");
 				int64_t more = 1;
 				size_t more_size = sizeof(more);
 				forCatcherMessagingSocket.getsockopt(ZMQ_RCVMORE, &more, &more_size);
@@ -849,7 +866,7 @@ void* ZMQNetworkAsyncPoll::workLoadProcessor(void *param) {
 				}else {
 					//  Last message frame
 					forCatcherMessagingSocket.recv(&workLoad);
-					LOG_DEBUG("ZMQA :Worker received WorkLoad\n");
+					LOG_DEBUG_NETWORK("ZMQA :Worker received WorkLoad\n");
 					int64_t more = 1;
 					size_t more_size = sizeof(more);
 					forCatcherMessagingSocket.getsockopt(ZMQ_RCVMORE, &more, &more_size);
@@ -857,15 +874,17 @@ void* ZMQNetworkAsyncPoll::workLoadProcessor(void *param) {
 						Logger::fatal("ZMQA : Worker Message part 3 unexpectedly long\n");
 					}
 					if (defaultHandler(workLoad)) {
-						LOG_DEBUG("ZMQA : Worker sending Callback Message Response\n");
+						LOG_DEBUG_NETWORK("ZMQA : Worker sending Callback Message Response\n");
 						forCatcherMessagingSocket.send(forwarderMeta, ZMQ_SNDMORE);
 						forCatcherMessagingSocket.send(senderMeta, ZMQ_SNDMORE);
 						forCatcherMessagingSocket.send(workLoad);
 					}
 				}
 			}
+//			time+=Logger::getCurrentTime() - start; runs++;
 		}catch(zmq::error_t & e) {
 			if (hyflowShutdown){
+//				Logger::fatal("Worker time spent=%f sec in %d runs\n",time, runs);
 				LOG_DEBUG("ZMQA : Worker Processor %d exiting\n", catcherId);
 				break;
 			}else {

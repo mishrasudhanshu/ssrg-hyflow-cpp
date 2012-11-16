@@ -27,6 +27,11 @@ public:
    bool operator()(std::string id1,std::string id2) {
 	   int obj1 = atoi(id1.substr(id1.find('-')+1).c_str());
 	   int obj2 = atoi(id2.substr(id2.find('-')+1).c_str());
+	   if ( obj1==obj2 ) {
+		   int node1 = atoi(id1.substr(0, id1.find('-')).c_str());
+		   int node2 = atoi(id2.substr(0, id2.find('-')).c_str());
+		   return sign*(node1-node2)>0;
+	   }
 	   return sign*(obj1-obj2)>0;
    }
 };

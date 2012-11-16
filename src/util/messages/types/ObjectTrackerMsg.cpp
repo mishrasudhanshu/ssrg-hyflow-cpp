@@ -72,7 +72,11 @@ void ObjectTrackerMsg::objectTrackerHandler(HyflowMessage & msg) {
 				HyflowObject* obj = DirectoryManager::getObjectLocally(otmsg->objectId, otmsg->isRead);
 				cbfmsg->setDataResponse(obj);
 				cbfmsg->notifyMessage();
-			} else {
+			} else if (otmsg->owner == -1) {
+				LOG_DEBUG("Object Tracker object %s got deleted\n", otmsg->objectId.c_str());
+				cbfmsg->setDataResponse(NULL);
+				cbfmsg->notifyMessage();
+			}else {
 				const std::string & objId = otmsg->objectId;
 				ObjectAccessMsg oam(objId, otmsg->isRead);
 				HyflowMessage hmsg(objId);
