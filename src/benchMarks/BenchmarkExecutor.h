@@ -12,7 +12,8 @@
 #include "HyflowBenchmark.h"
 #include "tm/bank/BankBenchmark.h"
 #include "tm/list/ListBenchmark.h"
-#include "tm/test/TestSpeed.h"
+#include "tm/test/TestSpeedBenchmark.h"
+#include "tm/skipList/SkipListBenchmark.h"
 #include "../util/concurrent/HyInteger.h"
 
 namespace vt_dstm {
@@ -66,7 +67,8 @@ public:
 	static void registerObjectTypes(Archive & ar) {
     	BankBenchmark::registerObjectTypes(ar);
     	ListBenchmark::registerObjectTypes(ar);
-    	TestSpeed::registerObjectTypes(ar);
+    	TestSpeedBenchmark::registerObjectTypes(ar);
+    	SkipListBenchmark::registerObjectTypes(ar);
     }
 
     static void executeThreads();

@@ -839,7 +839,7 @@ void* ZMQNetworkAsyncPoll::workLoadProcessor(void *param) {
 //	int runs=0;	double time=0;
 	while(!hyflowShutdown) {
 		try {
-			LOG_DEBUG("ZMQA :Worker Asking for work by sending its load socket Id\n");
+			LOG_DEBUG_NETWORK("ZMQA :Worker Asking for work by sending its load socket Id\n");
 			zmq::message_t workerMessage(wlId.size());
 			memcpy(workerMessage.data(), wlId.data(), wlId.size());
 			//Send Request to WorkDistributer requesting work

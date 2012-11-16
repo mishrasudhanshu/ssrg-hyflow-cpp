@@ -1,63 +1,57 @@
 /*
- * ListBenchmark.cpp
+ * SkipListBenchmark.cpp
  *
- *  Created on: Sep 8, 2012
+ *  Created on: Nov 15, 2012
  *      Author: mishras[at]vt.edu
  */
 
+#include "SkipListBenchmark.h"
 #include <cstdlib>
-#include "ListBenchmark.h"
+#include "SkipListBenchmark.h"
 #include "../../../util/concurrent/ThreadMeta.h"
 #include "../../../util/networking/NetworkManager.h"
 #include "../../../core/directory/DirectoryManager.h"
 #include "../../../util/logging/Logger.h"
 
-/*
- * Increasing contention level causes the longer lists and more contention
- * Higher contention value causes the deletion of object less probable
- * TODO: Set as configurable value from default.conf
- */
-#define HYFLOW_LIST_CONTENTION 3
+// TODO: Move to default configuration
+#define HYFLOW_SKIP_LIST_CONTENTION 3
+#define HYFLOW_SKIP_LIST_LEVELS 5
 
 namespace vt_dstm {
 
-boost::thread_specific_ptr<HyInteger> ListBenchmark::objectCreated;
+boost::thread_specific_ptr<HyInteger> SkipListBenchmark::objectCreated;
+int SkipListBenchmark::skipListLevels=HYFLOW_SKIP_LIST_LEVELS;
 
-ListBenchmark::ListBenchmark() { }
+SkipListBenchmark::SkipListBenchmark() { }
 
-ListBenchmark::~ListBenchmark() {}
+SkipListBenchmark::~SkipListBenchmark() {}
 
-int ListBenchmark::getOperandsCount()	{
+int SkipListBenchmark::getOperandsCount()	{
 	return 1;
 }
 
-void ListBenchmark::readOperation(std::string ids[], int size){
+void SkipListBenchmark::readOperation(std::string ids[], int size){
 	int random = abs(Logger::getCurrentMicroSec());
-	if (random%2 == 1 ) {
-		LOG_DEBUG("LIST :SUM Nodes\n");
-		ListNode::sumNodes();
-	}else {
-		int value = random%HYFLOW_LIST_CONTENTION;
-		LOG_DEBUG("LIST :FIND[%d] Node\n", value);
-		ListNode::findNode(value);
-	}
+	int value = random%HYFLOW_SKIP_LIST_CONTENTION;
+	LOG_DEBUG("LIST :FIND[%d] Node\n", value);
+	SkipListNode::findNode(value);
 }
 
-void ListBenchmark::writeOperation(std::string ids[], int size){
+void SkipListBenchmark::writeOperation(std::string ids[], int size){
 	int random = abs(Logger::getCurrentMicroSec());
-	int value = random%HYFLOW_LIST_CONTENTION;
+	int value = random%HYFLOW_SKIP_LIST_CONTENTION;
 	if (random%2 == 1 ) {
 		LOG_DEBUG("LIST :ADD[%d] Node\n", value);
-		ListNode::addNode(value);
+		SkipListNode::addNode(value);
 	}else {
 		LOG_DEBUG("LIST :DEL[%d] Node\n", value);
-		ListNode::deleteNode(value);
+		SkipListNode::deleteNode(value);
 	}
 }
 
-void ListBenchmark::checkSanity(){}
+void SkipListBenchmark::checkSanity(){}
 
-int ListBenchmark::getId() {
+int SkipListBenchmark::getId() {
 	HyInteger* objectCount = objectCreated.get();
 	if (!objectCount) {
 		objectCreated.reset(new HyInteger(0));
@@ -67,13 +61,11 @@ int ListBenchmark::getId() {
 	return objectCreated.get()->getValue();
 }
 
-std::string* ListBenchmark::createLocalObjects(int objCount) {
+std::string* SkipListBenchmark::createLocalObjects(int objCount) {
 	std::string* ids = NULL;
 	ids = new std::string [objCount];
 	if (NetworkManager::getNodeId() == 0 ) {
-		std::string next("NULL");
-		ListNode headNode(0, "HEAD");
-		headNode.setNextId(next);
+		SkipListNode headNode(0, "HEAD", skipListLevels);
 		DirectoryManager::registerObject(&headNode, 0);
 	}
 	// TODO : Don't Provide Random Ids, we don't need

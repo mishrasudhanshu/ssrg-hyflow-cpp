@@ -946,6 +946,7 @@ void DTL2Context::fetchObject(std::string id, bool isRead=true) {
 		}
 	}
 
+	// TODO: Search in publish set too, user may lose its own created objects
 	// Go over network and fetch the object
 	HyflowObject* obj = DirectoryManager::locate(id, true, txnId);
 	// If object got deleted then throw abort exception

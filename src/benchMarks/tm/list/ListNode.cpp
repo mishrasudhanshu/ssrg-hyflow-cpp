@@ -74,7 +74,7 @@ void ListNode::addNode(int value) {
 
 		ListNode* headNodeWrite = (ListNode*)HYFLOW_ON_WRITE(head);
 		headNodeWrite->setNextId(newNode->getId());
-		LOG_DEBUG("LIST :Set Head next Id to %s\n", newNode->getId().c_str());
+		LOG_DEBUG("LIST :Set Head next Id to %s value %d\n", newNode->getId().c_str(), value);
 	} HYFLOW_ATOMIC_END;
 }
 
@@ -89,7 +89,7 @@ void ListNode::deleteNode(int value) {
 		HYFLOW_FETCH(head, true);
 		targetNode = (ListNode*)HYFLOW_ON_READ(head);
 		next = targetNode->getNextId();
-		LOG_DEBUG("LIST :First Node is List %s\n", next.c_str());
+		LOG_DEBUG("LIST :First Node is List %s searching for %d\n", next.c_str(), value);
 
 		while(next.compare("NULL") != 0) {
 			HYFLOW_FETCH(next, true);
@@ -100,7 +100,7 @@ void ListNode::deleteNode(int value) {
 				ListNode* currentNode = (ListNode*)HYFLOW_ON_WRITE(next);
 				prevNode->setNextId(currentNode->getNextId());
 				HYFLOW_DELETE_OBJECT(currentNode);
-				LOG_DEBUG("LIST :Got the required value in node %s\n", currentNode->getId().c_str());
+				LOG_DEBUG("LIST :Got the required value %d in node %s\n", value, currentNode->getId().c_str());
 				break;
 			}
 			prev = next;

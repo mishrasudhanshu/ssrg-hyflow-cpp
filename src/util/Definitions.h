@@ -80,6 +80,7 @@ namespace vt_dstm
 #define BENCHMARK "benchmark"
 #define BANK "bank"
 #define LIST "list"
+#define SKIP_LIST "skipList"
 #define TEST "test"
 
 #define NESTING_MODEL "nestingModel"

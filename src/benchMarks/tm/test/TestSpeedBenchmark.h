@@ -1,21 +1,21 @@
 /*
- * TestSpeed.h
+ * TestSpeedBenchmark.h
  * This class is create verify the efficiency of Networking Library
  *  Created on: Nov 10, 2012
  *      Author: mishras[at]vt.edu
  */
 
-#ifndef TESTSPEED_H_
-#define TESTSPEED_H_
+#ifndef TESTSPEEDBENCHMARK_H_
+#define TESTSPEEDBENCHMARK_H_
 
 #include "../../HyflowBenchmark.h"
 
 namespace vt_dstm {
 
-class TestSpeed: public vt_dstm::HyflowBenchmark {
+class TestSpeedBenchmark: public vt_dstm::HyflowBenchmark {
 public:
-	TestSpeed();
-	virtual ~TestSpeed();
+	TestSpeedBenchmark();
+	virtual ~TestSpeedBenchmark();
 
 	template<class Archive>
 	static void registerObjectTypes(Archive & ar) {
@@ -31,4 +31,4 @@ public:
 
 } /* namespace vt_dstm */
 
-#endif /* TESTSPEED_H_ */
+#endif /* TESTSPEEDBENCHMARK_H_ */

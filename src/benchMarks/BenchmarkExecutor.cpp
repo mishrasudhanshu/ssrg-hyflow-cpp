@@ -74,7 +74,10 @@ void BenchmarkExecutor::initExecutor(){
 			benchmark = new ListBenchmark();
 		}else if(ConfigFile::Value(BENCHMARK).compare(TEST) == 0) {
 			benchMarkName = "Test";
-			benchmark = new TestSpeed();
+			benchmark = new TestSpeedBenchmark();
+		}else if(ConfigFile::Value(BENCHMARK).compare(SKIP_LIST) == 0) {
+			benchMarkName = "SkipList";
+			benchmark = new SkipListBenchmark();
 		}else {
 			Logger::fatal("BE :Unknown Benchmark\n");
 		}

@@ -31,8 +31,15 @@ src/benchMarks/tm/bank/BankBenchmark.d: \
  ../src/benchMarks/tm/bank/../../tm/list/../../../core/HyflowObjectFuture.h \
  ../src/benchMarks/tm/bank/../../tm/list/../../HyflowBenchmark.h \
  ../src/benchMarks/tm/bank/../../tm/list/../../../util/concurrent/HyInteger.h \
- ../src/benchMarks/tm/bank/../../tm/test/TestSpeed.h \
+ ../src/benchMarks/tm/bank/../../tm/test/TestSpeedBenchmark.h \
  ../src/benchMarks/tm/bank/../../tm/test/../../HyflowBenchmark.h \
+ ../src/benchMarks/tm/bank/../../tm/skipList/SkipListBenchmark.h \
+ ../src/benchMarks/tm/bank/../../tm/skipList/SkipListNode.h \
+ ../src/benchMarks/tm/bank/../../tm/skipList/../../../core/HyflowObject.h \
+ ../src/benchMarks/tm/bank/../../tm/skipList/../../../core/context/HyflowContext.h \
+ ../src/benchMarks/tm/bank/../../tm/skipList/../../../core/HyflowObjectFuture.h \
+ ../src/benchMarks/tm/bank/../../tm/skipList/../../HyflowBenchmark.h \
+ ../src/benchMarks/tm/bank/../../tm/skipList/../../../util/concurrent/HyInteger.h \
  ../src/benchMarks/tm/bank/../../../util/concurrent/HyInteger.h \
  ../src/benchMarks/tm/bank/../../../util/concurrent/ThreadMeta.h \
  ../src/benchMarks/tm/bank/../../../util/concurrent/HyInteger.h
@@ -99,9 +106,23 @@ src/benchMarks/tm/bank/BankBenchmark.d: \
 
 ../src/benchMarks/tm/bank/../../tm/list/../../../util/concurrent/HyInteger.h:
 
-../src/benchMarks/tm/bank/../../tm/test/TestSpeed.h:
+../src/benchMarks/tm/bank/../../tm/test/TestSpeedBenchmark.h:
 
 ../src/benchMarks/tm/bank/../../tm/test/../../HyflowBenchmark.h:
+
+../src/benchMarks/tm/bank/../../tm/skipList/SkipListBenchmark.h:
+
+../src/benchMarks/tm/bank/../../tm/skipList/SkipListNode.h:
+
+../src/benchMarks/tm/bank/../../tm/skipList/../../../core/HyflowObject.h:
+
+../src/benchMarks/tm/bank/../../tm/skipList/../../../core/context/HyflowContext.h:
+
+../src/benchMarks/tm/bank/../../tm/skipList/../../../core/HyflowObjectFuture.h:
+
+../src/benchMarks/tm/bank/../../tm/skipList/../../HyflowBenchmark.h:
+
+../src/benchMarks/tm/bank/../../tm/skipList/../../../util/concurrent/HyInteger.h:
 
 ../src/benchMarks/tm/bank/../../../util/concurrent/HyInteger.h:
 

@@ -1,11 +1,11 @@
 /*
- * TestSpeed.cpp
+ * TestSpeedBenchmark.cpp
  *
  *  Created on: Nov 10, 2012
  *      Author: mishras[at]vt.edu
  */
 
-#include "TestSpeed.h"
+#include "TestSpeedBenchmark.h"
 #include "../../../util/messages/types/DummyTestMsg.h"
 #include "../../../util/networking/NetworkManager.h"
 #include "../../../util/logging/Logger.h"
@@ -13,14 +13,14 @@
 
 namespace vt_dstm {
 
-TestSpeed::TestSpeed() {}
+TestSpeedBenchmark::TestSpeedBenchmark() {}
 
-TestSpeed::~TestSpeed() {}
+TestSpeedBenchmark::~TestSpeedBenchmark() {}
 
-int TestSpeed::getOperandsCount() {
+int TestSpeedBenchmark::getOperandsCount() {
 	return 0;
 }
-void TestSpeed::readOperation(std::string ids[], int size) {
+void TestSpeedBenchmark::readOperation(std::string ids[], int size) {
 	// Just send dummy messages
 	int nodeCount = NetworkManager::getNodeCount();
 	for (int i=0 ; (i < 6) ; i++) {
@@ -36,7 +36,7 @@ void TestSpeed::readOperation(std::string ids[], int size) {
 		LOG_DEBUG("TS :Transaction Complete\n");
 	}
 }
-void TestSpeed::writeOperation(std::string ids[], int size) {
+void TestSpeedBenchmark::writeOperation(std::string ids[], int size) {
 	int nodeCount = NetworkManager::getNodeCount();
 	for (int i=0 ; (i < 7) ; i++) {
 		HyflowMessageFuture mFu;
@@ -52,9 +52,9 @@ void TestSpeed::writeOperation(std::string ids[], int size) {
 	}
 }
 
-void TestSpeed::checkSanity() {};
+void TestSpeedBenchmark::checkSanity() {};
 
-std::string* TestSpeed::createLocalObjects(int objectCount) {
+std::string* TestSpeedBenchmark::createLocalObjects(int objectCount) {
 	return NULL;
 };
 

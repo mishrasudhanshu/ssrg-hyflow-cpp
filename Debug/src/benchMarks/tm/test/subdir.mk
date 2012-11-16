@@ -4,13 +4,13 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
-../src/benchMarks/tm/test/TestSpeed.cpp 
+../src/benchMarks/tm/test/TestSpeedBenchmark.cpp 
 
 OBJS += \
-./src/benchMarks/tm/test/TestSpeed.o 
+./src/benchMarks/tm/test/TestSpeedBenchmark.o 
 
 CPP_DEPS += \
-./src/benchMarks/tm/test/TestSpeed.d 
+./src/benchMarks/tm/test/TestSpeedBenchmark.d 
 
 
 # Each subdirectory must supply rules for building sources it contributes
