@@ -5,8 +5,8 @@
  *      Author: mishras[at]vt.edu
  */
 
-#include <cstdlib>
 #include "ListBenchmark.h"
+#include <cstdlib>
 #include "../../../util/concurrent/ThreadMeta.h"
 #include "../../../util/networking/NetworkManager.h"
 #include "../../../core/directory/DirectoryManager.h"
@@ -17,7 +17,7 @@
  * Higher contention value causes the deletion of object less probable
  * TODO: Set as configurable value from default.conf
  */
-#define HYFLOW_LIST_CONTENTION 3
+#define HYFLOW_LIST_CONTENTION 2
 
 namespace vt_dstm {
 

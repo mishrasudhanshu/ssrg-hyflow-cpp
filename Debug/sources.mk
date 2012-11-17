@@ -45,6 +45,7 @@ src/core \
 src/benchMarks/tm/test \
 src/benchMarks/tm/skipList \
 src/benchMarks/tm/list \
+src/benchMarks/tm/bst \
 src/benchMarks/tm/bank \
 src/benchMarks \
 

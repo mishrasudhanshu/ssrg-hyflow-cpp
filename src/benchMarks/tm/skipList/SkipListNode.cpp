@@ -155,7 +155,7 @@ void SkipListNode::deleteNode(int value) {
 		if (targetNode) {
 			// Get Writable pointer to targetNode
 			targetNode = (SkipListNode*)HYFLOW_ON_WRITE(targetNode->getId());
-			for(int level=targetNode->highestLevel; level>0 ; level++) {
+			for(int level=targetNode->highestLevel; level>0 ; level--) {
 				SkipListNode* pvNode = (SkipListNode*)HYFLOW_ON_WRITE(prevNodes[level]);
 				pvNode->setNextId(targetNode->getNextId(level), level);
 				LOG_DEBUG("SKIPLIST :Set next for %s from %s to %s\n", pvNode->getId().c_str(), targetNode->getId().c_str(), pvNode->getNextId(level).c_str());

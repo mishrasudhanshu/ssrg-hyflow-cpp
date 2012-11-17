@@ -1,57 +1,60 @@
 /*
- * SkipListBenchmark.cpp
+ * BstBenchmark.cpp
  *
- *  Created on: Nov 15, 2012
+ *  Created on: Nov 16, 2012
  *      Author: mishras[at]vt.edu
  */
 
-#include "SkipListBenchmark.h"
+#include "BstBenchmark.h"
 #include <cstdlib>
-#include "SkipListBenchmark.h"
 #include "../../../util/concurrent/ThreadMeta.h"
 #include "../../../util/networking/NetworkManager.h"
 #include "../../../core/directory/DirectoryManager.h"
 #include "../../../util/logging/Logger.h"
 
-// TODO: Move to default configuration
-#define HYFLOW_SKIP_LIST_CONTENTION 2
-#define HYFLOW_SKIP_LIST_LEVELS 5
+/*
+ * Increasing contention level causes the longer lists and more contention
+ * Higher contention value causes the deletion of object less probable
+ * TODO: Set as configurable value from default.conf
+ */
+#define HYFLOW_BST_CONTENTION 2
 
 namespace vt_dstm {
 
-boost::thread_specific_ptr<HyInteger> SkipListBenchmark::objectCreated;
-int SkipListBenchmark::skipListLevels=HYFLOW_SKIP_LIST_LEVELS;
+boost::thread_specific_ptr<HyInteger> BstBenchmark::objectCreated;
 
-SkipListBenchmark::SkipListBenchmark() { }
+BstBenchmark::BstBenchmark() { }
 
-SkipListBenchmark::~SkipListBenchmark() {}
+BstBenchmark::~BstBenchmark() {}
 
-int SkipListBenchmark::getOperandsCount()	{
+int BstBenchmark::getOperandsCount()	{
 	return 1;
 }
 
-void SkipListBenchmark::readOperation(std::string ids[], int size){
+void BstBenchmark::readOperation(std::string ids[], int size){
 	int random = abs(Logger::getCurrentMicroSec());
-	int value = random%HYFLOW_SKIP_LIST_CONTENTION;
+
+	int value = random%HYFLOW_BST_CONTENTION;
 	LOG_DEBUG("LIST :FIND[%d] Node\n", value);
-	SkipListNode::findNode(value);
+	BstNode::findNode(value);
+
 }
 
-void SkipListBenchmark::writeOperation(std::string ids[], int size){
+void BstBenchmark::writeOperation(std::string ids[], int size){
 	int random = abs(Logger::getCurrentMicroSec());
-	int value = random%HYFLOW_SKIP_LIST_CONTENTION;
+	int value = random%HYFLOW_BST_CONTENTION;
 	if (random%2 == 1 ) {
 		LOG_DEBUG("LIST :ADD[%d] Node\n", value);
-		SkipListNode::addNode(value);
+		BstNode::addNode(value);
 	}else {
 		LOG_DEBUG("LIST :DEL[%d] Node\n", value);
-		SkipListNode::deleteNode(value);
+		BstNode::deleteNode(value);
 	}
 }
 
-void SkipListBenchmark::checkSanity(){}
+void BstBenchmark::checkSanity(){}
 
-int SkipListBenchmark::getId() {
+int BstBenchmark::getId() {
 	HyInteger* objectCount = objectCreated.get();
 	if (!objectCount) {
 		objectCreated.reset(new HyInteger(0));
@@ -61,11 +64,12 @@ int SkipListBenchmark::getId() {
 	return objectCreated.get()->getValue();
 }
 
-std::string* SkipListBenchmark::createLocalObjects(int objCount) {
+std::string* BstBenchmark::createLocalObjects(int objCount) {
 	std::string* ids = NULL;
 	ids = new std::string [objCount];
 	if (NetworkManager::getNodeId() == 0 ) {
-		SkipListNode headNode(0, "HEAD", skipListLevels);
+		std::string next("NULL");
+		BstNode headNode(0, "HEAD");
 		DirectoryManager::registerObject(&headNode, 0);
 	}
 	// TODO : Don't Provide Random Ids, we don't need

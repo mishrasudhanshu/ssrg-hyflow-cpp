@@ -1,29 +1,28 @@
 /*
- * BankBenchmark.h
+ * TPCCBenchmark.h
  *
- *  Created on: Aug 30, 2012
+ *  Created on: Nov 17, 2012
  *      Author: mishras[at]vt.edu
  */
 
-#ifndef BANKBENCHMARK_H_
-#define BANKBENCHMARK_H_
+#ifndef TPCCBENCHMARK_H_
+#define TPCCBENCHMARK_H_
 
-#include "BankAccount.h"
 #include <cstddef>
 #include "../../HyflowBenchmark.h"
 
 namespace vt_dstm {
 
-class BankBenchmark: public vt_dstm::HyflowBenchmark {
+class TPCCBenchmark: public vt_dstm::HyflowBenchmark {
 	std::string* ids;
 	int objectCount;
 public:
-	BankBenchmark();
-	virtual ~BankBenchmark();
+	TPCCBenchmark();
+	virtual ~TPCCBenchmark();
 
     template<class Archive>
 	static void registerObjectTypes(Archive & ar) {
-    	ar.register_type(static_cast<BankAccount*>(NULL));
+    	ar.register_type(static_cast<TPCC*>(NULL));
     }
 
 	int getOperandsCount();
@@ -35,4 +34,4 @@ public:
 
 } /* namespace vt_dstm */
 
-#endif /* BANKBENCHMARK_H_ */
+#endif /* TPCCBENCHMARK_H_ */

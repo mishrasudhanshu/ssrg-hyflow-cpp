@@ -81,6 +81,7 @@ namespace vt_dstm
 #define BANK "bank"
 #define LIST "list"
 #define SKIP_LIST "skipList"
+#define BST "bst"
 #define TEST "test"
 
 #define NESTING_MODEL "nestingModel"

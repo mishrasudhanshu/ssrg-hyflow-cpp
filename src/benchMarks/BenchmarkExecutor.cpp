@@ -78,6 +78,9 @@ void BenchmarkExecutor::initExecutor(){
 		}else if(ConfigFile::Value(BENCHMARK).compare(SKIP_LIST) == 0) {
 			benchMarkName = "SkipList";
 			benchmark = new SkipListBenchmark();
+		}else if(ConfigFile::Value(BENCHMARK).compare(BST) == 0) {
+			benchMarkName = "Bst";
+			benchmark = new BstBenchmark();
 		}else {
 			Logger::fatal("BE :Unknown Benchmark\n");
 		}

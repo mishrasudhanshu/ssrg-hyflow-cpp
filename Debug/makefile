@@ -30,6 +30,7 @@ RM := rm -rf
 -include src/benchMarks/tm/test/subdir.mk
 -include src/benchMarks/tm/skipList/subdir.mk
 -include src/benchMarks/tm/list/subdir.mk
+-include src/benchMarks/tm/bst/subdir.mk
 -include src/benchMarks/tm/bank/subdir.mk
 -include src/benchMarks/subdir.mk
 -include subdir.mk

@@ -150,6 +150,7 @@ public:
 	void setRootContext(HyflowContext* rootContext) {
 		this->rootContext = rootContext;
 	}
+	//TODO: Provide a function for user to just look up object without adding to read or write set
 };
 
 } /* namespace vt_dstm */
