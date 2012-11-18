@@ -10,6 +10,7 @@
 
 #include <cstddef>
 #include "../../HyflowBenchmark.h"
+#include "Reservation.h"
 
 namespace vt_dstm {
 

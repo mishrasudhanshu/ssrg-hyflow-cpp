@@ -25,21 +25,34 @@ int TPCCBenchmark::getOperandsCount() {
 }
 
 void TPCCBenchmark::readOperation(std::string ids[], int size) {
-	LOG_DEBUG("Total Balance of %s & %s\n", ids[0].c_str(), ids[1].c_str());
-	TPCC::totalBalance(ids[0], ids[1]);
+	TpccOperation();
 }
 
 void TPCCBenchmark::writeOperation(std::string ids[], int size) {
-	int a = 1;
-	a += ThreadMeta::getThreadId();	// Only for debug sanity
-	LOG_DEBUG("Transfer from %s to %s %d\n", ids[0].c_str(), ids[1].c_str(), a);
-	TPCC::transfer(ids[0], ids[1], a);
+	TpccOperation();
 }
 
-void TPCCBenchmark::checkSanity() {
-	sleep(2);
-	TPCC::checkSanity(ids, objectCount);
+void TPCCBenchmark::TpccOperation() {
+	int opt = abs(Logger::getCurrentMicroSec())%100;
+	if (opt < 4) {
+			LOG_DEBUG("Run Transaction: Order Status");
+			TPCC_Ops::orderStatus();
+	} else if (opt < 8) {
+			LOG_DEBUG("Run Transaction: Delivery");
+			TPCC_Ops::delivery();
+	} else if (opt < 12) {
+			LOG_DEBUG("Run Transaction: Stock Level");
+			TPCC_Ops::stockLevel();
+	} else if (opt < 55) {
+			LOG_DEBUG("Run Transaction: Payment");
+			TPCC_Ops::payment();
+	} else {
+			LOG_DEBUG("Run Transaction: New Order");
+			TPCC_Ops::newOrder();
+	}
 }
+
+void TPCCBenchmark::checkSanity() {}
 
 std::string* TPCCBenchmark::createLocalObjects(int objCount) {
 	objectCount = objCount;

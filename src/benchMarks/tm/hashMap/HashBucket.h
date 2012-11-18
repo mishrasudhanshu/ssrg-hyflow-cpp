@@ -8,10 +8,12 @@
 #ifndef HASHBUCKET_H_
 #define HASHBUCKET_H_
 
+#include <vector>
+
 namespace vt_dstm {
 
 class HashBucket {
-	std::vector<std::pair<int, double>> bucket;
+	std::vector<std::pair<int, double> > bucket;
 public:
 	HashBucket();
 	virtual ~HashBucket();

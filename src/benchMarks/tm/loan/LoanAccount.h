@@ -11,6 +11,7 @@
 #include <stdint.h>
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>
+#include <vector>
 
 #include "../../../core/HyflowObject.h"
 #include "../../../core/context/HyflowContext.h"
@@ -22,14 +23,16 @@ namespace vt_dstm {
 
 class LoanArgs {
 public:
-	int money;
-	std::string id1;
-	std::string id2;
+	uint64_t money;
+	bool initiator;
+	std::string borrower;
+	std::vector<std::string> lenders;
 
-	LoanArgs(int m, std::string i1, std::string i2) {
+	LoanArgs(int m, std::string i1, std::vector<std::string> ld) {
 		money= m;
-		id1 = i1;
-		id2 = i2;
+		borrower = i1;
+		lenders = ld;
+		initiator = false;
 	}
 };
 
@@ -54,17 +57,17 @@ class LoanAccount: public HyflowObject {
 	static void depositAtomic(HyflowObject* self, void* args, HyflowContext* c, uint64_t* ignore);
 	static void withdrawAtomic(HyflowObject* self, void* args, HyflowContext* c, uint64_t* ignore);
 
-	static void totalBalanceAtomically(HyflowObject* self, void* args, HyflowContext* c, uint64_t* balance);
-	static void transferAtomically(HyflowObject* self, void* args, HyflowContext* c, void* ignore);
+	static void sumAtomically(HyflowObject* self, void* args, HyflowContext* c, uint64_t* balance);
+	static void borrowAtomically(HyflowObject* self, void* args, HyflowContext* c, void* ignore);
+	static double getRandom();
 public:
 	LoanAccount() {};
 	LoanAccount(uint64_t amount, const std::string & Id);
 	LoanAccount(uint64_t amount, const std::string & Id, int version);
 	virtual ~LoanAccount();
 
-
-	static uint64_t totalBalance(std::string id1, std::string id2);
-	static void transfer(std::string fromId, std::string toId, uint64_t money);
+	static uint64_t sum(std::vector<std::string> lenders);
+	static void borrow(std::string borrower, std::vector<std::string> lenders, uint64_t money);
 	void print();
 	void getClone(HyflowObject **obj);
 	static void checkSanity(std::string* ids, int objectCount);

@@ -20,6 +20,8 @@
 #include "../../BenchmarkExecutor.h"
 #include "../../../core/helper/CheckPointProvider.h"
 
+#define HYFLOW_LOAN_BRANCHING 2
+
 namespace vt_dstm {
 
 LoanAccount::LoanAccount(uint64_t amnt, const std::string & Id)
@@ -41,7 +43,7 @@ LoanAccount::LoanAccount(uint64_t amnt, const std::string & Id, int v)
 }
 
 LoanAccount::~LoanAccount() {
-	LOG_DEBUG("BANK : Delete Bank Account %s\n", hyId.c_str());
+	LOG_DEBUG("Loan :Delete Loan Account %s\n", hyId.c_str());
 }
 
 void LoanAccount::setAmount(uint64_t amnt) {
@@ -70,7 +72,7 @@ void LoanAccount::checkBalanceAtomic(HyflowObject* self, void *args, HyflowConte
 
 void LoanAccount::depositAtomic(HyflowObject* self, void* args, HyflowContext* context, uint64_t* ignore) {
 	int money = ((LoanArgs*)args)->money;
-	std::string id = ((LoanArgs*)args)->id2;
+	std::string id = ((LoanArgs*)args)->borrower;
 
 	context->fetchObject(id);
 
@@ -83,7 +85,7 @@ void LoanAccount::depositAtomic(HyflowObject* self, void* args, HyflowContext* c
 
 void LoanAccount::withdrawAtomic(HyflowObject* self, void* args, HyflowContext* context, uint64_t* ignore) {
 	int money = ((LoanArgs*)args)->money;
-	std::string id = ((LoanArgs*)args)->id1;
+	std::string id = ((LoanArgs*)args)->borrower;
 
 	context->fetchObject(id);
 
@@ -94,84 +96,69 @@ void LoanAccount::withdrawAtomic(HyflowObject* self, void* args, HyflowContext* 
 	ba->withdraw(money);
 }
 
-void LoanAccount::totalBalanceAtomically(HyflowObject* self, void* bankArgs, HyflowContext* c, uint64_t* balance) {
-	Atomic<uint64_t> atomicCheckBalance1, atomicCheckBalance2;
-	LoanArgs* args= (LoanArgs*)bankArgs;
+void LoanAccount::sumAtomically(HyflowObject* self, void* loanArgs, HyflowContext* __context__, uint64_t* balance) {
+	LoanArgs* args= (LoanArgs*)loanArgs;
 
-	LOG_DEBUG("BANK : Call check Balance1\n");
-	atomicCheckBalance1.atomically = LoanAccount::checkBalanceAtomic;
-	for(int i=0 ; i < BenchmarkExecutor::getCalls(); i++)
-		atomicCheckBalance1.execute(NULL, &args->id1, balance);
+	std::vector<std::string> accountNums = args->lenders;
 
-	LOG_DEBUG("BANK : Call check Balance2\n");
-	atomicCheckBalance2.atomically = LoanAccount::checkBalanceAtomic;
-	for(int i=0 ; i < BenchmarkExecutor::getCalls(); i++)
-		atomicCheckBalance2.execute(NULL, &args->id2, balance);
-}
-
-void LoanAccount::transferAtomically(HyflowObject* self, void* bankArgs, HyflowContext* c, void* ignore) {
-	Atomic<uint64_t> atomicWithdraw, atomicDeposit;
-
-	LOG_DEBUG("BANK :Call Withdraw\n");
-	atomicWithdraw.atomically = LoanAccount::withdrawAtomic;
-	for(int i=0 ; i < BenchmarkExecutor::getCalls(); i++)
-		atomicWithdraw.execute(NULL, bankArgs, NULL);
-
-	LOG_DEBUG("BANK :Call Deposit\n");
-	atomicDeposit.atomically = LoanAccount::depositAtomic;
-	for(int i=0 ; i < BenchmarkExecutor::getCalls(); i++)
-		atomicDeposit.execute(NULL, bankArgs, NULL);
-}
-
-uint64_t LoanAccount::totalBalance(std::string id1, std::string id2) {
-	uint64_t balance;
-	LoanArgs baArgs(0, id1, id2);
-	// We can not use atomically instrumented class for checkPointing as
-	// stack would have unwounded for atomic call.
-	if (ContextManager::getNestingModel() == HYFLOW_CHECKPOINTING) {
-		HYFLOW_ATOMIC_START {
-			HYFLOW_CHECKPOINT_INIT;
-			LOG_DEBUG("BANK :Call Withdraw\n");
-			for(int i=0 ; i < BenchmarkExecutor::getCalls(); i++) {
-				checkBalanceAtomic(NULL, &baArgs.id1, __context__, &balance);
-			}
-			HYFLOW_CHECKPOINT_HERE;
-			LOG_DEBUG("BANK :Call Deposit\n");
-			for(int i=0 ; i < BenchmarkExecutor::getCalls(); i++) {
-				checkBalanceAtomic(NULL, &baArgs.id2, __context__, &balance);
-			}
-		}HYFLOW_ATOMIC_END;
-	}else {
-		Atomic<uint64_t> atomicBalance;
-		atomicBalance.atomically = LoanAccount::totalBalanceAtomically;
-		atomicBalance.execute(NULL, &baArgs, &balance);
+	for (int i = 0; (i < HYFLOW_LOAN_BRANCHING) &&  (!accountNums.empty()); i++) {
+		std::string account = accountNums.at(accountNums.size()-1);
+		accountNums.pop_back();
+		checkBalanceAtomic(NULL, &account, __context__, balance);
+		LOG_DEBUG("Loan :Call check Balance on %s returned %llu\n", account.c_str(), *balance);
+		LoanArgs newArgs(0, "", accountNums);
+		sumAtomically(NULL, &newArgs, __context__, balance);
 	}
+}
+
+void LoanAccount::borrowAtomically(HyflowObject* self, void* loanArgs, HyflowContext* __context__, void* ignore) {
+	LoanArgs* args= (LoanArgs*)loanArgs;
+
+	std::vector<std::string> accountNums = args->lenders;
+
+	if(!args->initiator) {
+		withdrawAtomic(NULL, args, __context__, NULL);
+		LOG_DEBUG("Loan :Call borrow on %s to withdraw %llu\n", args->borrower.c_str(), args->money);
+	}
+
+	// Try to grab some withdrawn money from followers
+	int borrowAmount = args->money;
+	for (int i = 0; (i < HYFLOW_LOAN_BRANCHING) &&  (!accountNums.empty()); i++) {
+		std::string account = accountNums.at(accountNums.size()-1);
+		accountNums.pop_back();
+;
+		bool last = (i==HYFLOW_LOAN_BRANCHING-1 || accountNums.empty());	// is the last one?
+		uint64_t loan = last ? borrowAmount : (int)(getRandom()*borrowAmount);
+		LoanArgs newArgs(borrowAmount,account,accountNums);
+		borrowAtomically(NULL, &newArgs,__context__, NULL);
+
+		LoanArgs deposArgs(loan, account, accountNums);
+		depositAtomic(NULL, &deposArgs, __context__, NULL);
+		LOG_DEBUG("Loan :Call Deposit on %s to deposit %llu\n", account.c_str(), loan);
+		borrowAmount -= loan;
+	}
+}
+
+uint64_t LoanAccount::sum(std::vector<std::string> ids) {
+	uint64_t balance=0;
+	LoanArgs laArgs(0, "", ids);
+	HYFLOW_ATOMIC_START {
+		for(int i=0 ; i < BenchmarkExecutor::getCalls(); i++) {
+			sumAtomically(NULL, &laArgs, __context__, &balance);
+		}
+	}HYFLOW_ATOMIC_END;
 	return balance;
 }
 
-void LoanAccount::transfer(std::string id1, std::string id2,
+void LoanAccount::borrow(std::string id1, std::vector<std::string> ids,
 		uint64_t money) {
-	LoanArgs baArgs(money, id1, id2);
-	// We can not use atomically instrumented class for checkPointing as
-	// stack would have unwounded for atomic call.
-	if (ContextManager::getNestingModel() == HYFLOW_CHECKPOINTING) {
-		HYFLOW_ATOMIC_START {
-			HYFLOW_CHECKPOINT_INIT;
-			LOG_DEBUG("BANK :Call Withdraw\n");
-			for(int i=0 ; i < BenchmarkExecutor::getCalls(); i++) {
-				withdrawAtomic(NULL, &baArgs, __context__, NULL);
-			}
-			HYFLOW_CHECKPOINT_HERE;
-			LOG_DEBUG("BANK :Call Deposit\n");
-			for(int i=0 ; i < BenchmarkExecutor::getCalls(); i++) {
-				depositAtomic(NULL, &baArgs, __context__, NULL);
-			}
-		}HYFLOW_ATOMIC_END;
-	}else {
-		Atomic<void> atomicTransfer;
-		atomicTransfer.atomically = LoanAccount::transferAtomically;
-		atomicTransfer.execute(NULL, &baArgs, NULL);
-	}
+	LoanArgs laArgs(money, id1, ids);
+	laArgs.initiator = true;
+	HYFLOW_ATOMIC_START {
+		for(int i=0 ; i < BenchmarkExecutor::getCalls(); i++) {
+			borrowAtomically(NULL, &laArgs, __context__, NULL);
+		}
+	}HYFLOW_ATOMIC_END;
 }
 
 void LoanAccount::print(){
@@ -179,34 +166,26 @@ void LoanAccount::print(){
 }
 
 void LoanAccount::getClone(HyflowObject **obj){
-	LoanAccount *ba = new LoanAccount();
-	ba->amount = amount;
-	this->baseClone(ba);
-	*obj = ba;
+	LoanAccount *la = new LoanAccount();
+	la->amount = amount;
+	this->baseClone(la);
+	*obj = la;
 }
 
-void LoanAccount::checkSanity(std::string* ids, int objectCount) {
-	uint64_t balance = 0;
-	HyflowContext *c = ContextManager::getInstance();
-	if (NetworkManager::getNodeId() == 0) {
-		c->contextInit();
-		for(int i=0; i <objectCount ; i++ ) {
-			LoanAccount* ba = (LoanAccount*)DirectoryManager::locate(ids[i], true, c->getTxnId());
-			balance += ba->checkBalance();
-		}
-		uint64_t expected = AMOUNT*objectCount;
-		if ( expected == balance ) {
-			LOG_DEBUG("Sanity check passed...\n");
-		} else {
-			Logger::fatal("Sanity check failed... expected = %llu & Actual = %llu\n", expected, balance	);
-		}
-	}
+void LoanAccount::checkSanity(std::string* ids, int objectCount) {}
+
+double LoanAccount::getRandom() {
+	double random;
+	unsigned int seed = abs(Logger::getCurrentMicroSec()%100);
+	srand(seed);
+    random=(rand()/(double)RAND_MAX) ;
+    return random;
 }
 
 // Serialisation Test of object
 void LoanAccount::test() {
 	// create and open a character archive for output
-	std::ofstream ofs("BankAccount", std::ios::out);
+	std::ofstream ofs("LoanAccount", std::ios::out);
 
 	// create class instance
 	vt_dstm::LoanAccount  b(1000,"0-0");
@@ -223,7 +202,7 @@ void LoanAccount::test() {
 	vt_dstm::LoanAccount b1;
 	{
 		// create and open an archive for input
-		std::ifstream ifs("BankAccount", std::ios::in);
+		std::ifstream ifs("LoanAccount", std::ios::in);
 		boost::archive::text_iarchive ia(ifs);
 		// read class state from archive
 		ia >> b1;

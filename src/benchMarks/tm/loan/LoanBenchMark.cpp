@@ -11,6 +11,9 @@
 #include "../../../core/directory/DirectoryManager.h"
 #include "../../BenchmarkExecutor.h"
 #include "../../../util/concurrent/ThreadMeta.h"
+#include <vector>
+
+#define HYFLOW_LOAN_NESTING 3
 
 namespace vt_dstm {
 
@@ -21,24 +24,31 @@ LoanBenchmark::~LoanBenchmark() {
 }
 
 int LoanBenchmark::getOperandsCount() {
-	return 2;
+	return HYFLOW_LOAN_NESTING;
 }
 
 void LoanBenchmark::readOperation(std::string ids[], int size) {
-	LOG_DEBUG("Total Balance of %s & %s\n", ids[0].c_str(), ids[1].c_str());
-	LoanAccount::totalBalance(ids[0], ids[1]);
+	LOG_DEBUG("Sum of Loan Accounts\n");
+	std::vector<std::string> accounts;
+	for(int i=0 ; i<size ; i++ ) {
+		accounts.push_back(ids[i]);
+	}
+	LoanAccount::sum(accounts);
 }
 
 void LoanBenchmark::writeOperation(std::string ids[], int size) {
-	int a = 1;
+	int a = 100;
 	a += ThreadMeta::getThreadId();	// Only for debug sanity
-	LOG_DEBUG("Transfer from %s to %s %d\n", ids[0].c_str(), ids[1].c_str(), a);
-	LoanAccount::transfer(ids[0], ids[1], a);
+	LOG_DEBUG("Loan on accounts\n");
+	std::vector<std::string> accounts;
+	for(int i=1 ; i<size ; i++ ) {
+		accounts.push_back(ids[i]);
+	}
+	LoanAccount::borrow(ids[0], accounts, a);
 }
 
 void LoanBenchmark::checkSanity() {
 	sleep(2);
-	LoanAccount::checkSanity(ids, objectCount);
 }
 
 std::string* LoanBenchmark::createLocalObjects(int objCount) {
@@ -55,8 +65,8 @@ std::string* LoanBenchmark::createLocalObjects(int objCount) {
 			// Create a stack copy of object
 			// register account will create a heap copy of object
 			// and save its pointer in local cache
-			LoanAccount ba(AMOUNT, ids[i]);
-			DirectoryManager::registerObjectWait(&ba, 0);
+			LoanAccount la(AMOUNT, ids[i]);
+			DirectoryManager::registerObjectWait(&la, 0);
 		}
 	}
 	return ids;

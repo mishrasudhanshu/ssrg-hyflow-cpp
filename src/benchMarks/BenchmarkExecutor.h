@@ -15,6 +15,7 @@
 #include "tm/test/TestSpeedBenchmark.h"
 #include "tm/skipList/SkipListBenchmark.h"
 #include "tm/bst/BstBenchmark.h"
+#include "tm/loan/LoanBenchMark.h"
 #include "../util/concurrent/HyInteger.h"
 
 namespace vt_dstm {
@@ -71,6 +72,7 @@ public:
     	TestSpeedBenchmark::registerObjectTypes(ar);
     	SkipListBenchmark::registerObjectTypes(ar);
     	BstBenchmark::registerObjectTypes(ar);
+    	LoanBenchmark::registerObjectTypes(ar);
     }
 
     static void executeThreads();

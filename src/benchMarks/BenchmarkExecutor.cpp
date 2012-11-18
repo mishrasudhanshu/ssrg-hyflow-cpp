@@ -81,6 +81,9 @@ void BenchmarkExecutor::initExecutor(){
 		}else if(ConfigFile::Value(BENCHMARK).compare(BST) == 0) {
 			benchMarkName = "Bst";
 			benchmark = new BstBenchmark();
+		}else if(ConfigFile::Value(BENCHMARK).compare(LOAN) == 0) {
+			benchMarkName = "Loan";
+			benchmark = new LoanBenchmark();
 		}else {
 			Logger::fatal("BE :Unknown Benchmark\n");
 		}

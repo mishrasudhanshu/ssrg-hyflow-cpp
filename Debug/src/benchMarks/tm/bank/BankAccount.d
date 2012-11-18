@@ -1,18 +1,21 @@
 src/benchMarks/tm/bank/BankAccount.d: \
  ../src/benchMarks/tm/bank/BankAccount.cpp \
- ../src/benchMarks/tm/bank/../../../core/context/ContextManager.h \
+ ../src/benchMarks/tm/bank/BankAccount.h \
+ ../src/benchMarks/tm/bank/../../../core/HyflowObject.h \
  ../src/benchMarks/tm/bank/../../../core/context/HyflowContext.h \
  ../src/benchMarks/tm/bank/../../../core/context/../HyflowObject.h \
- ../src/benchMarks/tm/bank/../../../core/context/HyflowContextFactory.h \
- ../src/benchMarks/tm/bank/../../../core/context/../exceptions/types/TransactionException.h \
- ../src/benchMarks/tm/bank/../../../core/context/../exceptions/types/../HyflowException.h \
- ../src/benchMarks/tm/bank/../../../core/context/../../util/concurrent/ConcurrentHashMap.h \
  ../src/benchMarks/tm/bank/../../../core/HyflowObjectFuture.h \
  ../src/benchMarks/tm/bank/../../../core/HyflowObject.h \
  ../src/benchMarks/tm/bank/../../../core/../util/messages/HyflowMessageFuture.h \
  ../src/benchMarks/tm/bank/../../../core/../util/messages/HyflowMessage.h \
  ../src/benchMarks/tm/bank/../../../core/../util/messages/BaseMessage.h \
  ../src/benchMarks/tm/bank/../../../core/../util/messages/../../core/HyflowObject.h \
+ ../src/benchMarks/tm/bank/../../../core/context/ContextManager.h \
+ ../src/benchMarks/tm/bank/../../../core/context/HyflowContext.h \
+ ../src/benchMarks/tm/bank/../../../core/context/HyflowContextFactory.h \
+ ../src/benchMarks/tm/bank/../../../core/context/../exceptions/types/TransactionException.h \
+ ../src/benchMarks/tm/bank/../../../core/context/../exceptions/types/../HyflowException.h \
+ ../src/benchMarks/tm/bank/../../../core/context/../../util/concurrent/ConcurrentHashMap.h \
  ../src/benchMarks/tm/bank/../../../core/directory/DirectoryManager.h \
  ../src/benchMarks/tm/bank/../../../core/directory/../HyflowObject.h \
  ../src/benchMarks/tm/bank/../../../core/directory/HyflowDirectory.h \
@@ -30,9 +33,6 @@ src/benchMarks/tm/bank/BankAccount.d: \
  ../src/benchMarks/tm/bank/../../HyflowBenchmark.h \
  ../src/benchMarks/tm/bank/../../tm/bank/BankBenchmark.h \
  ../src/benchMarks/tm/bank/../../tm/bank/BankAccount.h \
- ../src/benchMarks/tm/bank/../../tm/bank/../../../core/HyflowObject.h \
- ../src/benchMarks/tm/bank/../../tm/bank/../../../core/context/HyflowContext.h \
- ../src/benchMarks/tm/bank/../../tm/bank/../../../core/HyflowObjectFuture.h \
  ../src/benchMarks/tm/bank/../../tm/bank/../../HyflowBenchmark.h \
  ../src/benchMarks/tm/bank/../../tm/list/ListBenchmark.h \
  ../src/benchMarks/tm/bank/../../tm/list/ListNode.h \
@@ -57,24 +57,23 @@ src/benchMarks/tm/bank/BankAccount.d: \
  ../src/benchMarks/tm/bank/../../tm/bst/../../../core/HyflowObjectFuture.h \
  ../src/benchMarks/tm/bank/../../tm/bst/../../HyflowBenchmark.h \
  ../src/benchMarks/tm/bank/../../tm/bst/../../../util/concurrent/HyInteger.h \
+ ../src/benchMarks/tm/bank/../../tm/loan/LoanBenchMark.h \
+ ../src/benchMarks/tm/bank/../../tm/loan/LoanAccount.h \
+ ../src/benchMarks/tm/bank/../../tm/loan/../../../core/HyflowObject.h \
+ ../src/benchMarks/tm/bank/../../tm/loan/../../../core/context/HyflowContext.h \
+ ../src/benchMarks/tm/bank/../../tm/loan/../../../core/HyflowObjectFuture.h \
+ ../src/benchMarks/tm/bank/../../tm/loan/../../HyflowBenchmark.h \
  ../src/benchMarks/tm/bank/../../../util/concurrent/HyInteger.h \
  ../src/benchMarks/tm/bank/../../../core/helper/CheckPointProvider.h \
- ../src/benchMarks/tm/bank/../../../core/helper/../context/ContextManager.h \
- ../src/benchMarks/tm/bank/BankAccount.h
+ ../src/benchMarks/tm/bank/../../../core/helper/../context/ContextManager.h
 
-../src/benchMarks/tm/bank/../../../core/context/ContextManager.h:
+../src/benchMarks/tm/bank/BankAccount.h:
+
+../src/benchMarks/tm/bank/../../../core/HyflowObject.h:
 
 ../src/benchMarks/tm/bank/../../../core/context/HyflowContext.h:
 
 ../src/benchMarks/tm/bank/../../../core/context/../HyflowObject.h:
-
-../src/benchMarks/tm/bank/../../../core/context/HyflowContextFactory.h:
-
-../src/benchMarks/tm/bank/../../../core/context/../exceptions/types/TransactionException.h:
-
-../src/benchMarks/tm/bank/../../../core/context/../exceptions/types/../HyflowException.h:
-
-../src/benchMarks/tm/bank/../../../core/context/../../util/concurrent/ConcurrentHashMap.h:
 
 ../src/benchMarks/tm/bank/../../../core/HyflowObjectFuture.h:
 
@@ -87,6 +86,18 @@ src/benchMarks/tm/bank/BankAccount.d: \
 ../src/benchMarks/tm/bank/../../../core/../util/messages/BaseMessage.h:
 
 ../src/benchMarks/tm/bank/../../../core/../util/messages/../../core/HyflowObject.h:
+
+../src/benchMarks/tm/bank/../../../core/context/ContextManager.h:
+
+../src/benchMarks/tm/bank/../../../core/context/HyflowContext.h:
+
+../src/benchMarks/tm/bank/../../../core/context/HyflowContextFactory.h:
+
+../src/benchMarks/tm/bank/../../../core/context/../exceptions/types/TransactionException.h:
+
+../src/benchMarks/tm/bank/../../../core/context/../exceptions/types/../HyflowException.h:
+
+../src/benchMarks/tm/bank/../../../core/context/../../util/concurrent/ConcurrentHashMap.h:
 
 ../src/benchMarks/tm/bank/../../../core/directory/DirectoryManager.h:
 
@@ -121,12 +132,6 @@ src/benchMarks/tm/bank/BankAccount.d: \
 ../src/benchMarks/tm/bank/../../tm/bank/BankBenchmark.h:
 
 ../src/benchMarks/tm/bank/../../tm/bank/BankAccount.h:
-
-../src/benchMarks/tm/bank/../../tm/bank/../../../core/HyflowObject.h:
-
-../src/benchMarks/tm/bank/../../tm/bank/../../../core/context/HyflowContext.h:
-
-../src/benchMarks/tm/bank/../../tm/bank/../../../core/HyflowObjectFuture.h:
 
 ../src/benchMarks/tm/bank/../../tm/bank/../../HyflowBenchmark.h:
 
@@ -176,10 +181,20 @@ src/benchMarks/tm/bank/BankAccount.d: \
 
 ../src/benchMarks/tm/bank/../../tm/bst/../../../util/concurrent/HyInteger.h:
 
+../src/benchMarks/tm/bank/../../tm/loan/LoanBenchMark.h:
+
+../src/benchMarks/tm/bank/../../tm/loan/LoanAccount.h:
+
+../src/benchMarks/tm/bank/../../tm/loan/../../../core/HyflowObject.h:
+
+../src/benchMarks/tm/bank/../../tm/loan/../../../core/context/HyflowContext.h:
+
+../src/benchMarks/tm/bank/../../tm/loan/../../../core/HyflowObjectFuture.h:
+
+../src/benchMarks/tm/bank/../../tm/loan/../../HyflowBenchmark.h:
+
 ../src/benchMarks/tm/bank/../../../util/concurrent/HyInteger.h:
 
 ../src/benchMarks/tm/bank/../../../core/helper/CheckPointProvider.h:
 
 ../src/benchMarks/tm/bank/../../../core/helper/../context/ContextManager.h:
-
-../src/benchMarks/tm/bank/BankAccount.h:

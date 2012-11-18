@@ -56,11 +56,11 @@ for (int i = 0; i < 0x7fffffff; i++) { \
 #define HYFLOW_ON_WRITE(ID) \
 	__context__->onWriteAccess(ID)
 
-#define HYFLOW_PUBLISH_OBJECT(ID) \
-	__context__->addToPublish(ID)
+#define HYFLOW_PUBLISH_OBJECT(OBJ) \
+	__context__->addToPublish(OBJ)
 
-#define HYFLOW_DELETE_OBJECT(ID) \
-	__context__->addToDelete(ID)
+#define HYFLOW_DELETE_OBJECT(OBJ) \
+	__context__->addToDelete(OBJ)
 
 namespace vt_dstm {
 

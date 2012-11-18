@@ -22,7 +22,7 @@ namespace vt_dstm {
 
 class BankArgs {
 public:
-	int money;
+	uint64_t money;
 	std::string id1;
 	std::string id2;
 

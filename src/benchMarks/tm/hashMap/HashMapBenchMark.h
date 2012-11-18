@@ -9,7 +9,7 @@
 #define HASHMAPBENCHMARK_H_
 
 #include "boost/thread/tss.hpp"
-#include "ListNode.h"
+#include "HashMap.h"
 #include "../../HyflowBenchmark.h"
 #include "../../../util/concurrent/HyInteger.h"
 
@@ -23,7 +23,7 @@ public:
 
 	template<class Archive>
 	static void registerObjectTypes(Archive & ar) {
-		ar.register_type(static_cast<ListNode*>(NULL));
+		ar.register_type(static_cast<HashMap*>(NULL));
 	}
 
 	int getOperandsCount();

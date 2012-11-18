@@ -69,7 +69,7 @@ void HashMap::addNode(int value) {
 
 		HashMap* headNodeRead =  (HashMap*)HYFLOW_ON_READ(head);
 		std::string oldNext = headNodeRead->getNextId();
-		HashMap* newNode = new HashMap(value, ListBenchmark::getId());
+		HashMap* newNode = new HashMap(value, HashMapBenchmark::getId());
 		newNode->setNextId(oldNext);
 		HYFLOW_PUBLISH_OBJECT(newNode);
 

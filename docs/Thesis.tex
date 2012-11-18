@@ -222,11 +222,23 @@ Related Work
 \hfill}
 
 Research in DSTM space have been relatively small and recent in comparison to STM. Manassiev~\cite{Manassiev:2006:EDV:1122971.1123002} work based on Distributed Multiversioning(DMV) can be considered one of first paper on DSTM published in 2006. It
-exploited the distributed data versions in order to avoid read-write conflicts. Later,
-...
-For our discussion purpose we will divide the work in DSTM space in two parts:
-1. Strong Memory Consistency
-2. Weak Memory Consistency 
+introduced a novel page-level distributed concurrency control algorithm, called Distributed Multiversioning(DMV), which automatically detected and resolved conflicts caused by data races for distributed transactions accessing shared in-memory data structures. DMV’s key feature was to exploit the distributed data versions in order to avoid read-write conflicts. Later,
+In 2007 Herily~\cite{Herilhy:2007:BallisticProtocal} described the problem of implementing transactional memory in a network of nodes and prosposed a newcache-coherence protocol,
+called the Ballistic protocol. In this protocol nodes are organized as clusters at different levels. One node in each cluster is chosen to act as leader for this cluster when communicating with clusters at different levels. When a transaction requests an object, the request rises in the hierarchy, probing leaders at increasing levels until the request encounters a downward link. When the request finds such a link, it descends, following a chain of links down to the cached copy of the object. But both of these systems had scalability issues to which later Cluster-STM~\cite{Bocchino:2008:STM:1345206.1345242} tried to resolve using partitioned global address space (PGAS) model. In later years DSTM systems were developed around various properties. These works can be classified on basis of mobility of transactions(control flow/Data flow), number of a active copies of transactional objects(single copy/replica), valid versions of objects(single version/multiverson) or transactional properties like memory consistency, serializability and opacity etc. For our discussion purpose we will divide the work in DSTM space based on serializibility property:
+\begin{enumerate}
+\item Serializable DSTM implementations
+\item Non-Serializable DSTM implementations 
+\end{enumerate}
+
+
+\section{Serializable DSTM implementations}
+
+Decent STM, GenRSTM, 
+To be Added
+
+\section{Non-Serializable DSTM implementations}
+
+To be Added
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %																									%

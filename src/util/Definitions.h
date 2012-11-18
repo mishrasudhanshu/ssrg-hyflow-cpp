@@ -82,6 +82,7 @@ namespace vt_dstm
 #define LIST "list"
 #define SKIP_LIST "skipList"
 #define BST "bst"
+#define LOAN "loan"
 #define TEST "test"
 
 #define NESTING_MODEL "nestingModel"
