@@ -8,7 +8,7 @@
 #include "TpccDistrict.h"
 #include "TpccOps.h"
 
-#define TPCC_DISTRICT_ID_OFFSET 230001
+#define TPCC_DISTRICT_ID_OFFSET 230000
 
 namespace vt_dstm {
 
@@ -27,7 +27,7 @@ TpccDistrict::TpccDistrict(int D_W_ID, int D_ID) {
 	this->D_TAX = 1;
 	this->D_YTD = 0;
 	this->D_NEXT_O_ID = 1;
-	this->D_LAST_DELV_O_ID = 0;
+	this->D_LAST_DELV_O_ID = 1;
 	std::stringstream idStr;
 	idStr<<D_W_ID-1<<"-"<<D_ID + TPCC_DISTRICT_ID_OFFSET;
 	hyId = idStr.str();

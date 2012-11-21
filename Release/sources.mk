@@ -42,9 +42,14 @@ src/core/directory \
 src/core/context/types \
 src/core/context \
 src/core \
+src/benchMarks/tm/tpcc \
 src/benchMarks/tm/test \
 src/benchMarks/tm/skipList \
+src/benchMarks/tm/loan \
 src/benchMarks/tm/list \
+src/benchMarks/tm/hashMap \
+src/benchMarks/tm/bst \
 src/benchMarks/tm/bank \
+src/benchMarks/tm/Vacation \
 src/benchMarks \
 

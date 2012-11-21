@@ -31,8 +31,42 @@ src/benchMarks/tm/bank/BankBenchmark.d: \
  ../src/benchMarks/tm/bank/../../tm/list/../../../core/HyflowObjectFuture.h \
  ../src/benchMarks/tm/bank/../../tm/list/../../HyflowBenchmark.h \
  ../src/benchMarks/tm/bank/../../tm/list/../../../util/concurrent/HyInteger.h \
- ../src/benchMarks/tm/bank/../../tm/test/TestSpeed.h \
+ ../src/benchMarks/tm/bank/../../tm/test/TestSpeedBenchmark.h \
  ../src/benchMarks/tm/bank/../../tm/test/../../HyflowBenchmark.h \
+ ../src/benchMarks/tm/bank/../../tm/skipList/SkipListBenchmark.h \
+ ../src/benchMarks/tm/bank/../../tm/skipList/SkipListNode.h \
+ ../src/benchMarks/tm/bank/../../tm/skipList/../../../core/HyflowObject.h \
+ ../src/benchMarks/tm/bank/../../tm/skipList/../../../core/context/HyflowContext.h \
+ ../src/benchMarks/tm/bank/../../tm/skipList/../../../core/HyflowObjectFuture.h \
+ ../src/benchMarks/tm/bank/../../tm/skipList/../../HyflowBenchmark.h \
+ ../src/benchMarks/tm/bank/../../tm/skipList/../../../util/concurrent/HyInteger.h \
+ ../src/benchMarks/tm/bank/../../tm/bst/BstBenchmark.h \
+ ../src/benchMarks/tm/bank/../../tm/bst/BstNode.h \
+ ../src/benchMarks/tm/bank/../../tm/bst/../../../core/HyflowObject.h \
+ ../src/benchMarks/tm/bank/../../tm/bst/../../../core/context/HyflowContext.h \
+ ../src/benchMarks/tm/bank/../../tm/bst/../../../core/HyflowObjectFuture.h \
+ ../src/benchMarks/tm/bank/../../tm/bst/../../HyflowBenchmark.h \
+ ../src/benchMarks/tm/bank/../../tm/bst/../../../util/concurrent/HyInteger.h \
+ ../src/benchMarks/tm/bank/../../tm/loan/LoanBenchMark.h \
+ ../src/benchMarks/tm/bank/../../tm/loan/LoanAccount.h \
+ ../src/benchMarks/tm/bank/../../tm/loan/../../../core/HyflowObject.h \
+ ../src/benchMarks/tm/bank/../../tm/loan/../../../core/context/HyflowContext.h \
+ ../src/benchMarks/tm/bank/../../tm/loan/../../../core/HyflowObjectFuture.h \
+ ../src/benchMarks/tm/bank/../../tm/loan/../../HyflowBenchmark.h \
+ ../src/benchMarks/tm/bank/../../tm/tpcc/TpccBenchmark.h \
+ ../src/benchMarks/tm/bank/../../tm/tpcc/../../HyflowBenchmark.h \
+ ../src/benchMarks/tm/bank/../../tm/tpcc/TpccDistrict.h \
+ ../src/benchMarks/tm/bank/../../tm/tpcc/../../../core/HyflowObject.h \
+ ../src/benchMarks/tm/bank/../../tm/tpcc/../../../core/context/HyflowContext.h \
+ ../src/benchMarks/tm/bank/../../tm/tpcc/../../../core/HyflowObjectFuture.h \
+ ../src/benchMarks/tm/bank/../../tm/tpcc/TpccItem.h \
+ ../src/benchMarks/tm/bank/../../tm/tpcc/TpccNewOrder.h \
+ ../src/benchMarks/tm/bank/../../tm/tpcc/TpccOrder.h \
+ ../src/benchMarks/tm/bank/../../tm/tpcc/TpccOrderLine.h \
+ ../src/benchMarks/tm/bank/../../tm/tpcc/TpccStock.h \
+ ../src/benchMarks/tm/bank/../../tm/tpcc/TpccCustomer.h \
+ ../src/benchMarks/tm/bank/../../tm/tpcc/TpccWareHouse.h \
+ ../src/benchMarks/tm/bank/../../tm/tpcc/../../../util/concurrent/HyInteger.h \
  ../src/benchMarks/tm/bank/../../../util/concurrent/HyInteger.h \
  ../src/benchMarks/tm/bank/../../../util/concurrent/ThreadMeta.h \
  ../src/benchMarks/tm/bank/../../../util/concurrent/HyInteger.h
@@ -99,9 +133,77 @@ src/benchMarks/tm/bank/BankBenchmark.d: \
 
 ../src/benchMarks/tm/bank/../../tm/list/../../../util/concurrent/HyInteger.h:
 
-../src/benchMarks/tm/bank/../../tm/test/TestSpeed.h:
+../src/benchMarks/tm/bank/../../tm/test/TestSpeedBenchmark.h:
 
 ../src/benchMarks/tm/bank/../../tm/test/../../HyflowBenchmark.h:
+
+../src/benchMarks/tm/bank/../../tm/skipList/SkipListBenchmark.h:
+
+../src/benchMarks/tm/bank/../../tm/skipList/SkipListNode.h:
+
+../src/benchMarks/tm/bank/../../tm/skipList/../../../core/HyflowObject.h:
+
+../src/benchMarks/tm/bank/../../tm/skipList/../../../core/context/HyflowContext.h:
+
+../src/benchMarks/tm/bank/../../tm/skipList/../../../core/HyflowObjectFuture.h:
+
+../src/benchMarks/tm/bank/../../tm/skipList/../../HyflowBenchmark.h:
+
+../src/benchMarks/tm/bank/../../tm/skipList/../../../util/concurrent/HyInteger.h:
+
+../src/benchMarks/tm/bank/../../tm/bst/BstBenchmark.h:
+
+../src/benchMarks/tm/bank/../../tm/bst/BstNode.h:
+
+../src/benchMarks/tm/bank/../../tm/bst/../../../core/HyflowObject.h:
+
+../src/benchMarks/tm/bank/../../tm/bst/../../../core/context/HyflowContext.h:
+
+../src/benchMarks/tm/bank/../../tm/bst/../../../core/HyflowObjectFuture.h:
+
+../src/benchMarks/tm/bank/../../tm/bst/../../HyflowBenchmark.h:
+
+../src/benchMarks/tm/bank/../../tm/bst/../../../util/concurrent/HyInteger.h:
+
+../src/benchMarks/tm/bank/../../tm/loan/LoanBenchMark.h:
+
+../src/benchMarks/tm/bank/../../tm/loan/LoanAccount.h:
+
+../src/benchMarks/tm/bank/../../tm/loan/../../../core/HyflowObject.h:
+
+../src/benchMarks/tm/bank/../../tm/loan/../../../core/context/HyflowContext.h:
+
+../src/benchMarks/tm/bank/../../tm/loan/../../../core/HyflowObjectFuture.h:
+
+../src/benchMarks/tm/bank/../../tm/loan/../../HyflowBenchmark.h:
+
+../src/benchMarks/tm/bank/../../tm/tpcc/TpccBenchmark.h:
+
+../src/benchMarks/tm/bank/../../tm/tpcc/../../HyflowBenchmark.h:
+
+../src/benchMarks/tm/bank/../../tm/tpcc/TpccDistrict.h:
+
+../src/benchMarks/tm/bank/../../tm/tpcc/../../../core/HyflowObject.h:
+
+../src/benchMarks/tm/bank/../../tm/tpcc/../../../core/context/HyflowContext.h:
+
+../src/benchMarks/tm/bank/../../tm/tpcc/../../../core/HyflowObjectFuture.h:
+
+../src/benchMarks/tm/bank/../../tm/tpcc/TpccItem.h:
+
+../src/benchMarks/tm/bank/../../tm/tpcc/TpccNewOrder.h:
+
+../src/benchMarks/tm/bank/../../tm/tpcc/TpccOrder.h:
+
+../src/benchMarks/tm/bank/../../tm/tpcc/TpccOrderLine.h:
+
+../src/benchMarks/tm/bank/../../tm/tpcc/TpccStock.h:
+
+../src/benchMarks/tm/bank/../../tm/tpcc/TpccCustomer.h:
+
+../src/benchMarks/tm/bank/../../tm/tpcc/TpccWareHouse.h:
+
+../src/benchMarks/tm/bank/../../tm/tpcc/../../../util/concurrent/HyInteger.h:
 
 ../src/benchMarks/tm/bank/../../../util/concurrent/HyInteger.h:
 

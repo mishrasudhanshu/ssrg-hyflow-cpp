@@ -125,6 +125,8 @@ void DTL2Context::beforeReadAccess(HyflowObject *obj) {
  * Don't object copy here as it is created in transaction should deleted in cleanMaps
  */
 void DTL2Context::addToPublish(HyflowObject *newObject) {
+	// Set object version to zero for time being, at commit it will set to required
+	newObject->setVersion(0);
 	//If checkPointing enabled set the checkPoint Index
 	newObject->setAccessCheckPoint(CheckPointProvider::getCheckPointIndex());
 	publishMap[newObject->getId()] = newObject;
@@ -749,9 +751,9 @@ void DTL2Context::reallyCommit() {
 
 	// Register yourself as owner of write set objects
 	std::map<std::string, HyflowObject*, ObjectIdComparator>::reverse_iterator wi;
+	// Update object version
+	int version = ContextManager::getClock();
 	for( wi = writeMap.rbegin() ; wi != writeMap.rend() ; wi++ ) {
-		// Update object version
-		int version = ContextManager::getClock();
 		// LESSON : Use node clock instead of transaction clock to make sure to
 		// transaction threads set different object version after commit and object
 		// version must increase after each commit.
@@ -764,6 +766,7 @@ void DTL2Context::reallyCommit() {
 
 	// Publish new created objects and wait of ownership change
 	for( wi = publishMap.rbegin() ; wi != publishMap.rend() ; wi++ ) {
+		wi->second->setVersion(version);
 		DirectoryManager::registerObject(wi->second, txnId);
 	}
 

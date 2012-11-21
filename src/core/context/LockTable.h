@@ -44,7 +44,7 @@ public:
 };
 
 class LockTable {
-	static int32_t REMOTE;
+//	static int32_t REMOTE;
 	static int32_t LOCK;
 	static int32_t UNLOCK;
 

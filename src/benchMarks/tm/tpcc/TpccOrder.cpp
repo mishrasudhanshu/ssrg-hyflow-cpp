@@ -8,8 +8,6 @@
 #include "TpccOrder.h"
 #include "TpccBenchmark.h"
 
-#define TPCC_ORDER_ID_OFFSET 300000
-
 namespace vt_dstm {
 
 TpccOrder::TpccOrder(int O_W_ID, int O_D_ID, int O_ID) {

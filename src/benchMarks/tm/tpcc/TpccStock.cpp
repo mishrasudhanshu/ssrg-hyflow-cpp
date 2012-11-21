@@ -7,7 +7,7 @@
 
 #include "TpccStock.h"
 
-#define TPCC_STOCK_ID_OFFSET 100001
+#define TPCC_STOCK_ID_OFFSET 100000
 
 namespace vt_dstm {
 

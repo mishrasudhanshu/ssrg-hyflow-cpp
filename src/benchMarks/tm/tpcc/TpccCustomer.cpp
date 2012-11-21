@@ -8,7 +8,7 @@
 #include "TpccCustomer.h"
 #include "TpccOps.h"
 
-#define TPCC_CUSTOMER_ID_OFFSET 200001
+#define TPCC_CUSTOMER_ID_OFFSET 200000
 
 namespace vt_dstm {
 
@@ -39,7 +39,7 @@ TpccCustomer::TpccCustomer(int warehouseId, int districtId, int customerId) {
 	this->C_DATA_1 = "C_DATA_1";
 	this->C_DATA_2 = "C_DATA_2";
 	std::stringstream idStr;
-	idStr<<(warehouseId-1)<<"-"<<districtId*customerId+customerId + TPCC_CUSTOMER_ID_OFFSET;
+	idStr<<(warehouseId-1)<<"-"<< (districtId-1)*3000 + customerId + TPCC_CUSTOMER_ID_OFFSET;
 	hyId = idStr.str();
 }
 
@@ -47,7 +47,7 @@ TpccCustomer::~TpccCustomer() {}
 
 std::string TpccCustomer::getCustomerId(int warehouseId, int districtId, int customerId) {
 	std::stringstream idStr;
-	idStr<<(warehouseId-1)<<"-"<<districtId*customerId+customerId + TPCC_CUSTOMER_ID_OFFSET;
+	idStr<<(warehouseId-1)<<"-"<<(districtId-1)*3000 + customerId + TPCC_CUSTOMER_ID_OFFSET;
 	return idStr.str();
 }
 

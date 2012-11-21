@@ -1,6 +1,6 @@
-src/benchMarks/tm/test/TestSpeed.d: \
- ../src/benchMarks/tm/test/TestSpeed.cpp \
- ../src/benchMarks/tm/test/TestSpeed.h \
+src/benchMarks/tm/test/TestSpeedBenchmark.d: \
+ ../src/benchMarks/tm/test/TestSpeedBenchmark.cpp \
+ ../src/benchMarks/tm/test/TestSpeedBenchmark.h \
  ../src/benchMarks/tm/test/../../HyflowBenchmark.h \
  ../src/benchMarks/tm/test/../../../util/messages/types/DummyTestMsg.h \
  ../src/benchMarks/tm/test/../../../util/messages/types/../BaseMessage.h \
@@ -14,7 +14,7 @@ src/benchMarks/tm/test/TestSpeed.d: \
  ../src/benchMarks/tm/test/../../../util/networking/../messages/../../core/HyflowObject.h \
  ../src/benchMarks/tm/test/../../../util/logging/Logger.h
 
-../src/benchMarks/tm/test/TestSpeed.h:
+../src/benchMarks/tm/test/TestSpeedBenchmark.h:
 
 ../src/benchMarks/tm/test/../../HyflowBenchmark.h:
 

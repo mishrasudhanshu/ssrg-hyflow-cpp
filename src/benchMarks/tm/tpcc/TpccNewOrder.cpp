@@ -14,7 +14,7 @@ TpccNewOrder::TpccNewOrder(int NO_W_ID, int NO_D_ID, int NO_O_ID) {
 	this->NO_O_ID = NO_O_ID;
 	this->NO_D_ID = NO_D_ID;
 	this->NO_W_ID = NO_W_ID;
-	int noId = TpccBenchmark::getOrderBase(NO_D_ID);
+	int noId = TpccBenchmark::getNewOrderBase(NO_D_ID);
 	std::stringstream idStr;
 	idStr<<NO_W_ID-1<<"-"<<noId+NO_O_ID;
 	hyId = idStr.str();
@@ -23,7 +23,7 @@ TpccNewOrder::TpccNewOrder(int NO_W_ID, int NO_D_ID, int NO_O_ID) {
 TpccNewOrder::~TpccNewOrder() {}
 
 std::string TpccNewOrder::getNewOrderId(int NO_W_ID, int NO_D_ID, int NO_O_ID) {
-	int noId = TpccBenchmark::getOrderBase(NO_D_ID);
+	int noId = TpccBenchmark::getNewOrderBase(NO_D_ID);
 	std::stringstream idStr;
 	idStr<<NO_W_ID-1<<"-"<<noId+NO_O_ID;
 	return idStr.str();

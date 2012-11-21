@@ -19,7 +19,7 @@
 #define TPCC_NEW_ORDER_ID_OFFSET 20000000
 #define TPCC_ORDER_LINE_ID_OFFSET 30000000
 #define TPCC_ORDER_HISTORY_ID_OFFSET 40000000
-#define TPCC_ID_STEP 10000
+#define TPCC_ID_STEP 1000000
 
 namespace vt_dstm {
 
@@ -36,22 +36,22 @@ int TpccBenchmark::getOperandsCount() {
 }
 
 int TpccBenchmark::getOrderBase(int district) {
-	return district*TPCC_ID_STEP + TPCC_ORDER_ID_OFFSET;
+	return (district-1)*TPCC_ID_STEP + TPCC_ORDER_ID_OFFSET;
 }
 
 int TpccBenchmark::getNewOrderBase(int district) {
-	return district*TPCC_ID_STEP + TPCC_NEW_ORDER_ID_OFFSET;
+	return (district-1)*TPCC_ID_STEP + TPCC_NEW_ORDER_ID_OFFSET;
 }
 
 int TpccBenchmark::getOrderLineBase(int district) {
-	return	district*TPCC_ID_STEP + TPCC_ORDER_HISTORY_ID_OFFSET;
+	return (district-1)*TPCC_ID_STEP + TPCC_ORDER_LINE_ID_OFFSET;
 }
 
 int TpccBenchmark::getNextHistory() {
 	HyInteger* objectCount = historyCreated.get();
 	if (!objectCount) {
 		historyCreated.reset(new HyInteger(0));
-		historyCreated.get()->setValue(ThreadMeta::getThreadId()*TPCC_ID_STEP + TPCC_ORDER_LINE_ID_OFFSET);
+		historyCreated.get()->setValue(ThreadMeta::getThreadId()*TPCC_ID_STEP + TPCC_ORDER_HISTORY_ID_OFFSET);
 	}
 	historyCreated->increaseValue();
 	return historyCreated.get()->getValue();
@@ -113,18 +113,18 @@ std::string* TpccBenchmark::createLocalObjects(int objCount) {
 	// Create all the items and there stocks
 	LOG_DEBUG("TPCCB :Creating Items and stock\n");
 	for(int itemCount=0 ; itemCount<100000 ; itemCount++ ) {
-		TpccItem item(itemCount);
+		TpccItem item(itemCount+1);
 		DirectoryManager::registerObjectWait(&item, 0);
-		TpccStock stock(warehouseId, itemCount);
+		TpccStock stock(warehouseId, itemCount+1);
 		DirectoryManager::registerObjectWait(&stock, 0);
 	}
 
 	for(int districtCount=0 ; districtCount < 10 ; districtCount++ ) {
 		LOG_DEBUG("TPCCB :Creating District %d\n", districtCount+1);
-		TpccDistrict district(warehouseId, districtCount);
+		TpccDistrict district(warehouseId, districtCount+1);
 		DirectoryManager::registerObjectWait(&district, 0);
 		for ( int customerCount=0 ; customerCount<3000 ; customerCount++ ) {
-			TpccCustomer customer(warehouseId, districtCount, customerCount);
+			TpccCustomer customer(warehouseId, districtCount+1, customerCount+1);
 			DirectoryManager::registerObjectWait(&customer, 0);
 		}
 	}

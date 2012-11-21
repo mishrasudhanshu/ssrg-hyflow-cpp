@@ -11,7 +11,7 @@
 #include <string>
 #include <iostream>
 
-#define TPCC_ITEM_ID_OFFSET 1
+#define TPCC_ITEM_ID_OFFSET 0
 
 namespace vt_dstm {
 
