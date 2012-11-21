@@ -1,18 +1,52 @@
 /*
- * TCustomer.h
+ * TpccCustomer.h
  *
  *  Created on: Nov 17, 2012
  *      Author: mishras[at]vt.edu
  */
 
-#ifndef TCUSTOMER_H_
-#define TCUSTOMER_H_
+#ifndef TPCCCUSTOMER_H_
+#define TPCCCUSTOMER_H_
 
-#include "HyflowObject.h"
+#include <boost/serialization/access.hpp>
+#include <boost/serialization/base_object.hpp>
+
+#include "../../../core/HyflowObject.h"
+#include "../../../core/context/HyflowContext.h"
+#include "../../../core/HyflowObjectFuture.h"
 
 namespace vt_dstm {
 
-class TCustomer: public vt_dstm::HyflowObject {
+class TpccCustomer: public vt_dstm::HyflowObject {
+    friend class boost::serialization::access;
+
+    template<class Archive>
+    void serialize(Archive & ar, const unsigned int version) {
+    	ar & boost::serialization::base_object<HyflowObject>(*this);
+		ar & C_ID;
+		ar & C_D_ID;
+		ar & C_W_ID;
+		ar & C_FIRST;
+		ar & C_MIDDLE;
+		ar & C_LAST;
+		ar & C_STREET_1;
+		ar & C_STREET_2;
+		ar & C_CITY;
+		ar & C_STATE;
+		ar & C_ZIP;
+		ar & C_PHONE;
+		ar & C_SINCE;
+		ar & C_CREDIT;
+		ar & C_CREDIT_LIM;
+		ar & C_DISCOUNT;
+		ar & C_BALANCE;
+		ar & C_YTD_PAYMENT;
+		ar & C_CNT_PAYMENT;
+		ar & C_CNT_DELIVERY;
+		ar & C_DATA_1;
+		ar & C_DATA_2;
+    }
+
 public:
     int C_ID;	//		INTEGER,
     int C_D_ID;	//		INTEGER,
@@ -37,8 +71,9 @@ public:
     std::string  C_DATA_1;		// CHARACTER (250),
     std::string  C_DATA_2;		// CHARACTER (250),
 
-	TCustomer();
-	virtual ~TCustomer();
+	TpccCustomer() {}
+	TpccCustomer(int warehouseId, int districtId, int customerId);
+	virtual ~TpccCustomer();
 
 	void print() {}
 	void getClone(HyflowObject **tCustomer);
@@ -49,4 +84,4 @@ public:
 
 } /* namespace vt_dstm */
 
-#endif /* TCUSTOMER_H_ */
+#endif /* TPCCCUSTOMER_H_ */

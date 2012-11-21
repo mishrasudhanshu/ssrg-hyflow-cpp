@@ -65,7 +65,7 @@ breakatwhitespace=false,        % sets if automatic breaks should only happen at
 
 % TITLE
 {\Large 
-HyflowCPP : Distributed Transaction Memory framework for C++
+HyflowCPP : A Distributed Transaction Memory framework for C++
 }
 
 \vfill
@@ -203,6 +203,8 @@ Introduction
 
 DSTM provides an alternative to classical lock-based distributed concurrency control for achieving concurrency in a networked environment. 
 
+Other than relaxing the consistency criteria there are ways to change in transactional model itself to increase the performance. These technique like nesting and checkpointing are studied in detail in  STM space. The basic idea behind these approach is to reduce the abort penalty by dividing the transaction in small chunks and retry from last invalid chunk. 
+
 \section{Thesis Contribution}
 
 To be Added
@@ -222,23 +224,73 @@ Related Work
 \hfill}
 
 Research in DSTM space have been relatively small and recent in comparison to STM. Manassiev~\cite{Manassiev:2006:EDV:1122971.1123002} work based on Distributed Multiversioning(DMV) can be considered one of first paper on DSTM published in 2006. It
-introduced a novel page-level distributed concurrency control algorithm, called Distributed Multiversioning(DMV), which automatically detected and resolved conflicts caused by data races for distributed transactions accessing shared in-memory data structures. DMV’s key feature was to exploit the distributed data versions in order to avoid read-write conflicts. Later,
-In 2007 Herily~\cite{Herilhy:2007:BallisticProtocal} described the problem of implementing transactional memory in a network of nodes and prosposed a newcache-coherence protocol,
-called the Ballistic protocol. In this protocol nodes are organized as clusters at different levels. One node in each cluster is chosen to act as leader for this cluster when communicating with clusters at different levels. When a transaction requests an object, the request rises in the hierarchy, probing leaders at increasing levels until the request encounters a downward link. When the request finds such a link, it descends, following a chain of links down to the cached copy of the object. But both of these systems had scalability issues to which later Cluster-STM~\cite{Bocchino:2008:STM:1345206.1345242} tried to resolve using partitioned global address space (PGAS) model. In later years DSTM systems were developed around various properties. These works can be classified on basis of mobility of transactions(control flow/Data flow), number of a active copies of transactional objects(single copy/replica), valid versions of objects(single version/multiverson) or transactional properties like memory consistency, serializability and opacity etc. For our discussion purpose we will divide the work in DSTM space based on serializibility property:
+introduced a novel page-level distributed concurrency control algorithm, called Distributed Multiversioning(DMV), which automatically detects and resolves conflicts caused by data races for distributed transactions accessing shared in-memory data structures. DMV’s key feature is to exploit the distributed data versions in order to avoid read-write conflicts. Later,
+in 2007 Herily~\cite{Herilhy:2007:BallisticProtocal} described the problem of implementing transactional memory in a network of nodes and prosposed a new cache-coherence protocol,
+called the Ballistic protocol. In this protocol nodes are organized as clusters at different levels. One node in each cluster is chosen to act as leader for this cluster when communicating with clusters at different levels. When a transaction requests an object, the request rises in the hierarchy, probing leaders at increasing levels until the request encounters a downward link. When the request finds such a link, it descends, following a chain of links down to the cached copy of the object. But both of these systems had scalability issues to which later in 2008 Cluster-STM~\cite{Bocchino:2008:STM:1345206.1345242} tried to resolve using partitioned global address space (PGAS)~\cite{PGAS:Programmin:Model} model. Using a word-level cluster D-STM it showed how remote commmunication can be aggregated with data communication to improve scalability. 
+
+In later years DSTM systems were developed around various properties. These works can be classified on basis of mobility of transactions(control flow/Data flow), number of a active copies of transactional objects(single copy/replica), valid versions of objects(single version/multiverson) or transactional properties like Atomicity, Serializability and Liveness etc. For our discussion purpose we will divide the work in DSTM space based on serializibility property:
+%%Describe all these classes in introduction
 \begin{enumerate}
 \item Serializable DSTM implementations
 \item Non-Serializable DSTM implementations 
 \end{enumerate}
 
+We will discuss the different transactional models like nesting and checkpointing in last section. 
 
 \section{Serializable DSTM implementations}
 
-Decent STM, GenRSTM, 
-To be Added
+Serializability is a strong consistency criteria and requires all transactions to execute in  complete isolation i.e., all transactions in the system should execute in a way that is equivalent to a serial order. Two or more transactions can execute at the same time only if the equivalence to a serial execution can be maintained. In lock-based concurrency control
+implementation, serializability requires that locks to be acquired in certain range of
+execution. While in non-lock concurrency control, no lock is acquired, but if the system detects a concurrent transaction in progress it rollbacks.
+
+One of the first work in DSTM by Manassiev~\cite{Manassiev:2006:EDV:1122971.1123002}, as discussed previously, supported the serializability. In DMV algorithm described in this work allows each node to keep a single local copy of the data items to read or write. At commit time page differences are broadcasted to all other replicas, and a transaction commits successfully upon receiving acknowledgments from all nodes. A central timestamp is employed, which allows only a single update transaction to commit at a time. Unfortunately, this requirement of transaction to acquire a cluster-wide unique token, which globally serializes the commit phases of transactions imposes considerable overhead and seriously hamper performance as later described by Kotselidis et. al.~\cite{Kotselidis08distm:a}.
+
+Cluster-STM~\cite{Bocchino:2008:STM:1345206.1345242} work based on PGAS~\cite{PGAS:Programmin:Model} programming model also supported serializibility by imposing the programming restriction that each memory location must be accessed always within transactions or always outside transactions. In their work the dataset is partitioned across the nodes and each data item is assigned a home node. Home node maintains the authoritative version of data item and synchronizes the accesses of conflicting remote transactions. As been
+based on PGAS~\cite{PGAS:Programmin:Model} programming model Cluster-STM does not distinguishing processes that execute in the same node from processes
+that execute on different nodes and pays a heavy performance penality for not exploiting shared memory for intra-node communication.
+
+DiSTM ~\cite{Kotselidis08distm:a} work published in 2008 uses a distributed
+mutual exclusion mechanism to coordinate the commit of transactions. This mechanism ensures that no two conflicting transactions try to commit simultaneously. To provide distributed mutual exclusion this protocol grants leases to nodes on datasets, based on the their data access pattern, for each transaction commit. It allows transaction to escape performance penalty incurred by serialization cost in commit phase. However, it may still become a bottleneck in contention intensive workloads. Also DiSTM suffers the scalibility issues due to the single coordinating node performing lease establishment mechanism as the number of nodes increases. Due to this bottle neck DiSTM provides a dedicated node to perform lease establishment mechanism.
+For transactions which require the  
+In 2009 Dependable Distributed Software Transactional Memory(D2STM)~\cite{D2STM:5368778} followed which utilized the Atomic Broadcast~\cite{Defago:2004:TOB:1041680.1041682} and Bloom Filter~\cite{Bloom:1970:STH:362686.362692} Certification to achieve good performance in a replicated cluster. Replication of objects allows it to execute all Read-only transactions locally without incurring in any network communication overhead. For write transactions D2STM first validates it locally and aborts if required on basis of locally available information. After validating locally Replication Manager encodes the transaction read-set in a Bloom Filter and Atomic Broadcasts it along with the transaction write-set. Even though Atomic Broadcast allowed the D2STM to support serializibility, it incurs high performance cost with increase in number of nodes in cluster. Also, use of Bloom filter required the prior knowledge of transaction read-set to fine tune for reduced false positives. Same research group later came up with AGGRessively Optimistic concurrency control scheme(AGGRO)~\cite{AGGRO:5598236} to address dependability issue in DSTM utilizing the replication. AGGRO propagates dependencies across uncommitted transactions in a serialization order compliant with the optimistic message delivery order provided by the Optimistic Atomic Broadcast(OAB)~\cite{OAB:Pedone200379} service. Even though OAB allowed to improve performance, it also make it prone to saturation issue with the OAB group communication subsystem.  
+
+In 2009 another work, namely, Sinfonia~\cite{Aguilera:2009:SNP:1629087.1629088} framework came out which utilized the mini-transactions. The idea behind the mini-transactions was to send the transaction itself a piggyback in first phase of two phase commit. All the transactions for which conditional value and update object exist on same node can be convert to a mini-transaction. Utilizing the mini-transaction Aguilera et. al. was to reduce the network communication to a large extent and achieve good performance.
+
+Cloud-TM~\cite{Romano:2010:CHC:1773912.1773914} work published in 2010 tried to enumerate the features which can be useful to make DSTM successful in providing concurrency solution over network cloud. They suggested to make DSTM easily graspable by hiding Complexities and make it capable to cope up with Workload Heterogeneity. They also make a point to maximizing locality and automatic resource provisioning for a high performant and adaptable system. They asked DSTM to support durability also to surrive in failure prone cloud environment. 
+
+In 2011, based on D2STM and AGGRO work Romano et. al. came up with A Generic Framework for Replicated Software Transactional Memories(GenRSTM) ~\cite{GenRSTM:6038614}. Goals of this framework was to simplify the development and testing of new replication protocols and STMs, provide high decoupling between the architecture building blocks and Support multiple implementations of the architecture building block. This framework enabled system administrators to seek optimal performance as a function of the workload/deployment scenario by reconfiguring the replicated STM middleware platform, in a transparent fashion for the
+user level application and simplified the development and evaluation of alternative replication protocols
+
+In same year Srinivas et. al. from Oak Ridge National Laboratory published a technical report~\cite{sridharan2011scalable} Language-Based Software Transactional Memory for Distributed Memory Systems. In Chapel~\cite{chapel:Language}, a general-purpose parallel language, they provided atomic sementics and pluggable compiler support for multiple DSTM implementations. They also provided a prototype distributed STM implementation Global Transactional Memory 2 (GTM2) a enhancement over GTM~\cite{sridharan2009scalable} work published in 2009 based on Remote Procedure Call(RPC) to provide DSTM  support. In GTM2 simple RPC was improved with read versioning, deferred update, and eager acquire scheme.
+
+Similar to GenRSTM, in 2011 Hyflow a Java framework~\cite{Saad:2011:HHP:1996130.1996167} for DSTM was released for non-replication based systems. Later in 2012 a DSTM framework in Scala language was released which showed improvement over previous framework. Both of these frameworks utilized TFA algorithm for there prototype implementation, which uses an asynchronous clockbased validation technique to ensure DTM transactional properties. HyflowCPP framework also uses TFA as its base transactional algorithm. We will describe TFA algorithm later in detail in Chapter~\ref{chap:algorithm}.
+
+Recently in 2012 Granola~\cite{cowling2012granola} work from MIT provided the support for the serializability. It divides the transactions in three different categories: Single-repository transactions executing on a single storage node, Coordinated distributed transactions executing atomically across multiple storage nodes, independent distributed transactions executing atomically across a set of nodes and commit independently. Coordinated distributed transactions follow the traditional two phase commit voting protocal and provided the current state of art performance. Meanwhile, single-repository transactions and independent distributed transactions using timestamp synchronization and no locking provide a high throughput.  
 
 \section{Non-Serializable DSTM implementations}
 
-To be Added
+For achieving high performances many times promising a serializable DSTM implementation proves a very strong guarantee to provide. In recent years many researchers came up with high performant system by relaxing  serializable consistancy property. Even though these system provides high performance improvements by relaxing the serializability, it forces programmers to embrace such relaxed consistency models. Such model typically comes as a big challenge for ordinary programmers as they are required to understand all the subtleties of complicated consistency properties to avoid sanity failures.
+
+One of the first paper on weaker consistency Model was Decent STM~\cite{DecentSTM:5470446} in 2010. Decent STM implements the slightly weaker snapshot isolation (SI) semantics, a very popular semantics in databases. A transaction executing under snapshot isolation takes a 
+personal snapshot of the database at the start of the transaction. When the transaction
+finish, it commits only if the values of the items in its personal snapshot have not been updated by other committed transactions. In such semantics write skew anomalies can occur, which happens when two transactions concurrently read an overlapping data set, make disjoint updates, and finally concurrently commit. Neither of transaction see update performed by the other. Decent STM algorithm keeps limited list of committed versions of all shared data and obtains lazily a consistent memory snapshot during a transaction’s execution. By choosing a version upon read, a transaction determines on which versions it depends. In fact with unlimited version history, a read only transaction would never have to abort, because
+it could always read a previous version that does not conflict with the data read so far. For coincidental commits DSTM uses a voting based randomized consensus protocal. Using snapshot isolation do provide the higher performance in Decent STM, but also adds up additional memory overhead of maintaining versioned objects.  
+
+In 2011 Nuno et. al. in DiasSTM~\cite{dias2011efficient} came up with approach of static analysis of transactional code to provide serializable correctness to the snapshot consistancy model based database systems. They suggested the methodes to avoid read-write anomalies by automatically modifying the transaction code.
+
+Genuine Multiversion Update-Serializable Partial Data Replication(GMU)~\cite{GMU:peluso2012scalability} work published in 2012 provided high performance using the consistency criterion Extended Update Serializability(EUS)~\cite{EUS:HansdahPatnaik}. EUS unlike 1-Copy Serialization allows concurrent read-only transactions to observe snapshots generated from different linear extensions of the history of update transactions. At it heart GMU uses a distributed multiversion concurrency control scheme based on a vector clock based synchronization algorithm to track down data and causal dependency relations. It uses the partial replication to reduce the amount of network communication.
+
+In recent times there have been lot of work on designing unconventional database system. With explosion in amount of data processed and stored in data warehouse, system administors are understanding the limitation of current database systems. Many works ~\cite{Stonebraker:2007:EAE:1325851.1325981}~\cite{harizopoulos2008oltp} have argued that current DBMS perform a poor job of CPU utilization and might whole re-architecting. Works like HStore~\cite{HSTORE:kallman2008h} and Google Spanner~\cite{corbett2012spanner} have achieve high performance using replication and multi-versioning for database systems.  
+
+\section{Transaction Nesting and Checkpointing}
+
+For performance improvement Nesting techniques are widely used database systems. In 1981 Moss~\cite{moss1981nested} first time described the nesting concept in a distributed transaction. He extended two phase commit protocal~\cite{TwoPC:weikum1991principles} to support the nesting and proposed algorithms for distributed transaction management, object state restoration, and distributed deadlock detection. Later in 1983 Gracia~\cite{garcia1983using} et. al. extensive analyzed it in open nesting context using undo-logs transactions. 
+
+Transaction nesting was first time introduced to STM in 2006 by  Moss and Hosking in ~\cite{moss2006nested}.They provided the semantics of transactional operations in terms of
+system states as a tuple of a transaction ID, a memory location, a read/write flag, and the value read or written. Later Moss ~\cite{moss2006open} further described the open-nesting as 
+method to overcome false conflicts and improve concurrency. 
+
+In same year Moravan et al. implemented nesting in logTM~\cite{moravan2006supporting} and demonstrated the speed-up 100\% for few benchmarks. In 2009 Agrawal et. al. ~\cite{agrawal2009safe} introduced the concept of transaction ownership by combining the close and open nesting. Herlihy and Koskinen propose transactional boosting~\cite{herlihy2008transactional} for implementing highly concurrent transactional data structures, which internally implemented the open-nesting. Later Koskinen and Herlihy~\cite{koskinen2008checkpoints} suggested the checkpointing as an alternative to nesting.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %																									%

@@ -63,6 +63,20 @@ src/benchMarks/tm/bank/BankAccount.d: \
  ../src/benchMarks/tm/bank/../../tm/loan/../../../core/context/HyflowContext.h \
  ../src/benchMarks/tm/bank/../../tm/loan/../../../core/HyflowObjectFuture.h \
  ../src/benchMarks/tm/bank/../../tm/loan/../../HyflowBenchmark.h \
+ ../src/benchMarks/tm/bank/../../tm/tpcc/TpccBenchmark.h \
+ ../src/benchMarks/tm/bank/../../tm/tpcc/../../HyflowBenchmark.h \
+ ../src/benchMarks/tm/bank/../../tm/tpcc/TpccDistrict.h \
+ ../src/benchMarks/tm/bank/../../tm/tpcc/../../../core/HyflowObject.h \
+ ../src/benchMarks/tm/bank/../../tm/tpcc/../../../core/context/HyflowContext.h \
+ ../src/benchMarks/tm/bank/../../tm/tpcc/../../../core/HyflowObjectFuture.h \
+ ../src/benchMarks/tm/bank/../../tm/tpcc/TpccItem.h \
+ ../src/benchMarks/tm/bank/../../tm/tpcc/TpccNewOrder.h \
+ ../src/benchMarks/tm/bank/../../tm/tpcc/TpccOrder.h \
+ ../src/benchMarks/tm/bank/../../tm/tpcc/TpccOrderLine.h \
+ ../src/benchMarks/tm/bank/../../tm/tpcc/TpccStock.h \
+ ../src/benchMarks/tm/bank/../../tm/tpcc/TpccCustomer.h \
+ ../src/benchMarks/tm/bank/../../tm/tpcc/TpccWareHouse.h \
+ ../src/benchMarks/tm/bank/../../tm/tpcc/../../../util/concurrent/HyInteger.h \
  ../src/benchMarks/tm/bank/../../../util/concurrent/HyInteger.h \
  ../src/benchMarks/tm/bank/../../../core/helper/CheckPointProvider.h \
  ../src/benchMarks/tm/bank/../../../core/helper/../context/ContextManager.h
@@ -192,6 +206,34 @@ src/benchMarks/tm/bank/BankAccount.d: \
 ../src/benchMarks/tm/bank/../../tm/loan/../../../core/HyflowObjectFuture.h:
 
 ../src/benchMarks/tm/bank/../../tm/loan/../../HyflowBenchmark.h:
+
+../src/benchMarks/tm/bank/../../tm/tpcc/TpccBenchmark.h:
+
+../src/benchMarks/tm/bank/../../tm/tpcc/../../HyflowBenchmark.h:
+
+../src/benchMarks/tm/bank/../../tm/tpcc/TpccDistrict.h:
+
+../src/benchMarks/tm/bank/../../tm/tpcc/../../../core/HyflowObject.h:
+
+../src/benchMarks/tm/bank/../../tm/tpcc/../../../core/context/HyflowContext.h:
+
+../src/benchMarks/tm/bank/../../tm/tpcc/../../../core/HyflowObjectFuture.h:
+
+../src/benchMarks/tm/bank/../../tm/tpcc/TpccItem.h:
+
+../src/benchMarks/tm/bank/../../tm/tpcc/TpccNewOrder.h:
+
+../src/benchMarks/tm/bank/../../tm/tpcc/TpccOrder.h:
+
+../src/benchMarks/tm/bank/../../tm/tpcc/TpccOrderLine.h:
+
+../src/benchMarks/tm/bank/../../tm/tpcc/TpccStock.h:
+
+../src/benchMarks/tm/bank/../../tm/tpcc/TpccCustomer.h:
+
+../src/benchMarks/tm/bank/../../tm/tpcc/TpccWareHouse.h:
+
+../src/benchMarks/tm/bank/../../tm/tpcc/../../../util/concurrent/HyInteger.h:
 
 ../src/benchMarks/tm/bank/../../../util/concurrent/HyInteger.h:
 

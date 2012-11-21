@@ -84,6 +84,9 @@ void BenchmarkExecutor::initExecutor(){
 		}else if(ConfigFile::Value(BENCHMARK).compare(LOAN) == 0) {
 			benchMarkName = "Loan";
 			benchmark = new LoanBenchmark();
+		}else if(ConfigFile::Value(BENCHMARK).compare(TPCC) == 0) {
+			benchMarkName = "Tpcc";
+			benchmark = new TpccBenchmark();
 		}else {
 			Logger::fatal("BE :Unknown Benchmark\n");
 		}

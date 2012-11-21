@@ -10,13 +10,10 @@
 
 namespace vt_dstm {
 
-class TPCC_Ops {
-	/*
-	 * Non Unified Random Number Generator
-	 */
+class TpccOps {
 public:
-	TPCC_Ops();
-	virtual ~TPCC_Ops();
+	TpccOps();
+	virtual ~TpccOps();
 
 	static double newOrder();
 	static void payment();
@@ -24,6 +21,9 @@ public:
 	static void delivery();
 	static void stockLevel();
 
+	/*
+	 * Non Unified Random Number Generator
+	 */
 	static int NonURand(int A, int x, int y);
 };
 
