@@ -40,10 +40,6 @@ class DTL2Context: public vt_dstm::HyflowContext {
 	int tnxClock;
 	int highestSenderClock;
 
-	/*
-	 * Used by checkPoint Model to count restarts
-	 */
-	int restartCount;
 	bool isWrite;
 	bool lockObject(HyflowObject *obj);
 	void unlockObjectOnFail(HyflowObject *obj);
@@ -55,6 +51,7 @@ class DTL2Context: public vt_dstm::HyflowContext {
 	void reallyCommit();
 	void cleanAllMaps();
 	void mergeIntoParents();
+	void cleanSetTillCheckPoint(int checkPoint);
 public:
 	DTL2Context();
 	virtual ~DTL2Context();

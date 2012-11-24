@@ -341,7 +341,7 @@ GMU & \XSolidBold{} & \CheckmarkBold{} & \CheckmarkBold{} & \XSolidBold{} & \XSo
 \label{tbl:stmComp}
 \end{table}
 
-HyflowCpp framework is implemented in C++ at API-level and focuses on non-replicated peer to peer distributed systems. Current default algorithm implementation, Transaction Forwarding Algorithm, provides the strong memory consistency. In Table~\ref{tbl:stmComp}, we summarize our comparison of HyflowCpp. Each row of the table describes an DSTM implementation, and each column describes an feature. The table entries describe the features supported by the different DSTMs.
+HyflowCpp framework is implemented in C++ at API-level and focuses on non-replicated peer to peer distributed systems. Current default algorithm implementation, Transaction Forwarding Algorithm, provides the strong memory consistency. In Table~\ref{tbl:stmComp}, we summarize our comparison of HyflowCpp. Each row of the table describes an DSTM implementation, and each column describes a feature. The table entries describe the features supported by the different DSTMs.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %																									%
@@ -353,8 +353,223 @@ HyflowCpp framework is implemented in C++ at API-level and focuses on non-replic
 Programming Interface
 \hfill}
 
-To Be Added
+In this chapter, we introduce the programming interface provided by HyflowCpp to execute distributed atomic transactions. First we describe the basics of interface and then explain it by developing the list benchmark using it. Hyflow allows user to configure the Benchmark and execution setting using a configuration file. User can also pass all those variable using environment variables for all those settings.
 
+In a networked system objects are distributed over different nodes, therefore normal object reference can not be used. User is required to use a unique key to address a particular object anywhere in network. We provide a base class name ~\emph{HyflowObject} for every distributed object. Every distributed object should must inherit this class. This base class provides the getId() method which returns as unique key to access the object from anywhere in the network.
+
+HyflowCpp performs object serialization using boost serialization library. User is required to follow it for proper packing and unpacking of object over the network. Objects created by user needs to register itself as inherited class of HyflowObject and register all the object field in boost serialize function to which it wish to be serializable over network.
+
+For development of DSTM applications HyflowCpp provides two transactional interfaces: 
+\begin{enumerate}
+\item Transaction Support using Macros
+\item Transaction Support using Atomic class 
+\end{enumerate}
+
+\section{Transaction Support using Macros}
+
+HyflowCpp provides standard atomic semantics using macros \emph{HYFLOW{\_}ATOMIC{\_}START} and \emph{HYFLOW{\_}ATOMIC{\_}END}. Figure~\ref{Fig:atomicConstr} shows how to utilize the these macro to execute any given part of code atomically and compares it to standard STM atomic semantics. 
+
+\begin{figure}
+\centering 
+\begin{footnotesize}
+\begin{minipage}[b]{0.45\linewidth}\centering
+HyflowCpp atomic construct 
+\begin{lstlisting}
+HYFLOW_ATOMIC_START{
+// Example of simple compare
+// and swap operation
+   value = Read(Address);
+   if( value==myValue )
+       Write(Address, myValue)
+}HYFLOW_ATOMIC_END;
+\end{lstlisting} 
+\end{minipage} 
+\begin{minipage}[b]{0.45\linewidth}\centering
+Standard STM atomic construct
+\begin{lstlisting}   					   
+atomic{
+// Example of simple compare
+// and swap operation
+   value = Read(Address);
+   if( value==myValue )
+       Write(Address, myValue)
+}
+\end{lstlisting}			  
+\end{minipage}
+\end{footnotesize}
+\label{Fig:atomicConstr}\caption{Atomic Construct for Hyflow vs. Standard STM implementations}
+\end{figure}
+
+Any object in the network can be openned either in \emph{Read} or \emph{Write} mode. Once user requests the object, HyflowCpp fetches the object from its current location and copies to transactions read or write set depending of access type. For accessing any object user should macro \emph{HYFLOW{\_}FETCH(ID, IS{\_}READ)}. First argument to this macro is \emph{objectId} and second argument is access type \emph{true/false}, true for read, otherwise false.
+
+For reading or writing the fetched object we provide two more macros \emph{HYFLOW{\_}ON{\_}READ(ID)} and \emph{HYFLOW{\_}ON{\_}WRITE(ID)}. \emph{HYFLOW{\_}ON{\_}READ} returns the user the constant reference pointer to HyflowObject, which can be used for read-only operations. For manipulating the object user again require to call \emph{HYFLOW{\_}ON{\_}WRITE}, which returns a normal reference pointer to object. User can also pass the object reference pointer itself in place of unique object key to retrieve the object.   
+
+\emph{HYFLOW{\_}PUBLISH{\_}OBJECT(OBJ)} allows user to publish any locally created object on the network. But, such objects must inherit the HyflowObject class as a base type as discussed earlier. Similarly, \emph{HYFLOW{\_}PUBLISH{\_}DELETE(OBJ)} allows user to delete any object from the network.
+
+Now using these macro's we can write the list benchmark as described in figure~\ref{Fig:listMacro}. In this figure we illustrate the list node addition and deletion atomically using HyflowCpp Macros. 
+\begin{figure}
+\centering
+\begin{lstlisting}
+class ListNode::HyflowObject {
+
+void ListNode::addNode(int value) {
+	HYFLOW_ATOMIC_START{
+		std::string head="HEAD";
+		HYFLOW_FETCH(head, false);
+
+		ListNode* headNodeRead =  (ListNode*)HYFLOW_ON_READ(head);
+		std::string oldNext = headNodeRead->getNextId();
+		ListNode* newNode = new ListNode(value, ListBenchmark::getId());
+		newNode->setNextId(oldNext);
+		HYFLOW_PUBLISH_OBJECT(newNode);
+
+		ListNode* headNodeWrite = (ListNode*)HYFLOW_ON_WRITE(head);
+		headNodeWrite->setNextId(newNode->getId());
+	} HYFLOW_ATOMIC_END;
+}
+
+void ListNode::deleteNode(int value) {
+	HYFLOW_ATOMIC_START{
+		ListNode* targetNode = NULL;
+		std::string head("HEAD");
+		std::string prev = head, next;
+
+		HYFLOW_FETCH(head, true);
+		targetNode = (ListNode*)HYFLOW_ON_READ(head);
+		next = targetNode->getNextId();
+
+		while(next.compare("NULL") != 0) {
+			HYFLOW_FETCH(next, true);
+			targetNode = (ListNode*)HYFLOW_ON_READ(next);
+			int nodeValue = targetNode->getValue();
+			if (nodeValue == value) {
+				ListNode* prevNode = (ListNode*)HYFLOW_ON_WRITE(prev);
+				ListNode* currentNode = (ListNode*)HYFLOW_ON_WRITE(next);
+				prevNode->setNextId(currentNode->getNextId());
+				HYFLOW_DELETE_OBJECT(currentNode);
+				break;
+			}
+			prev = next;
+			next = targetNode->getNextId();
+		}
+	} HYFLOW_ATOMIC_END;
+}
+
+}
+\end{lstlisting}
+\caption{list Benchmark using HyflowCpp Macros}
+\label{Fig:listMacro}
+\end{figure}
+
+HyflowCpp also support the transaction \emph{Checkpointing} using macros. For minimum Checkpointing overhead we support CheckPointing in outermost transaction call. We allow user to checkpoint at any place using ~\emph{HYFLOW{\_}CHECKPOINT{\_}HERE}. User is also required to initiate the Checkpointing at start of transaction using ~\emph{HYFLOW{\_}CHECKPOINT{\_}INIT}. Figure~\ref{Fig:bankCP} illustrates how CheckPointing can be implemented simple bank transfer function. Note that how user is required to pass the current context instance to withdraw function. This requirement exist for all the functions which are called within atomic block and require to be executed atomically. This additional argument passing will be removed once the compiler support is added to atomic block. 
+
+\begin{figure}
+\begin{minipage}[b]{0.9\linewidth}\centering
+\begin{lstlisting}
+void BankAccount::transfer(string Account1, string Account2, Money) {
+	HYFLOW_ATOMIC_START {
+		HYFLOW_CHECKPOINT_INIT;
+
+		withdraw(Account1, Money, __context__);
+
+		HYFLOW_CHECKPOINT_HERE;
+	
+		deposit(Account2, Money, __context__);
+	}HYFLOW_ATOMIC_END;
+}
+\end{lstlisting}
+\end{minipage}
+\caption{CheckPointing in bank transfer function}
+\label{Fig:bankCP}
+\end{figure}
+
+\section{Transaction Support using Atomic class}
+
+Atomic class interface is more involved and allows users to directly program against the HyflowCpp framework. Using the Atomic class interface user can directly interact with transaction context. Atomic class is template type class which can be Type defined using atomic function class return type. Atomic class contains function pointer ~\emph{atomically} for functions which can directed by user to execute given function atomically. After setting up the function pointer values user can call the ~\emph{execute} method from atomic class to run the atomic function atomically.
+
+Atomic class also provides the function pointers to support advance nesting features like open-nesting. User can specify the ~\emph{onCommit} and ~\emph{onAbort} function for  ~\emph{HyflowObject} requiring the open nesting support. All these function pointers requires all the function to follow a define argument set similar to libraries like pthread. Only hind side of using atomic class is that, Checkpointing can not be performed on transaction using atomic class. Checkpointing can not be created in inner transactions and atomic class calls the transaction from an inner transaction. 
+
+User can also write the benchmark directly without using any of Atomic class or Macros. This will require the user to directory manipulate the DirectoryManager for remote object access and ContextManager for transaction atomicity. It can be some time useful for debug some internal framework issues, otherwise it is not a recommended method.
+
+In Figure[~\ref{Fig:listClassAdd}][~\ref{Fig:listClassDelete}] we re-write the same List benchmark functions using the atomic class. 
+
+\begin{figure}
+\centering
+\begin{lstlisting}
+class ListNode::HyflowObject {
+
+void* addNodeAtomically(HyflowObject* self, void* args,
+	HyflowContext* __context__, uint64_t* balance)
+{
+	int value = *((int*)args);
+	std::string head="HEAD";
+	HYFLOW_FETCH(head, false);
+
+	ListNode* headNodeRead =  (ListNode*)HYFLOW_ON_READ(head);
+	std::string oldNext = headNodeRead->getNextId();
+	ListNode* newNode = new ListNode(value, ListBenchmark::getId());
+	newNode->setNextId(oldNext);
+	HYFLOW_PUBLISH_OBJECT(newNode);
+
+	ListNode* headNodeWrite = (ListNode*)HYFLOW_ON_WRITE(head);
+	headNodeWrite->setNextId(newNode->getId());
+}
+
+void ListNode::addNode(int value) {
+	Atomic<uint64_t> atomicAdd;	
+	atomicAdd.atomically = ListNode::addNodeAtomically;
+	atomicAdd.execute(NULL, &value, NULL);
+}
+}
+\end{lstlisting}
+\caption{list Benchmark using HyflowCpp Atomic Class}
+\label{Fig:listClassAdd}
+\end{figure}
+
+\begin{figure}
+\centering
+\begin{lstlisting}
+class ListNode::HyflowObject {
+
+void* deleteNodeAtomically(HyflowObject* self, void* args,
+	HyflowContext* c, uint64_t* balance)
+{
+	int value = *((int*)args);
+	ListNode* targetNode = NULL;
+	std::string head("HEAD");
+	std::string prev = head, next;
+
+	HYFLOW_FETCH(head, true);
+	targetNode = (ListNode*)HYFLOW_ON_READ(head);
+	next = targetNode->getNextId();
+
+	while(next.compare("NULL") != 0) {
+		HYFLOW_FETCH(next, true);
+		targetNode = (ListNode*)HYFLOW_ON_READ(next);
+		int nodeValue = targetNode->getValue();
+		if (nodeValue == value) {
+			ListNode* prevNode = (ListNode*)HYFLOW_ON_WRITE(prev);
+			ListNode* currentNode = (ListNode*)HYFLOW_ON_WRITE(next);
+			prevNode->setNextId(currentNode->getNextId());
+			HYFLOW_DELETE_OBJECT(currentNode);
+			break;
+		}
+		prev = next;
+		next = targetNode->getNextId();
+	}
+}
+
+void ListNode::deleteNode(int value) {
+	Atomic<uint64_t> atomiDelete;	
+	atomicDelete.atomically = ListNode::deleteNodeAtomically;
+	atomicDelete.execute(NULL, &value, NULL);
+}
+
+}
+\end{lstlisting}
+\caption{list Benchmark using HyflowCpp Atomic Class}
+\label{Fig:listClassDelete}
+\end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %																									%
@@ -367,7 +582,41 @@ To Be Added
 System Architecture
 \hfill}
 
-To be Added
+HyflowCpp is a distributed software transaction memory system at API level. It written in C++ using object oriented programming paradigm. It is carefully design to provide plugging support for different DSTM, cache-coherency protocols and network libraries. All components are developed independent of each other and connected through well defined interfaces. Any individual component can be easily replaced or modified by writing any implementation by following the given component interface. 
+
+Figure~\ref{Fig:HyflowCppArch} shows the architecture of a node in HyflowCpp. It it made of six modules: Transaction Interface Module, Transaction Validation Module, Object Access Module, Object serialization Module, Network Module and Message Processing Module. We have already discussed by Transaction Interface Module in detail in chapter~\ref{chap:progInterface}. Now we will describe rest of modules in details in following sections.
+
+\begin{figure}
+\begin{minipage}
+\centering \includegraphics[scale=0.5]{\string"eps/HyflowCppArch".pdf}
+\caption{HyflowCpp Architecture}
+\label{Fig:HyflowCppArch}
+\end{minipage}
+\end{figure}
+
+\section{Transaction Validation Module}
+
+The purpose of Transaction Validation Module is to provide the transactional consistency and achieve system progress. All DSTM logic is performed in this module by extending basic ~\emph{HyflowContext}. Currently by default ~\emph{HyflowContext} is extended as ~\emph{DTLContext} which implements the TFA algorithm. This module validates memory locations and retrying transactional code as needed on commit failure. This module can be configured based on the transaction model used like checkPointing and closed nesting etc. 
+
+To support the DSTM protocols this module also provides the ~\emph{LockTable} for object level or word level locking. This table is implemented using high perform concurrent hashMaps for TBB~\cite{willhalm2008putting} library. This module also provides the ~\emph{ContextMap} to access the context instance using transaction Id. It enable the contention Managers to collect meta data and make updates to different transactional contexts.
+
+This module interfaces with 
+
+\section{Object Access Module}
+
+directory
+
+\section{Object Serialization Module}
+
+Hyflow Message
+
+\section{Network Module}
+
+
+
+\section{Message Processing Module}
+
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %																									%
