@@ -94,6 +94,7 @@ void BenchmarkExecutor::initExecutor(){
 		objectsCount = atoi(ConfigFile::Value(OBJECTS).c_str());
 		transactions = atoi(ConfigFile::Value(TRANSACTIONS).c_str());
 		readPercent =  atoi(ConfigFile::Value(READS).c_str());
+		calls = atoi(ConfigFile::Value(CALLS).c_str());
 		isInitiated = true;
 		threadCount = NetworkManager::getThreadCount();
 		benchmarkThreads = new boost::thread*[threadCount];

@@ -11,6 +11,7 @@
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 
+#include <unistd.h>
 #include "../../../core/context/ContextManager.h"
 #include "../../../core/HyflowObjectFuture.h"
 #include "../../../core/directory/DirectoryManager.h"
@@ -100,13 +101,17 @@ void BankAccount::totalBalanceAtomically(HyflowObject* self, void* bankArgs, Hyf
 
 	LOG_DEBUG("BANK : Call check Balance1\n");
 	atomicCheckBalance1.atomically = BankAccount::checkBalanceAtomic;
-	for(int i=0 ; i < BenchmarkExecutor::getCalls(); i++)
+	for(int i=0 ; i < BenchmarkExecutor::getCalls(); i++) {
+		//usleep(2000);
 		atomicCheckBalance1.execute(NULL, &args->id1, balance);
+	}
 
 	LOG_DEBUG("BANK : Call check Balance2\n");
 	atomicCheckBalance2.atomically = BankAccount::checkBalanceAtomic;
-	for(int i=0 ; i < BenchmarkExecutor::getCalls(); i++)
+	for(int i=0 ; i < BenchmarkExecutor::getCalls(); i++) {
+		//usleep(2000);
 		atomicCheckBalance2.execute(NULL, &args->id2, balance);
+	}
 }
 
 void BankAccount::transferAtomically(HyflowObject* self, void* bankArgs, HyflowContext* c, void* ignore) {
@@ -114,13 +119,17 @@ void BankAccount::transferAtomically(HyflowObject* self, void* bankArgs, HyflowC
 
 	LOG_DEBUG("BANK :Call Withdraw\n");
 	atomicWithdraw.atomically = BankAccount::withdrawAtomic;
-	for(int i=0 ; i < BenchmarkExecutor::getCalls(); i++)
+	for(int i=0 ; i < BenchmarkExecutor::getCalls(); i++) {
+		//usleep(2000);
 		atomicWithdraw.execute(NULL, bankArgs, NULL);
+	}
 
 	LOG_DEBUG("BANK :Call Deposit\n");
 	atomicDeposit.atomically = BankAccount::depositAtomic;
-	for(int i=0 ; i < BenchmarkExecutor::getCalls(); i++)
+	for(int i=0 ; i < BenchmarkExecutor::getCalls(); i++) {
+		//usleep(2000);
 		atomicDeposit.execute(NULL, bankArgs, NULL);
+	}
 }
 
 uint64_t BankAccount::totalBalance(std::string id1, std::string id2) {
@@ -133,11 +142,13 @@ uint64_t BankAccount::totalBalance(std::string id1, std::string id2) {
 			HYFLOW_CHECKPOINT_INIT;
 			LOG_DEBUG("BANK :Call Withdraw\n");
 			for(int i=0 ; i < BenchmarkExecutor::getCalls(); i++) {
+				//usleep(2000);
 				checkBalanceAtomic(NULL, &baArgs.id1, __context__, &balance);
 			}
 			HYFLOW_CHECKPOINT_HERE;
 			LOG_DEBUG("BANK :Call Deposit\n");
 			for(int i=0 ; i < BenchmarkExecutor::getCalls(); i++) {
+				//usleep(2000);
 				checkBalanceAtomic(NULL, &baArgs.id2, __context__, &balance);
 			}
 		}HYFLOW_ATOMIC_END;
@@ -159,11 +170,13 @@ void BankAccount::transfer(std::string id1, std::string id2,
 			HYFLOW_CHECKPOINT_INIT;
 			LOG_DEBUG("BANK :Call Withdraw\n");
 			for(int i=0 ; i < BenchmarkExecutor::getCalls(); i++) {
+				//usleep(2000);
 				withdrawAtomic(NULL, &baArgs, __context__, NULL);
 			}
 			HYFLOW_CHECKPOINT_HERE;
 			LOG_DEBUG("BANK :Call Deposit\n");
 			for(int i=0 ; i < BenchmarkExecutor::getCalls(); i++) {
+				//usleep(2000);
 				depositAtomic(NULL, &baArgs, __context__, NULL);
 			}
 		}HYFLOW_ATOMIC_END;
