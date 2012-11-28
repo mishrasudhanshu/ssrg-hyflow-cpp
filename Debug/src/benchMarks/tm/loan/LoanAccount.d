@@ -24,6 +24,8 @@ src/benchMarks/tm/loan/LoanAccount.d: \
  ../src/benchMarks/tm/loan/../../../core/helper/../../util/logging/Logger.h \
  ../src/benchMarks/tm/loan/../../../core/helper/../../core/HyflowObject.h \
  ../src/benchMarks/tm/loan/../../../core/helper/../../core/context/ContextManager.h \
+ ../src/benchMarks/tm/loan/../../../core/helper/CheckPointProvider.h \
+ ../src/benchMarks/tm/loan/../../../core/helper/../context/ContextManager.h \
  ../src/benchMarks/tm/loan/../../../util/logging/Logger.h \
  ../src/benchMarks/tm/loan/../../../util/networking/NetworkManager.h \
  ../src/benchMarks/tm/loan/../../../util/networking/AbstractNetwork.h \
@@ -63,6 +65,13 @@ src/benchMarks/tm/loan/LoanAccount.d: \
  ../src/benchMarks/tm/loan/../../tm/loan/LoanBenchMark.h \
  ../src/benchMarks/tm/loan/../../tm/loan/LoanAccount.h \
  ../src/benchMarks/tm/loan/../../tm/loan/../../HyflowBenchmark.h \
+ ../src/benchMarks/tm/loan/../../tm/hashTable/HashTableBenchMark.h \
+ ../src/benchMarks/tm/loan/../../tm/hashTable/HashTable.h \
+ ../src/benchMarks/tm/loan/../../tm/hashTable/../../../core/HyflowObject.h \
+ ../src/benchMarks/tm/loan/../../tm/hashTable/../../../core/context/HyflowContext.h \
+ ../src/benchMarks/tm/loan/../../tm/hashTable/../../../core/HyflowObjectFuture.h \
+ ../src/benchMarks/tm/loan/../../tm/hashTable/../../HyflowBenchmark.h \
+ ../src/benchMarks/tm/loan/../../tm/hashTable/../../../util/concurrent/HyInteger.h \
  ../src/benchMarks/tm/loan/../../tm/tpcc/TpccBenchmark.h \
  ../src/benchMarks/tm/loan/../../tm/tpcc/../../HyflowBenchmark.h \
  ../src/benchMarks/tm/loan/../../tm/tpcc/TpccDistrict.h \
@@ -78,8 +87,7 @@ src/benchMarks/tm/loan/LoanAccount.d: \
  ../src/benchMarks/tm/loan/../../tm/tpcc/TpccWareHouse.h \
  ../src/benchMarks/tm/loan/../../tm/tpcc/../../../util/concurrent/HyInteger.h \
  ../src/benchMarks/tm/loan/../../../util/concurrent/HyInteger.h \
- ../src/benchMarks/tm/loan/../../../core/helper/CheckPointProvider.h \
- ../src/benchMarks/tm/loan/../../../core/helper/../context/ContextManager.h
+ ../src/benchMarks/tm/loan/../../../core/helper/CheckPointProvider.h
 
 ../src/benchMarks/tm/loan/LoanAccount.h:
 
@@ -128,6 +136,10 @@ src/benchMarks/tm/loan/LoanAccount.d: \
 ../src/benchMarks/tm/loan/../../../core/helper/../../core/HyflowObject.h:
 
 ../src/benchMarks/tm/loan/../../../core/helper/../../core/context/ContextManager.h:
+
+../src/benchMarks/tm/loan/../../../core/helper/CheckPointProvider.h:
+
+../src/benchMarks/tm/loan/../../../core/helper/../context/ContextManager.h:
 
 ../src/benchMarks/tm/loan/../../../util/logging/Logger.h:
 
@@ -207,6 +219,20 @@ src/benchMarks/tm/loan/LoanAccount.d: \
 
 ../src/benchMarks/tm/loan/../../tm/loan/../../HyflowBenchmark.h:
 
+../src/benchMarks/tm/loan/../../tm/hashTable/HashTableBenchMark.h:
+
+../src/benchMarks/tm/loan/../../tm/hashTable/HashTable.h:
+
+../src/benchMarks/tm/loan/../../tm/hashTable/../../../core/HyflowObject.h:
+
+../src/benchMarks/tm/loan/../../tm/hashTable/../../../core/context/HyflowContext.h:
+
+../src/benchMarks/tm/loan/../../tm/hashTable/../../../core/HyflowObjectFuture.h:
+
+../src/benchMarks/tm/loan/../../tm/hashTable/../../HyflowBenchmark.h:
+
+../src/benchMarks/tm/loan/../../tm/hashTable/../../../util/concurrent/HyInteger.h:
+
 ../src/benchMarks/tm/loan/../../tm/tpcc/TpccBenchmark.h:
 
 ../src/benchMarks/tm/loan/../../tm/tpcc/../../HyflowBenchmark.h:
@@ -238,5 +264,3 @@ src/benchMarks/tm/loan/LoanAccount.d: \
 ../src/benchMarks/tm/loan/../../../util/concurrent/HyInteger.h:
 
 ../src/benchMarks/tm/loan/../../../core/helper/CheckPointProvider.h:
-
-../src/benchMarks/tm/loan/../../../core/helper/../context/ContextManager.h:

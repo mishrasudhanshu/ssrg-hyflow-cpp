@@ -65,7 +65,6 @@ int BstBenchmark::getId() {
 }
 
 std::string* BstBenchmark::createLocalObjects(int objCount) {
-	std::string* ids = NULL;
 	ids = new std::string [objCount];
 	if (NetworkManager::getNodeId() == 0 ) {
 		std::string next("NULL");

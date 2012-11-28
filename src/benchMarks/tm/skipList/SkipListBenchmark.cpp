@@ -62,7 +62,6 @@ int SkipListBenchmark::getId() {
 }
 
 std::string* SkipListBenchmark::createLocalObjects(int objCount) {
-	std::string* ids = NULL;
 	ids = new std::string [objCount];
 	if (NetworkManager::getNodeId() == 0 ) {
 		SkipListNode headNode(0, "HEAD", skipListLevels);

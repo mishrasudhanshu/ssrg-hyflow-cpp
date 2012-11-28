@@ -46,7 +46,8 @@ void ListBenchmark::readOperation(std::string ids[], int size){
 void ListBenchmark::writeOperation(std::string ids[], int size){
 	int random = abs(Logger::getCurrentMicroSec());
 	int value = random%HYFLOW_LIST_CONTENTION;
-	if (random%2 == 1 ) {
+	int select = abs(Logger::getCurrentMicroSec()+1);
+	if (select%2 == 1 ) {
 		LOG_DEBUG("LIST :ADD[%d] Node\n", value);
 		ListNode::addNode(value);
 	}else {
@@ -68,7 +69,6 @@ int ListBenchmark::getId() {
 }
 
 std::string* ListBenchmark::createLocalObjects(int objCount) {
-	std::string* ids = NULL;
 	ids = new std::string [objCount];
 	if (NetworkManager::getNodeId() == 0 ) {
 		std::string next("NULL");

@@ -34,9 +34,9 @@ HyflowContext* HyflowContextFactory::getContextInstance() {
 		}
 	}else if (ContextManager::getNestingModel() == HYFLOW_NESTING_FLAT) {
 		if( contextStackIndex==-1 ) {
-			context = getContextFromStack();
+			context = getFreshContext();
 		}else {
-			context = contextStack.at(contextStackIndex);
+			context = contextStack.at(0);
 			contextStackIndex++;
 		}
 		context->setContextExecutionDepth(contextStackIndex);
@@ -141,7 +141,7 @@ void HyflowContextFactory::releaseContextInstance(){
 
 HyflowContext* HyflowContextFactory::getContextFromStack() {
 	int size = contextStack.size();
-	if ( size > contextStackIndex) {
+	if ( size > contextStackIndex ) {
 		LOG_DEBUG("HCF : Providing already created context\n");
 		return contextStack.at(contextStackIndex++);
 	}

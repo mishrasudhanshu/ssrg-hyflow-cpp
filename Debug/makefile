@@ -32,7 +32,7 @@ RM := rm -rf
 -include src/benchMarks/tm/skipList/subdir.mk
 -include src/benchMarks/tm/loan/subdir.mk
 -include src/benchMarks/tm/list/subdir.mk
--include src/benchMarks/tm/hashMap/subdir.mk
+-include src/benchMarks/tm/hashTable/subdir.mk
 -include src/benchMarks/tm/bst/subdir.mk
 -include src/benchMarks/tm/bank/subdir.mk
 -include src/benchMarks/tm/Vacation/subdir.mk

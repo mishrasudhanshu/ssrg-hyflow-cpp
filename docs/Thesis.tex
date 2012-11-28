@@ -54,6 +54,7 @@ breakatwhitespace=false,        % sets if automatic breaks should only happen at
 \usepackage{bbding}
 \usepackage{float}
 \usepackage{threeparttable}
+\usepackage{amsthm}
 
 
 
@@ -224,7 +225,48 @@ The rest of the thesis is organized as follows: Chapter~\ref{chap:relWork} overv
 Related Work
 \hfill}
 
-In this chapter we survey the past and related work focusing on the problem of distributed transactional memory. The work can be classified into two categories based on memory consistency properties:
+In this chapter we survey the past and related work focusing on the problem of distributed transactional memory. Prior to discussing the related works, we describes the various DTM properties, which are useful to understand research works in this area.
+
+\section{DTM Properties}
+
+\subsection{Memory Consistency}
+
+A \textit{memory consistency} model is a agreement between the framework and programmer that specifies the memory access rules, which ensures that memory remain consistent and predictable after different memory operations. 
+If programmer follows these rules memory consistency is guaranteed by framework. These operation are generally provided in low level semantics like read and write data or compare and swap. Now we describe few memory consistency model which are often used in DTM frameworks.
+
+\newtheorem{definition}{Definition}[section]
+\begin{definition}[\textbf{Serializability}]
+Serializability is a strong consistency requirement and  requires all transactions to execute in  complete isolation i.e., all transactions in the system should execute in a way that is equivalent to a serial order. Two or more transactions can execute at the same time only if the equivalence to a serial execution can be maintained. In lock-based concurrency control implementation, serializability requires that locks to be acquired in certain range of execution. While in non-lock concurrency control, no lock is acquired, but if the system detects a concurrent transaction in progress it rollbacks.
+\end{definition}
+
+\begin{definition}[\textbf{Snapshot Isolation}]
+A transaction executing under snapshot isolation takes a personal snapshot of the database at the start of the transaction. When the transaction finish, it commits only if the values of the items in its personal snapshot have not been updated by other committed transactions. In such semantics write skew anomalies can occur, which happens when two transactions concurrently read an overlapping data set, make disjoint updates, and finally concurrently commit. Neither of transaction see update performed by the other.
+\end{definition}
+
+\begin{definition}[\textbf{Extended Update Serializability}]
+Extended Update Serializability (EUS)~\cite{EUS:HansdahPatnaik} unlike 1-Copy Serialization allows concurrent read-only transactions to observe snapshots generated from different linear extensions of the history of update transactions.
+\end{definition}
+
+For achieving high performances, many times supporting the serializability proves a very strong guarantee to provide. In recent years many researchers came up with high performance system by relaxing  serializable consistency criteria. Even though these system provides high performance improvements by relaxing the serializability, it forces programmers to embrace such relaxed consistency models. Such model typically comes as a big challenge for ordinary programmers as they are required to understand all the subtleties of complicated consistency properties to avoid sanity failures.
+
+\subsection{Replication and Multi-versioning}
+
+\textit{Replication} is very common in databases and mostly used for backup and load balancing purposes. In DTM, classical replication solution can be viewed as primary/backup model, where primary have authoritative object copy and used to update all backup copies. In case of primary copy failures the backup copy are used to service the transactions. This switch from primary to backup copies creates many problems for the transactions in progress, at the time failure. Many systems send log updates to backup copies to allow in-progress transactions to start from certain state. Many times Replication also viewed as tool for DTM to increment in performance through localization.
+
+\textit{Multi-versioning} is a concurrency control method often used in databases to provides the concurrent access. In Multi-version concurrency control(MVCC) each write on an object $x$ creates a new copy of it. All copies of same object are given proper version based on history value. MVCC provides time-consistence views for the system. It allows the delayed read operations to execute successfully by providing the object version  relevant to transaction's time-stamp. 
+
+\subsection{Strong Atomicity}
+
+\subsection{Transactional Models}
+
+In DTM there are various transactional models are available which provide different partial abort mechanisms to improve performance. ~\emph{Nesting} is one of the famous model to perform partial aborts. A transaction is nested when it encloses some other transaction. There are three different models of nesting, which are studied: ~\emph{Flat}, ~\emph{Closed}, and ~\emph{Open}. 
+
+\textit{Flat} nesting is the simplest form of nesting, which simply ignores the existence of transactions in inner code. All operations are executed in context of the outermost enclosing transaction. Aborting any of inner transaction cause the parent transaction to abort. Therefore no partial rollback can be performed. Flat nesting don't provide any performance incentive over non-nested transactions.
+
+\textit{Closed} nesting
+
+\section{Past and current Work}
+For our discussion purpose, we classify the past and current work in DTM into two categories based on memory consistency properties:
 
 \begin{enumerate}
 \item Serializable DSTM implementations
@@ -233,9 +275,7 @@ In this chapter we survey the past and related work focusing on the problem of d
 
 We will also discuss the different transactional models like nesting and checkpointing in STM, DSTM and Database problem space in last section. 
 
-\section{Serializable DSTM implementations}
-
-Serializability is a strong consistency criteria and requires all transactions to execute in  complete isolation i.e., all transactions in the system should execute in a way that is equivalent to a serial order. Two or more transactions can execute at the same time only if the equivalence to a serial execution can be maintained. In lock-based concurrency control implementation, serializability requires that locks to be acquired in certain range of execution. While in non-lock concurrency control, no lock is acquired, but if the system detects a concurrent transaction in progress it rollbacks.
+\subsection{Serializable DSTM implementations}
 
 One of the first work in DSTM by Manassiev~\cite{Manassiev:2006:EDV:1122971.1123002}, supported the serializability. It introduced a novel page-level distributed concurrency control algorithm, called Distributed Multiversioning(DMV). DMV allows each node to keep a single local copy of the data items to read or write. At commit time page differences are broadcasted to all other replicas, and a transaction commits successfully upon receiving acknowledgments from all nodes. A central timestamp is employed, which allows only a single update transaction to commit at a time. Unfortunately, this requirement of transaction to acquire a cluster-wide unique token, which globally serializes the commit phases of transactions imposes considerable overhead and seriously hampers performance as later described by Kotselidis et. al.~\cite{Kotselidis08distm:a}.
 
@@ -258,19 +298,17 @@ Similar to GenRSTM, in 2011 Hyflow a Java framework~\cite{Saad:2011:HHP:1996130.
 
 Recently in 2012 Granola~\cite{cowling2012granola} work from MIT provided the support for the serializability. It divides the transactions in three different categories: Single-repository transactions executing using objects within a repository, Coordinated distributed transactions executing using objects from more than one repositories, independent distributed transactions executing atomically across a set of repositories and commit independently. Coordinated distributed transactions follow the traditional two phase commit voting protocal and provide the current state of art performance. Meanwhile, single-repository transactions and independent distributed transactions using timestamp synchronization and no locking provide a high throughput.   
 
-\section{Non-Serializable DSTM implementations}
+\subsection{Non-Serializable DSTM implementations}
 
-For achieving high performances, many times supporting the serializability proves a very strong guarantee to provide. In recent years many researchers came up with high performance system by relaxing  serializable consistency criteria. Even though these system provides high performance improvements by relaxing the serializability, it forces programmers to embrace such relaxed consistency models. Such model typically comes as a big challenge for ordinary programmers as they are required to understand all the subtleties of complicated consistency properties to avoid sanity failures.
-
-One of the first paper on weaker consistency Model was DecentSTM~\cite{DecentSTM:5470446} in 2010. DecentSTM implements the slightly weaker consistency semantics, snapshot isolation (SI), a very popular semantics in databases. A transaction executing under snapshot isolation takes a personal snapshot of the database at the start of the transaction. When the transaction finish, it commits only if the values of the items in its personal snapshot have not been updated by other committed transactions. In such semantics write skew anomalies can occur, which happens when two transactions concurrently read an overlapping data set, make disjoint updates, and finally concurrently commit. Neither of transaction see update performed by the other. DecentSTM algorithm keeps limited list of committed versions of all shared data and obtains lazily a consistent memory snapshot during a transaction’s execution. By choosing a version upon read, a transaction determines on which versions it depends. In fact with unlimited version history, a read only transaction would never have to abort, because it could always read a previous version that does not conflict with the data read so far. For coincidental commits DSTM uses a voting based randomized consensus protocol. Using snapshot isolation do provide the higher performance in Decent STM, but also adds up additional memory overhead of maintaining versioned objects.  
+One of the first paper on weaker consistency Model was DecentSTM~\cite{DecentSTM:5470446} in 2010. DecentSTM implements the slightly weaker consistency semantics, snapshot isolation (SI), a very popular semantics in databases.  DecentSTM algorithm keeps limited list of committed versions of all shared data and obtains lazily a consistent memory snapshot during a transaction’s execution. By choosing a version upon read, a transaction determines on which versions it depends. In fact with unlimited version history, a read only transaction would never have to abort, because it could always read a previous version that does not conflict with the data read so far. For coincidental commits DSTM uses a voting based randomized consensus protocol. Using snapshot isolation do provide the higher performance in Decent STM, but also adds up additional memory overhead of maintaining versioned objects.  
 
 In 2011 Nuno et. al. in DiasSTM~\cite{dias2011efficient} came up with approach of static analysis of transactional code to provide serializable correctness to the snapshot consistency model based database systems. They suggested the methods to avoid read-write anomalies by automatically modifying the transaction code.
 
-Genuine Multiversion Update-Serializable Partial Data Replication(GMU)~\cite{GMU:peluso2012scalability} work published in 2012 provided high performance using the consistency criterion Extended Update Serializability(EUS)~\cite{EUS:HansdahPatnaik}. EUS unlike 1-Copy Serialization allows concurrent read-only transactions to observe snapshots generated from different linear extensions of the history of update transactions. At its heart GMU uses a distributed multiversion concurrency control scheme, a vector clock based synchronization algorithm, to track down data and causal dependency relations. It uses the partial replication to reduce the amount of network communication.
+Genuine Multiversion Update-Serializable Partial Data Replication(GMU)~\cite{GMU:peluso2012scalability} work published in 2012 provided high performance using the consistency criterion Extended Update Serializability(EUS). At its heart GMU uses a distributed multiversion concurrency control scheme, a vector clock based synchronization algorithm, to track down data and causal dependency relations. It uses the partial replication to reduce the amount of network communication.
 
 In recent times there have been lot of work on designing unconventional database system. With explosion in amount of data processed and stored in data warehouse, system administers are understanding the limitation of current database systems. Many works ~\cite{Stonebraker:2007:EAE:1325851.1325981}~\cite{harizopoulos2008oltp} have argued that current DBMS perform a poor job of CPU utilization and might require whole redesign. Works like HStore~\cite{HSTORE:kallman2008h} and Google Spanner~\cite{corbett2012spanner} have achieve high performance using new architectures based on replication and multi-versioning for database systems.  
 
-\section{Transaction Nesting and Checkpointing}
+\subsection{Transaction Nesting and Checkpointing}
 
 For performance improvement Nesting techniques are widely used in database systems. In 1981 Moss~\cite{moss1981nested} first time described the nesting concept in a distributed transaction. He extended two phase commit protocal~\cite{TwoPC:weikum1991principles} to support the nesting and proposed algorithms for distributed transaction management, object state restoration, and distributed deadlock detection. Later in 1983 Gracia~\cite{garcia1983using} et. al. extensive analyzed it in open nesting context using undo-logs transactions. 
 
@@ -327,7 +365,7 @@ GMU & \XSolidBold{} & \CheckmarkBold{} & \CheckmarkBold{} & \XSolidBold{} & \XSo
 \caption{Comparison of DSTM implementations.}
 \label{tbl:stmComp}
 \end{table}
-HyflowCpp framework is implemented in C++ at API-level and focuses on non-replicated peer to peer distributed systems. Current default algorithm implementation, Transaction Forwarding Algorithm(TFA), provides the strong memory consistency. Using distributed clock, TFA is able to overcome any global serialization overhead. Single version objects without any replication helps TFA to reduce the amount of network messaging and enables it to scale without any network bottleneck. In Table~\ref{tbl:stmComp}, we summarize our comparison: %of HyflowCpp. Each row of the table describes an DSTM implementation, and each column describes a feature. The table entries describe the features supported by the different DSTMs.
+HyflowCpp framework is implemented in C++ at API-level and focuses on non-replicated peer to peer distributed systems. Current default algorithm implementation, Transaction Forwarding Algorithm(TFA), provides the strong memory consistency. Using distributed clock, TFA is able to overcome any global serialization overhead. Single version objects without any replication helps TFA to reduce the amount of network messaging and enables it to scale without any network bottleneck. In Table~\ref{tbl:stmComp}, we summarize our comparison of HyflowCpp. Each row of the table describes an DSTM implementation, and each column describes a feature. The table entries describe the features supported by the different DSTMs.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %																									%

@@ -33,6 +33,7 @@ bool BenchmarkExecutor::isInitiated = false;
 double BenchmarkExecutor::throughPut = 0;
 int BenchmarkExecutor::threadCount = 0;
 int BenchmarkExecutor::retryCount = 0;
+int BenchmarkExecutor::checkPointResume = 0;
 std::string BenchmarkExecutor::benchMarkName;
 
 HyflowBenchmark* BenchmarkExecutor::benchmark = NULL;
@@ -40,6 +41,7 @@ bool* BenchmarkExecutor::transactionType = NULL;
 std::string*** BenchmarkExecutor::threadArgsArray = NULL;
 std::string* BenchmarkExecutor::ids = NULL;
 boost::thread_specific_ptr<HyInteger> BenchmarkExecutor::tries;
+boost::thread_specific_ptr<HyInteger> BenchmarkExecutor::checkResume;
 boost::thread** BenchmarkExecutor::benchmarkThreads = NULL;
 boost::mutex BenchmarkExecutor::execMutex;
 
@@ -53,15 +55,17 @@ unsigned long long BenchmarkExecutor::getTime() {
 	return tv.tv_sec*1000000 + tv.tv_usec;
 }
 
-void BenchmarkExecutor::addMetaData(double trp, int retry) {
+void BenchmarkExecutor::addMetaData(double trp, int retry, int cpResume) {
 	boost::unique_lock<boost::mutex> metaDatalock(execMutex);
 	throughPut += trp;
 	retryCount += retry;
+	checkPointResume += cpResume;
 }
 
 void BenchmarkExecutor::writeResults() {
 	Logger::result("Throughput=%.2f\n", throughPut);
 	Logger::result("Retries=%d\n",retryCount);
+	Logger::result("CheckpointResume=%d\n",checkPointResume);
 }
 
 void BenchmarkExecutor::initExecutor(){
@@ -84,6 +88,9 @@ void BenchmarkExecutor::initExecutor(){
 		}else if(ConfigFile::Value(BENCHMARK).compare(LOAN) == 0) {
 			benchMarkName = "Loan";
 			benchmark = new LoanBenchmark();
+		}else if(ConfigFile::Value(BENCHMARK).compare(HASH_TABLE) == 0) {
+			benchMarkName = "hashTable";
+			benchmark = new HashTableBenchmark();
 		}else if(ConfigFile::Value(BENCHMARK).compare(TPCC) == 0) {
 			benchMarkName = "Tpcc";
 			benchmark = new TpccBenchmark();
@@ -111,6 +118,7 @@ void BenchmarkExecutor::writeConfig() {
 	Logger::result("Trnxs=%d\n", transactions);
 	Logger::result("Threads=%d\n",threadCount);
 	Logger::result("Nodes=%d\n",NetworkManager::getNodeCount());
+	Logger::result("Nesting=%s\n",ConfigFile::Value(NESTING_MODEL).c_str());
 }
 
 void BenchmarkExecutor::createObjects(){
@@ -170,12 +178,15 @@ void BenchmarkExecutor::execute(int id){
 	unsigned long long executionTime = (end -start + 1);	// Get value in us
 	LOG_DEBUG("Execution time %llu ms\n",executionTime/1000);
 	double thrPut = (transactions*1000000)/executionTime;
-	int rtry = 0;
+	int rtry = 0, checkRes=0;
 	if (tries.get()) {
 	// Tries are also get included in retried value as we count number of contexts created
 		rtry = tries.get()->getValue() - transactions;
 	}
-	addMetaData(thrPut, rtry);
+	if (checkResume.get()) {
+		checkRes = checkResume.get()->getValue();
+	}
+	addMetaData(thrPut, rtry, checkRes);
 	LOG_DEBUG("BNC_EXE %d: ThroughPut = %0.2f trxns/sec <----------------------\n", id, thrPut);
 //	sleep(20);
 //	ThreadMeta::threadDeinit(TRANSACTIONAL_THREAD);
@@ -186,8 +197,17 @@ void BenchmarkExecutor::increaseRetries() {
 		tries.reset(new HyInteger(0));
 	}
 	tries.get()->increaseValue();
-	LOG_DEBUG("---tries++-->%d\n", tries.get()->getValue());
+	LOG_DEBUG("BE:---tries++-->%d\n", tries.get()->getValue());
 }
+
+void BenchmarkExecutor::increaseCheckpoint() {
+	if (!checkResume.get()) {
+		checkResume.reset(new HyInteger(0));
+	}
+	checkResume.get()->increaseValue();
+	LOG_DEBUG("BE:---Checkpoint++-->%d\n", checkResume.get()->getValue());
+}
+
 
 void BenchmarkExecutor::executeThreads() {
 	// Read all the configuration settings

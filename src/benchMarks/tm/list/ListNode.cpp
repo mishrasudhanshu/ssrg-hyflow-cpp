@@ -82,6 +82,7 @@ void ListNode::deleteNode(int value, HyflowContext *c) {}
 
 void ListNode::deleteNode(int value) {
 	HYFLOW_ATOMIC_START{
+		HYFLOW_CHECKPOINT_INIT;
 		ListNode* targetNode = NULL;
 		std::string head("HEAD");
 		std::string prev = head, next;
@@ -92,6 +93,7 @@ void ListNode::deleteNode(int value) {
 		LOG_DEBUG("LIST :First Node is List %s searching for %d\n", next.c_str(), value);
 
 		while(next.compare("NULL") != 0) {
+			HYFLOW_CHECKPOINT_HERE;
 			HYFLOW_FETCH(next, true);
 			targetNode = (ListNode*)HYFLOW_ON_READ(next);
 			int nodeValue = targetNode->getValue();
@@ -114,6 +116,7 @@ void ListNode::sumNodes(HyflowContext *c) {}
 
 void ListNode::sumNodes() {
 	HYFLOW_ATOMIC_START{
+		HYFLOW_CHECKPOINT_INIT;
 		ListNode* targetNode = NULL;
 		std::string head("HEAD");
 		std::string prev = head, next;
@@ -125,6 +128,7 @@ void ListNode::sumNodes() {
 		LOG_DEBUG("LIST :First Node is List %s\n", next.c_str());
 
 		while(next.compare("NULL") != 0) {
+			HYFLOW_CHECKPOINT_HERE;
 			HYFLOW_FETCH(next, true);
 			targetNode = (ListNode*)HYFLOW_ON_READ(next);
 			nodeSum += targetNode->getValue();
@@ -143,6 +147,7 @@ void ListNode::findNode(int value, HyflowContext *c) {
 
 void ListNode::findNode(int value) {
 	HYFLOW_ATOMIC_START{
+		HYFLOW_CHECKPOINT_INIT;
 		bool isPresent = false;
 		ListNode* targetNode = NULL;
 		std::string head("HEAD");
@@ -154,6 +159,7 @@ void ListNode::findNode(int value) {
 		LOG_DEBUG("LIST :First Node is List %s\n", next.c_str());
 
 		while(next.compare("NULL") != 0) {
+			HYFLOW_CHECKPOINT_HERE;
 			HYFLOW_FETCH(next, true);
 			targetNode = (ListNode*)HYFLOW_ON_READ(next);
 			int nodeValue = targetNode->getValue();

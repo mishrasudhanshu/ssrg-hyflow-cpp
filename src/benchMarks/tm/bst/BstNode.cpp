@@ -61,6 +61,7 @@ void BstNode::addNode(int value, HyflowContext *c, HyflowObjectFuture & fu) {}
 
 void BstNode::addNode(int value) {
 	HYFLOW_ATOMIC_START {
+		HYFLOW_CHECKPOINT_INIT;
 		std::string head="HEAD";
 		HYFLOW_FETCH(head, true);
 

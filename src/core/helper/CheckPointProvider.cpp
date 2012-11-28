@@ -11,12 +11,18 @@
 #include "../../util/networking/NetworkManager.h"
 #include "../../util/concurrent/ThreadMeta.h"
 #include "../../util/logging/Logger.h"
+#include "../../benchMarks/BenchmarkExecutor.h"
 
 namespace vt_dstm {
+
 volatile bool* CheckPointProvider::isTransactionComplete = NULL;
 std::vector<ucontext_t *>** CheckPointProvider::checkPoints = NULL;
 volatile int* CheckPointProvider::checkPointIndex = NULL;
 bool CheckPointProvider::checkPointingEnabled = false;
+
+std::vector<std::vector<std::pair<int*, int*> > >** CheckPointProvider::threadIntegerStore = NULL;
+std::vector<std::vector<std::pair<std::string*, std::string*> > >** CheckPointProvider::threadStringStore = NULL;
+std::vector<std::vector<std::pair<void**, void**> > >** CheckPointProvider::threadPointerStore = NULL;
 
 CheckPointProvider::CheckPointProvider() {}
 
@@ -29,8 +35,16 @@ void CheckPointProvider::checkPointProviderInit() {
 		isTransactionComplete = new volatile bool[threadCount] ;
 		checkPointIndex = new volatile int[threadCount];
 		checkPoints = new std::vector<ucontext_t*>*[threadCount];
+
+		threadIntegerStore = new std::vector<std::vector<std::pair<int*, int*> > >*[threadCount];
+		threadStringStore = new std::vector<std::vector<std::pair<std::string*, std::string*> > >*[threadCount];
+		threadPointerStore = new std::vector<std::vector<std::pair<void**, void**> > >*[threadCount];
+
 		for (int i=0; i<threadCount ; i++) {
 			checkPoints[i] = new std::vector<ucontext_t *>();
+			threadIntegerStore[i] = new std::vector<std::vector<std::pair<int*, int*> > >();
+			threadStringStore[i] = new std::vector<std::vector<std::pair<std::string*, std::string*> > >();
+			threadPointerStore[i] = new std::vector<std::vector<std::pair<void**, void**> > >();
 		}
 	}
 	checkPointingEnabled = true;
@@ -41,8 +55,9 @@ void CheckPointProvider::checkPointInit() {
 		int threadId = ThreadMeta::getThreadId();
 		isTransactionComplete[threadId] = false;
 		checkPointIndex[threadId] = 0;
-		for (unsigned int i=0 ; i<checkPoints[threadId]->size() ; i++ )
+		for (unsigned int i=0 ; i<checkPoints[threadId]->size() ; i++ ) {
 			delete checkPoints[threadId]->at(i);
+		}
 		checkPoints[threadId]->clear();
 	}
 }
@@ -82,6 +97,7 @@ void CheckPointProvider::startCheckPoint(int checkPointIndex) {
 				LOG_DEBUG("CPP : Deleted checkpoint %d\n", i);
 				restartPoint = NULL;
 			}else if(checkPointIndex == i) {
+				LOG_DEBUG("CPP : Found checkpoint %d\n", i);
 				restartPoint = checkPoints[threadId]->at(i);
 				break;
 			} else {
@@ -89,7 +105,8 @@ void CheckPointProvider::startCheckPoint(int checkPointIndex) {
 			}
 		}
 
-		LOG_DEBUG("CPP : Restarting checkPoint\n");
+		BenchmarkExecutor::increaseCheckpoint();
+		LOG_DEBUG("CPP : Restarting checkPoint %d\n", checkPointIndex);
 		setcontext(restartPoint);
 	}
 }
@@ -98,6 +115,7 @@ void CheckPointProvider::saveCheckPoint(ucontext_t* checkPoint) {
 	if (checkPointingEnabled) {
 		int threadId = ThreadMeta::getThreadId();
 		checkPoints[threadId]->push_back(checkPoint);
+		LOG_DEBUG("CPP : Saved checkpoint number %d\n", checkPoints[threadId]->size());
 	}
 }
 

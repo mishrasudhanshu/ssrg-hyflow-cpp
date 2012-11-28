@@ -21,19 +21,23 @@ BankBenchmark::~BankBenchmark() {
 }
 
 int BankBenchmark::getOperandsCount() {
-	return 2;
+	return 2*3;
 }
 
 void BankBenchmark::readOperation(std::string ids[], int size) {
-	LOG_DEBUG("Total Balance of %s & %s\n", ids[0].c_str(), ids[1].c_str());
-	BankAccount::totalBalance(ids[0], ids[1]);
+	for(int txns=0 ; txns<size ; txns+=2 ) {
+		LOG_DEBUG("Total Balance of %s & %s\n", ids[txns].c_str(), ids[txns+1].c_str());
+	}
+	BankAccount::totalBalanceMulti(ids, size);
 }
 
 void BankBenchmark::writeOperation(std::string ids[], int size) {
 	int a = 1;
 	a += ThreadMeta::getThreadId();	// Only for debug sanity
-	LOG_DEBUG("Transfer from %s to %s %d\n", ids[0].c_str(), ids[1].c_str(), a);
-	BankAccount::transfer(ids[0], ids[1], a);
+	for(int txns=0 ; txns<size ; txns+=2 ) {
+		LOG_DEBUG("Transfer from %s to %s %d\n", ids[txns].c_str(), ids[txns+1].c_str(), a);
+	}
+	BankAccount::transferMulti(ids, size, a);
 }
 
 void BankBenchmark::checkSanity() {

@@ -12,6 +12,7 @@
 #include "../../util/logging/Logger.h"
 #include "../../core/HyflowObject.h"
 #include "../../core/context/ContextManager.h"
+#include "CheckPointProvider.h"
 
 #define HYFLOW_ATOMIC_START \
 HyflowContext* __context__ = ContextManager::getInstance(); \

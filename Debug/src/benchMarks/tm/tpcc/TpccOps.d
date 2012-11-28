@@ -10,6 +10,8 @@ src/benchMarks/tm/tpcc/TpccOps.d: ../src/benchMarks/tm/tpcc/TpccOps.cpp \
  ../src/benchMarks/tm/tpcc/../../../core/helper/../../core/context/../exceptions/types/TransactionException.h \
  ../src/benchMarks/tm/tpcc/../../../core/helper/../../core/context/../exceptions/types/../HyflowException.h \
  ../src/benchMarks/tm/tpcc/../../../core/helper/../../core/context/../../util/concurrent/ConcurrentHashMap.h \
+ ../src/benchMarks/tm/tpcc/../../../core/helper/CheckPointProvider.h \
+ ../src/benchMarks/tm/tpcc/../../../core/helper/../context/ContextManager.h \
  ../src/benchMarks/tm/tpcc/../../../util/logging/Logger.h \
  ../src/benchMarks/tm/tpcc/TpccOrder.h \
  ../src/benchMarks/tm/tpcc/../../../core/HyflowObject.h \
@@ -50,6 +52,10 @@ src/benchMarks/tm/tpcc/TpccOps.d: ../src/benchMarks/tm/tpcc/TpccOps.cpp \
 ../src/benchMarks/tm/tpcc/../../../core/helper/../../core/context/../exceptions/types/../HyflowException.h:
 
 ../src/benchMarks/tm/tpcc/../../../core/helper/../../core/context/../../util/concurrent/ConcurrentHashMap.h:
+
+../src/benchMarks/tm/tpcc/../../../core/helper/CheckPointProvider.h:
+
+../src/benchMarks/tm/tpcc/../../../core/helper/../context/ContextManager.h:
 
 ../src/benchMarks/tm/tpcc/../../../util/logging/Logger.h:
 

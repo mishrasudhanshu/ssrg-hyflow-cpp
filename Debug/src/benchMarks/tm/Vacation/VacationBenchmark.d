@@ -58,6 +58,13 @@ src/benchMarks/tm/Vacation/VacationBenchmark.d: \
  ../src/benchMarks/tm/Vacation/../../tm/loan/../../../core/context/HyflowContext.h \
  ../src/benchMarks/tm/Vacation/../../tm/loan/../../../core/HyflowObjectFuture.h \
  ../src/benchMarks/tm/Vacation/../../tm/loan/../../HyflowBenchmark.h \
+ ../src/benchMarks/tm/Vacation/../../tm/hashTable/HashTableBenchMark.h \
+ ../src/benchMarks/tm/Vacation/../../tm/hashTable/HashTable.h \
+ ../src/benchMarks/tm/Vacation/../../tm/hashTable/../../../core/HyflowObject.h \
+ ../src/benchMarks/tm/Vacation/../../tm/hashTable/../../../core/context/HyflowContext.h \
+ ../src/benchMarks/tm/Vacation/../../tm/hashTable/../../../core/HyflowObjectFuture.h \
+ ../src/benchMarks/tm/Vacation/../../tm/hashTable/../../HyflowBenchmark.h \
+ ../src/benchMarks/tm/Vacation/../../tm/hashTable/../../../util/concurrent/HyInteger.h \
  ../src/benchMarks/tm/Vacation/../../tm/tpcc/TpccBenchmark.h \
  ../src/benchMarks/tm/Vacation/../../tm/tpcc/../../HyflowBenchmark.h \
  ../src/benchMarks/tm/Vacation/../../tm/tpcc/TpccDistrict.h \
@@ -191,6 +198,20 @@ src/benchMarks/tm/Vacation/VacationBenchmark.d: \
 ../src/benchMarks/tm/Vacation/../../tm/loan/../../../core/HyflowObjectFuture.h:
 
 ../src/benchMarks/tm/Vacation/../../tm/loan/../../HyflowBenchmark.h:
+
+../src/benchMarks/tm/Vacation/../../tm/hashTable/HashTableBenchMark.h:
+
+../src/benchMarks/tm/Vacation/../../tm/hashTable/HashTable.h:
+
+../src/benchMarks/tm/Vacation/../../tm/hashTable/../../../core/HyflowObject.h:
+
+../src/benchMarks/tm/Vacation/../../tm/hashTable/../../../core/context/HyflowContext.h:
+
+../src/benchMarks/tm/Vacation/../../tm/hashTable/../../../core/HyflowObjectFuture.h:
+
+../src/benchMarks/tm/Vacation/../../tm/hashTable/../../HyflowBenchmark.h:
+
+../src/benchMarks/tm/Vacation/../../tm/hashTable/../../../util/concurrent/HyInteger.h:
 
 ../src/benchMarks/tm/Vacation/../../tm/tpcc/TpccBenchmark.h:
 

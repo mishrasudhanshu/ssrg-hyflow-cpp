@@ -83,6 +83,7 @@ namespace vt_dstm
 #define SKIP_LIST "skipList"
 #define BST "bst"
 #define LOAN "loan"
+#define HASH_TABLE "hashTable"
 #define TPCC "tpcc"
 #define TEST "test"
 

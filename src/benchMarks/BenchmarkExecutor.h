@@ -16,6 +16,7 @@
 #include "tm/skipList/SkipListBenchmark.h"
 #include "tm/bst/BstBenchmark.h"
 #include "tm/loan/LoanBenchMark.h"
+#include "tm/hashTable/HashTableBenchMark.h"
 #include "tm/tpcc/TpccBenchmark.h"
 #include "../util/concurrent/HyInteger.h"
 
@@ -26,6 +27,7 @@ class BenchmarkExecutor {
 	static boost::thread **benchmarkThreads;
 
 	static boost::thread_specific_ptr<HyInteger> tries;
+	static boost::thread_specific_ptr<HyInteger> checkResume;
 	static int calls;
 	static int delay;
 	static long timeout;
@@ -39,6 +41,7 @@ class BenchmarkExecutor {
 	static int threadCount;
 	static double throughPut;
 	static int retryCount;
+	static int checkPointResume;
 	static boost::mutex execMutex;
 
 	static bool* transactionType;
@@ -54,7 +57,7 @@ class BenchmarkExecutor {
 	static std::string& randomId();
 	static void createObjects();
     static void execute(int id);
-	static void addMetaData(double trhPut, int retry);
+	static void addMetaData(double trhPut, int retry, int cpResume);
 	static void writeConfig();
 public:
 	BenchmarkExecutor();
@@ -74,11 +77,13 @@ public:
     	SkipListBenchmark::registerObjectTypes(ar);
     	BstBenchmark::registerObjectTypes(ar);
     	LoanBenchmark::registerObjectTypes(ar);
+    	HashTableBenchmark::registerObjectTypes(ar);
     	TpccBenchmark::registerObjectTypes(ar);
     }
 
     static void executeThreads();
 	static void increaseRetries();
+	static void increaseCheckpoint();
 
 	static int getCalls() {	return calls; }
 

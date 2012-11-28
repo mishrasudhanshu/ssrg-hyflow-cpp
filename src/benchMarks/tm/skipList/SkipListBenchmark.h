@@ -16,6 +16,7 @@
 namespace vt_dstm {
 
 class SkipListBenchmark: public vt_dstm::HyflowBenchmark {
+	std::string* ids;
 	static boost::thread_specific_ptr<HyInteger> objectCreated;
 	static int skipListLevels;
 public:

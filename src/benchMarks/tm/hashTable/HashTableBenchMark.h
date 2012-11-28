@@ -5,36 +5,39 @@
  *      Author: mishras[at]vt.edu
  */
 
-#ifndef HASHMAPBENCHMARK_H_
-#define HASHMAPBENCHMARK_H_
+#ifndef HASHTABLEBENCHMARK_H_
+#define HASHTABLEBENCHMARK_H_
 
 #include "boost/thread/tss.hpp"
-#include "HashMap.h"
+#include "HashTable.h"
 #include "../../HyflowBenchmark.h"
 #include "../../../util/concurrent/HyInteger.h"
 
 namespace vt_dstm {
 
-class HashMapBenchmark: public vt_dstm::HyflowBenchmark {
+class HashTableBenchmark: public vt_dstm::HyflowBenchmark {
+	std::string* ids;
+	static int objectCount;
+	static int bucketCount;
 	static boost::thread_specific_ptr<HyInteger> objectCreated;
 public:
-	HashMapBenchmark();
-	virtual ~HashMapBenchmark();
+	HashTableBenchmark();
+	virtual ~HashTableBenchmark();
 
 	template<class Archive>
 	static void registerObjectTypes(Archive & ar) {
-		ar.register_type(static_cast<HashMap*>(NULL));
+		ar.register_type(static_cast<HashBucket*>(NULL));
 	}
 
 	int getOperandsCount();
 	void readOperation(std::string ids[], int size);
 	void writeOperation(std::string ids[], int size);
 	void checkSanity();
-	static int getId();
+	static std::string getBucketId(int key);
 	std::string* createLocalObjects(int objCount);
 };
 
 } /* namespace vt_dstm */
 
 
-#endif /* HASHMAPBENCHMARK_H_ */
+#endif /* HASHTABLEBENCHMARK_H_ */

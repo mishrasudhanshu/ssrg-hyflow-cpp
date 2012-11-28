@@ -23,6 +23,8 @@ src/benchMarks/tm/bst/BstNode.d: ../src/benchMarks/tm/bst/BstNode.cpp \
  ../src/benchMarks/tm/bst/../../../core/helper/../../util/logging/Logger.h \
  ../src/benchMarks/tm/bst/../../../core/helper/../../core/HyflowObject.h \
  ../src/benchMarks/tm/bst/../../../core/helper/../../core/context/ContextManager.h \
+ ../src/benchMarks/tm/bst/../../../core/helper/CheckPointProvider.h \
+ ../src/benchMarks/tm/bst/../../../core/helper/../context/ContextManager.h \
  ../src/benchMarks/tm/bst/../../../util/logging/Logger.h \
  ../src/benchMarks/tm/bst/../../../util/networking/NetworkManager.h \
  ../src/benchMarks/tm/bst/../../../util/networking/AbstractNetwork.h \
@@ -79,6 +81,10 @@ src/benchMarks/tm/bst/BstNode.d: ../src/benchMarks/tm/bst/BstNode.cpp \
 ../src/benchMarks/tm/bst/../../../core/helper/../../core/HyflowObject.h:
 
 ../src/benchMarks/tm/bst/../../../core/helper/../../core/context/ContextManager.h:
+
+../src/benchMarks/tm/bst/../../../core/helper/CheckPointProvider.h:
+
+../src/benchMarks/tm/bst/../../../core/helper/../context/ContextManager.h:
 
 ../src/benchMarks/tm/bst/../../../util/logging/Logger.h:
 
