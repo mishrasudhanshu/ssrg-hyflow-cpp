@@ -18,6 +18,17 @@
 
 namespace vt_dstm {
 
+class ListArgs {
+public:
+	int *values;
+	int size;
+
+	ListArgs(int *v, int s) {
+		values = v ;
+		size = s ;
+	}
+};
+
 class ListNode: public vt_dstm::HyflowObject {
     friend class boost::serialization::access;
 
@@ -30,22 +41,15 @@ class ListNode: public vt_dstm::HyflowObject {
 
 	std::string nextId;
 	int value;
-	static void addNode(int value, HyflowContext *c, HyflowObjectFuture & fu);
-	static void deleteNode(int value, HyflowContext *c);
-	static void sumNodes(HyflowContext *c);
-	static void findNode(int value, HyflowContext *c);
-public:
-	ListNode();
-	ListNode(int value, int counter);
-	ListNode(int value, std::string id);
-	virtual ~ListNode();
+	static void addNodeAtomically(HyflowObject* self, void* args, HyflowContext* c, void* ignore);
+	static void deleteNodeAtomically(HyflowObject* self, void* args, HyflowContext* c, void* ignore);
+	static void sumNodesAtomically(HyflowObject* self, void* args, HyflowContext* c, void* ignore);
+	static void findNodeAtomically(HyflowObject* self, void* args, HyflowContext* c, void* ignore);
 
-	std::string getNextId() const;
-	void setNextId(std::string nextId);
-	int getValue() const;
-	void setValue(int value);
-	void print();
-	void getClone(HyflowObject **obj);
+	static void addNodeMultiAtomically(HyflowObject* self, void* args, HyflowContext* c, void* ignore);
+	static void deleteNodeMultiAtomically(HyflowObject* self, void* args, HyflowContext* c, void* ignore);
+	static void sumNodesMultiAtomically(HyflowObject* self, void* args, HyflowContext* c, void* ignore);
+	static void findNodeMultiAtomically(HyflowObject* self, void* args, HyflowContext* c, void* ignore);
 	/*
 	 * Adds the given value in the list
 	 */
@@ -62,6 +66,23 @@ public:
 	 * Finds the first occurrence of value in list
 	 */
 	static void findNode(int value);
+public:
+	ListNode();
+	ListNode(int value, int counter);
+	ListNode(int value, std::string id);
+	virtual ~ListNode();
+
+	std::string getNextId() const;
+	void setNextId(std::string nextId);
+	int getValue() const;
+	void setValue(int value);
+	void print();
+	void getClone(HyflowObject **obj);
+
+	static void addNodeMulti(int values[], int size);
+	static void deleteNodeMulti(int values[], int size);
+	static void sumNodesMulti(int count);
+	static void findNodeMulti(int values[], int size);
 
 	void test();
 };

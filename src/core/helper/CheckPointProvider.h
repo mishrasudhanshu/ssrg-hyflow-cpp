@@ -30,32 +30,30 @@ do{\
 		ucontext_t* checkPoint = new ucontext_t(); \
 		vt_dstm::CheckPointProvider::saveCheckPoint(checkPoint); \
 		getcontext(checkPoint); \
-		LOG_DEBUG("Restoring the CheckPoint\n");\
+		vt_dstm::CheckPointProvider::restoreUserValues();\
 	}\
 }\
 
 #define HYFLOW_STORE(VAR_REFERENCE, VAR_VALUE) \
 do {\
-	\
-}while(0)\
-
-#define HYFLOW_RESTORE_ALL \
-do {\
-\
+	vt_dstm::CheckPointProvider::storeUserValue(VAR_REFERENCE, VAR_VALUE);\
 }while(0)\
 
 namespace vt_dstm {
 
 class CheckPointProvider {
 public:
+	static volatile int* jumpCheck;
 	// TODO: Add all primary data types
-	static void storeUserValue(int *Reference, int *value);
-	static void storeUserValue(std::string *Reference, std::string *Referece);
-	static void storeUserValue(void **Reference, void **value);
+	static void storeUserValue(int *Reference, int value);
+	static void storeUserValue(std::string *Reference, std::string value);
+	static void storeUserValue(void **Reference, void *value);
 
-	static std::vector<std::vector<std::pair<int*, int*> > >** threadIntegerStore;
-	static std::vector<std::vector<std::pair<std::string*, std::string*> > >** threadStringStore;
-	static std::vector<std::vector<std::pair<void**, void**> > >** threadPointerStore;
+	static void cleanUpUserValues(int forCheckPoint);
+	static void restoreUserValues();
+	static std::map<int, std::vector<std::pair<int*, int> > >** threadIntegerStore;
+	static std::map<int, std::vector<std::pair<std::string*, std::string> > >** threadStringStore;
+	static std::map<int, std::vector<std::pair<void**, void*> > >** threadPointerStore;
 
 	static volatile bool* isTransactionComplete;
 	static volatile int* checkPointIndex;
@@ -67,7 +65,7 @@ public:
 	}
 
 	static int getCheckPointIndex();
-	void setCheckPointIndex(int checkPointIndex);
+	static void setCheckPointIndex(int checkPointIndex);
 
 	CheckPointProvider();
 	virtual ~CheckPointProvider();

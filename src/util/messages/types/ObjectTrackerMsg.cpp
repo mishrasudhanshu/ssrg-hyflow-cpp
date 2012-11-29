@@ -17,6 +17,7 @@
 #include "../../messages/MessageMaps.h"
 #include "../../logging/Logger.h"
 #include "../../../core/directory/DirectoryManager.h"
+#include "../../../core/context/ContextManager.h"
 
 namespace vt_dstm {
 
@@ -69,6 +70,13 @@ void ObjectTrackerMsg::objectTrackerHandler(HyflowMessage & msg) {
 			int myNode = NetworkManager::getNodeId();
 			if (myNode == otmsg->owner) {
 				LOG_DEBUG("Object Tracker Response: Local object %s\n", otmsg->objectId.c_str());
+
+				// Update sender clock for requesting context
+				HyflowContext *c = ContextManager::findContext(cbfmsg->getTxnId());
+				// Transaction forwarding will be done on before access call, currently just note
+				// down the highest sender clock.
+				c->updateClock(msg.fromNodeClock);
+
 				HyflowObject* obj = DirectoryManager::getObjectLocally(otmsg->objectId, otmsg->isRead);
 				cbfmsg->setDataResponse(obj);
 				cbfmsg->notifyMessage();

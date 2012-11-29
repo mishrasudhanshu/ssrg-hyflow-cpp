@@ -150,7 +150,9 @@ bool ContextManager::atomicUpdateClock(int newClock, int oldClock) {
 }
 
 void ContextManager::atomicIncreaseClock() {
+	int old = localNodeClock.load();
 	localNodeClock++;
+	LOG_DEBUG("CM :Move clock from %d to %d\n", old, localNodeClock.load());
 }
 
 Hyflow_NestingModel ContextManager::getNestingModel() {
@@ -162,7 +164,9 @@ void ContextManager::setNestingModel(Hyflow_NestingModel nM) {
 }
 
 int ContextManager::getClock() {
-	return localNodeClock.load();
+	int clock = localNodeClock.load();
+	LOG_DEBUG("CM :Current clock %d\n", clock);
+	return clock;
 }
 
 } /* namespace vt_dstm */

@@ -263,33 +263,32 @@ void DTL2Context::forward(int senderClock) {
 	}else if (nestingModel == HYFLOW_CHECKPOINTING) {
 		if (tnxClock < senderClock) {
 			int availableCheckPoint = CheckPointProvider::getCheckPointIndex()+1;
-			// Try to verify read versions of all the objects.
-			std::map<std::string, HyflowObject*, ObjectIdComparator>::reverse_iterator rev_ri = readMap.rbegin();
-			while(rev_ri != readMap.rend()) {
-				int objectsCheckPoint = rev_ri->second->getAccessCheckPoint();
+			// Try to verify read versions of all the objects. Need not be reverse order
+			std::map<std::string, HyflowObject*, ObjectIdComparator>::iterator ri = readMap.begin();
+			while(ri != readMap.end()) {
+				int objectsCheckPoint = ri->second->getAccessCheckPoint();
 				if ( objectsCheckPoint >= availableCheckPoint) {
 					// As this object was access in to be aborted part of transaction don't validate
-					HyflowObject *saveObject = rev_ri->second;
-					LOG_DEBUG("ValidateCP :Object %s Copy found in read set with accessIndex %d\n", rev_ri->first.c_str(), objectsCheckPoint);
-					rev_ri++;
-					readMap.erase(saveObject->getId());
+					HyflowObject *saveObject = ri->second;
+					LOG_DEBUG("ValidateCP :Object %s Copy found in read set with accessIndex %d\n", ri->first.c_str(), objectsCheckPoint);
+					readMap.erase(ri++);
 					delete saveObject;
 					continue;
 				}
 
-				if (!validateObject(rev_ri->second)) {
-					LOG_DEBUG("ValidateCP :Unable to validate for %s, version %d accessIndex %d with txn %ull\n", rev_ri->first.c_str(), objectsCheckPoint, rev_ri->second->getVersion(), txnId);
+				if (!validateObject(ri->second)) {
+					LOG_DEBUG("ValidateCP :Unable to validate for %s, version %d accessIndex %d with txn %ull\n", ri->first.c_str(), objectsCheckPoint, ri->second->getVersion(), txnId);
 
 					if (objectsCheckPoint > 0) {
 						availableCheckPoint = objectsCheckPoint;
 						LOG_DEBUG("ValidateCP :Got a valid checkPoint %d\n", objectsCheckPoint);
 					} else { // No check point available throw exception
 						setStatus(TXN_ABORTED);
-						TransactionException readValidationFail("Commit :Unable to validate for "+rev_ri->first+"\n");
+						TransactionException readValidationFail("Commit :Unable to validate for "+ri->first+"\n");
 						throw readValidationFail;
 					}
 				}
-				rev_ri++;
+				ri++;
 			}
 
 			// Time to remove invalid objects in read set, Write set, Publish Set and Delete Set too
@@ -613,7 +612,9 @@ void DTL2Context::tryCommitCP() {
 					throw unableToWriteLock;
 				}
 			}else {
-				lockedObjects.push_back(rev_wi->second);
+				HyflowObject* lockCopy = NULL;
+				rev_wi->second->getClone(&lockCopy);
+				lockedObjects.push_back(lockCopy);
 			}
 			rev_wi++;
 		}
@@ -626,6 +627,7 @@ void DTL2Context::tryCommitCP() {
 		while (rev_ri != readMap.rend()) {
 			int objectsCheckPoint = rev_ri->second->getAccessCheckPoint();
 			if ( objectsCheckPoint >= availableCheckPoint) {
+				rev_ri++;
 				continue;
 			}
 
@@ -659,6 +661,7 @@ void DTL2Context::tryCommitCP() {
 				std::vector<HyflowObject *>::iterator vi;
 				for ( vi = lockedObjects.begin(); vi != lockedObjects.end(); vi++) {
 					unlockObjectOnFail(*vi);
+					delete *vi;
 				}
 				lockedObjects.clear();
 
@@ -669,8 +672,10 @@ void DTL2Context::tryCommitCP() {
 		// Free all acquired locks
 		LOG_DEBUG("Commit :Transaction failed, freeing the locks\n");
 		std::vector<HyflowObject *>::iterator vi;
-		for ( vi = lockedObjects.begin(); vi != lockedObjects.end(); vi++)
+		for ( vi = lockedObjects.begin(); vi != lockedObjects.end(); vi++) {
 			unlockObjectOnFail(*vi);
+			delete *vi;
+		}
 		throw;
 	}
 }
@@ -692,7 +697,7 @@ void DTL2Context::reallyCommit() {
 		// version must increase after each commit.
 //		wi->second->setVersion(tnxClock);
 		wi->second->setVersion(version);
-		LOG_DEBUG("Set object %s version %d\n",wi->first.c_str(), tnxClock);
+		LOG_DEBUG("Set object %s version %d\n",wi->first.c_str(), version);
 		// Register object
 		DirectoryManager::registerObject(wi->second, txnId);
 	}
@@ -882,7 +887,41 @@ void DTL2Context::fetchObject(std::string id, bool isRead=true) {
 		}
 	}
 
-	// TODO: Search in publish set too, user may lose its own created objects
+	// Search in publish set too, user may lose its own created objects
+	std::map<std::string, HyflowObject*>::iterator pubItr = publishMap.find(id);
+	if ( pubItr != publishMap.end() ) {
+		LOG_DEBUG("DTL :Object %s found in transaction publish Set\n", id.c_str());
+		// Copy object to its read set
+		HyflowObject* pCopy = NULL;
+		pubItr->second->getClone(&pCopy);
+		// Update checkPoint access index and Copy to this transaction readSet
+		pCopy->setAccessCheckPoint(CheckPointProvider::getCheckPointIndex());
+		if (isRead) {
+			readMap[id] = pCopy;
+		}else {
+			writeMap[id] = pCopy;
+		}
+		return;
+	}
+
+	//Check if object copy is available in any of parent transaction
+	for (DTL2Context* current= (DTL2Context*)parentContext; current != NULL; current = (DTL2Context*)current->parentContext) {
+		std::map<std::string, HyflowObject*>::iterator ppubItr = current->publishMap.find(id);
+		if (ppubItr != current->publishMap.end()) {
+			// We got object in parent transaction
+			HyflowObject* pCopy = NULL;
+			ppubItr->second->getClone(&pCopy);
+			// Update checkPoint access index and Copy to this transaction readSet
+			pCopy->setAccessCheckPoint(CheckPointProvider::getCheckPointIndex());
+			if (isRead) {
+				readMap[id] = pCopy;
+			}else {
+				writeMap[id] = pCopy;
+ 			}
+			return ;
+		}
+	}
+
 	// Go over network and fetch the object
 	HyflowObject* obj = DirectoryManager::locate(id, true, txnId);
 	// If object got deleted then throw abort exception

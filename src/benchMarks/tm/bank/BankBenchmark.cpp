@@ -21,7 +21,7 @@ BankBenchmark::~BankBenchmark() {
 }
 
 int BankBenchmark::getOperandsCount() {
-	return 2*3;
+	return 2*2;
 }
 
 void BankBenchmark::readOperation(std::string ids[], int size) {

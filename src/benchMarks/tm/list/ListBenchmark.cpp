@@ -17,7 +17,7 @@
  * Higher contention value causes the deletion of object less probable
  * TODO: Set as configurable value from default.conf
  */
-#define HYFLOW_LIST_CONTENTION 2
+#define HYFLOW_LIST_CONTENTION 3		//Should create around 5 nodes
 
 namespace vt_dstm {
 
@@ -28,32 +28,47 @@ ListBenchmark::ListBenchmark() { }
 ListBenchmark::~ListBenchmark() {}
 
 int ListBenchmark::getOperandsCount()	{
-	return 1;
+	return 1*1;
 }
 
 void ListBenchmark::readOperation(std::string ids[], int size){
-	int random = abs(Logger::getCurrentMicroSec());
-	if (random%2 == 1 ) {
+	int multiCount = getOperandsCount();
+	int select = abs(Logger::getCurrentMicroSec()+1);
+	if (select%2 == 1 ) {
 		LOG_DEBUG("LIST :SUM Nodes\n");
-		ListNode::sumNodes();
+		ListNode::sumNodesMulti(multiCount);
 	}else {
-		int value = random%HYFLOW_LIST_CONTENTION;
-		LOG_DEBUG("LIST :FIND[%d] Node\n", value);
-		ListNode::findNode(value);
+		int random = abs(Logger::getCurrentMicroSec());
+		int* values = new int[multiCount];
+		for(int txns = 0; txns<multiCount ; txns++) {
+			values[txns] = (random+txns)%HYFLOW_LIST_CONTENTION;
+			LOG_DEBUG("LIST :FIND[%d] Node\n", values[txns]);
+		}
+		ListNode::findNodeMulti(values, multiCount);
+		delete[] values;
 	}
 }
 
 void ListBenchmark::writeOperation(std::string ids[], int size){
 	int random = abs(Logger::getCurrentMicroSec());
-	int value = random%HYFLOW_LIST_CONTENTION;
 	int select = abs(Logger::getCurrentMicroSec()+1);
+	int multiCount = getOperandsCount();
+
+	int* values = new int[multiCount];
 	if (select%2 == 1 ) {
-		LOG_DEBUG("LIST :ADD[%d] Node\n", value);
-		ListNode::addNode(value);
+		for(int txns = 0; txns<multiCount ; txns++) {
+			values[txns] = (random+txns)%HYFLOW_LIST_CONTENTION;
+			LOG_DEBUG("LIST :ADD[%d] Node\n", values[txns]);
+		}
+		ListNode::addNodeMulti(values,multiCount);
 	}else {
-		LOG_DEBUG("LIST :DEL[%d] Node\n", value);
-		ListNode::deleteNode(value);
+		for(int txns = 0; txns<multiCount ; txns++) {
+			values[txns] = (random+txns)%HYFLOW_LIST_CONTENTION;
+			LOG_DEBUG("LIST :DEL[%d] Node\n", values[txns]);
+		}
+		ListNode::deleteNodeMulti(values, multiCount);
 	}
+	delete [] values;
 }
 
 void ListBenchmark::checkSanity(){}

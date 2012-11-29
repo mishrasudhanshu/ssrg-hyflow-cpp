@@ -20,6 +20,17 @@
 
 namespace vt_dstm {
 
+class SkipListArgs {
+public:
+	int *values;
+	int size;
+
+	SkipListArgs(int *v, int s) {
+		values = v ;
+		size = s ;
+	}
+};
+
 class SkipListNode: public vt_dstm::HyflowObject {
     friend class boost::serialization::access;
 
@@ -34,10 +45,18 @@ class SkipListNode: public vt_dstm::HyflowObject {
 	std::vector<std::string> nextIds;
 	int value;
 	int highestLevel;
-	static void addNode(int value, HyflowContext *c, HyflowObjectFuture & fu);
-	static void deleteNode(int value, HyflowContext *c);
-	static void sumNodes(HyflowContext *c);
-	static void findNode(int value, HyflowContext *c);
+
+	static void addNodeAtomically(HyflowObject* self, void* args, HyflowContext* c, void* ignore);
+	static void deleteNodeAtomically(HyflowObject* self, void* args, HyflowContext* c, void* ignore);
+	static void findNodeAtomically(HyflowObject* self, void* args, HyflowContext* c, void* ignore);
+
+	static void addNodeMultiAtomically(HyflowObject* self, void* args, HyflowContext* c, void* ignore);
+	static void deleteNodeMultiAtomically(HyflowObject* self, void* args, HyflowContext* c, void* ignore);
+	static void findNodeMultiAtomically(HyflowObject* self, void* args, HyflowContext* c, void* ignore);
+
+	static void addNode(int value);
+	static void deleteNode(int value);
+	static void findNode(int value);
 public:
 	SkipListNode();
 	SkipListNode(int value, int counter);
@@ -54,15 +73,15 @@ public:
 	/*
 	 * Adds the given value in the list
 	 */
-	static void addNode(int value);
+	static void addNodeMulti(int* values, int size);
 	/*
 	 * Deletes the first occurrence of value in list
 	 */
-	static void deleteNode(int value);
+	static void deleteNodeMulti(int* values, int size);
 	/*
 	 * Finds the first occurrence of value in list
 	 */
-	static void findNode(int value);
+	static void findNodeMulti(int* values, int size);
 
 	void test();
 };

@@ -59,120 +59,232 @@ void ListNode::setValue(int value) {
 ListNode::~ListNode() {
 }
 
-void ListNode::addNode(int value, HyflowContext *c, HyflowObjectFuture & fu) {}
+void ListNode::addNodeAtomically(HyflowObject* self, void* args, HyflowContext* __context__, void* ignore) {
+	int nodeValue = *((int*)args);
+
+	std::string head="HEAD";
+	HYFLOW_FETCH(head, false);
+
+	ListNode* headNodeRead =  (ListNode*)HYFLOW_ON_READ(head);
+	std::string oldNext = headNodeRead->getNextId();
+	ListNode* newNode = new ListNode(nodeValue, ListBenchmark::getId());
+	newNode->setNextId(oldNext);
+	HYFLOW_PUBLISH_OBJECT(newNode);
+
+	ListNode* headNodeWrite = (ListNode*)HYFLOW_ON_WRITE(head);
+	headNodeWrite->setNextId(newNode->getId());
+	LOG_DEBUG("LIST :Set Head next Id to %s value %d\n", newNode->getId().c_str(), nodeValue);
+}
 
 void ListNode::addNode(int value) {
-	HYFLOW_ATOMIC_START{
-		std::string head="HEAD";
-		HYFLOW_FETCH(head, false);
-
-		ListNode* headNodeRead =  (ListNode*)HYFLOW_ON_READ(head);
-		std::string oldNext = headNodeRead->getNextId();
-		ListNode* newNode = new ListNode(value, ListBenchmark::getId());
-		newNode->setNextId(oldNext);
-		HYFLOW_PUBLISH_OBJECT(newNode);
-
-		ListNode* headNodeWrite = (ListNode*)HYFLOW_ON_WRITE(head);
-		headNodeWrite->setNextId(newNode->getId());
-		LOG_DEBUG("LIST :Set Head next Id to %s value %d\n", newNode->getId().c_str(), value);
-	} HYFLOW_ATOMIC_END;
+	Atomic<void> atomicAdd;
+	atomicAdd.atomically = ListNode::addNodeAtomically;
+	atomicAdd.execute(NULL, &value, NULL);
 }
 
-void ListNode::deleteNode(int value, HyflowContext *c) {}
+void ListNode::deleteNodeAtomically(HyflowObject* self, void* args, HyflowContext* __context__, void* ignore) {
+	int givenValue = *((int*)args);
+	HYFLOW_CHECKPOINT_INIT;
+	ListNode* targetNode = NULL;
+	std::string head("HEAD");
+	std::string prev = head, next;
+	//Fetch the Head Node first, It is just a dummy Node
+	HYFLOW_FETCH(head, true);
+	targetNode = (ListNode*)HYFLOW_ON_READ(head);
+	next = targetNode->getNextId();
+	LOG_DEBUG("LIST :First Node is List %s searching for %d\n", next.c_str(), givenValue);
+
+	while(next.compare("NULL") != 0) {
+		HYFLOW_FETCH(next, true);
+		targetNode = (ListNode*)HYFLOW_ON_READ(next);
+		int nodeValue = targetNode->getValue();
+		if (nodeValue == givenValue) {
+			ListNode* prevNode = (ListNode*)HYFLOW_ON_WRITE(prev);
+			ListNode* currentNode = (ListNode*)HYFLOW_ON_WRITE(next);
+			prevNode->setNextId(currentNode->getNextId());
+			HYFLOW_DELETE_OBJECT(currentNode);
+			LOG_DEBUG("LIST :Got the required value %d in node %s\n", givenValue, currentNode->getId().c_str());
+			break;
+		}
+		prev = next;
+		next = targetNode->getNextId();
+		//TODO: Think about removing previous->previous node from read write set
+	}
+}
 
 void ListNode::deleteNode(int value) {
-	HYFLOW_ATOMIC_START{
-		HYFLOW_CHECKPOINT_INIT;
-		ListNode* targetNode = NULL;
-		std::string head("HEAD");
-		std::string prev = head, next;
-		//Fetch the Head Node first, It is just a dummy Node
-		HYFLOW_FETCH(head, true);
-		targetNode = (ListNode*)HYFLOW_ON_READ(head);
-		next = targetNode->getNextId();
-		LOG_DEBUG("LIST :First Node is List %s searching for %d\n", next.c_str(), value);
-
-		while(next.compare("NULL") != 0) {
-			HYFLOW_CHECKPOINT_HERE;
-			HYFLOW_FETCH(next, true);
-			targetNode = (ListNode*)HYFLOW_ON_READ(next);
-			int nodeValue = targetNode->getValue();
-			if (nodeValue == value) {
-				ListNode* prevNode = (ListNode*)HYFLOW_ON_WRITE(prev);
-				ListNode* currentNode = (ListNode*)HYFLOW_ON_WRITE(next);
-				prevNode->setNextId(currentNode->getNextId());
-				HYFLOW_DELETE_OBJECT(currentNode);
-				LOG_DEBUG("LIST :Got the required value %d in node %s\n", value, currentNode->getId().c_str());
-				break;
-			}
-			prev = next;
-			next = targetNode->getNextId();
-			//TODO: Think about removing previous->previous node from read write set
-		}
-	} HYFLOW_ATOMIC_END;
+	Atomic<void> atomicDelete;
+	atomicDelete.atomically = ListNode::deleteNodeAtomically;
+	atomicDelete.execute(NULL, &value, NULL);
 }
 
-void ListNode::sumNodes(HyflowContext *c) {}
+void ListNode::sumNodesAtomically(HyflowObject* self, void* args, HyflowContext* __context__, void* ignore) {
+	ListNode* targetNode = NULL;
+	std::string head("HEAD");
+	std::string prev = head, next;
+	int nodeSum =0 ;
+	//Fetch the Head Node first, It is just a dummy Node
+	HYFLOW_FETCH(head, true);
+	targetNode = (ListNode*)HYFLOW_ON_READ(head);
+	next = targetNode->getNextId();
+	LOG_DEBUG("LIST :First Node is List %s\n", next.c_str());
+
+	while(next.compare("NULL") != 0) {
+		HYFLOW_FETCH(next, true);
+		targetNode = (ListNode*)HYFLOW_ON_READ(next);
+		nodeSum += targetNode->getValue();
+		prev = next;
+		next = targetNode->getNextId();
+		//TODO: Think about removing previous->previous node from read write set
+		LOG_DEBUG("LIST :Got value %d in %s with next %s\n", targetNode->getValue(), targetNode->getId().c_str(), next.c_str());
+	}
+	LOG_DEBUG("LIST :Sum Value=%d\n", nodeSum);
+}
 
 void ListNode::sumNodes() {
-	HYFLOW_ATOMIC_START{
-		HYFLOW_CHECKPOINT_INIT;
-		ListNode* targetNode = NULL;
-		std::string head("HEAD");
-		std::string prev = head, next;
-		int nodeSum =0 ;
-		//Fetch the Head Node first, It is just a dummy Node
-		HYFLOW_FETCH(head, true);
-		targetNode = (ListNode*)HYFLOW_ON_READ(head);
-		next = targetNode->getNextId();
-		LOG_DEBUG("LIST :First Node is List %s\n", next.c_str());
+	Atomic<void> atomicSum;
+	atomicSum.atomically = ListNode::sumNodesAtomically;
+	atomicSum.execute(NULL, NULL, NULL);
+}
 
-		while(next.compare("NULL") != 0) {
-			HYFLOW_CHECKPOINT_HERE;
-			HYFLOW_FETCH(next, true);
-			targetNode = (ListNode*)HYFLOW_ON_READ(next);
-			nodeSum += targetNode->getValue();
-			prev = next;
-			next = targetNode->getNextId();
-			//TODO: Think about removing previous->previous node from read write set
-			LOG_DEBUG("LIST :Got value %d in %s with next %s\n", targetNode->getValue(), targetNode->getId().c_str(), next.c_str());
+void ListNode::findNodeAtomically(HyflowObject* self, void* args, HyflowContext* __context__, void* ignore) {
+	int givenValue = *((int*)args);
+	bool isPresent = false;
+	ListNode* targetNode = NULL;
+	std::string head("HEAD");
+	std::string prev = head, next;
+	//Fetch the Head Node first, It is just a dummy Node
+	HYFLOW_FETCH(head, true);
+	targetNode = (ListNode*)HYFLOW_ON_READ(head);
+	next = targetNode->getNextId();
+	LOG_DEBUG("LIST :First Node is List %s\n", next.c_str());
+
+	while(next.compare("NULL") != 0) {
+		HYFLOW_FETCH(next, true);
+		targetNode = (ListNode*)HYFLOW_ON_READ(next);
+		int nodeValue = targetNode->getValue();
+		if (nodeValue == givenValue) {
+			isPresent = true;
+			LOG_DEBUG("LIST :Found Value %d in %s\n", nodeValue, targetNode->getId().c_str());
+			break;
 		}
-		LOG_DEBUG("LIST :Sum Value=%d\n", nodeSum);
-	} HYFLOW_ATOMIC_END;
-}
-
-void ListNode::findNode(int value, HyflowContext *c) {
-
-}
-
-void ListNode::findNode(int value) {
-	HYFLOW_ATOMIC_START{
-		HYFLOW_CHECKPOINT_INIT;
-		bool isPresent = false;
-		ListNode* targetNode = NULL;
-		std::string head("HEAD");
-		std::string prev = head, next;
-		//Fetch the Head Node first, It is just a dummy Node
-		HYFLOW_FETCH(head, true);
-		targetNode = (ListNode*)HYFLOW_ON_READ(head);
+		prev = next;
 		next = targetNode->getNextId();
-		LOG_DEBUG("LIST :First Node is List %s\n", next.c_str());
+		//TODO: Think about removing previous->previous node from read write set
+	}
+}
 
-		while(next.compare("NULL") != 0) {
-			HYFLOW_CHECKPOINT_HERE;
-			HYFLOW_FETCH(next, true);
-			targetNode = (ListNode*)HYFLOW_ON_READ(next);
-			int nodeValue = targetNode->getValue();
-			if (nodeValue == value) {
-				isPresent = true;
-				LOG_DEBUG("LIST :Found Value %d in %s\n", nodeValue, targetNode->getId().c_str());
-				break;
+void ListNode::findNode(int nodeValue) {
+	Atomic<void> atomicfind;
+	atomicfind.atomically = ListNode::findNodeAtomically;
+	atomicfind.execute(NULL, &nodeValue, NULL);
+}
+
+void ListNode::addNodeMultiAtomically(HyflowObject* self, void* args, HyflowContext* c, void* ignore) {
+	ListArgs* largs = (ListArgs*)args;
+	for (int txns = 0; txns < largs->size ; txns+=1) {
+		addNode(largs->values[txns]);
+	}
+}
+
+void ListNode::deleteNodeMultiAtomically(HyflowObject* self, void* args, HyflowContext* c, void* ignore) {
+	ListArgs* largs = (ListArgs*)args;
+	for (int txns = 0; txns < largs->size ; txns+=1) {
+		deleteNode(largs->values[txns]);
+	}
+}
+
+void ListNode::sumNodesMultiAtomically(HyflowObject* self, void* args, HyflowContext* c, void* ignore) {
+	ListArgs* largs = (ListArgs*)args;
+	for (int txns = 0; txns < largs->size ; txns+=1) {
+		sumNodes();
+	}
+}
+
+void ListNode::findNodeMultiAtomically(HyflowObject* self, void* args, HyflowContext* c, void* ignore) {
+	ListArgs* largs = (ListArgs*)args;
+	for (int txns = 0; txns < largs->size ; txns+=1) {
+		findNode(largs->values[txns]);
+	}
+}
+
+void ListNode::addNodeMulti(int values[], int size) {
+	if (ContextManager::getNestingModel() == HYFLOW_CHECKPOINTING) {
+		HYFLOW_ATOMIC_START {
+			HYFLOW_CHECKPOINT_INIT;
+			for(int txns=0 ; txns<size ; txns+=1 ) {
+				LOG_DEBUG("List :Call Add Node with %d in txns %d\n", values[txns], txns);
+				addNode(values[txns]);
+
+				HYFLOW_STORE(&txns, txns);
+				HYFLOW_CHECKPOINT_HERE;
 			}
-			prev = next;
-			next = targetNode->getNextId();
-			//TODO: Think about removing previous->previous node from read write set
-		}
-	} HYFLOW_ATOMIC_END;
+		}HYFLOW_ATOMIC_END;
+	}else {
+		ListArgs largs(values, size);
+		Atomic<void> atomicAddMulti;
+		atomicAddMulti.atomically = ListNode::addNodeMultiAtomically;
+		atomicAddMulti.execute(NULL, &largs, NULL);
+	}
+}
+
+void ListNode::deleteNodeMulti(int values[], int size) {
+	if (ContextManager::getNestingModel() == HYFLOW_CHECKPOINTING) {
+		HYFLOW_ATOMIC_START {
+			HYFLOW_CHECKPOINT_INIT;
+			for(int txns=0 ; txns<size ; txns+=1 ) {
+				LOG_DEBUG("List :Call Delete Node with %d in txns %d\n", values[txns], txns);
+				deleteNode(values[txns]);
+
+				HYFLOW_STORE(&txns, txns);
+				HYFLOW_CHECKPOINT_HERE;
+			}
+		}HYFLOW_ATOMIC_END;
+	}else {
+		ListArgs largs(values, size);
+		Atomic<void> atomicDeleteMulti;
+		atomicDeleteMulti.atomically = ListNode::deleteNodeMultiAtomically;
+		atomicDeleteMulti.execute(NULL, &largs, NULL);
+	}
+}
+
+void ListNode::sumNodesMulti(int count) {
+	if (ContextManager::getNestingModel() == HYFLOW_CHECKPOINTING) {
+		HYFLOW_ATOMIC_START {
+			HYFLOW_CHECKPOINT_INIT;
+			for(int txns=0 ; txns<count ; txns+=1 ) {
+				LOG_DEBUG("List :Call sumNodes %d  time\n", txns);
+				sumNodes();
+
+				HYFLOW_STORE(&txns, txns);
+				HYFLOW_CHECKPOINT_HERE;
+			}
+		}HYFLOW_ATOMIC_END;
+	}else {
+		Atomic<void> atomicSumMulti;
+		atomicSumMulti.atomically = ListNode::sumNodesMultiAtomically;
+		atomicSumMulti.execute(NULL, NULL, NULL);
+	}
+}
+
+void ListNode::findNodeMulti(int values[], int size) {
+	if (ContextManager::getNestingModel() == HYFLOW_CHECKPOINTING) {
+		HYFLOW_ATOMIC_START {
+			HYFLOW_CHECKPOINT_INIT;
+			for(int txns=0 ; txns<size ; txns+=1 ) {
+				LOG_DEBUG("List :Call find Node with %d in txns %d\n", values[txns], txns);
+				findNode(values[txns]);
+
+				HYFLOW_STORE(&txns, txns);
+				HYFLOW_CHECKPOINT_HERE;
+			}
+		}HYFLOW_ATOMIC_END;
+	}else {
+		ListArgs largs(values, size);
+		Atomic<void> atomicfindMulti;
+		atomicfindMulti.atomically = ListNode::findNodeMultiAtomically;
+		atomicfindMulti.execute(NULL, &largs, NULL);
+	}
 }
 
 void ListNode::print() {

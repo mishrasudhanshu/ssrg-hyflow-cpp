@@ -12,6 +12,8 @@
 #include <boost/archive/text_oarchive.hpp>
 
 #include <unistd.h>
+#include <vector>
+#include <inttypes.h>
 #include "../../../core/context/ContextManager.h"
 #include "../../../core/HyflowObjectFuture.h"
 #include "../../../core/directory/DirectoryManager.h"
@@ -70,7 +72,7 @@ void BankAccount::checkBalanceAtomic(HyflowObject* self, void *args, HyflowConte
 }
 
 void BankAccount::depositAtomic(HyflowObject* self, void* args, HyflowContext* context, uint64_t* ignore) {
-	int money = ((BankArgs*)args)->money;
+	uint64_t money = ((BankArgs*)args)->money;
 	std::string id = ((BankArgs*)args)->ids[1];
 
 	context->fetchObject(id);
@@ -80,10 +82,11 @@ void BankAccount::depositAtomic(HyflowObject* self, void* args, HyflowContext* c
 
 	ba->setAmount(baCurrent->amount);
 	ba->deposit(money);
+	LOG_DEBUG("Bank :In %s Money %llu deposit change %llu to %llu\n", id.c_str(), money, baCurrent->amount, ba->amount);
 }
 
 void BankAccount::withdrawAtomic(HyflowObject* self, void* args, HyflowContext* context, uint64_t* ignore) {
-	int money = ((BankArgs*)args)->money;
+	uint64_t money = ((BankArgs*)args)->money;
 	std::string id = ((BankArgs*)args)->ids[0];
 
 	context->fetchObject(id);
@@ -93,6 +96,7 @@ void BankAccount::withdrawAtomic(HyflowObject* self, void* args, HyflowContext* 
 
 	ba->setAmount(baCurrent->amount);
 	ba->withdraw(money);
+	LOG_DEBUG("Bank :In %s Money %llu withdraw change %llu to %llu\n", id.c_str(), money, baCurrent->amount, ba->amount);
 }
 
 void BankAccount::totalBalanceAtomically(HyflowObject* self, void* bankArgs, HyflowContext* c, uint64_t* balance) {
@@ -184,6 +188,7 @@ void BankAccount::totalBalanceMulti(std::string ids[], int size) {
 					checkBalanceAtomic(NULL, &ids[txns], __context__, &balance);
 				}
 
+				HYFLOW_STORE(&txns, txns);
 				HYFLOW_CHECKPOINT_HERE;
 
 				LOG_DEBUG("BANK :Call CheckBalance in txns %d\n", txns);
@@ -192,6 +197,7 @@ void BankAccount::totalBalanceMulti(std::string ids[], int size) {
 					checkBalanceAtomic(NULL, &ids[txns+1], __context__, &balance);
 				}
 
+				HYFLOW_STORE(&txns, txns);
 				HYFLOW_CHECKPOINT_HERE;
 			}
 		}HYFLOW_ATOMIC_END;
@@ -215,6 +221,7 @@ void BankAccount::transferMulti(std::string ids[], int size, int money) {
 					withdrawAtomic(NULL, &baArgs, __context__, NULL);
 				}
 
+				HYFLOW_STORE(&txns, txns);
 				HYFLOW_CHECKPOINT_HERE;
 
 				LOG_DEBUG("BANK :Call Deposit in txns %d\n", txns);
@@ -222,6 +229,7 @@ void BankAccount::transferMulti(std::string ids[], int size, int money) {
 					//usleep(2000);
 					depositAtomic(NULL, &baArgs, __context__, NULL);
 				}
+				HYFLOW_STORE(&txns, txns);
 				HYFLOW_CHECKPOINT_HERE;
 			}
 		}HYFLOW_ATOMIC_END;

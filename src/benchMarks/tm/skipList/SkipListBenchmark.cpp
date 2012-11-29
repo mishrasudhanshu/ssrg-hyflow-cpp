@@ -14,7 +14,7 @@
 #include "../../../util/logging/Logger.h"
 
 // TODO: Move to default configuration
-#define HYFLOW_SKIP_LIST_CONTENTION 2
+#define HYFLOW_SKIP_LIST_CONTENTION 3  // Should create around 5+ nodes
 #define HYFLOW_SKIP_LIST_LEVELS 5
 
 namespace vt_dstm {
@@ -31,22 +31,38 @@ int SkipListBenchmark::getOperandsCount()	{
 }
 
 void SkipListBenchmark::readOperation(std::string ids[], int size){
+	int multiCount = getOperandsCount();
+
 	int random = abs(Logger::getCurrentMicroSec());
-	int value = random%HYFLOW_SKIP_LIST_CONTENTION;
-	LOG_DEBUG("LIST :FIND[%d] Node\n", value);
-	SkipListNode::findNode(value);
+	int* values = new int[multiCount];
+	for(int txns = 0; txns<multiCount ; txns++) {
+		values[txns] = (random+txns)%HYFLOW_SKIP_LIST_CONTENTION;
+		LOG_DEBUG("SkipLIST :FIND[%d] Node\n", values[txns]);
+	}
+	SkipListNode::findNodeMulti(values, multiCount);
+	delete[] values;
 }
 
 void SkipListBenchmark::writeOperation(std::string ids[], int size){
 	int random = abs(Logger::getCurrentMicroSec());
-	int value = random%HYFLOW_SKIP_LIST_CONTENTION;
-	if (random%2 == 1 ) {
-		LOG_DEBUG("LIST :ADD[%d] Node\n", value);
-		SkipListNode::addNode(value);
+	int select = abs(Logger::getCurrentMicroSec()+1);
+	int multiCount = getOperandsCount();
+
+	int* values = new int[multiCount];
+	if (select%2 == 1 ) {
+		for(int txns = 0; txns<multiCount ; txns++) {
+			values[txns] = (random+txns)%HYFLOW_SKIP_LIST_CONTENTION;
+			LOG_DEBUG("SkipLIST :ADD[%d] Node\n", values[txns]);
+		}
+		SkipListNode::addNodeMulti(values,multiCount);
 	}else {
-		LOG_DEBUG("LIST :DEL[%d] Node\n", value);
-		SkipListNode::deleteNode(value);
+		for(int txns = 0; txns<multiCount ; txns++) {
+			values[txns] = (random+txns)%HYFLOW_SKIP_LIST_CONTENTION;
+			LOG_DEBUG("SkipLIST :DEL[%d] Node\n", values[txns]);
+		}
+		SkipListNode::deleteNodeMulti(values, multiCount);
 	}
+	delete[] values;
 }
 
 void SkipListBenchmark::checkSanity(){}

@@ -17,7 +17,7 @@
  * Higher contention value causes the deletion of object less probable
  * TODO: Set as configurable value from default.conf
  */
-#define HYFLOW_BST_CONTENTION 2
+#define HYFLOW_BST_CONTENTION 3		//Should create around 5 nodes
 
 namespace vt_dstm {
 
@@ -35,7 +35,7 @@ void BstBenchmark::readOperation(std::string ids[], int size){
 	int random = abs(Logger::getCurrentMicroSec());
 
 	int value = random%HYFLOW_BST_CONTENTION;
-	LOG_DEBUG("LIST :FIND[%d] Node\n", value);
+	LOG_DEBUG("BST :FIND[%d] Node\n", value);
 	BstNode::findNode(value);
 
 }
@@ -43,11 +43,12 @@ void BstBenchmark::readOperation(std::string ids[], int size){
 void BstBenchmark::writeOperation(std::string ids[], int size){
 	int random = abs(Logger::getCurrentMicroSec());
 	int value = random%HYFLOW_BST_CONTENTION;
-	if (random%2 == 1 ) {
-		LOG_DEBUG("LIST :ADD[%d] Node\n", value);
+	int select = abs(Logger::getCurrentMicroSec()+1)%2;
+	if (select) {
+		LOG_DEBUG("BST :ADD[%d] Node\n", value);
 		BstNode::addNode(value);
 	}else {
-		LOG_DEBUG("LIST :DEL[%d] Node\n", value);
+		LOG_DEBUG("BST :DEL[%d] Node\n", value);
 		BstNode::deleteNode(value);
 	}
 }
