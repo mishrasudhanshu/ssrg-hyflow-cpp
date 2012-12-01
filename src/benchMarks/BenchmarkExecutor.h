@@ -42,6 +42,8 @@ class BenchmarkExecutor {
 	static double throughPut;
 	static int retryCount;
 	static int checkPointResume;
+	static int transactionLength;
+	static int innerTxns;
 	static boost::mutex execMutex;
 
 	static bool* transactionType;
@@ -83,7 +85,13 @@ public:
 
     static void executeThreads();
 	static void increaseRetries();
-	static void increaseCheckpoint();
+	static void countCheckpointResume();
+
+	static void transactionLengthDelay();
+
+	static int getInnerTxns(){
+		return innerTxns;
+	}
 
 	static int getCalls() {	return calls; }
 

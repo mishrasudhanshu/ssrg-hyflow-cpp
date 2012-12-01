@@ -12,6 +12,7 @@
 #include "../../util/logging/Logger.h"
 #include "../../core/HyflowObject.h"
 #include "../../core/context/ContextManager.h"
+#include "../../benchMarks/BenchmarkExecutor.h"
 #include "CheckPointProvider.h"
 
 #define HYFLOW_ATOMIC_START \
@@ -109,9 +110,11 @@ public:
 				((ContextManager::getNestingModel() == HYFLOW_NO_NESTING) ||
 					(ContextManager::getNestingModel() == HYFLOW_CHECKPOINTING))) {
 			HyflowContext* __context__ = ContextManager::getInstance();
+			BenchmarkExecutor::transactionLengthDelay();
 			atomically(self, args, __context__, retValue);
 		}else {
 			HYFLOW_ATOMIC_START {
+				BenchmarkExecutor::transactionLengthDelay();
 				atomically(self, args, __context__, retValue);
 			}HYFLOW_ATOMIC_END;
 		}

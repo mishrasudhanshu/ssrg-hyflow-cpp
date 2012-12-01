@@ -94,6 +94,8 @@ namespace vt_dstm
 #define NESTING_OPEN "open"
 #define NESTING_CHECKPOINT "checkPointing"
 
+#define INNER_TXNS "innerTxns"
+
 #define TRUE "true"
 #define FALSE "false"
 

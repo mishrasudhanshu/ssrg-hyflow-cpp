@@ -143,6 +143,7 @@ void DTL2Context::addToDelete(HyflowObject *deleteObject) {
 }
 
 /*
+ * TODO: Optimize, no forwarding if objects/node*threads*benchmarkOperands > 10
  * Performs the early validation of object at before read time itself and on finding
  * stale object aborts the transaction.
  */
@@ -934,8 +935,9 @@ void DTL2Context::fetchObject(std::string id, bool isRead=true) {
 	// Perform early validation step, always use highestSendClock, it is update by objectAccessMessage
 	// First do forwarding on current readSet then add new object to it
 	forward(highestSenderClock);
-	LOG_DEBUG("DTL :Fetched object %s\n", obj->getId().c_str());
-	obj->setAccessCheckPoint(CheckPointProvider::getCheckPointIndex());
+	int checkPointIndex = CheckPointProvider::getCheckPointIndex();
+	obj->setAccessCheckPoint(checkPointIndex);
+	LOG_DEBUG("DTL :Fetched object %s at checkPointIndex %d\n", obj->getId().c_str(), checkPointIndex);
 	if (isRead) {
 		LOG_DEBUG("DTL :Adding fetched object %s to readSet\n", id.c_str());
 		readMap[id] = obj;

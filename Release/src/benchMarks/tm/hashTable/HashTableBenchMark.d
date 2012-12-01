@@ -23,7 +23,60 @@ src/benchMarks/tm/hashTable/HashTableBenchMark.d: \
  ../src/benchMarks/tm/hashTable/../../../core/directory/../HyflowObject.h \
  ../src/benchMarks/tm/hashTable/../../../core/directory/HyflowDirectory.h \
  ../src/benchMarks/tm/hashTable/../../../core/directory/../HyflowObjectFuture.h \
- ../src/benchMarks/tm/hashTable/../../../util/logging/Logger.h
+ ../src/benchMarks/tm/hashTable/../../../util/logging/Logger.h \
+ ../src/benchMarks/tm/hashTable/../../BenchmarkExecutor.h \
+ ../src/benchMarks/tm/hashTable/../../HyflowBenchmark.h \
+ ../src/benchMarks/tm/hashTable/../../tm/bank/BankBenchmark.h \
+ ../src/benchMarks/tm/hashTable/../../tm/bank/BankAccount.h \
+ ../src/benchMarks/tm/hashTable/../../tm/bank/../../../core/HyflowObject.h \
+ ../src/benchMarks/tm/hashTable/../../tm/bank/../../../core/context/HyflowContext.h \
+ ../src/benchMarks/tm/hashTable/../../tm/bank/../../../core/HyflowObjectFuture.h \
+ ../src/benchMarks/tm/hashTable/../../tm/bank/../../HyflowBenchmark.h \
+ ../src/benchMarks/tm/hashTable/../../tm/list/ListBenchmark.h \
+ ../src/benchMarks/tm/hashTable/../../tm/list/ListNode.h \
+ ../src/benchMarks/tm/hashTable/../../tm/list/../../../core/HyflowObject.h \
+ ../src/benchMarks/tm/hashTable/../../tm/list/../../../core/context/HyflowContext.h \
+ ../src/benchMarks/tm/hashTable/../../tm/list/../../../core/HyflowObjectFuture.h \
+ ../src/benchMarks/tm/hashTable/../../tm/list/../../HyflowBenchmark.h \
+ ../src/benchMarks/tm/hashTable/../../tm/list/../../../util/concurrent/HyInteger.h \
+ ../src/benchMarks/tm/hashTable/../../tm/test/TestSpeedBenchmark.h \
+ ../src/benchMarks/tm/hashTable/../../tm/test/../../HyflowBenchmark.h \
+ ../src/benchMarks/tm/hashTable/../../tm/skipList/SkipListBenchmark.h \
+ ../src/benchMarks/tm/hashTable/../../tm/skipList/SkipListNode.h \
+ ../src/benchMarks/tm/hashTable/../../tm/skipList/../../../core/HyflowObject.h \
+ ../src/benchMarks/tm/hashTable/../../tm/skipList/../../../core/context/HyflowContext.h \
+ ../src/benchMarks/tm/hashTable/../../tm/skipList/../../../core/HyflowObjectFuture.h \
+ ../src/benchMarks/tm/hashTable/../../tm/skipList/../../HyflowBenchmark.h \
+ ../src/benchMarks/tm/hashTable/../../tm/skipList/../../../util/concurrent/HyInteger.h \
+ ../src/benchMarks/tm/hashTable/../../tm/bst/BstBenchmark.h \
+ ../src/benchMarks/tm/hashTable/../../tm/bst/BstNode.h \
+ ../src/benchMarks/tm/hashTable/../../tm/bst/../../../core/HyflowObject.h \
+ ../src/benchMarks/tm/hashTable/../../tm/bst/../../../core/context/HyflowContext.h \
+ ../src/benchMarks/tm/hashTable/../../tm/bst/../../../core/HyflowObjectFuture.h \
+ ../src/benchMarks/tm/hashTable/../../tm/bst/../../HyflowBenchmark.h \
+ ../src/benchMarks/tm/hashTable/../../tm/bst/../../../util/concurrent/HyInteger.h \
+ ../src/benchMarks/tm/hashTable/../../tm/loan/LoanBenchMark.h \
+ ../src/benchMarks/tm/hashTable/../../tm/loan/LoanAccount.h \
+ ../src/benchMarks/tm/hashTable/../../tm/loan/../../../core/HyflowObject.h \
+ ../src/benchMarks/tm/hashTable/../../tm/loan/../../../core/context/HyflowContext.h \
+ ../src/benchMarks/tm/hashTable/../../tm/loan/../../../core/HyflowObjectFuture.h \
+ ../src/benchMarks/tm/hashTable/../../tm/loan/../../HyflowBenchmark.h \
+ ../src/benchMarks/tm/hashTable/../../tm/hashTable/HashTableBenchMark.h \
+ ../src/benchMarks/tm/hashTable/../../tm/tpcc/TpccBenchmark.h \
+ ../src/benchMarks/tm/hashTable/../../tm/tpcc/../../HyflowBenchmark.h \
+ ../src/benchMarks/tm/hashTable/../../tm/tpcc/TpccDistrict.h \
+ ../src/benchMarks/tm/hashTable/../../tm/tpcc/../../../core/HyflowObject.h \
+ ../src/benchMarks/tm/hashTable/../../tm/tpcc/../../../core/context/HyflowContext.h \
+ ../src/benchMarks/tm/hashTable/../../tm/tpcc/../../../core/HyflowObjectFuture.h \
+ ../src/benchMarks/tm/hashTable/../../tm/tpcc/TpccItem.h \
+ ../src/benchMarks/tm/hashTable/../../tm/tpcc/TpccNewOrder.h \
+ ../src/benchMarks/tm/hashTable/../../tm/tpcc/TpccOrder.h \
+ ../src/benchMarks/tm/hashTable/../../tm/tpcc/TpccOrderLine.h \
+ ../src/benchMarks/tm/hashTable/../../tm/tpcc/TpccStock.h \
+ ../src/benchMarks/tm/hashTable/../../tm/tpcc/TpccCustomer.h \
+ ../src/benchMarks/tm/hashTable/../../tm/tpcc/TpccWareHouse.h \
+ ../src/benchMarks/tm/hashTable/../../tm/tpcc/../../../util/concurrent/HyInteger.h \
+ ../src/benchMarks/tm/hashTable/../../../util/concurrent/HyInteger.h
 
 ../src/benchMarks/tm/hashTable/HashTableBenchMark.h:
 
@@ -72,3 +125,109 @@ src/benchMarks/tm/hashTable/HashTableBenchMark.d: \
 ../src/benchMarks/tm/hashTable/../../../core/directory/../HyflowObjectFuture.h:
 
 ../src/benchMarks/tm/hashTable/../../../util/logging/Logger.h:
+
+../src/benchMarks/tm/hashTable/../../BenchmarkExecutor.h:
+
+../src/benchMarks/tm/hashTable/../../HyflowBenchmark.h:
+
+../src/benchMarks/tm/hashTable/../../tm/bank/BankBenchmark.h:
+
+../src/benchMarks/tm/hashTable/../../tm/bank/BankAccount.h:
+
+../src/benchMarks/tm/hashTable/../../tm/bank/../../../core/HyflowObject.h:
+
+../src/benchMarks/tm/hashTable/../../tm/bank/../../../core/context/HyflowContext.h:
+
+../src/benchMarks/tm/hashTable/../../tm/bank/../../../core/HyflowObjectFuture.h:
+
+../src/benchMarks/tm/hashTable/../../tm/bank/../../HyflowBenchmark.h:
+
+../src/benchMarks/tm/hashTable/../../tm/list/ListBenchmark.h:
+
+../src/benchMarks/tm/hashTable/../../tm/list/ListNode.h:
+
+../src/benchMarks/tm/hashTable/../../tm/list/../../../core/HyflowObject.h:
+
+../src/benchMarks/tm/hashTable/../../tm/list/../../../core/context/HyflowContext.h:
+
+../src/benchMarks/tm/hashTable/../../tm/list/../../../core/HyflowObjectFuture.h:
+
+../src/benchMarks/tm/hashTable/../../tm/list/../../HyflowBenchmark.h:
+
+../src/benchMarks/tm/hashTable/../../tm/list/../../../util/concurrent/HyInteger.h:
+
+../src/benchMarks/tm/hashTable/../../tm/test/TestSpeedBenchmark.h:
+
+../src/benchMarks/tm/hashTable/../../tm/test/../../HyflowBenchmark.h:
+
+../src/benchMarks/tm/hashTable/../../tm/skipList/SkipListBenchmark.h:
+
+../src/benchMarks/tm/hashTable/../../tm/skipList/SkipListNode.h:
+
+../src/benchMarks/tm/hashTable/../../tm/skipList/../../../core/HyflowObject.h:
+
+../src/benchMarks/tm/hashTable/../../tm/skipList/../../../core/context/HyflowContext.h:
+
+../src/benchMarks/tm/hashTable/../../tm/skipList/../../../core/HyflowObjectFuture.h:
+
+../src/benchMarks/tm/hashTable/../../tm/skipList/../../HyflowBenchmark.h:
+
+../src/benchMarks/tm/hashTable/../../tm/skipList/../../../util/concurrent/HyInteger.h:
+
+../src/benchMarks/tm/hashTable/../../tm/bst/BstBenchmark.h:
+
+../src/benchMarks/tm/hashTable/../../tm/bst/BstNode.h:
+
+../src/benchMarks/tm/hashTable/../../tm/bst/../../../core/HyflowObject.h:
+
+../src/benchMarks/tm/hashTable/../../tm/bst/../../../core/context/HyflowContext.h:
+
+../src/benchMarks/tm/hashTable/../../tm/bst/../../../core/HyflowObjectFuture.h:
+
+../src/benchMarks/tm/hashTable/../../tm/bst/../../HyflowBenchmark.h:
+
+../src/benchMarks/tm/hashTable/../../tm/bst/../../../util/concurrent/HyInteger.h:
+
+../src/benchMarks/tm/hashTable/../../tm/loan/LoanBenchMark.h:
+
+../src/benchMarks/tm/hashTable/../../tm/loan/LoanAccount.h:
+
+../src/benchMarks/tm/hashTable/../../tm/loan/../../../core/HyflowObject.h:
+
+../src/benchMarks/tm/hashTable/../../tm/loan/../../../core/context/HyflowContext.h:
+
+../src/benchMarks/tm/hashTable/../../tm/loan/../../../core/HyflowObjectFuture.h:
+
+../src/benchMarks/tm/hashTable/../../tm/loan/../../HyflowBenchmark.h:
+
+../src/benchMarks/tm/hashTable/../../tm/hashTable/HashTableBenchMark.h:
+
+../src/benchMarks/tm/hashTable/../../tm/tpcc/TpccBenchmark.h:
+
+../src/benchMarks/tm/hashTable/../../tm/tpcc/../../HyflowBenchmark.h:
+
+../src/benchMarks/tm/hashTable/../../tm/tpcc/TpccDistrict.h:
+
+../src/benchMarks/tm/hashTable/../../tm/tpcc/../../../core/HyflowObject.h:
+
+../src/benchMarks/tm/hashTable/../../tm/tpcc/../../../core/context/HyflowContext.h:
+
+../src/benchMarks/tm/hashTable/../../tm/tpcc/../../../core/HyflowObjectFuture.h:
+
+../src/benchMarks/tm/hashTable/../../tm/tpcc/TpccItem.h:
+
+../src/benchMarks/tm/hashTable/../../tm/tpcc/TpccNewOrder.h:
+
+../src/benchMarks/tm/hashTable/../../tm/tpcc/TpccOrder.h:
+
+../src/benchMarks/tm/hashTable/../../tm/tpcc/TpccOrderLine.h:
+
+../src/benchMarks/tm/hashTable/../../tm/tpcc/TpccStock.h:
+
+../src/benchMarks/tm/hashTable/../../tm/tpcc/TpccCustomer.h:
+
+../src/benchMarks/tm/hashTable/../../tm/tpcc/TpccWareHouse.h:
+
+../src/benchMarks/tm/hashTable/../../tm/tpcc/../../../util/concurrent/HyInteger.h:
+
+../src/benchMarks/tm/hashTable/../../../util/concurrent/HyInteger.h:

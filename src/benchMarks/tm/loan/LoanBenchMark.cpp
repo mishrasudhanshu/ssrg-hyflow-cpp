@@ -44,7 +44,7 @@ void LoanBenchmark::writeOperation(std::string ids[], int size) {
 	for(int i=1 ; i<size ; i++ ) {
 		accounts.push_back(ids[i]);
 	}
-	LoanAccount::borrow(ids[0], accounts, a);
+	LoanAccount::borrow(ids[0], accounts, a, true);
 }
 
 void LoanBenchmark::checkSanity() {

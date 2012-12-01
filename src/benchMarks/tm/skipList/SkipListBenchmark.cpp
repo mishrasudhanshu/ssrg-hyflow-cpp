@@ -12,6 +12,7 @@
 #include "../../../util/networking/NetworkManager.h"
 #include "../../../core/directory/DirectoryManager.h"
 #include "../../../util/logging/Logger.h"
+#include "../../BenchmarkExecutor.h"
 
 // TODO: Move to default configuration
 #define HYFLOW_SKIP_LIST_CONTENTION 3  // Should create around 5+ nodes
@@ -27,7 +28,7 @@ SkipListBenchmark::SkipListBenchmark() { }
 SkipListBenchmark::~SkipListBenchmark() {}
 
 int SkipListBenchmark::getOperandsCount()	{
-	return 1;
+	return 1*BenchmarkExecutor::getInnerTxns();;
 }
 
 void SkipListBenchmark::readOperation(std::string ids[], int size){

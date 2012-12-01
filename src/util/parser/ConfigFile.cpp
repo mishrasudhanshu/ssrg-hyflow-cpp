@@ -229,6 +229,10 @@ void ConfigFile::UpdateMap() {
 	value = getenv(NESTING_MODEL);
 	if (value)
 		Update(NESTING_MODEL, value);
+
+	value = getenv(INNER_TXNS);
+	if (value)
+		Update(INNER_TXNS, value);
 }
 
 void ConfigFile::test() {

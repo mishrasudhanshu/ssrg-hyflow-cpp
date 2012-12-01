@@ -11,6 +11,7 @@
 #include "../../../util/networking/NetworkManager.h"
 #include "../../../core/directory/DirectoryManager.h"
 #include "../../../util/logging/Logger.h"
+#include "../../BenchmarkExecutor.h"
 
 #define HYFLOW_HASHTABLE_CONTENTION 2
 
@@ -25,7 +26,7 @@ HashTableBenchmark::HashTableBenchmark() { }
 HashTableBenchmark::~HashTableBenchmark() {}
 
 int HashTableBenchmark::getOperandsCount()	{
-	return 1;
+	return 1*BenchmarkExecutor::getInnerTxns();
 }
 
 void HashTableBenchmark::readOperation(std::string ids[], int size){

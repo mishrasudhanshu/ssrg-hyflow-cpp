@@ -10,6 +10,7 @@
 #include <boost/thread/thread.hpp>
 #include <string.h>
 #include <time.h>
+#include <unistd.h>
 #include "BenchmarkExecutor.h"
 #include "../util/Definitions.h"
 #include "../util/parser/ConfigFile.h"
@@ -33,7 +34,10 @@ bool BenchmarkExecutor::isInitiated = false;
 double BenchmarkExecutor::throughPut = 0;
 int BenchmarkExecutor::threadCount = 0;
 int BenchmarkExecutor::retryCount = 0;
+int BenchmarkExecutor::transactionLength=0;
 int BenchmarkExecutor::checkPointResume = 0;
+int BenchmarkExecutor::innerTxns=1;
+
 std::string BenchmarkExecutor::benchMarkName;
 
 HyflowBenchmark* BenchmarkExecutor::benchmark = NULL;
@@ -106,6 +110,12 @@ void BenchmarkExecutor::initExecutor(){
 		threadCount = NetworkManager::getThreadCount();
 		benchmarkThreads = new boost::thread*[threadCount];
 		sanity = (strcmp(ConfigFile::Value(SANITY).c_str(), TRUE) == 0)? true:false;
+		transactionLength = atoi(ConfigFile::Value(TRANSACTIONS_LENGTH).c_str());
+		int it = atoi(ConfigFile::Value(INNER_TXNS).c_str());
+		if (it>0) {
+			innerTxns = it;
+		}
+
 		writeConfig();
 	}
 }
@@ -123,6 +133,10 @@ void BenchmarkExecutor::writeConfig() {
 
 void BenchmarkExecutor::createObjects(){
 	ids = benchmark->createLocalObjects(objectsCount);
+}
+
+void BenchmarkExecutor::transactionLengthDelay() {
+	usleep(transactionLength*1000);
 }
 
 void BenchmarkExecutor::prepareArgs() {
@@ -200,7 +214,7 @@ void BenchmarkExecutor::increaseRetries() {
 	LOG_DEBUG("BE:---tries++-->%d\n", tries.get()->getValue());
 }
 
-void BenchmarkExecutor::increaseCheckpoint() {
+void BenchmarkExecutor::countCheckpointResume() {
 	if (!checkResume.get()) {
 		checkResume.reset(new HyInteger(0));
 	}

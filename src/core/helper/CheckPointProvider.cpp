@@ -134,6 +134,7 @@ int CheckPointProvider::getCheckPointIndex() {
 void CheckPointProvider::setCheckPointIndex(int cpi) {
 	if (checkPointingEnabled) {
 		checkPointIndex[ThreadMeta::getThreadId()] = cpi;
+		LOG_DEBUG("CPP :PreJump CheckPoint Index %d\n", cpi);
 	}
 }
 
@@ -164,7 +165,7 @@ void CheckPointProvider::startCheckPoint(int checkPointIndex) {
 			}
 		}
 
-		BenchmarkExecutor::increaseCheckpoint();
+		BenchmarkExecutor::countCheckpointResume();
 		LOG_DEBUG("CPP : Setting checkPoint Jump Point %d\n", checkPointIndex);
 		jumpCheck[threadId] = checkPointIndex;
 		setcontext(restartPoint);
@@ -192,7 +193,7 @@ void CheckPointProvider::restoreUserValues() {
 			std::vector<std::pair<int*, int> >& intStore = (*intMapItr).second;
 			std::vector<std::pair<int*, int> >::iterator iitr;
 			for ( iitr = intStore.begin() ; iitr < intStore.end() ; iitr++ ) {
-				LOG_DEBUG("CPP : Restoring Integer Value\n");
+				LOG_DEBUG("CPP : Restoring Integer Value from  to %d\n", *(iitr->first), iitr->second);
 				*(iitr->first) = iitr->second;
 			}
 		}
@@ -218,6 +219,7 @@ void CheckPointProvider::restoreUserValues() {
 				*(vitr->first) = vitr->second;
 			}
 		}
+		LOG_DEBUG("CPP :PostJump CheckPoint Index %d\n", whereWeJumped);
 	}
 }
 

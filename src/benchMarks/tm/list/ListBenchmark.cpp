@@ -11,6 +11,7 @@
 #include "../../../util/networking/NetworkManager.h"
 #include "../../../core/directory/DirectoryManager.h"
 #include "../../../util/logging/Logger.h"
+#include "../../BenchmarkExecutor.h"
 
 /*
  * Increasing contention level causes the longer lists and more contention
@@ -28,7 +29,7 @@ ListBenchmark::ListBenchmark() { }
 ListBenchmark::~ListBenchmark() {}
 
 int ListBenchmark::getOperandsCount()	{
-	return 1*1;
+	return 1*BenchmarkExecutor::getInnerTxns();;
 }
 
 void ListBenchmark::readOperation(std::string ids[], int size){

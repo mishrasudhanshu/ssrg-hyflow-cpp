@@ -11,7 +11,6 @@
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 
-#include <unistd.h>
 #include <vector>
 #include <inttypes.h>
 #include "../../../core/context/ContextManager.h"
@@ -170,6 +169,7 @@ void BankAccount::transferMultiAtomically(HyflowObject* self, void* bankArgs, Hy
 	BankArgs* bArgs = (BankArgs*)bankArgs;
 	std::string* ids = bArgs->ids;
 	int money = bArgs->money;
+
 	for(int txns=0 ; txns<bArgs->size ; txns+=2 ) {
 		transfer(ids[txns], ids[txns+1], money);
 	}
@@ -185,7 +185,7 @@ void BankAccount::totalBalanceMulti(std::string ids[], int size) {
 				LOG_DEBUG("BANK :Call CheckBalance in txns %d\n", txns);
 				for(int i=0 ; i < BenchmarkExecutor::getCalls(); i++) {
 					//usleep(2000);
-					checkBalanceAtomic(NULL, &ids[txns], __context__, &balance);
+					checkBalanceAtomic(NULL, &(ids[txns]), __context__, &balance);
 				}
 
 				HYFLOW_STORE(&txns, txns);
@@ -194,7 +194,7 @@ void BankAccount::totalBalanceMulti(std::string ids[], int size) {
 				LOG_DEBUG("BANK :Call CheckBalance in txns %d\n", txns);
 				for(int i=0 ; i < BenchmarkExecutor::getCalls(); i++) {
 					//usleep(2000);
-					checkBalanceAtomic(NULL, &ids[txns+1], __context__, &balance);
+					checkBalanceAtomic(NULL, &(ids[txns+1]), __context__, &balance);
 				}
 
 				HYFLOW_STORE(&txns, txns);
