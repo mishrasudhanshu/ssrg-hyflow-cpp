@@ -215,9 +215,9 @@ void BankAccount::transferMulti(std::string ids[], int size, int money) {
 			HYFLOW_CHECKPOINT_INIT;
 			for(int txns=0 ; txns<size ; txns+=2 ) {
 				LOG_DEBUG("BANK :Call Withdraw in txns %d\n", txns);
-				BankArgs baArgs(money, &ids[txns], 2);
 				for(int i=0 ; i < BenchmarkExecutor::getCalls(); i++) {
 					//usleep(2000);
+					BankArgs baArgs(money, &ids[txns], 2);
 					withdrawAtomic(NULL, &baArgs, __context__, NULL);
 				}
 
@@ -227,6 +227,7 @@ void BankAccount::transferMulti(std::string ids[], int size, int money) {
 				LOG_DEBUG("BANK :Call Deposit in txns %d\n", txns);
 				for(int i=0 ; i < BenchmarkExecutor::getCalls(); i++) {
 					//usleep(2000);
+					BankArgs baArgs(money, &ids[txns], 2);
 					depositAtomic(NULL, &baArgs, __context__, NULL);
 				}
 				HYFLOW_STORE(&txns, txns);

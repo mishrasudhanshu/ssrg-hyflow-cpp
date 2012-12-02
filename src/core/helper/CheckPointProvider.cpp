@@ -193,7 +193,7 @@ void CheckPointProvider::restoreUserValues() {
 			std::vector<std::pair<int*, int> >& intStore = (*intMapItr).second;
 			std::vector<std::pair<int*, int> >::iterator iitr;
 			for ( iitr = intStore.begin() ; iitr < intStore.end() ; iitr++ ) {
-				LOG_DEBUG("CPP : Restoring Integer Value from  to %d\n", *(iitr->first), iitr->second);
+				LOG_DEBUG("CPP : Restoring Integer Value from %d to %d\n", *(iitr->first), iitr->second);
 				*(iitr->first) = iitr->second;
 			}
 		}
@@ -226,8 +226,8 @@ void CheckPointProvider::restoreUserValues() {
 void CheckPointProvider::saveCheckPoint(ucontext_t* checkPoint) {
 	if (checkPointingEnabled) {
 		int threadId = ThreadMeta::getThreadId();
-		checkPoints[threadId]->push_back(checkPoint);
 		LOG_DEBUG("CPP : Saved checkpoint number %d\n", checkPoints[threadId]->size());
+		checkPoints[threadId]->push_back(checkPoint);
 	}
 }
 

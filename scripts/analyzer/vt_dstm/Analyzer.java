@@ -14,7 +14,10 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+
+import vt_dstm.Experiment;
 
 /**
  * 
@@ -27,6 +30,7 @@ public class Analyzer {
 		String directoryPath;
 		int reads=0, threads=0, nodes=0;
 		float throughput=0;
+		String printMode = "nogc";
 		
 		if (args.length == 0) {
 			System.err.println("Using default directory");
@@ -34,6 +38,10 @@ public class Analyzer {
 		} else {
 			directoryPath = args[0];
 			System.out.println("directoryPath =" + directoryPath);
+			
+			if (args.length == 2) {
+				printMode = args[1];
+			}
 		}
 
 		File dir = new File(directoryPath);
@@ -44,6 +52,8 @@ public class Analyzer {
 		};
 
 		String[] filenames = dir.list(filter);
+		
+		HashSet<Integer> threadSet = new HashSet<Integer>();
 
 		// ArrayList per Nodes count
 		HashMap<Integer, HashMap<Integer, HashMap<Integer, Experiment>>> nodeMap = new HashMap<Integer, HashMap<Integer, HashMap<Integer, Experiment>>>();
@@ -76,6 +86,7 @@ public class Analyzer {
 					}else if (strLine.startsWith("Threads")) {
 						String[] values=strLine.split("=");
 						threads = Integer.parseInt(values[1]);
+						threadSet.add(threads);
 					}else if (strLine.startsWith("Throughput")) {
 						String[] values=strLine.split("=");
 						throughput = Float.parseFloat(values[1]);
@@ -105,6 +116,40 @@ public class Analyzer {
 			}
 		}
 		
+	if (printMode.equals("gc")) {		// Graph compatible
+		List<Integer> nl= new ArrayList<Integer>(nodeMap.keySet());
+		Collections.sort(nl);
+		// Print top Column headings
+		System.out.println("#Throughput for given nodes, reads and threads graph Compatible");
+		System.out.format("%-7s%-7s", "Nodes","Reads");
+		for (Integer thread: threadSet) {
+			System.out.format("%-8s%02d  ","Threads=", thread);
+		}		
+		System.out.println();
+		
+		for(Integer nds : nl) {
+			HashMap<Integer, HashMap<Integer,Experiment>> readMap = nodeMap.get(new Integer(nds));
+			
+			List<Integer> rl = new ArrayList<Integer>(readMap.keySet());
+			Collections.sort(rl);
+			// Print results
+			for(Integer read :rl) {
+				HashMap<Integer, Experiment> trpMap = readMap.get(read);
+				List<Integer> tl = new ArrayList<Integer>(trpMap.keySet());
+				Collections.sort(tl);
+				System.out.format("%-7d%-7d", nds,read.intValue());
+				for(Integer trd: threadSet) {
+					Experiment exp = trpMap.get(trd);
+					if(exp == null) {
+						System.out.format("%-12s", " ");
+					}else {
+						System.out.format("%-12.2f",nds*exp.throughPut/exp.count);						
+					}
+				}
+				System.out.print("\n");
+			}
+		}
+	}else {
 		List<Integer> nl= new ArrayList<Integer>(nodeMap.keySet());
 		Collections.sort(nl);
 		for(Integer nds : nl) {
@@ -127,7 +172,6 @@ public class Analyzer {
 				System.out.print("\n");
 			}
 		}
-		
 	}
-
+	}
 }
