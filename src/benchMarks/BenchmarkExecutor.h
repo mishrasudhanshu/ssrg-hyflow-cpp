@@ -17,6 +17,7 @@
 #include "tm/bst/BstBenchmark.h"
 #include "tm/loan/LoanBenchMark.h"
 #include "tm/hashTable/HashTableBenchMark.h"
+#include "tm/vacation/VacationBenchmark.h"
 #include "tm/tpcc/TpccBenchmark.h"
 #include "../util/concurrent/HyInteger.h"
 
@@ -80,6 +81,7 @@ public:
     	BstBenchmark::registerObjectTypes(ar);
     	LoanBenchmark::registerObjectTypes(ar);
     	HashTableBenchmark::registerObjectTypes(ar);
+    	VacationBenchmark::registerObjectTypes(ar);
     	TpccBenchmark::registerObjectTypes(ar);
     }
 

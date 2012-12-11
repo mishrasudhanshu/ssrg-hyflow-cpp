@@ -42,6 +42,7 @@ src/core/directory \
 src/core/context/types \
 src/core/context \
 src/core \
+src/benchMarks/tm/vacation \
 src/benchMarks/tm/tpcc \
 src/benchMarks/tm/test \
 src/benchMarks/tm/skipList \
@@ -50,6 +51,5 @@ src/benchMarks/tm/list \
 src/benchMarks/tm/hashTable \
 src/benchMarks/tm/bst \
 src/benchMarks/tm/bank \
-src/benchMarks/tm/Vacation \
 src/benchMarks \
 

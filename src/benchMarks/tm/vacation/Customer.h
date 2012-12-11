@@ -14,6 +14,7 @@
 #include "../../../core/HyflowObject.h"
 #include "../../../core/context/HyflowContext.h"
 #include "../../../core/HyflowObjectFuture.h"
+#include "ReservationInfo.h"
 
 #define AMOUNT 100000
 
@@ -38,32 +39,18 @@ class Customer: public HyflowObject {
     template<class Archive>
     void serialize(Archive & ar, const unsigned int version) {
     	ar & boost::serialization::base_object<HyflowObject>(*this);
-    	ar & amount;
+    	ar & reservations;
     }
 
-	uint64_t amount;
+	std::vector<std::string> reservations;
 
-	void setAmount(uint64_t amount);
-
-	uint64_t checkBalance();
-	void deposit(uint64_t money);
-	void withdraw(uint64_t money);
-
-	static void checkBalanceAtomic(HyflowObject* self, void *args, HyflowContext* c, uint64_t* balance);
-	static void depositAtomic(HyflowObject* self, void* args, HyflowContext* c, uint64_t* ignore);
-	static void withdrawAtomic(HyflowObject* self, void* args, HyflowContext* c, uint64_t* ignore);
-
-	static void totalBalanceAtomically(HyflowObject* self, void* args, HyflowContext* c, uint64_t* balance);
-	static void transferAtomically(HyflowObject* self, void* args, HyflowContext* c, void* ignore);
 public:
 	Customer() {};
-	Customer(uint64_t amount, const std::string & Id);
-	Customer(uint64_t amount, const std::string & Id, int version);
+	Customer(const std::string & Id);
+	Customer(const std::string & Id, int version);
 	virtual ~Customer();
 
-
-	static uint64_t totalBalance(std::string id1, std::string id2);
-	static void transfer(std::string fromId, std::string toId, uint64_t money);
+	void addReseverationInfo(ReservationInfo* resInfo);
 	void print();
 	void getClone(HyflowObject **obj);
 	static void checkSanity(std::string* ids, int objectCount);

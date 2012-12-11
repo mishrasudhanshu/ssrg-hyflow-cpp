@@ -14,17 +14,17 @@
 #include "../../BenchmarkExecutor.h"
 
 /*
- * Increasing contention level causes the longer lists and more contention
- * Higher contention value causes the deletion of object less probable
- * TODO: Set as configurable value from default.conf
+ * Increasing object count causes the longer lists and more contention
+ * Higher object count causes the deletion of object less probable
  */
-#define HYFLOW_LIST_CONTENTION 3		//Should create around 5 nodes
 
 namespace vt_dstm {
 
 boost::thread_specific_ptr<HyInteger> ListBenchmark::objectCreated;
 
-ListBenchmark::ListBenchmark() { }
+ListBenchmark::ListBenchmark() {
+	objectCount = 0;
+}
 
 ListBenchmark::~ListBenchmark() {}
 
@@ -41,10 +41,12 @@ void ListBenchmark::readOperation(std::string ids[], int size){
 	}else {
 		int random = abs(Logger::getCurrentMicroSec());
 		int* values = new int[multiCount];
+
 		for(int txns = 0; txns<multiCount ; txns++) {
-			values[txns] = (random+txns)%HYFLOW_LIST_CONTENTION;
+			values[txns] = (random+txns)%objectCount;
 			LOG_DEBUG("LIST :FIND[%d] Node\n", values[txns]);
 		}
+
 		ListNode::findNodeMulti(values, multiCount);
 		delete[] values;
 	}
@@ -54,17 +56,17 @@ void ListBenchmark::writeOperation(std::string ids[], int size){
 	int random = abs(Logger::getCurrentMicroSec());
 	int select = abs(Logger::getCurrentMicroSec()+1);
 	int multiCount = getOperandsCount();
-
 	int* values = new int[multiCount];
+
 	if (select%2 == 1 ) {
 		for(int txns = 0; txns<multiCount ; txns++) {
-			values[txns] = (random+txns)%HYFLOW_LIST_CONTENTION;
+			values[txns] = (random+txns)%objectCount;
 			LOG_DEBUG("LIST :ADD[%d] Node\n", values[txns]);
 		}
 		ListNode::addNodeMulti(values,multiCount);
 	}else {
 		for(int txns = 0; txns<multiCount ; txns++) {
-			values[txns] = (random+txns)%HYFLOW_LIST_CONTENTION;
+			values[txns] = (random+txns)%objectCount;
 			LOG_DEBUG("LIST :DEL[%d] Node\n", values[txns]);
 		}
 		ListNode::deleteNodeMulti(values, multiCount);
@@ -85,6 +87,7 @@ int ListBenchmark::getId() {
 }
 
 std::string* ListBenchmark::createLocalObjects(int objCount) {
+	objectCount = objCount;
 	ids = new std::string [objCount];
 	if (NetworkManager::getNodeId() == 0 ) {
 		std::string next("NULL");

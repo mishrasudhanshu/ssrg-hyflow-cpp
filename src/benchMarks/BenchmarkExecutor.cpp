@@ -67,8 +67,10 @@ void BenchmarkExecutor::addMetaData(double trp, int retry, int cpResume) {
 }
 
 void BenchmarkExecutor::writeResults() {
+	LOG_DEBUG("Throughput=%f, abortRate=%d\n", throughPut, retryCount);
 	Logger::result("Throughput=%.2f\n", throughPut);
-	Logger::result("Retries=%d\n",retryCount);
+	float abortRate = (retryCount*100)/(transactions*threadCount);
+	Logger::result("AbortRate=%.2f\n",abortRate);
 	Logger::result("CheckpointResume=%d\n",checkPointResume);
 }
 
@@ -95,6 +97,9 @@ void BenchmarkExecutor::initExecutor(){
 		}else if(ConfigFile::Value(BENCHMARK).compare(HASH_TABLE) == 0) {
 			benchMarkName = "hashTable";
 			benchmark = new HashTableBenchmark();
+		}else if(ConfigFile::Value(BENCHMARK).compare(VACATION) == 0) {
+			benchMarkName = "vacation";
+			benchmark = new VacationBenchmark();
 		}else if(ConfigFile::Value(BENCHMARK).compare(TPCC) == 0) {
 			benchMarkName = "Tpcc";
 			benchmark = new TpccBenchmark();
@@ -195,7 +200,7 @@ void BenchmarkExecutor::execute(int id){
 	int rtry = 0, checkRes=0;
 	if (tries.get()) {
 	// Tries are also get included in retried value as we count number of contexts created
-		rtry = tries.get()->getValue() - transactions;
+		rtry = tries.get()->getValue();
 	}
 	if (checkResume.get()) {
 		checkRes = checkResume.get()->getValue();

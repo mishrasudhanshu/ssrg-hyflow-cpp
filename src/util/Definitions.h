@@ -85,6 +85,7 @@ namespace vt_dstm
 #define LOAN "loan"
 #define HASH_TABLE "hashTable"
 #define TPCC "tpcc"
+#define VACATION "vacation"
 #define TEST "test"
 
 #define NESTING_MODEL "nestingModel"

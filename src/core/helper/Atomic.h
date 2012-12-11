@@ -20,6 +20,7 @@ HyflowContext* __context__ = ContextManager::getInstance(); \
 for (int i = 0; i < 0x7fffffff; i++) { \
 	__context__->contextInit(); \
 	bool commit = true; \
+	BenchmarkExecutor::transactionLengthDelay(); \
 	try { \
 
 #define HYFLOW_ATOMIC_END \
@@ -30,17 +31,29 @@ for (int i = 0; i < 0x7fffffff; i++) { \
 	if (commit) {\
 		try {\
 			__context__->commit();\
-			LOG_DEBUG("++++++++++Transaction Successful ++++++++++\n");\
+			if (__context__->getContextExecutionDepth() == 0) {	\
+				LOG_DEBUG("++++++++++Transaction Successful ++++++++++\n"); \
+			}else { \
+				LOG_DEBUG(".....InnerTxn Successful.....\n");\
+			} \
 			ContextManager::releaseInstance(&__context__);\
 			break;\
 		} catch (TransactionException & ex) {\
-			LOG_DEBUG("XXX-----Transaction Failed Post Validation------XXX\n");\
+			if (__context__->getContextExecutionDepth() == 0) {	\
+				LOG_DEBUG("XXX-----Transaction Failed Post Validation------XXX\n");\
+			}else { \
+				LOG_DEBUG("xxxx-InnerTxn Failed Post Validation-xxxx\n");\
+			} \
 			ContextManager::releaseInstance(&__context__);\
 			ex.print();\
 			continue;\
 		}\
 	}else {\
-		LOG_DEBUG("XXX-----Transaction Failed Early Validation------XXX\n");\
+		if (__context__->getContextExecutionDepth() == 0) {	\
+			LOG_DEBUG("XXX-----Transaction Failed Early Validation------XXX\n");\
+		}else { \
+			LOG_DEBUG("xxxx-InnerTxn Early Failed Validation-xxxx\n");\
+		} \
 		ContextManager::releaseInstance(&__context__);\
 		continue;\
 	}\
@@ -51,6 +64,9 @@ for (int i = 0; i < 0x7fffffff; i++) { \
 
 #define HYFLOW_FETCH(ID, ACCESS_TYPE) \
 	__context__->fetchObject(ID, ACCESS_TYPE)
+
+#define HYFLOW_NFETCH(ID, ACCESS_TYPE, ABORT_ON_NULL) \
+	__context__->fetchObject(ID, ACCESS_TYPE, ABORT_ON_NULL)
 
 #define HYFLOW_ON_READ(ID) \
 	__context__->onReadAccess(ID)

@@ -91,6 +91,11 @@ src/benchMarks/tm/Vacation/ReservationInfo.d: \
  ../src/benchMarks/tm/Vacation/../../../util/networking/../messages/HyflowMessage.h \
  ../src/benchMarks/tm/Vacation/../../../util/networking/../messages/HyflowMessageFuture.h \
  ../src/benchMarks/tm/Vacation/../../BenchmarkExecutor.h \
+ ../src/benchMarks/tm/Vacation/VacationBenchmark.h \
+ ../src/benchMarks/tm/Vacation/../../HyflowBenchmark.h \
+ ../src/benchMarks/tm/Vacation/../../../util/concurrent/HyInteger.h \
+ ../src/benchMarks/tm/Vacation/Resource.h \
+ ../src/benchMarks/tm/Vacation/Customer.h \
  ../src/benchMarks/tm/Vacation/../../../core/helper/CheckPointProvider.h
 
 ../src/benchMarks/tm/Vacation/ReservationInfo.h:
@@ -274,5 +279,15 @@ src/benchMarks/tm/Vacation/ReservationInfo.d: \
 ../src/benchMarks/tm/Vacation/../../../util/networking/../messages/HyflowMessageFuture.h:
 
 ../src/benchMarks/tm/Vacation/../../BenchmarkExecutor.h:
+
+../src/benchMarks/tm/Vacation/VacationBenchmark.h:
+
+../src/benchMarks/tm/Vacation/../../HyflowBenchmark.h:
+
+../src/benchMarks/tm/Vacation/../../../util/concurrent/HyInteger.h:
+
+../src/benchMarks/tm/Vacation/Resource.h:
+
+../src/benchMarks/tm/Vacation/Customer.h:
 
 ../src/benchMarks/tm/Vacation/../../../core/helper/CheckPointProvider.h:

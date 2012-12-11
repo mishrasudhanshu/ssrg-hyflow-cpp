@@ -60,20 +60,51 @@ ListNode::~ListNode() {
 }
 
 void ListNode::addNodeAtomically(HyflowObject* self, void* args, HyflowContext* __context__, void* ignore) {
-	int nodeValue = *((int*)args);
+	int newNodeValue = *((int*)args);
+	ListNode* currentNode = NULL;
+	std::string head("HEAD");
+	std::string prev = head, next;
 
-	std::string head="HEAD";
-	HYFLOW_FETCH(head, false);
+	//Fetch the Head Node first, It is a sentinel Node
+	HYFLOW_FETCH(head, true);
+	currentNode = (ListNode*)HYFLOW_ON_READ(head);
+	next = currentNode->getNextId();
+	LOG_DEBUG("LIST :First Node in List is %s adding new value %d\n", next.c_str(), newNodeValue);
 
-	ListNode* headNodeRead =  (ListNode*)HYFLOW_ON_READ(head);
-	std::string oldNext = headNodeRead->getNextId();
-	ListNode* newNode = new ListNode(nodeValue, ListBenchmark::getId());
-	newNode->setNextId(oldNext);
-	HYFLOW_PUBLISH_OBJECT(newNode);
+	if (next.compare("NULL") == 0) {
+		ListNode* newNode = new ListNode(newNodeValue, ListBenchmark::getId());
+		newNode->setNextId(next);
+		HYFLOW_PUBLISH_OBJECT(newNode);
 
-	ListNode* headNodeWrite = (ListNode*)HYFLOW_ON_WRITE(head);
-	headNodeWrite->setNextId(newNode->getId());
-	LOG_DEBUG("LIST :Set Head next Id to %s value %d\n", newNode->getId().c_str(), nodeValue);
+		ListNode* headNodeWrite = (ListNode*)HYFLOW_ON_WRITE(head);
+		headNodeWrite->setNextId(newNode->getId());
+		LOG_DEBUG("LIST :In empty list set Head next Id to %s  value %d\n", newNode->getId().c_str(), newNodeValue);
+	}else {
+		// Find the correct place to add
+		while(next.compare("NULL") != 0) {
+			LOG_DEBUG("LIST :Add traverse when prev=%s and next=%s \n", prev.c_str(), next.c_str());
+			HYFLOW_FETCH(next, true);
+			currentNode = (ListNode*)HYFLOW_ON_READ(next);
+			int nextNodeValue = currentNode->getValue();
+			if (nextNodeValue >= newNodeValue) {
+				LOG_DEBUG("LIST :Got the required value %d to add before in node %s\n", newNodeValue, next.c_str());
+				break;
+			}
+			prev = next;
+			next = currentNode->getNextId();
+		}
+
+		ListNode* newNode = new ListNode(newNodeValue, ListBenchmark::getId());
+		newNode->setNextId(next);
+		HYFLOW_PUBLISH_OBJECT(newNode);
+
+		if (next.compare("NULL") == 0) {
+			LOG_DEBUG("LIST :At end of list set %s next Id to %s value %d\n", prev.c_str(), newNode->getId().c_str(), newNodeValue);
+		}
+		ListNode* prevNode = (ListNode*)HYFLOW_ON_WRITE(prev);
+		prevNode->setNextId(newNode->getId());
+		LOG_DEBUG("LIST :Add Set %s next to %s\n", prev.c_str(), newNode->getId().c_str());
+	}
 }
 
 void ListNode::addNode(int value) {
@@ -84,7 +115,6 @@ void ListNode::addNode(int value) {
 
 void ListNode::deleteNodeAtomically(HyflowObject* self, void* args, HyflowContext* __context__, void* ignore) {
 	int givenValue = *((int*)args);
-	HYFLOW_CHECKPOINT_INIT;
 	ListNode* targetNode = NULL;
 	std::string head("HEAD");
 	std::string prev = head, next;
@@ -95,6 +125,7 @@ void ListNode::deleteNodeAtomically(HyflowObject* self, void* args, HyflowContex
 	LOG_DEBUG("LIST :First Node is List %s searching for %d\n", next.c_str(), givenValue);
 
 	while(next.compare("NULL") != 0) {
+		LOG_DEBUG("LIST :DEL traverse when prev=%s and next=%s \n", prev.c_str(), next.c_str());
 		HYFLOW_FETCH(next, true);
 		targetNode = (ListNode*)HYFLOW_ON_READ(next);
 		int nodeValue = targetNode->getValue();
@@ -104,6 +135,9 @@ void ListNode::deleteNodeAtomically(HyflowObject* self, void* args, HyflowContex
 			prevNode->setNextId(currentNode->getNextId());
 			HYFLOW_DELETE_OBJECT(currentNode);
 			LOG_DEBUG("LIST :Got the required value %d in node %s\n", givenValue, currentNode->getId().c_str());
+			break;
+		}else if (nodeValue > givenValue) {
+			LOG_DEBUG("LIST :DEL object %d not found in list\n", givenValue);
 			break;
 		}
 		prev = next;
@@ -261,9 +295,10 @@ void ListNode::sumNodesMulti(int count) {
 			}
 		}HYFLOW_ATOMIC_END;
 	}else {
+		ListArgs largs(NULL, count);
 		Atomic<void> atomicSumMulti;
 		atomicSumMulti.atomically = ListNode::sumNodesMultiAtomically;
-		atomicSumMulti.execute(NULL, NULL, NULL);
+		atomicSumMulti.execute(NULL, &largs, NULL);
 	}
 }
 

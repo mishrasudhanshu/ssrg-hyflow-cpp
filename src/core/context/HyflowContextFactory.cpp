@@ -49,8 +49,16 @@ HyflowContext* HyflowContextFactory::getContextInstance() {
 			context->setParentContext(contextStack[contextStackIndex-1]);
 		}
 		// Otherwise for top context parent is set to be NULL by default
+		context->setContextExecutionDepth(contextStackIndex);
 	}else if (ContextManager::getNestingModel() == HYFLOW_NESTING_OPEN) {
-		Logger::fatal("HCF : Open nesting not supported currently\n");
+		txnIndex++;
+		// In close nesting we don't check execution depth instead check parent NULL
+		// except in context.Init() which checks its depth
+		context = getFreshContext();
+		if( contextStackIndex != 0 ) {
+			context->setParentContext(contextStack[contextStackIndex-1]);
+		}
+		// Otherwise for top context parent is set to be NULL by default
 	}else if (ContextManager::getNestingModel() == HYFLOW_CHECKPOINTING) {
 		if( contextStackIndex==-1 ) {
 			context = getFreshContext();
@@ -107,6 +115,10 @@ void HyflowContextFactory::releaseContextInstance(){
 				LOG_DEBUG("HCF :Performing the checkParent\n");
 				throwException = context->checkParent();
 				if (throwException) {
+				// In close nesting each transaction try is given new context
+					// Set parent to abort, so that it is retried as required
+					if (context->getParentContext())
+						context->getParentContext()->setStatus(TXN_ABORTED);
 					contextStack.pop_back();
 					contextStackIndex--;
 					ContextManager::deleteContext(&context);
@@ -134,7 +146,7 @@ void HyflowContextFactory::releaseContextInstance(){
 
 	if (throwException) {
 		LOG_DEBUG("HCF : Check Parent throws an exception\n");
-		TransactionException checkParent("Check Parent throws an exception");
+		TransactionException checkParent("Check Parent throws an exception\n");
 		throw checkParent;
 	}
 }

@@ -62,6 +62,15 @@ src/benchMarks/tm/hashTable/HashTableBenchMark.d: \
  ../src/benchMarks/tm/hashTable/../../tm/loan/../../../core/HyflowObjectFuture.h \
  ../src/benchMarks/tm/hashTable/../../tm/loan/../../HyflowBenchmark.h \
  ../src/benchMarks/tm/hashTable/../../tm/hashTable/HashTableBenchMark.h \
+ ../src/benchMarks/tm/hashTable/../../tm/vacation/VacationBenchmark.h \
+ ../src/benchMarks/tm/hashTable/../../tm/vacation/../../HyflowBenchmark.h \
+ ../src/benchMarks/tm/hashTable/../../tm/vacation/../../../util/concurrent/HyInteger.h \
+ ../src/benchMarks/tm/hashTable/../../tm/vacation/ReservationInfo.h \
+ ../src/benchMarks/tm/hashTable/../../tm/vacation/../../../core/HyflowObject.h \
+ ../src/benchMarks/tm/hashTable/../../tm/vacation/../../../core/context/HyflowContext.h \
+ ../src/benchMarks/tm/hashTable/../../tm/vacation/../../../core/HyflowObjectFuture.h \
+ ../src/benchMarks/tm/hashTable/../../tm/vacation/Resource.h \
+ ../src/benchMarks/tm/hashTable/../../tm/vacation/Customer.h \
  ../src/benchMarks/tm/hashTable/../../tm/tpcc/TpccBenchmark.h \
  ../src/benchMarks/tm/hashTable/../../tm/tpcc/../../HyflowBenchmark.h \
  ../src/benchMarks/tm/hashTable/../../tm/tpcc/TpccDistrict.h \
@@ -201,6 +210,24 @@ src/benchMarks/tm/hashTable/HashTableBenchMark.d: \
 ../src/benchMarks/tm/hashTable/../../tm/loan/../../HyflowBenchmark.h:
 
 ../src/benchMarks/tm/hashTable/../../tm/hashTable/HashTableBenchMark.h:
+
+../src/benchMarks/tm/hashTable/../../tm/vacation/VacationBenchmark.h:
+
+../src/benchMarks/tm/hashTable/../../tm/vacation/../../HyflowBenchmark.h:
+
+../src/benchMarks/tm/hashTable/../../tm/vacation/../../../util/concurrent/HyInteger.h:
+
+../src/benchMarks/tm/hashTable/../../tm/vacation/ReservationInfo.h:
+
+../src/benchMarks/tm/hashTable/../../tm/vacation/../../../core/HyflowObject.h:
+
+../src/benchMarks/tm/hashTable/../../tm/vacation/../../../core/context/HyflowContext.h:
+
+../src/benchMarks/tm/hashTable/../../tm/vacation/../../../core/HyflowObjectFuture.h:
+
+../src/benchMarks/tm/hashTable/../../tm/vacation/Resource.h:
+
+../src/benchMarks/tm/hashTable/../../tm/vacation/Customer.h:
 
 ../src/benchMarks/tm/hashTable/../../tm/tpcc/TpccBenchmark.h:
 

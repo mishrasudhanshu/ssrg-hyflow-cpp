@@ -8,5 +8,10 @@ then
     dir=$1
 fi
 
-echo "Using $dir"
-java -jar scripts/analyzer.jar $dir
+if ! [ -z $2 ]
+then
+    mode=$2
+fi
+
+echo "Using $dir $mode"
+java -jar scripts/analyzer.jar $dir $mode

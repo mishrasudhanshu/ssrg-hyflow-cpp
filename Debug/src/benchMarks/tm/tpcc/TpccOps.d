@@ -59,6 +59,15 @@ src/benchMarks/tm/tpcc/TpccOps.d: ../src/benchMarks/tm/tpcc/TpccOps.cpp \
  ../src/benchMarks/tm/tpcc/../../../core/helper/../../benchMarks/tm/hashTable/../../../core/HyflowObjectFuture.h \
  ../src/benchMarks/tm/tpcc/../../../core/helper/../../benchMarks/tm/hashTable/../../HyflowBenchmark.h \
  ../src/benchMarks/tm/tpcc/../../../core/helper/../../benchMarks/tm/hashTable/../../../util/concurrent/HyInteger.h \
+ ../src/benchMarks/tm/tpcc/../../../core/helper/../../benchMarks/tm/vacation/VacationBenchmark.h \
+ ../src/benchMarks/tm/tpcc/../../../core/helper/../../benchMarks/tm/vacation/../../HyflowBenchmark.h \
+ ../src/benchMarks/tm/tpcc/../../../core/helper/../../benchMarks/tm/vacation/../../../util/concurrent/HyInteger.h \
+ ../src/benchMarks/tm/tpcc/../../../core/helper/../../benchMarks/tm/vacation/ReservationInfo.h \
+ ../src/benchMarks/tm/tpcc/../../../core/helper/../../benchMarks/tm/vacation/../../../core/HyflowObject.h \
+ ../src/benchMarks/tm/tpcc/../../../core/helper/../../benchMarks/tm/vacation/../../../core/context/HyflowContext.h \
+ ../src/benchMarks/tm/tpcc/../../../core/helper/../../benchMarks/tm/vacation/../../../core/HyflowObjectFuture.h \
+ ../src/benchMarks/tm/tpcc/../../../core/helper/../../benchMarks/tm/vacation/Resource.h \
+ ../src/benchMarks/tm/tpcc/../../../core/helper/../../benchMarks/tm/vacation/Customer.h \
  ../src/benchMarks/tm/tpcc/../../../core/helper/../../benchMarks/tm/tpcc/TpccBenchmark.h \
  ../src/benchMarks/tm/tpcc/../../../core/helper/../../benchMarks/tm/tpcc/../../HyflowBenchmark.h \
  ../src/benchMarks/tm/tpcc/../../../core/helper/../../benchMarks/tm/tpcc/TpccDistrict.h \
@@ -209,6 +218,24 @@ src/benchMarks/tm/tpcc/TpccOps.d: ../src/benchMarks/tm/tpcc/TpccOps.cpp \
 ../src/benchMarks/tm/tpcc/../../../core/helper/../../benchMarks/tm/hashTable/../../HyflowBenchmark.h:
 
 ../src/benchMarks/tm/tpcc/../../../core/helper/../../benchMarks/tm/hashTable/../../../util/concurrent/HyInteger.h:
+
+../src/benchMarks/tm/tpcc/../../../core/helper/../../benchMarks/tm/vacation/VacationBenchmark.h:
+
+../src/benchMarks/tm/tpcc/../../../core/helper/../../benchMarks/tm/vacation/../../HyflowBenchmark.h:
+
+../src/benchMarks/tm/tpcc/../../../core/helper/../../benchMarks/tm/vacation/../../../util/concurrent/HyInteger.h:
+
+../src/benchMarks/tm/tpcc/../../../core/helper/../../benchMarks/tm/vacation/ReservationInfo.h:
+
+../src/benchMarks/tm/tpcc/../../../core/helper/../../benchMarks/tm/vacation/../../../core/HyflowObject.h:
+
+../src/benchMarks/tm/tpcc/../../../core/helper/../../benchMarks/tm/vacation/../../../core/context/HyflowContext.h:
+
+../src/benchMarks/tm/tpcc/../../../core/helper/../../benchMarks/tm/vacation/../../../core/HyflowObjectFuture.h:
+
+../src/benchMarks/tm/tpcc/../../../core/helper/../../benchMarks/tm/vacation/Resource.h:
+
+../src/benchMarks/tm/tpcc/../../../core/helper/../../benchMarks/tm/vacation/Customer.h:
 
 ../src/benchMarks/tm/tpcc/../../../core/helper/../../benchMarks/tm/tpcc/TpccBenchmark.h:
 

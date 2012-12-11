@@ -11,8 +11,10 @@
 #include <set>
 #include <map>
 #include <string>
+#include <boost/thread/tss.hpp>
 #include "../../helper/ObjectIdComparator.h"
 #include "../HyflowContext.h"
+#include "../../../util/concurrent/HyInteger.h"
 
 namespace vt_dstm {
 
@@ -40,6 +42,7 @@ class DTL2Context: public vt_dstm::HyflowContext {
 	int tnxClock;
 	int highestSenderClock;
 
+	static boost::thread_specific_ptr<HyInteger> abortCount;
 	bool isWrite;
 	bool lockObject(HyflowObject *obj);
 	void unlockObjectOnFail(HyflowObject *obj);
@@ -48,10 +51,13 @@ class DTL2Context: public vt_dstm::HyflowContext {
 	void validateObjectCP(HyflowObject* obj);
 	void tryCommit();
 	void tryCommitCP();
+	void tryCommitON();
 	void reallyCommit();
+	void reallyCommitON();
 	void cleanAllMaps();
 	void mergeIntoParents();
 	void cleanSetTillCheckPoint(int checkPoint);
+	void contextReset();
 public:
 	DTL2Context();
 	virtual ~DTL2Context();
@@ -70,8 +76,11 @@ public:
 	void rollback();
 	bool checkParent();
 	void updateClock(int c);
-	void fetchObject(std::string id, bool isRead);
+	bool fetchObject(std::string id, bool isRead, bool abortOnNull);
 	void fetchObjects(std::string ids[], int objCount, bool isRead);
+	static void increaseAbortCount();
+	static int getAbortCount();
+	static void resetAbortCount();
 };
 
 } /* namespace vt_dstm */

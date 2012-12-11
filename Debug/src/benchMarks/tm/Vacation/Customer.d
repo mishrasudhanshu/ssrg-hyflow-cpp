@@ -10,6 +10,7 @@ src/benchMarks/tm/Vacation/Customer.d: \
  ../src/benchMarks/tm/Vacation/../../../core/../util/messages/HyflowMessage.h \
  ../src/benchMarks/tm/Vacation/../../../core/../util/messages/BaseMessage.h \
  ../src/benchMarks/tm/Vacation/../../../core/../util/messages/../../core/HyflowObject.h \
+ ../src/benchMarks/tm/Vacation/ReservationInfo.h \
  ../src/benchMarks/tm/Vacation/../../../core/context/ContextManager.h \
  ../src/benchMarks/tm/Vacation/../../../core/context/HyflowContext.h \
  ../src/benchMarks/tm/Vacation/../../../core/context/HyflowContextFactory.h \
@@ -112,6 +113,8 @@ src/benchMarks/tm/Vacation/Customer.d: \
 ../src/benchMarks/tm/Vacation/../../../core/../util/messages/BaseMessage.h:
 
 ../src/benchMarks/tm/Vacation/../../../core/../util/messages/../../core/HyflowObject.h:
+
+../src/benchMarks/tm/Vacation/ReservationInfo.h:
 
 ../src/benchMarks/tm/Vacation/../../../core/context/ContextManager.h:
 

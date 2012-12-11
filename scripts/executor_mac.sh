@@ -4,6 +4,13 @@
 
 txns=2000
 objs=10000
+setBenchMarks="list bst skipList"
+if [[ "$setBenchMarks" =~ "$bench"  ]]
+then
+    objects=5
+    echo "Got Set BenchMark Objects=$objects"
+fi
+
 build=Debug
 machines=2
 

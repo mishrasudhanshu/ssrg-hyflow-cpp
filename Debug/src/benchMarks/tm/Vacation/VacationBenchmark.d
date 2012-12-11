@@ -2,7 +2,8 @@ src/benchMarks/tm/Vacation/VacationBenchmark.d: \
  ../src/benchMarks/tm/Vacation/VacationBenchmark.cpp \
  ../src/benchMarks/tm/Vacation/VacationBenchmark.h \
  ../src/benchMarks/tm/Vacation/../../HyflowBenchmark.h \
- ../src/benchMarks/tm/Vacation/Reservation.h \
+ ../src/benchMarks/tm/Vacation/../../../util/concurrent/HyInteger.h \
+ ../src/benchMarks/tm/Vacation/ReservationInfo.h \
  ../src/benchMarks/tm/Vacation/../../../core/HyflowObject.h \
  ../src/benchMarks/tm/Vacation/../../../core/context/HyflowContext.h \
  ../src/benchMarks/tm/Vacation/../../../core/context/../HyflowObject.h \
@@ -12,6 +13,9 @@ src/benchMarks/tm/Vacation/VacationBenchmark.d: \
  ../src/benchMarks/tm/Vacation/../../../core/../util/messages/HyflowMessage.h \
  ../src/benchMarks/tm/Vacation/../../../core/../util/messages/BaseMessage.h \
  ../src/benchMarks/tm/Vacation/../../../core/../util/messages/../../core/HyflowObject.h \
+ ../src/benchMarks/tm/Vacation/Resource.h \
+ ../src/benchMarks/tm/Vacation/Customer.h \
+ ../src/benchMarks/tm/Vacation/Vacation.h \
  ../src/benchMarks/tm/Vacation/../../../util/networking/NetworkManager.h \
  ../src/benchMarks/tm/Vacation/../../../util/networking/AbstractNetwork.h \
  ../src/benchMarks/tm/Vacation/../../../util/networking/../messages/HyflowMessage.h \
@@ -87,7 +91,9 @@ src/benchMarks/tm/Vacation/VacationBenchmark.d: \
 
 ../src/benchMarks/tm/Vacation/../../HyflowBenchmark.h:
 
-../src/benchMarks/tm/Vacation/Reservation.h:
+../src/benchMarks/tm/Vacation/../../../util/concurrent/HyInteger.h:
+
+../src/benchMarks/tm/Vacation/ReservationInfo.h:
 
 ../src/benchMarks/tm/Vacation/../../../core/HyflowObject.h:
 
@@ -106,6 +112,12 @@ src/benchMarks/tm/Vacation/VacationBenchmark.d: \
 ../src/benchMarks/tm/Vacation/../../../core/../util/messages/BaseMessage.h:
 
 ../src/benchMarks/tm/Vacation/../../../core/../util/messages/../../core/HyflowObject.h:
+
+../src/benchMarks/tm/Vacation/Resource.h:
+
+../src/benchMarks/tm/Vacation/Customer.h:
+
+../src/benchMarks/tm/Vacation/Vacation.h:
 
 ../src/benchMarks/tm/Vacation/../../../util/networking/NetworkManager.h:
 

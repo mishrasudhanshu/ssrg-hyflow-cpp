@@ -5,20 +5,23 @@
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
 ../src/benchMarks/tm/Vacation/Customer.cpp \
-../src/benchMarks/tm/Vacation/Reservation.cpp \
 ../src/benchMarks/tm/Vacation/ReservationInfo.cpp \
+../src/benchMarks/tm/Vacation/Resource.cpp \
+../src/benchMarks/tm/Vacation/Vacation.cpp \
 ../src/benchMarks/tm/Vacation/VacationBenchmark.cpp 
 
 OBJS += \
 ./src/benchMarks/tm/Vacation/Customer.o \
-./src/benchMarks/tm/Vacation/Reservation.o \
 ./src/benchMarks/tm/Vacation/ReservationInfo.o \
+./src/benchMarks/tm/Vacation/Resource.o \
+./src/benchMarks/tm/Vacation/Vacation.o \
 ./src/benchMarks/tm/Vacation/VacationBenchmark.o 
 
 CPP_DEPS += \
 ./src/benchMarks/tm/Vacation/Customer.d \
-./src/benchMarks/tm/Vacation/Reservation.d \
 ./src/benchMarks/tm/Vacation/ReservationInfo.d \
+./src/benchMarks/tm/Vacation/Resource.d \
+./src/benchMarks/tm/Vacation/Vacation.d \
 ./src/benchMarks/tm/Vacation/VacationBenchmark.d 
 
 

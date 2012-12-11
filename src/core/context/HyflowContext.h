@@ -104,7 +104,7 @@ public:
 	/*
 	 * Fetch Object for this context and adds to readSet
 	 */
-	virtual void fetchObject(std::string objId, bool isRead = true) = 0;
+	virtual bool fetchObject(std::string objId, bool isRead=true, bool abortOnNull=true ) = 0;
 	/*
 	 * Fetch Objects for this context
 	 */

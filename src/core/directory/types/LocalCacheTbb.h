@@ -12,6 +12,7 @@
 #include <map>
 #include "tbb/concurrent_hash_map.h"
 #include "../../HyflowObject.h"
+#include "../../../util/logging/Logger.h"
 
 namespace vt_dstm {
 
@@ -55,12 +56,14 @@ public:
 			if (map->find(a,objId)) {
 				obj = a->second;
 				if(!obj) {
-					throw "NULL Object Found!!";
+					Logger::fatal("DIR :GO Null Object found\n");
+//					throw "NULL Object Found!!";
 				}
 				obj->getClone(&objectCopy);
 				return objectCopy;
 			} else {
-				throw "No Object Found!!";
+				Logger::fatal("DIR :GO No Object found\n");
+//				throw "No Object Found!!";
 			}
 		}
 		return objectCopy;
@@ -75,11 +78,13 @@ public:
 		if (map->find(a,objId)) {
 			obj = a->second;
 			if(!obj) {
-				throw "NULL Object Found!!";
+				Logger::fatal("DIR :OV Null Object found\n");
+//				throw "NULL Object Found!!";
 			}
 			return obj->getVersion();
 		} else {
-			throw "No Object Found!!";
+			Logger::fatal("DIR :OV No Object found\n");
+//			throw "No Object Found!!";
 		}
 		return -1;
 	}

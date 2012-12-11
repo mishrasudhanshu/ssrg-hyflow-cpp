@@ -66,7 +66,6 @@ HyflowContext* ContextManager::getInstance() {
 }
 
 void ContextManager::releaseInstance(HyflowContext **c) {
-	BenchmarkExecutor::increaseRetries();
 	if (*c) {
 		(*c)->contextDeinit();
 		// Following part is just for debugging, can be commented
@@ -75,6 +74,8 @@ void ContextManager::releaseInstance(HyflowContext **c) {
 			*c = NULL;
 		}else {
 			LOG_DEBUG("CM : Transaction aborted, not resetting context pointer to NULL\n");
+			if((*c)->getContextExecutionDepth() == 0 )	//For Top context abort increase retries
+				BenchmarkExecutor::increaseRetries();
 		}
 	}
 	HyflowContextFactory *contextFactory = threadContextFactory.get();

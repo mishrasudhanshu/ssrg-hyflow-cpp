@@ -2,6 +2,13 @@
 
 txns=2000
 objs=10000
+setBenchMarks="list bst skipList"
+if [[ "$setBenchMarks" =~ "$bench"  ]]
+then
+    objects=5
+    echo "Got Set BenchMark Objects=$objects"
+fi
+
 threads=1;
 build=Debug
 
@@ -15,7 +22,7 @@ echo "txns=$txns, objs=$objs, reads 0..100..20 threads 1, nodes=1..24"
 for exp in {1..3}
 do
     echo "For experiment = $exp"
-    for nodes in 1 2 4 8 16 24 32 40 48
+    for nodes in 2 4 8 16 32 48
     do
         echo "    For nodes = $nodes"
 	for read in {20..100..30}

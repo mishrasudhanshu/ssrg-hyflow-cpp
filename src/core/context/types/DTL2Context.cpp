@@ -19,6 +19,7 @@
 
 namespace vt_dstm {
 
+boost::thread_specific_ptr<HyInteger> DTL2Context::abortCount;
 
 DTL2Context::DTL2Context() {
 	status = TXN_ACTIVE;
@@ -78,26 +79,38 @@ void DTL2Context::cleanAllMaps(){
 	deleteMap.clear();
 }
 
+void DTL2Context::contextReset() {
+	cleanAllMaps();
+	lockSet.clear();
+
+	status = TXN_ACTIVE;
+	highestSenderClock = 0;
+	tnxClock = ContextManager::getClock();
+
+	txnId = ContextManager::createTid(this);
+	ContextManager::registerContext(this);
+
+	LOG_DEBUG("DTL :Context initialize with id %llu\n", txnId);
+}
+
 void DTL2Context::contextInit(){
 	if (contextExecutionDepth > 0) {
-		LOG_DEBUG("DTL :Context already initialize\n");
+		if (nestingModel == HYFLOW_NESTING_FLAT) {
+			LOG_DEBUG("DTL :Context already initialize\n");
+		}else {
+			contextReset();
+		}
 	} else{
-		cleanAllMaps();
-		lockSet.clear();
-
-		status = TXN_ACTIVE;
-		highestSenderClock = 0;
-		tnxClock = ContextManager::getClock();
-
-		txnId = ContextManager::createTid(this);
-		ContextManager::registerContext(this);
-
-		LOG_DEBUG("DTL :Context initialize with id %llu\n", txnId);
+		contextReset();
 	}
 }
 
 void DTL2Context::contextDeinit() {
-	if (contextExecutionDepth <= 0) {
+	if (nestingModel == HYFLOW_NESTING_FLAT) {
+		if (contextExecutionDepth <= 0) {
+			ContextManager::unregisterContext(this);
+		}
+	}else {
 		ContextManager::unregisterContext(this);
 	}
 }
@@ -324,10 +337,13 @@ const HyflowObject* DTL2Context::onReadAccess(HyflowObject *obj){
 }
 
 const HyflowObject* DTL2Context::onReadAccess(std::string id){
+	// TODO: Check in delete map if object got deleted, currently we are safe as Fetch is called first
 	// Verify in write set whether we have recent value
 	std::map<std::string, HyflowObject*>::iterator i = writeMap.find(id);
-	if ( i == writeMap.end())
+	if ( i == writeMap.end()) {
+		LOG_DEBUG("DTL :Getting object %s from readSet\n", id.c_str());
 		return readMap.at(id);
+	}
 	return writeMap.at(id);
 }
 
@@ -340,6 +356,7 @@ HyflowObject* DTL2Context::onWriteAccess(HyflowObject *obj){
 		HyflowObject *writeSetCopy = NULL;
 		std::map<std::string, HyflowObject*>::iterator i = writeMap.find(id);
 		if ( i == writeMap.end()) {
+			// Check if object is available in parent context write object
 			obj->getClone(&writeSetCopy);
 			writeMap[id] = writeSetCopy;
 			return writeSetCopy;
@@ -350,10 +367,12 @@ HyflowObject* DTL2Context::onWriteAccess(HyflowObject *obj){
 }
 
 HyflowObject* DTL2Context::onWriteAccess(std::string id){
+	// TODO: Check in delete map if object got deleted, currently we are safe as Fetch is called first
 	if (getStatus() != TXN_ABORTED) {
 		HyflowObject *writeSetCopy = NULL;
 		std::map<std::string, HyflowObject*>::iterator i = writeMap.find(id);
 		if ( i == writeMap.end()) {
+			LOG_DEBUG("DTL :Copying object %s from readSet to writeSet\n", id.c_str());
 			readMap.at(id)->getClone(&writeSetCopy);
 			writeMap[id] = writeSetCopy;
 			return writeSetCopy;
@@ -365,6 +384,7 @@ HyflowObject* DTL2Context::onWriteAccess(std::string id){
 
 bool DTL2Context::lockObject(HyflowObject* obj) {
 	int myNode = NetworkManager::getNodeId();
+
 	if (myNode == obj->getOwnerNode()) {
 		LOG_DEBUG("DTL :Local Lock available for %s\n", obj->getId().c_str());
 		return LockTable::tryLock(obj->getId(), obj->getVersion(), txnId);
@@ -390,6 +410,7 @@ bool DTL2Context::lockObject(HyflowObject* obj) {
  */
 void  DTL2Context::unlockObjectOnFail(HyflowObject *obj) {
 	int myNode = NetworkManager::getNodeId();
+
 	if (myNode == obj->getOwnerNode()) {
 		LOG_DEBUG("DTL :Local Unlock available for %s\n", obj->getId().c_str());
 		LockTable::tryUnlock(obj->getId(), obj->getVersion(), txnId);
@@ -425,6 +446,12 @@ bool DTL2Context::validateObject(HyflowObject* obj)	{
 	 * update object version, allowing us to rollback transaction
 	 */
 	int owner = obj->getOwnerNode();
+	if (owner == -1) {
+		// While forwarding this condition might come, not in commit as we filter it out
+		LOG_DEBUG("Validate :Must be from forwarding, no forwarding required for publish set object\n");
+		return true;
+	}
+
 	if (owner == NetworkManager::getNodeId()) {
 		// If I am the owner verify the object state locally
 		HyflowObject* currentObject  = DirectoryManager::getObjectLocally(obj->getId(), false);
@@ -460,15 +487,6 @@ void DTL2Context::tryCommit() {
 		// Try to acquire the locks on object in lazy fashion
 		// TODO: Make it asynchronous
 		for( wi = writeMap.rbegin() ; wi != writeMap.rend() ; wi++ ) {
-			isWrite = true;
-			if (!lockObject(wi->second)) {
-				setStatus(TXN_ABORTED);
-				LOG_DEBUG("Commit :Unable to get WriteLock for %s\n", wi->first.c_str());
-				TransactionException unableToWriteLock("Commit :Unable to get WriteLock for "+wi->first + "\n");
-				throw unableToWriteLock;
-			}
-			lockedObjects.push_back(wi->second);
-			// Redirect all the locate call of object through context
 			// Remove same object from readSet as we use version locks
 			std::map<std::string, HyflowObject*, ObjectIdComparator>::iterator itr = readMap.find(wi->first) ;
 			if ( itr != readMap.end()) {
@@ -477,6 +495,40 @@ void DTL2Context::tryCommit() {
 				readMap.erase(itr);
 				delete readObject;
 			}
+
+			isWrite = true;
+			// If same object exist in publish set of my or another innerTxn don't take lock on it
+			// It might have been copied to write Map when manipulated by other transaction
+			if (wi->second->getOwnerNode() == -1) {
+				LOG_DEBUG("Commit :Publish set object %s, lock not required\n", wi->first.c_str());
+				// Copy it to publish set object, delete old publish copy
+				// Don't do anything, it may create issue for checkPointing, do all in really commit
+//				std::map<std::string, HyflowObject*, ObjectIdComparator>::iterator pub_i = publishMap.find(wi->first);
+//				if (pub_i == publishMap.end()) {
+//					// We would have got this object from parent
+//					// For now just copy to publish set, while merge to parent we will overwrite
+//					LOG_DEBUG("Commit :Got parent publish set object\n");
+//					HyflowObject* writeObject = NULL;
+//					wi->second->getClone(&writeObject);
+//					publishMap[wi->first] = writeObject;
+//				} else {
+//					HyflowObject* oldObject = publishMap.at(wi->first);
+//					HyflowObject* writeObject = NULL;
+//					wi->second->getClone(&writeObject);
+//					publishMap[wi->first] = writeObject;
+//					delete oldObject;
+//				}
+				continue;
+			}
+
+			if (!lockObject(wi->second)) {
+				setStatus(TXN_ABORTED);
+				LOG_DEBUG("Commit :Unable to get WriteLock for %s\n", wi->first.c_str());
+				TransactionException unableToWriteLock("Commit :Unable to get WriteLock for "+wi->first + "\n");
+				throw unableToWriteLock;
+			}
+			lockedObjects.push_back(wi->second);
+
 		}
 		LOG_DEBUG("Commit :Lock Acquisition complete, verifying read Set\n");
 		// FIXME: Don't Perform context forwarding here
@@ -484,6 +536,13 @@ void DTL2Context::tryCommit() {
 		// Try to verify read versions of all the objects.
 		std::map<std::string, HyflowObject*, ObjectIdComparator>::reverse_iterator ri;
 		for ( ri = readMap.rbegin() ; ri != readMap.rend() ; ri++) {
+			// If same object exist in publish set of my or another innerTxn don't validate
+			// It might have been copied to write Map when manipulated by other transaction
+			if (ri->second->getOwnerNode() == -1) {
+				LOG_DEBUG("Commit :Publish set object %s in read Set validation not required\n", ri->first.c_str());
+				continue;
+			}
+
 			if (!validateObject(ri->second)) {
 				setStatus(TXN_ABORTED);
 				LOG_DEBUG("Commit :Unable to validate for %s, version %d with txn %ull\n", ri->first.c_str(), ri->second->getVersion(), txnId);
@@ -599,6 +658,30 @@ void DTL2Context::tryCommitCP() {
 				objectsCheckPoint = readCopyAccessCheckPoint;
 			}
 
+			// If same object exist in publish set of my or another innerTxn don't take lock on it
+			// It might have been copied to write Map when manipulated by other transaction
+			if (rev_wi->second->getOwnerNode() == -1) {
+				LOG_DEBUG("Commit :Publish set object %s, lock not required\n",rev_wi->first.c_str());
+				// Copy it to publish set object, delete old publish copy
+//				std::map<std::string, HyflowObject*, ObjectIdComparator>::iterator pub_i = publishMap.find(rev_wi->first);
+//				if (pub_i == publishMap.end()) {
+//					// We would have got this object from parent
+//					// For now just copy to publish set, while merge to parent we will overwrite
+//					LOG_DEBUG("Commit :Got parent publish set object\n");
+//					HyflowObject* writeObject = NULL;
+//					rev_wi->second->getClone(&writeObject);
+//					publishMap[rev_wi->first] = writeObject;
+//				} else {
+//					HyflowObject* oldObject = publishMap.at(rev_wi->first);
+//					HyflowObject* writeObject = NULL;
+//					rev_wi->second->getClone(&writeObject);
+//					publishMap[rev_wi->first] = writeObject;
+//					delete oldObject;
+//				}
+				rev_wi++;
+				continue;
+			}
+
 			if (!lockObject(rev_wi->second)) {
 				LOG_DEBUG("CommitCP :Unable to get WriteLock for %s\n", rev_wi->first.c_str());
 
@@ -629,6 +712,13 @@ void DTL2Context::tryCommitCP() {
 			int objectsCheckPoint = rev_ri->second->getAccessCheckPoint();
 			if ( objectsCheckPoint >= availableCheckPoint) {
 				rev_ri++;
+				continue;
+			}
+
+			// If same object exist in publish set of my or another innerTxn don't validate
+			// It might have been copied to write Map when manipulated by other transaction
+			if (rev_ri->second->getOwnerNode() == -1) {
+				LOG_DEBUG("CommitCP :Publish set object %s in read Set validation not required\n", rev_ri->first.c_str());
 				continue;
 			}
 
@@ -692,24 +782,46 @@ void DTL2Context::reallyCommit() {
 	std::map<std::string, HyflowObject*, ObjectIdComparator>::reverse_iterator wi;
 	// Update object version
 	int version = ContextManager::getClock();
+	LOG_DEBUG("DTL :Commit write Set Objects\n");
 	for( wi = writeMap.rbegin() ; wi != writeMap.rend() ; wi++ ) {
 		// LESSON : Use node clock instead of transaction clock to make sure to
 		// transaction threads set different object version after commit and object
 		// version must increase after each commit.
-//		wi->second->setVersion(tnxClock);
 		wi->second->setVersion(version);
 		LOG_DEBUG("Set object %s version %d\n",wi->first.c_str(), version);
 		// Register object
 		DirectoryManager::registerObject(wi->second, txnId);
+
+		// Check if updated object was part of publish set too, if so delete from there as that is older
+		// Don't need to it with delete set object as they commit at last
+		std::map<std::string, HyflowObject*>::iterator ti = publishMap.find(wi->first);
+		if ( ti != publishMap.end()) {
+			LOG_DEBUG("DTL :Deleting from publish set object %s copy\n", wi->first.c_str());
+			publishMap.erase(ti);
+		}
 	}
 
 	// Publish new created objects and wait of ownership change
+	LOG_DEBUG("DTL :Commit publish Set Objects\n");
 	for( wi = publishMap.rbegin() ; wi != publishMap.rend() ; wi++ ) {
+		// Check if this object was deleted in same transaction, if so don't register
+		// Actually we can skip as, delete commit happens at last
+
+		// Check if this object was updated later and is part of write set, don't publish old copy
+		// While tryCommit we copy the latest copy of object to publish set
+//		ti = writeMap.find(wi->first);
+//		if ( ti != writeMap.end()) {
+//			LOG_DEBUG("DTL :Not publishing Old object copy %s, it is published in writeSet\n", wi->first.c_str());
+//			continue;
+//		}
+
+		// otherwise tackle usually
 		wi->second->setVersion(version);
 		DirectoryManager::registerObject(wi->second, txnId);
 	}
 
 	// Unregister deleted objects
+	LOG_DEBUG("DTL :Commit delete Set Objects\n");
 	for( wi = deleteMap.rbegin() ; wi != deleteMap.rend() ; wi++ ) {
 		DirectoryManager::unregisterObject(wi->second, txnId);
 	}
@@ -730,6 +842,7 @@ void DTL2Context::mergeIntoParents() {
 		if (pi == pContext->readMap.end()) {
 			pContext->readMap[i->first] = objCopy;
 		}else {
+			LOG_DEBUG("DTL :Merge overwrite %s in parent Read Map\n", i->first.c_str());
 			HyflowObject *pCopy = pi->second;
 			//Over write the child object copy
 			pContext->readMap[i->first] = objCopy;
@@ -744,6 +857,7 @@ void DTL2Context::mergeIntoParents() {
 		if (pi == pContext->writeMap.end()) {
 			pContext->writeMap[i->first] = objCopy;
 		}else {
+			LOG_DEBUG("DTL :Merge overwrite %s in parent write Map\n", i->first.c_str());
 			HyflowObject *pCopy = pi->second;
 			//Over write the child object copy
 			pContext->writeMap[i->first] = objCopy;
@@ -758,6 +872,7 @@ void DTL2Context::mergeIntoParents() {
 		if (pi == pContext->publishMap.end()) {
 			pContext->publishMap[i->first] = objCopy;
 		}else {
+			LOG_DEBUG("DTL :Merge overwrite %s in parent publish Map\n", i->first.c_str());
 			HyflowObject *pCopy = pi->second;
 			//Over write the child object copy
 			pContext->publishMap[i->first] = objCopy;
@@ -772,12 +887,21 @@ void DTL2Context::mergeIntoParents() {
 		if (pi == pContext->deleteMap.end()) {
 			pContext->deleteMap[i->first] = objCopy;
 		}else {
+			LOG_DEBUG("DTL :Merge overwrite %s in parent delete Map\n", i->first.c_str());
 			HyflowObject *pCopy = pi->second;
 			//Over write the child object copy
 			pContext->deleteMap[i->first] = objCopy;
 			delete pCopy;
 		}
 	}
+}
+
+void DTL2Context::tryCommitON() {
+
+}
+
+void DTL2Context::reallyCommitON() {
+
 }
 
 void DTL2Context::commit(){
@@ -800,9 +924,11 @@ void DTL2Context::commit(){
 		} else {
 			LOG_DEBUG("DTL :CLOSED Context Call, merging sets to parent\n");
 			mergeIntoParents();
+			resetAbortCount();
 		}
 	}else if (ContextManager::getNestingModel() == HYFLOW_NESTING_OPEN) {
-		Logger::fatal("DTL :Open nesting not supported currently\n");
+		tryCommitON();
+		reallyCommitON();
 	}else if (ContextManager::getNestingModel() == HYFLOW_CHECKPOINTING) {
 		tryCommitCP();
 		reallyCommit();
@@ -830,7 +956,7 @@ bool DTL2Context::checkParent() {
 		}
 	}else if (ContextManager::getNestingModel() == HYFLOW_NESTING_CLOSED) {
 		if (!parentContext) {	// Top context commit here
-			LOG_DEBUG("DTL :Check Parent not throwing exception\n");
+			LOG_DEBUG("DTL :Top context Check Parent not throwing exception\n");
 			return false;
 		} else {
 			// If parent transaction is also aborted then we can not
@@ -839,8 +965,15 @@ bool DTL2Context::checkParent() {
 				LOG_DEBUG("DTL :Check Parent throwing exception\n");
 				return true;
 			} else {
-				// if my parent is not aborted then I should keep retrying on my level
-				LOG_DEBUG("DTL :Check Parent not throwing exception as parent Active\n");
+				// Inner transaction abort count
+				increaseAbortCount();
+				int aborts = getAbortCount();
+				if (aborts > 3 ) {
+					LOG_DEBUG("DTL :Repeated Inner transaction Abort=%d, full abort\n", aborts);
+					resetAbortCount();
+					return true;
+				}
+				LOG_DEBUG("DTL :Check Parent not throwing exception as parent Active, abort Count %d\n", aborts);
 				return false;
 			}
 		}
@@ -861,65 +994,125 @@ void DTL2Context::updateClock(int c) {
  * TODO: Provide a method to revive fresh copies
  * Object fetching and beforeRead step combined
  */
-void DTL2Context::fetchObject(std::string id, bool isRead=true) {
-	// check if object is already part of read set, if not fetch add to read set
-	std::map<std::string, HyflowObject*>::iterator i = readMap.find(id);
-	if ( i != readMap.end()) {
-		// We already have object in transactions read set nothing to do return
-		LOG_DEBUG("DTL :Object %s already available in ReadSet\n", id.c_str());
-		return;
+bool DTL2Context::fetchObject(std::string id, bool isRead=true, bool abortOnNull=true) {
+	/*
+	 * Perform object availability check in Transaction itself
+	 */
+	// First of all check is object is part of delete set, Txn might have deleted
+	std::map<std::string, HyflowObject*>::iterator cdi = deleteMap.find(id);
+	if ( cdi != deleteMap.end()) {
+		if (abortOnNull) {
+			LOG_DEBUG("DTL :Object %s in Delete Map, abort this transaction\n", id.c_str());
+			status = TXN_ABORTED;
+			TransactionException objectDeleted("DTL :Object in delete map, abort this transaction\n");
+			throw objectDeleted;
+		}else {
+			LOG_DEBUG("DTL :Object %s was Deleted by this transaction\n", id.c_str());
+			return false;
+		}
 	}
 
-	//Check if object copy is available in any of parent transaction
-	for (DTL2Context* current= (DTL2Context*)parentContext; current != NULL; current = (DTL2Context*)current->parentContext) {
-		std::map<std::string, HyflowObject*>::iterator pi = current->readMap.find(id);
-		if (pi != current->readMap.end()) {
-			// We got object in parent transaction
-			HyflowObject* pCopy = NULL;
-			pi->second->getClone(&pCopy);
-			// Update checkPoint access index and Copy to this transaction readSet
-			pCopy->setAccessCheckPoint(CheckPointProvider::getCheckPointIndex());
-			if (isRead) {
-				readMap[id] = pCopy;
-			}else {
-				writeMap[id] = pCopy;
- 			}
-			return ;
-		}
+	// check if object is already part of read set, all objects are added to read set
+	// which are either fetched for read or write, therefore need not to check for write set
+	std::map<std::string, HyflowObject*>::iterator cri = readMap.find(id);
+	if ( cri != readMap.end()) {
+		// We already have object in transactions read set nothing to do return
+		LOG_DEBUG("DTL :Object %s already available in ReadSet\n", id.c_str());
+		return true;
 	}
 
 	// Search in publish set too, user may lose its own created objects
-	std::map<std::string, HyflowObject*>::iterator pubItr = publishMap.find(id);
-	if ( pubItr != publishMap.end() ) {
+	// We need not to test to parent transactions first as transaction create unique objects
+	std::map<std::string, HyflowObject*>::iterator cpi = publishMap.find(id);
+	if ( cpi != publishMap.end() ) {
 		LOG_DEBUG("DTL :Object %s found in transaction publish Set\n", id.c_str());
 		// Copy object to its read set
-		HyflowObject* pCopy = NULL;
-		pubItr->second->getClone(&pCopy);
-		// Update checkPoint access index and Copy to this transaction readSet
-		pCopy->setAccessCheckPoint(CheckPointProvider::getCheckPointIndex());
-		if (isRead) {
-			readMap[id] = pCopy;
-		}else {
-			writeMap[id] = pCopy;
+		HyflowObject* prCopy = NULL;
+		cpi->second->getClone(&prCopy);
+
+		readMap[id] = prCopy;
+		if (!isRead) {
+			HyflowObject* pwCopy = NULL;
+			cpi->second->getClone(&pwCopy);
+			writeMap[id] = pwCopy;
 		}
-		return;
+		return true;
 	}
 
-	//Check if object copy is available in any of parent transaction
+	/*
+	 * Perform object availability check in Transaction parents, Useful for close and open nesting
+	 */
 	for (DTL2Context* current= (DTL2Context*)parentContext; current != NULL; current = (DTL2Context*)current->parentContext) {
-		std::map<std::string, HyflowObject*>::iterator ppubItr = current->publishMap.find(id);
-		if (ppubItr != current->publishMap.end()) {
-			// We got object in parent transaction
-			HyflowObject* pCopy = NULL;
-			ppubItr->second->getClone(&pCopy);
-			// Update checkPoint access index and Copy to this transaction readSet
-			pCopy->setAccessCheckPoint(CheckPointProvider::getCheckPointIndex());
-			if (isRead) {
-				readMap[id] = pCopy;
-			}else {
-				writeMap[id] = pCopy;
- 			}
-			return ;
+		{
+			// Check if object got Deleted by any of previous inner transaction
+			std::map<std::string, HyflowObject*>::iterator pdi = current->deleteMap.find(id);
+			if ( pdi != current->deleteMap.end()) {
+				if (abortOnNull) {
+					LOG_DEBUG("DTL :Object %s in parent Delete Map, abort this transaction\n", id.c_str());
+					status = TXN_ABORTED;
+					TransactionException objectDeleted("DTL :Object in delete map, abort this transaction\n");
+					throw objectDeleted;
+				}else {
+					LOG_DEBUG("DTL :Object %s got Deleted by parent\n", id.c_str());
+					return false;
+				}
+			}
+		}
+
+		{
+			// Check if object got updated by any of previous inner transaction: InnerTxn should read updated object
+			std::map<std::string, HyflowObject*>::iterator pwi = current->writeMap.find(id);
+			if ( pwi != current->writeMap.end()) {
+				// We got object in parent transaction
+				LOG_DEBUG("Got %s in parent transaction writeMap\n", id.c_str());
+				HyflowObject* prCopy = NULL;
+				pwi->second->getClone(&prCopy);
+
+				readMap[id] = prCopy;
+				if (!isRead) {
+					HyflowObject* pwCopy = NULL;
+					pwi->second->getClone(&pwCopy);
+					writeMap[id] = pwCopy;
+	 			}
+				return true;
+			}
+		}
+
+		{
+			// Check if object exist in Read Map
+			std::map<std::string, HyflowObject*>::iterator pri = current->readMap.find(id);
+			if (pri != current->readMap.end()) {
+				// We got object in parent transaction
+				LOG_DEBUG("Got %s in parent transaction readMap\n", id.c_str());
+				HyflowObject* prCopy = NULL;
+				pri->second->getClone(&prCopy);
+				readMap[id] = prCopy;
+				if (!isRead) {
+					HyflowObject* pwCopy = NULL;
+					pri->second->getClone(&pwCopy);
+					writeMap[id] = pwCopy;
+				}
+				return true;
+			}
+		}
+
+		{
+			// Check if object exist in publish set
+			std::map<std::string, HyflowObject*>::iterator ppubItr = current->publishMap.find(id);
+			if (ppubItr != current->publishMap.end()) {
+				// We got object in parent transaction
+				LOG_DEBUG("Got %s in parent transaction publishMap\n", id.c_str());
+				HyflowObject* prCopy = NULL;
+				ppubItr->second->getClone(&prCopy);
+
+				readMap[id] = prCopy;
+				if (!isRead) {
+					HyflowObject* pwCopy = NULL;
+					ppubItr->second->getClone(&pwCopy);
+					writeMap[id] = pwCopy;
+				}
+				return true;
+			}
 		}
 	}
 
@@ -927,10 +1120,15 @@ void DTL2Context::fetchObject(std::string id, bool isRead=true) {
 	HyflowObject* obj = DirectoryManager::locate(id, true, txnId);
 	// If object got deleted then throw abort exception
 	if (obj == NULL) {
-		LOG_DEBUG("DTL :Object %s got Deleted, need to delete this transaction\n", id.c_str());
-		status = TXN_ABORTED;
-		TransactionException objectDeleted("DTL :Object got Deleted, need to delete this transaction\n");
-		throw objectDeleted;
+		if (abortOnNull) {
+			LOG_DEBUG("DTL :Object %s got Deleted, need to abort this transaction\n", id.c_str());
+			status = TXN_ABORTED;
+			TransactionException objectDeleted("DTL :Object got Deleted, need to delete this transaction\n");
+			throw objectDeleted;
+		}else {
+			LOG_DEBUG("DTL :Object %s got Deleted\n", id.c_str());
+			return false;
+		}
 	}
 	// Perform early validation step, always use highestSendClock, it is update by objectAccessMessage
 	// First do forwarding on current readSet then add new object to it
@@ -942,9 +1140,14 @@ void DTL2Context::fetchObject(std::string id, bool isRead=true) {
 		LOG_DEBUG("DTL :Adding fetched object %s to readSet\n", id.c_str());
 		readMap[id] = obj;
 	}else {
+		// Save a reference of object, so we don't have to go to network get non-manipulated copy
+		HyflowObject* referenceCopy = NULL;
+		obj->getClone(&referenceCopy);
+		readMap[id] = referenceCopy;
 		LOG_DEBUG("DTL :Adding fetched object %s to writeSet\n", id.c_str());
 		writeMap[id] = obj;
 	}
+	return true;
 }
 
 void DTL2Context::fetchObjects(std::string ids[], int objCount, bool isRead=true) {
@@ -952,5 +1155,30 @@ void DTL2Context::fetchObjects(std::string ids[], int objCount, bool isRead=true
 		fetchObject(ids[i], isRead);
 	}
 }
+
+void DTL2Context::increaseAbortCount() {
+	if (!abortCount.get()) {
+		HyInteger* aborts = new HyInteger(0);
+		abortCount.reset(aborts);
+	}
+	abortCount.get()->increaseValue();
+}
+
+int DTL2Context::getAbortCount() {
+	if (!abortCount.get()) {
+		HyInteger* aborts = new HyInteger(0);
+		abortCount.reset(aborts);
+	}
+	return abortCount.get()->getValue();
+}
+
+void DTL2Context::resetAbortCount() {
+	if (!abortCount.get()) {
+		HyInteger* aborts = new HyInteger(0);
+		abortCount.reset(aborts);
+	}
+	abortCount.get()->setValue(0);
+}
+
 
 } /* namespace vt_dstm */

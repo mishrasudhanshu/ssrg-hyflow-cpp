@@ -1,6 +1,6 @@
 /*
  * TestSpeedBenchmark.h
- * This class is create verify the efficiency of Networking Library
+ * This class is created to verify the efficiency of Networking Library
  *  Created on: Nov 10, 2012
  *      Author: mishras[at]vt.edu
  */

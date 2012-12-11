@@ -73,6 +73,15 @@ src/benchMarks/tm/tpcc/TpccBenchmark.d: \
  ../src/benchMarks/tm/tpcc/../../tm/hashTable/../../../core/HyflowObjectFuture.h \
  ../src/benchMarks/tm/tpcc/../../tm/hashTable/../../HyflowBenchmark.h \
  ../src/benchMarks/tm/tpcc/../../tm/hashTable/../../../util/concurrent/HyInteger.h \
+ ../src/benchMarks/tm/tpcc/../../tm/vacation/VacationBenchmark.h \
+ ../src/benchMarks/tm/tpcc/../../tm/vacation/../../HyflowBenchmark.h \
+ ../src/benchMarks/tm/tpcc/../../tm/vacation/../../../util/concurrent/HyInteger.h \
+ ../src/benchMarks/tm/tpcc/../../tm/vacation/ReservationInfo.h \
+ ../src/benchMarks/tm/tpcc/../../tm/vacation/../../../core/HyflowObject.h \
+ ../src/benchMarks/tm/tpcc/../../tm/vacation/../../../core/context/HyflowContext.h \
+ ../src/benchMarks/tm/tpcc/../../tm/vacation/../../../core/HyflowObjectFuture.h \
+ ../src/benchMarks/tm/tpcc/../../tm/vacation/Resource.h \
+ ../src/benchMarks/tm/tpcc/../../tm/vacation/Customer.h \
  ../src/benchMarks/tm/tpcc/../../tm/tpcc/TpccBenchmark.h \
  ../src/benchMarks/tm/tpcc/../../../util/concurrent/HyInteger.h \
  ../src/benchMarks/tm/tpcc/../../../util/concurrent/ThreadMeta.h \
@@ -224,6 +233,24 @@ src/benchMarks/tm/tpcc/TpccBenchmark.d: \
 ../src/benchMarks/tm/tpcc/../../tm/hashTable/../../HyflowBenchmark.h:
 
 ../src/benchMarks/tm/tpcc/../../tm/hashTable/../../../util/concurrent/HyInteger.h:
+
+../src/benchMarks/tm/tpcc/../../tm/vacation/VacationBenchmark.h:
+
+../src/benchMarks/tm/tpcc/../../tm/vacation/../../HyflowBenchmark.h:
+
+../src/benchMarks/tm/tpcc/../../tm/vacation/../../../util/concurrent/HyInteger.h:
+
+../src/benchMarks/tm/tpcc/../../tm/vacation/ReservationInfo.h:
+
+../src/benchMarks/tm/tpcc/../../tm/vacation/../../../core/HyflowObject.h:
+
+../src/benchMarks/tm/tpcc/../../tm/vacation/../../../core/context/HyflowContext.h:
+
+../src/benchMarks/tm/tpcc/../../tm/vacation/../../../core/HyflowObjectFuture.h:
+
+../src/benchMarks/tm/tpcc/../../tm/vacation/Resource.h:
+
+../src/benchMarks/tm/tpcc/../../tm/vacation/Customer.h:
 
 ../src/benchMarks/tm/tpcc/../../tm/tpcc/TpccBenchmark.h:
 
