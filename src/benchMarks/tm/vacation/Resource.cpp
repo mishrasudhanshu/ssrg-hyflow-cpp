@@ -13,6 +13,7 @@ Resource::Resource(std::string id, uint64_t p, ResourceType t) {
 	hyId = id;
 	price = p;
 	resouceType = t;
+	hyVersion = 0;
 }
 
 Resource::~Resource() {

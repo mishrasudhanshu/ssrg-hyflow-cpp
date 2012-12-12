@@ -25,6 +25,11 @@ public:
     * returns id1>id2 if sign>0, else id1<id2
     */
    bool operator()(std::string id1,std::string id2) {
+	   if (id1.compare("HEAD") == 0) {
+		   return false;
+	   }else if(id2.compare("HEAD") == 0) {
+		   return true;
+	   }
 	   int obj1 = atoi(id1.substr(id1.find('-')+1).c_str());
 	   int obj2 = atoi(id2.substr(id2.find('-')+1).c_str());
 	   if ( obj1==obj2 ) {

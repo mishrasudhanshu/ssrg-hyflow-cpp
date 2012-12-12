@@ -13,6 +13,7 @@
 #include "../../../util/logging/Logger.h"
 #include "../../BenchmarkExecutor.h"
 
+// Defines the number of elements per bucket
 #define HYFLOW_HASHTABLE_CONTENTION 2
 
 namespace vt_dstm {
@@ -34,7 +35,7 @@ void HashTableBenchmark::readOperation(std::string ids[], int size){
 	int *keys = new int[txnsCount];
 	for ( int txns=0 ; txns<txnsCount ; txns++) {
 		// Make access to random buckets
-		keys[txns] = (abs(Logger::getCurrentMicroSec()+txns))%objectCount;
+		keys[txns] = (abs(Logger::getCurrentMicroSec())+txns)%objectCount;
 		LOG_DEBUG("HashTable :GET[%d] Nodes\n", keys[txns]);
 	}
 	HashBucket::getMulti(keys, txnsCount);
@@ -48,7 +49,7 @@ void HashTableBenchmark::writeOperation(std::string ids[], int size){
 		std::pair<int, double> *entries = new std::pair<int, double>[txnsCount];
 		for ( int txns=0 ; txns<txnsCount ; txns++) {
 			// Make access to random buckets
-			int key = (abs(Logger::getCurrentMicroSec()+txns))%objectCount;
+			int key = (abs(Logger::getCurrentMicroSec())+txns)%objectCount;
 			entries[txns].first = key;
 			entries[txns].second = 0.1;
 			LOG_DEBUG("HashTable :PUT[%d] Entry\n", entries[txns].first);
@@ -59,7 +60,7 @@ void HashTableBenchmark::writeOperation(std::string ids[], int size){
 		int *keys = new int[txnsCount];
 		for ( int txns=0 ; txns<txnsCount ; txns++) {
 			// Make access to random buckets
-			keys[txns] = (abs(Logger::getCurrentMicroSec()+txns))%objectCount;
+			keys[txns] = (abs(Logger::getCurrentMicroSec())+txns)%objectCount;
 			LOG_DEBUG("HashTable :DEL[%d] Nodes\n", keys[txns]);
 		}
 		HashBucket::removeMulti(keys, txnsCount);
@@ -69,8 +70,8 @@ void HashTableBenchmark::writeOperation(std::string ids[], int size){
 		int *keys2 = new int[txnsCount];
 		for ( int txns=0 ; txns<txnsCount ; txns++) {
 			// Make access to random buckets
-			keys1[txns] = (abs(Logger::getCurrentMicroSec()+txns))%objectCount;
-			keys2[txns] = (abs(Logger::getCurrentMicroSec()+txns+11))%objectCount;
+			keys1[txns] = (abs(Logger::getCurrentMicroSec())+txns)%objectCount;
+			keys2[txns] = (abs(Logger::getCurrentMicroSec())+txns+txnsCount)%objectCount;
 			LOG_DEBUG("HashTable :MV[%d][%d] Nodes\n", keys1[txns], keys2[txns]);
 		}
 		HashBucket::moveMulti(keys1, keys2, txnsCount);

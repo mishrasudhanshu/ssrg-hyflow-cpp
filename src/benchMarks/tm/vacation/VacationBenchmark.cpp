@@ -39,9 +39,9 @@ void VacationBenchmark::readOperation(std::string ids[], int size) {
 void VacationBenchmark::writeOperation(std::string ids[], int size) {
 	int random = abs(Logger::getCurrentMicroSec());
 	if (random%2 == 0) {
-		processRequest(ACTION_UPDATE_TABLES);
-	}else {
 		processRequest(ACTION_DELETE_CUSTOMER);
+	}else {
+		processRequest(ACTION_UPDATE_TABLES);
 	}
 }
 
@@ -69,12 +69,14 @@ void VacationBenchmark::processRequest(Actions action)
 				std::stringstream idStream;
 				idStream << object%nodeCount <<"-"<< object;
 				resourceIds[queries] = idStream.str();
+				LOG_DEBUG("VAC :Make Reservation on resource %s\n",resourceIds[queries].c_str());
 			}
 			int randomCustomer = abs(Logger::getCurrentMicroSec());
 			int customer = (randomCustomer%customerCount) + resourceCount;
 			std::stringstream custStream;
 			custStream<<(customer%nodeCount)<<"-"<<customer;
 			std::string customerId = custStream.str();
+			LOG_DEBUG("VAC :Make Reservation for customer %s\n", customerId.c_str());
 			Vacation::makeReservation(customerId, resourceIds, queryPerTransaction);
 			delete[] resourceIds;
 		}
@@ -85,6 +87,7 @@ void VacationBenchmark::processRequest(Actions action)
 			std::stringstream custStream;
 			custStream<<(customer%nodeCount)<<"-"<<customer;
 			std::string customerId = custStream.str();
+			LOG_DEBUG("VAC :Delete Customer %s\n", customerId.c_str());
 			Vacation::deleteCustomer(customerId);
 		}
 		break;
@@ -98,6 +101,7 @@ void VacationBenchmark::processRequest(Actions action)
 				idStream << object%nodeCount <<"-"<< object;
 				resourceIds[queries] = idStream.str();
 				prices[queries] = queries+10;
+				LOG_DEBUG("VAC :Update tables resource %s to value %d\n", resourceIds[queries].c_str(), prices[queries]);
 			}
 			Vacation::updateOffers(resourceIds, prices, queryPerTransaction);
 			delete[] resourceIds;
@@ -107,10 +111,7 @@ void VacationBenchmark::processRequest(Actions action)
 	}
 }
 
-void VacationBenchmark::checkSanity() {
-	sleep(2);
-	BankAccount::checkSanity(ids, objectCount);
-}
+void VacationBenchmark::checkSanity() {}
 
 std::string* VacationBenchmark::createLocalObjects(int objCount) {
 	if (objCount < 10) {

@@ -24,6 +24,7 @@ TpccWareHouse::TpccWareHouse(int W_ID) {
 	std::stringstream idStr;
 	idStr<<W_ID-1<<"-0";
 	hyId = idStr.str();
+	hyVersion = 0;
 }
 
 TpccWareHouse::~TpccWareHouse() {}

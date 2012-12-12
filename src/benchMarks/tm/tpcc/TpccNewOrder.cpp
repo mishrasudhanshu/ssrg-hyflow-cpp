@@ -18,6 +18,7 @@ TpccNewOrder::TpccNewOrder(int NO_W_ID, int NO_D_ID, int NO_O_ID) {
 	std::stringstream idStr;
 	idStr<<NO_W_ID-1<<"-"<<noId+NO_O_ID;
 	hyId = idStr.str();
+	hyVersion = 0;
 }
 
 TpccNewOrder::~TpccNewOrder() {}

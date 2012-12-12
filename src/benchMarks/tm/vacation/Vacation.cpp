@@ -22,7 +22,7 @@ void Vacation::makeReservation(std::string& customerId, std::string resources[],
 	std::string objects[3];
 	HYFLOW_ATOMIC_START {
 		for(int queries=0; queries<size ; queries++ ) {
-			LOG_DEBUG("Vacation :makeReservation : fetching resouce %s\n", resources[queries].c_str());
+			LOG_DEBUG("Vacation :makeReservation : fetching resource %s\n", resources[queries].c_str());
 			HYFLOW_FETCH(resources[queries], true);
 			Resource* res = (Resource*)HYFLOW_ON_READ(resources[queries]);
 			uint64_t price = res->getPrice();

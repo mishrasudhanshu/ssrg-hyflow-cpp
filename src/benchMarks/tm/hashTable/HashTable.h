@@ -28,9 +28,10 @@ public:
 
 	int size;
 	HTArgs() {}
-	HTArgs(int *k1, int *k2, int size) {
+	HTArgs(int *k1, int *k2, int s) {
 		key1 = k1;
 		key2 = k2;
+		size = s;
 	}
 
 };

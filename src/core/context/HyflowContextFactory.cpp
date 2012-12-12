@@ -65,6 +65,7 @@ HyflowContext* HyflowContextFactory::getContextInstance() {
 		}else {
 			context = contextStack.at(contextStackIndex);
 		}
+		context->setContextExecutionDepth(contextStackIndex);
 	}else {
 		Logger::fatal("HCF : Invalid Nesting Model\n");
 	}

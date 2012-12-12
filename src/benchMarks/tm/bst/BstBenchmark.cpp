@@ -13,17 +13,15 @@
 #include "../../../util/logging/Logger.h"
 
 /*
- * Increasing contention level causes the longer lists and more contention
- * Higher contention value causes the deletion of object less probable
- * TODO: Set as configurable value from default.conf
+ * Increasing object count causes the longer lists and more contention
+ * Higher object count causes the deletion of object less probable
  */
-#define HYFLOW_BST_CONTENTION 3		//Should create around 5 nodes
 
 namespace vt_dstm {
 
 boost::thread_specific_ptr<HyInteger> BstBenchmark::objectCreated;
 
-BstBenchmark::BstBenchmark() { }
+BstBenchmark::BstBenchmark() { objectCount=0; }
 
 BstBenchmark::~BstBenchmark() {}
 
@@ -34,7 +32,7 @@ int BstBenchmark::getOperandsCount()	{
 void BstBenchmark::readOperation(std::string ids[], int size){
 	int random = abs(Logger::getCurrentMicroSec());
 
-	int value = random%HYFLOW_BST_CONTENTION;
+	int value = random%objectCount;
 	LOG_DEBUG("BST :FIND[%d] Node\n", value);
 	BstNode::findNode(value);
 
@@ -42,7 +40,7 @@ void BstBenchmark::readOperation(std::string ids[], int size){
 
 void BstBenchmark::writeOperation(std::string ids[], int size){
 	int random = abs(Logger::getCurrentMicroSec());
-	int value = random%HYFLOW_BST_CONTENTION;
+	int value = random%objectCount;
 	int select = abs(Logger::getCurrentMicroSec()+1)%2;
 	if (select) {
 		LOG_DEBUG("BST :ADD[%d] Node\n", value);
@@ -66,6 +64,7 @@ int BstBenchmark::getId() {
 }
 
 std::string* BstBenchmark::createLocalObjects(int objCount) {
+	objectCount = objCount;
 	ids = new std::string [objCount];
 	if (NetworkManager::getNodeId() == 0 ) {
 		std::string next("NULL");

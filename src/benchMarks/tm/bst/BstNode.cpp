@@ -87,11 +87,11 @@ void BstNode::addNode(int value) {
 				if(currentNode->value > value) {
 					next = currentNode->leftChild;
 					leftChild = true;
-					LOG_DEBUG("BST :Node %s with value %d move child %d to left towards %s\n", currentNode->getId().c_str(), currentNode->value, value, next.c_str());
+					LOG_DEBUG("BST :Node %s with value %d move child %d to left, towards %s\n", currentNode->getId().c_str(), currentNode->value, value, next.c_str());
 				}else {
 					next = currentNode->rightChild;
 					leftChild = false;
-					LOG_DEBUG("BST :Node %s with value %d move child %d to right towards %s\n", currentNode->getId().c_str(), currentNode->value, value, next.c_str());
+					LOG_DEBUG("BST :Node %s with value %d move child %d to right, towards %s\n", currentNode->getId().c_str(), currentNode->value, value, next.c_str());
 				}
 			}while (next.compare("NULL") != 0);
 
@@ -115,21 +115,23 @@ void BstNode::deleteNode(int value) {
 		std::string head="HEAD";
 		HYFLOW_FETCH(head, true);
 
-		// Dummy Node whose right Child points to Root Node
+		// Sentinel Node whose right Child points to Root Node
 		BstNode* headNode = (BstNode*) HYFLOW_ON_READ(head);
 		std::string root = headNode->rightChild;
 		LOG_DEBUG("BST :Root node is %s\n", root.c_str());
-		BstNode	*currentNode=NULL, *prevNode=NULL;
-		std::string next;
 
 		// Check if Root Node exists or not
 		if (root.compare("NULL")!= 0) {	//otherwise nothing to delete
-			next = root;
+			std::string currentNodeId = "NULL", prevNodeId = "NULL";
+			std::string next = root;
+
 			bool leftChild = false;
 			do {
-				prevNode = currentNode;
-				HYFLOW_FETCH(next, true);
-				currentNode = (BstNode*)HYFLOW_ON_READ(next);
+				prevNodeId = currentNodeId;
+				currentNodeId = next;
+
+				HYFLOW_FETCH(currentNodeId, true);
+				BstNode	*currentNode= (BstNode*)HYFLOW_ON_READ(currentNodeId);
 
 				if(currentNode->value > value) {
 					next = currentNode->getLeftChild();
@@ -148,38 +150,56 @@ void BstNode::deleteNode(int value) {
 						replacementId = currentNode->leftChild;
 						LOG_DEBUG("BST :Got replacement %s in leftChild\n", replacementId.c_str());
 					}else{
-						// Replace with left child most in right tree
-						std::string nextIn = currentNode->rightChild;
-						BstNode* cNode = NULL, *pNode = NULL;
+						// Replace with left most child in right tree
+						std::string cNodeId = "NULL", pNodeId = "NULL";
+						std::string leftChildId = currentNode->rightChild;
 						do {
-							pNode = cNode;
-							HYFLOW_FETCH(nextIn, true);
-							cNode = (BstNode*) HYFLOW_ON_READ(nextIn);
-							nextIn = cNode->leftChild;
-						}while (nextIn.compare("NULL")!=0);
+							pNodeId = cNodeId;
+							cNodeId = leftChildId;
+
+							HYFLOW_FETCH(cNodeId, true);
+							BstNode* cNode = (BstNode*) HYFLOW_ON_READ(cNodeId);
+							leftChildId = cNode->leftChild;
+						}while (leftChildId.compare("NULL")!=0);
+
+						// We have reached to left most node in right tree
+						replacementId = cNodeId;
+						LOG_DEBUG("BST :Got replacement %s in leftChild of right tree of\n", replacementId.c_str());
 						// Disconnect the cNode
-						if (pNode) {
-							pNode = (BstNode*) HYFLOW_ON_WRITE(pNode->getId());
-							pNode->leftChild = cNode->rightChild;
-							LOG_DEBUG("BST :Moved %s from %s to %s", pNode->getId().c_str(), cNode->getId().c_str(), cNode->rightChild.c_str());
+						if (pNodeId.compare("NULL") != 0) {
+							BstNode *pNode = (BstNode*) HYFLOW_ON_WRITE(pNodeId);
+							BstNode *toBeDeletedNode = (BstNode*) HYFLOW_ON_WRITE(cNodeId);
+							pNode->leftChild = toBeDeletedNode->rightChild;
+							LOG_DEBUG("BST :Moved Node %s left child from %s to %s\n", pNode->getId().c_str(), cNodeId.c_str(), toBeDeletedNode->rightChild.c_str());
 						}
-						replacementId = cNode->getId();
-						LOG_DEBUG("BST :Got replacement %s in leftChild of ight tree of\n", replacementId.c_str());
-					}
-					if (replacementId.compare("NULL")!=0) {
-						BstNode* replacementNode = (BstNode*)HYFLOW_ON_WRITE(replacementId);
-						replacementNode->leftChild = currentNode->leftChild;
-						replacementNode->rightChild = currentNode->rightChild;
 					}
 
-					if(prevNode) {
+					// LESSON: Don't use the Node object error prone, access object using IDs
+					if ((currentNode->leftChild.compare("NULL")!=0)&&(currentNode->rightChild.compare("NULL")!=0)) {
+						HYFLOW_FETCH(replacementId, false);
+						BstNode* replacementNode = (BstNode*)HYFLOW_ON_WRITE(replacementId);
+						BstNode* toBeDeletedNode = (BstNode*)HYFLOW_ON_WRITE(currentNodeId);
+						// Cases in which replaced nodes are child of deleted node
+						if (toBeDeletedNode->leftChild.compare(replacementId) != 0) { // For left child condition not required
+							replacementNode->leftChild = toBeDeletedNode->leftChild;
+						}
+						if (toBeDeletedNode->rightChild.compare(replacementId) != 0) {
+							replacementNode->rightChild = toBeDeletedNode->rightChild;
+						}
+						LOG_DEBUG("BST :Set %s left child %s to %s and right child %s to %s if condition met\n", replacementId.c_str(), replacementNode->leftChild.c_str(), toBeDeletedNode->leftChild.c_str(), replacementNode->rightChild.c_str(), toBeDeletedNode->rightChild.c_str());
+					}
+
+					if(prevNodeId.compare("NULL") != 0 ) {
+						BstNode *prevNode = (BstNode*) HYFLOW_ON_WRITE(prevNodeId);
 						if(leftChild) {
 							prevNode->leftChild = replacementId;
+							LOG_DEBUG("BST :DEL update prevNode %s leftChild %s\n",prevNode->getId().c_str(), replacementId.c_str());
 						}else {
 							prevNode->rightChild = replacementId;
+							LOG_DEBUG("BST :DEL update prevNode %s rightChild %s\n",prevNode->getId().c_str(), replacementId.c_str());
 						}
 					}else {
-						// We delete root node itself, set our dummy head to NULL
+						// We delete root node itself, set our sentinel head to NULL
 						headNode = (BstNode*) HYFLOW_ON_WRITE(head);
 						headNode->rightChild = "NULL";
 					}
@@ -208,10 +228,11 @@ void BstNode::findNode(int value) {
 
 		// Check if Root Node exists or not
 		if (root.compare("NULL") != 0) {
-			HYFLOW_FETCH(root, true);
+//			HYFLOW_FETCH(root, true);
 			BstNode* currentNode = NULL;
 			std::string next = root;
 			do {
+				HYFLOW_FETCH(next, true);
 				currentNode = (BstNode*) HYFLOW_ON_READ(next);
 				if(currentNode->value > value) {
 					next = currentNode->leftChild;

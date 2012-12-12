@@ -266,9 +266,7 @@ void HashBucket::getMulti(int values[], int size) {
 	}
 }
 
-void HashBucket::print() {
-
-}
+void HashBucket::print() {}
 
 void HashBucket::getClone(HyflowObject **obj) {
 	HashBucket *ln = new HashBucket();

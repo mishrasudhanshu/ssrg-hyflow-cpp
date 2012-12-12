@@ -29,7 +29,7 @@ ListBenchmark::ListBenchmark() {
 ListBenchmark::~ListBenchmark() {}
 
 int ListBenchmark::getOperandsCount()	{
-	return 1*BenchmarkExecutor::getInnerTxns();;
+	return 1*BenchmarkExecutor::getInnerTxns();
 }
 
 void ListBenchmark::readOperation(std::string ids[], int size){

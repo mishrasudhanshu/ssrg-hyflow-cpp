@@ -25,6 +25,7 @@ TpccItem::TpccItem(int id) {
 	std::stringstream IdStr;
 	IdStr<<nodeId<<"-"<<I_ID + TPCC_ITEM_ID_OFFSET;
 	hyId = IdStr.str();
+	hyVersion = 0;
 }
 
 TpccItem::~TpccItem() {}

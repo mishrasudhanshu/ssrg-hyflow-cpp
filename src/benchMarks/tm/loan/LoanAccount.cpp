@@ -109,7 +109,7 @@ void LoanAccount::sumAtomically(HyflowObject* self, void* loanArgs, HyflowContex
 		LOG_DEBUG("Loan :Call check Balance on %s returned %llu\n", account.c_str(), *balance);
 //		LoanArgs newArgs(0, "", accountNums);
 //		sumAtomically(NULL, &newArgs, __context__, balance);
-		sum(accountNums);
+		balance += sum(accountNums);
 	}
 }
 
@@ -179,7 +179,7 @@ uint64_t LoanAccount::sum(std::vector<std::string> ids) {
 	}else {
 		Atomic<uint64_t> atomicSum;
 		atomicSum.atomically = sumAtomically;
-		atomicSum.execute(NULL, &laArgs, NULL);
+		atomicSum.execute(NULL, &laArgs, &balance);
 	}
 	return balance;
 }

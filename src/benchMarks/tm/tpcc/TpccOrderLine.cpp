@@ -20,6 +20,7 @@ TpccOrderLine::	TpccOrderLine(int w_id, int d_id, int o_id, int ol_num) {
 	std::stringstream idStr;
 	idStr<<OL_W_ID-1<<"-"<<olId+(OL_O_ID-1)*20+OL_NUMBER;
 	hyId = idStr.str();
+	hyVersion = 0;
 }
 
 std::string TpccOrderLine::getOrderLineId(int OL_W_ID, int OL_D_ID, int OL_O_ID, int OL_NUMBER) {

@@ -14,8 +14,11 @@
 #include "../../../util/logging/Logger.h"
 #include "../../BenchmarkExecutor.h"
 
+/*
+ * Increasing object count causes the longer lists and more contention
+ * Higher object count causes the deletion of object less probable
+ */
 // TODO: Move to default configuration
-#define HYFLOW_SKIP_LIST_CONTENTION 3  // Should create around 5+ nodes
 #define HYFLOW_SKIP_LIST_LEVELS 5
 
 namespace vt_dstm {
@@ -23,12 +26,12 @@ namespace vt_dstm {
 boost::thread_specific_ptr<HyInteger> SkipListBenchmark::objectCreated;
 int SkipListBenchmark::skipListLevels=HYFLOW_SKIP_LIST_LEVELS;
 
-SkipListBenchmark::SkipListBenchmark() { }
+SkipListBenchmark::SkipListBenchmark() { objectCount=0; }
 
 SkipListBenchmark::~SkipListBenchmark() {}
 
 int SkipListBenchmark::getOperandsCount()	{
-	return 1*BenchmarkExecutor::getInnerTxns();;
+	return 1*BenchmarkExecutor::getInnerTxns();
 }
 
 void SkipListBenchmark::readOperation(std::string ids[], int size){
@@ -37,7 +40,7 @@ void SkipListBenchmark::readOperation(std::string ids[], int size){
 	int random = abs(Logger::getCurrentMicroSec());
 	int* values = new int[multiCount];
 	for(int txns = 0; txns<multiCount ; txns++) {
-		values[txns] = (random+txns)%HYFLOW_SKIP_LIST_CONTENTION;
+		values[txns] = (random+txns)%objectCount;
 		LOG_DEBUG("SkipLIST :FIND[%d] Node\n", values[txns]);
 	}
 	SkipListNode::findNodeMulti(values, multiCount);
@@ -52,13 +55,13 @@ void SkipListBenchmark::writeOperation(std::string ids[], int size){
 	int* values = new int[multiCount];
 	if (select%2 == 1 ) {
 		for(int txns = 0; txns<multiCount ; txns++) {
-			values[txns] = (random+txns)%HYFLOW_SKIP_LIST_CONTENTION;
+			values[txns] = (random+txns)%objectCount;
 			LOG_DEBUG("SkipLIST :ADD[%d] Node\n", values[txns]);
 		}
 		SkipListNode::addNodeMulti(values,multiCount);
 	}else {
 		for(int txns = 0; txns<multiCount ; txns++) {
-			values[txns] = (random+txns)%HYFLOW_SKIP_LIST_CONTENTION;
+			values[txns] = (random+txns)%objectCount;
 			LOG_DEBUG("SkipLIST :DEL[%d] Node\n", values[txns]);
 		}
 		SkipListNode::deleteNodeMulti(values, multiCount);
@@ -79,6 +82,7 @@ int SkipListBenchmark::getId() {
 }
 
 std::string* SkipListBenchmark::createLocalObjects(int objCount) {
+	objectCount = objCount;
 	ids = new std::string [objCount];
 	if (NetworkManager::getNodeId() == 0 ) {
 		SkipListNode headNode(0, "HEAD", skipListLevels);

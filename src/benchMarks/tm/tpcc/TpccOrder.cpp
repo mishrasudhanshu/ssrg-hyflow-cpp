@@ -19,6 +19,7 @@ TpccOrder::TpccOrder(int O_W_ID, int O_D_ID, int O_ID) {
 	std::stringstream idStr;
 	idStr<<O_W_ID-1<<"-"<<oId+O_ID;
 	hyId = idStr.str();
+	hyVersion = 0;
 }
 
 TpccOrder::~TpccOrder() {}

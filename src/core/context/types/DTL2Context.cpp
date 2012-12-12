@@ -141,6 +141,7 @@ void DTL2Context::addToPublish(HyflowObject *newObject) {
 	newObject->setVersion(0);
 	//If checkPointing enabled set the checkPoint Index
 	newObject->setAccessCheckPoint(CheckPointProvider::getCheckPointIndex());
+	LOG_DEBUG("DTL :Added object %s to publish set at checkPointIndex %d\n", newObject->getId().c_str(), newObject->getAccessCheckPoint());
 	publishMap[newObject->getId()] = newObject;
 }
 
@@ -719,6 +720,7 @@ void DTL2Context::tryCommitCP() {
 			// It might have been copied to write Map when manipulated by other transaction
 			if (rev_ri->second->getOwnerNode() == -1) {
 				LOG_DEBUG("CommitCP :Publish set object %s in read Set validation not required\n", rev_ri->first.c_str());
+				rev_ri++;
 				continue;
 			}
 

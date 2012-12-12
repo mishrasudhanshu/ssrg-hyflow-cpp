@@ -7,8 +7,8 @@ objs=10000
 setBenchMarks="list bst skipList"
 if [[ "$setBenchMarks" =~ "$bench"  ]]
 then
-    objects=5
-    echo "Got Set BenchMark Objects=$objects"
+    objs=5
+    echo "Got Set BenchMark Objects=$objs"
 fi
 
 build=Debug

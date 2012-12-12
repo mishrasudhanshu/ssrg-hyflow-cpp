@@ -23,6 +23,7 @@ TpccHistory::TpccHistory(int H_W_ID, int H_D_ID) {
 	std::stringstream idStr;
 	idStr<<NetworkManager::getNodeId()<<"-"<<hId;
 	hyId = idStr.str();
+	hyVersion = 0;
 }
 
 TpccHistory::~TpccHistory() {}

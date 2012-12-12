@@ -31,6 +31,7 @@ TpccDistrict::TpccDistrict(int D_W_ID, int D_ID) {
 	std::stringstream idStr;
 	idStr<<D_W_ID-1<<"-"<<D_ID + TPCC_DISTRICT_ID_OFFSET;
 	hyId = idStr.str();
+	hyVersion = 0;
 }
 
 TpccDistrict::~TpccDistrict() {}

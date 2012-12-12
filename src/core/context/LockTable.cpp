@@ -137,7 +137,7 @@ void LockTable::tryUnlock(std::string & objId, int32_t obVer, unsigned long long
 			return;
 		}
 		a->second.setLockVersion(versionLock & UNLOCK);
-		LOG_DEBUG("LockTable : Unlock successful for %s to %d\n", objId.c_str(), versionLock & UNLOCK);
+		LOG_DEBUG("LockTable : Unlock successful for %s to %d, requested %d\n", objId.c_str(), versionLock & UNLOCK, obVer);
 		return;
 	}
 	LOG_DEBUG("LockTable : Request object %s was already unlocked\n", objId.c_str());

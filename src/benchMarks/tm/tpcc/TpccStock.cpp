@@ -35,6 +35,7 @@ TpccStock::TpccStock(int S_W_ID, int S_I_ID) {
 	std::stringstream IdStr;
 	IdStr<<S_W_ID-1<<"-"<<S_I_ID + TPCC_STOCK_ID_OFFSET;
 	hyId = IdStr.str();
+	hyVersion = 0;
 }
 
 TpccStock::~TpccStock() {

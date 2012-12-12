@@ -41,6 +41,7 @@ TpccCustomer::TpccCustomer(int warehouseId, int districtId, int customerId) {
 	std::stringstream idStr;
 	idStr<<(warehouseId-1)<<"-"<< (districtId-1)*3000 + customerId + TPCC_CUSTOMER_ID_OFFSET;
 	hyId = idStr.str();
+	hyVersion = 0;
 }
 
 TpccCustomer::~TpccCustomer() {}
