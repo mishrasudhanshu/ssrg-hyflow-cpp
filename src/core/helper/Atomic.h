@@ -9,10 +9,8 @@
 #define ATOMIC_H_
 
 #include <cstdlib>
-#include "../../util/logging/Logger.h"
-#include "../../core/HyflowObject.h"
-#include "../../core/context/ContextManager.h"
-#include "../../benchMarks/BenchmarkExecutor.h"
+#include "BenchMarkArgs.h"
+#include "BenchMarkReturn.h"
 #include "CheckPointProvider.h"
 
 #define HYFLOW_ATOMIC_START \
@@ -85,56 +83,30 @@ namespace vt_dstm {
 /*
  * Other way to do it can be using explicit overloading void type for Atomic class
  */
-template <class ReturnType>
 class Atomic {
 	Hyflow_NestingModel nestingModel;
 	bool m_hasOnCommit;
 	bool m_hasOnAbort;
 
-	static void defaultOnCommit(HyflowObject* self, void* args, HyflowContext* context) {}
-	static void defaultOnAbort(HyflowObject* self, void* args, HyflowContext* context) {}
+	void* arguements;
+	BenchMarkReturn* returnType;
+	HyflowObject* selfPointer;
+
+
+	static void defaultOnCommit(HyflowObject* self, BenchMarkArgs* args, HyflowContext* context) {}
+	static void defaultOnAbort(HyflowObject* self, BenchMarkArgs* args, HyflowContext* context) {}
 public:
-	void (*atomically)(HyflowObject* self, void* args, HyflowContext* context, ReturnType* rt);
+	void (*atomically)(HyflowObject* self, BenchMarkArgs* args, HyflowContext* context, BenchMarkReturn* rt);
 
-	void (*onCommit)(HyflowObject* self, void* args, HyflowContext* context);
-	void (*onAbort)(HyflowObject* self, void* args, HyflowContext* context);
+	void (*onCommit)(HyflowObject* self, BenchMarkArgs* args, HyflowContext* context);
+	void (*onAbort)(HyflowObject* self, BenchMarkArgs* args, HyflowContext* context);
 
-	Atomic(){
-		m_hasOnCommit = false;
-		m_hasOnAbort = false;
-		atomically = NULL;
-		onCommit = Atomic::defaultOnCommit;
-		onAbort = Atomic::defaultOnAbort;
-		nestingModel = ContextManager::getNestingModel() ;
-	}
+	Atomic();
 
-	Atomic(Hyflow_NestingModel model) {
-		m_hasOnCommit = false;
-		m_hasOnAbort = false;
-		atomically = NULL;
-		onCommit = defaultOnCommit;
-		onAbort = defaultOnAbort;
-		nestingModel = model;
-	}
-
+	Atomic(Hyflow_NestingModel model);
 	virtual ~Atomic() {}
 
-	void execute(HyflowObject* self, void* args, ReturnType* retValue) {
-		// LESSON: Don't increase __context__ scope to function level
-		// Execute sub-transactions non-atomically if using check pointing or no nesting
-		if ((ContextManager::isContextInit()) &&
-				((ContextManager::getNestingModel() == HYFLOW_NO_NESTING) ||
-					(ContextManager::getNestingModel() == HYFLOW_CHECKPOINTING))) {
-			HyflowContext* __context__ = ContextManager::getInstance();
-			BenchmarkExecutor::transactionLengthDelay();
-			atomically(self, args, __context__, retValue);
-		}else {
-			HYFLOW_ATOMIC_START {
-				BenchmarkExecutor::transactionLengthDelay();
-				atomically(self, args, __context__, retValue);
-			}HYFLOW_ATOMIC_END;
-		}
-	}
+	void execute(HyflowObject* self, BenchMarkArgs* args, BenchMarkReturn* retValue);
 
 	bool hasOnCommit() {
 		return m_hasOnCommit;
@@ -144,11 +116,8 @@ public:
 		return m_hasOnAbort;
 	}
 
-	static void test() {
-		Atomic<bool>* testBool = new Atomic<bool>();
-		Atomic<uint64_t>* testUint64 = new Atomic<uint64_t>();
-	}
-
+	void getClone(Atomic** atomicObject);
+	static void test();
 };
 
 } /* namespace vt_dstm */

@@ -62,15 +62,15 @@ void LoanAccount::withdrawInternal(uint64_t money) {
 	amount -= money;
 }
 
-void LoanAccount::checkBalanceAtomic(HyflowObject* self, void *args, HyflowContext* context, uint64_t* balance) {
-	std::string* id = (std::string*) args;
-	context->fetchObject(*id);
+void LoanAccount::checkBalanceAtomic(HyflowObject* self, BenchMarkArgs *args, HyflowContext* context, BenchMarkReturn* balance) {
+	std::string id = ((LoanArgs*)args)->borrower;
+	context->fetchObject(id);
 
-	LoanAccount* ba = (LoanAccount*)context->onReadAccess(*id);
-	(*balance) += ba->checkBalanceInternal();
+	LoanAccount* ba = (LoanAccount*)context->onReadAccess(id);
+	((LoanBalance*)balance)->money += ba->checkBalanceInternal();
 }
 
-void LoanAccount::depositAtomic(HyflowObject* self, void* args, HyflowContext* context, void* ignore) {
+void LoanAccount::depositAtomic(HyflowObject* self, BenchMarkArgs* args, HyflowContext* context, BenchMarkReturn* ignore) {
 	int money = ((LoanArgs*)args)->money;
 	std::string id = ((LoanArgs*)args)->borrower;
 
@@ -83,7 +83,7 @@ void LoanAccount::depositAtomic(HyflowObject* self, void* args, HyflowContext* c
 	ba->depositInternal(money);
 }
 
-void LoanAccount::withdrawAtomic(HyflowObject* self, void* args, HyflowContext* context, void* ignore) {
+void LoanAccount::withdrawAtomic(HyflowObject* self, BenchMarkArgs* args, HyflowContext* context, BenchMarkReturn* ignore) {
 	int money = ((LoanArgs*)args)->money;
 	std::string id = ((LoanArgs*)args)->borrower;
 
@@ -96,7 +96,7 @@ void LoanAccount::withdrawAtomic(HyflowObject* self, void* args, HyflowContext* 
 	ba->withdrawInternal(money);
 }
 
-void LoanAccount::sumAtomically(HyflowObject* self, void* loanArgs, HyflowContext* __context__, uint64_t* balance) {
+void LoanAccount::sumAtomically(HyflowObject* self, BenchMarkArgs* loanArgs, HyflowContext* __context__, BenchMarkReturn* balance) {
 	LoanArgs* args= (LoanArgs*)loanArgs;
 
 	std::vector<std::string> accountNums = args->lenders;
@@ -105,37 +105,37 @@ void LoanAccount::sumAtomically(HyflowObject* self, void* loanArgs, HyflowContex
 		std::string account = accountNums.at(accountNums.size()-1);
 		accountNums.pop_back();
 		checkBalance(account);
-//		checkBalanceAtomic(NULL, &account, __context__, balance);
-		LOG_DEBUG("Loan :Call check Balance on %s returned %llu\n", account.c_str(), *balance);
-//		LoanArgs newArgs(0, "", accountNums);
-//		sumAtomically(NULL, &newArgs, __context__, balance);
-		balance += sum(accountNums);
+
+		LOG_DEBUG("Loan :Call check Balance on %s returned %llu\n", account.c_str(), ((LoanBalance*)balance)->money);
+		((LoanBalance*)balance)->money += sum(accountNums);
 	}
 }
 
 uint64_t LoanAccount::checkBalance(std::string account) {
-	uint64_t balance=0;
-	Atomic<uint64_t> atomicCheck;
+	LoanArgs lArgs(0, account);
+	LoanBalance lBal;
+	Atomic atomicCheck;
+
 	atomicCheck.atomically = LoanAccount::checkBalanceAtomic;
-	atomicCheck.execute(NULL, &account, &balance);
-	return balance;
+	atomicCheck.execute(NULL, &lArgs, &lBal);
+	return lBal.money;
 }
 
 void LoanAccount::deposit(uint64_t money, std::string account) {
 	LoanArgs largs(money,account);
-	Atomic<void> atomicDeposit;
+	Atomic atomicDeposit;
 	atomicDeposit.atomically = LoanAccount::depositAtomic;
 	atomicDeposit.execute(NULL, &largs, NULL);
 }
 
 void LoanAccount::withdraw(uint64_t money, std::string account) {
 	LoanArgs largs(money,account);
-	Atomic<void> atomicWithdraw;
+	Atomic atomicWithdraw;
 	atomicWithdraw.atomically = LoanAccount::withdrawAtomic;
 	atomicWithdraw.execute(NULL, &largs, NULL);
 }
 
-void LoanAccount::borrowAtomically(HyflowObject* self, void* loanArgs, HyflowContext* __context__, void* ignore) {
+void LoanAccount::borrowAtomically(HyflowObject* self, BenchMarkArgs* loanArgs, HyflowContext* __context__, BenchMarkReturn* ignore) {
 	LoanArgs* args= (LoanArgs*)loanArgs;
 
 	std::vector<std::string> accountNums = args->lenders;
@@ -154,12 +154,7 @@ void LoanAccount::borrowAtomically(HyflowObject* self, void* loanArgs, HyflowCon
 		bool last = (i==HYFLOW_LOAN_BRANCHING-1 || accountNums.empty());	// is the last one?
 		uint64_t loan = last ? borrowAmount : (int)(getRandom()*borrowAmount);
 
-//		LoanArgs newArgs(borrowAmount,account,accountNums);
-//		borrowAtomically(NULL, &newArgs,__context__, NULL);
 		borrow(account, accountNums, borrowAmount, false);
-
-//		LoanArgs deposArgs(loan, account, accountNums);
-//		depositAtomic(NULL, &deposArgs, __context__, NULL);
 		deposit(loan, account);
 
 		LOG_DEBUG("Loan :Call Deposit on %s to deposit %llu\n", account.c_str(), loan);
@@ -168,20 +163,20 @@ void LoanAccount::borrowAtomically(HyflowObject* self, void* loanArgs, HyflowCon
 }
 
 uint64_t LoanAccount::sum(std::vector<std::string> ids) {
-	uint64_t balance=0;
+	LoanBalance lbal;
 	LoanArgs laArgs(0, "", ids);
 	if (ContextManager::getNestingModel() == HYFLOW_CHECKPOINTING) {
 		HYFLOW_ATOMIC_START {
 			for(int i=0 ; i < BenchmarkExecutor::getCalls(); i++) {
-				sumAtomically(NULL, &laArgs, __context__, &balance);
+				sumAtomically(NULL, &laArgs, __context__, &lbal);
 			}
 		}HYFLOW_ATOMIC_END;
 	}else {
-		Atomic<uint64_t> atomicSum;
+		Atomic atomicSum;
 		atomicSum.atomically = sumAtomically;
-		atomicSum.execute(NULL, &laArgs, &balance);
+		atomicSum.execute(NULL, &laArgs, &lbal);
 	}
-	return balance;
+	return lbal.money;
 }
 
 void LoanAccount::borrow(std::string id1, std::vector<std::string> ids,
@@ -196,7 +191,7 @@ void LoanAccount::borrow(std::string id1, std::vector<std::string> ids,
 			}
 		}HYFLOW_ATOMIC_END;
 	}else {
-		Atomic<void> atomicBorrow;
+		Atomic atomicBorrow;
 		atomicBorrow.atomically = borrowAtomically;
 		atomicBorrow.execute(NULL, &laArgs, NULL);
 	}

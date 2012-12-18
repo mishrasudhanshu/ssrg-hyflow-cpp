@@ -52,13 +52,14 @@ HyflowContext* HyflowContextFactory::getContextInstance() {
 		context->setContextExecutionDepth(contextStackIndex);
 	}else if (ContextManager::getNestingModel() == HYFLOW_NESTING_OPEN) {
 		txnIndex++;
-		// In close nesting we don't check execution depth instead check parent NULL
+		// In open nesting we don't check execution depth instead check parent NULL
 		// except in context.Init() which checks its depth
 		context = getFreshContext();
 		if( contextStackIndex != 0 ) {
 			context->setParentContext(contextStack[contextStackIndex-1]);
 		}
 		// Otherwise for top context parent is set to be NULL by default
+		context->setContextExecutionDepth(contextStackIndex);
 	}else if (ContextManager::getNestingModel() == HYFLOW_CHECKPOINTING) {
 		if( contextStackIndex==-1 ) {
 			context = getFreshContext();
@@ -133,7 +134,29 @@ void HyflowContextFactory::releaseContextInstance(){
 			}
 		}
 	}else if (ContextManager::getNestingModel() == HYFLOW_NESTING_OPEN) {
-		Logger::fatal("HCF : Open nesting not supported currently\n");
+		HyflowContext* context = contextStack[contextStackIndex];
+		// If releasing a instance of aborted transaction, check if we require
+		// to throw transaction exception, after context clean-up
+		if (context->getStatus() == TXN_ABORTED) {
+				LOG_DEBUG("HCF :Performing the checkParent\n");
+				throwException = context->checkParent();
+				if (throwException) {
+				// In close nesting each transaction try is given new context
+					// Set parent to abort, so that it is retried as required
+					if (context->getParentContext())
+						context->getParentContext()->setStatus(TXN_ABORTED);
+					contextStack.pop_back();
+					contextStackIndex--;
+					ContextManager::deleteContext(&context);
+				}
+		}else {
+			contextStack.pop_back();
+			contextStackIndex--;
+			ContextManager::deleteContext(&context);
+			if (contextStackIndex == -1) {
+				txnIndex = 0;
+			}
+		}
 	}else if (ContextManager::getNestingModel() == HYFLOW_CHECKPOINTING) {
 		HyflowContext* context = contextStack[0];
 		if (context->getStatus() != TXN_ABORTED) {

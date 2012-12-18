@@ -2,6 +2,8 @@
 
 txns=2000
 objs=10000
+
+# To support all_benchmarks script
 setBenchMarks="list bst skipList"
 if [[ "$setBenchMarks" =~ "$bench"  ]]
 then

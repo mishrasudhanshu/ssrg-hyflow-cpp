@@ -19,6 +19,7 @@
 #include "../../../core/helper/Atomic.h"
 #include "../../../util/logging/Logger.h"
 #include "../../../util/networking/NetworkManager.h"
+#include "../../BenchmarkExecutor.h"
 #include "BstBenchmark.h"
 
 #define ROOT "HEAD"

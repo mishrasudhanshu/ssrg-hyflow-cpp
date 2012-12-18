@@ -11,6 +11,8 @@ src/benchMarks/tm/list/ListBenchmark.d: \
  ../src/benchMarks/tm/list/../../../core/../util/messages/HyflowMessage.h \
  ../src/benchMarks/tm/list/../../../core/../util/messages/BaseMessage.h \
  ../src/benchMarks/tm/list/../../../core/../util/messages/../../core/HyflowObject.h \
+ ../src/benchMarks/tm/list/../../../core/helper/BenchMarkArgs.h \
+ ../src/benchMarks/tm/list/../../../core/helper/BenchMarkReturn.h \
  ../src/benchMarks/tm/list/../../HyflowBenchmark.h \
  ../src/benchMarks/tm/list/../../../util/concurrent/HyInteger.h \
  ../src/benchMarks/tm/list/../../../util/concurrent/ThreadMeta.h \
@@ -31,6 +33,8 @@ src/benchMarks/tm/list/ListBenchmark.d: \
  ../src/benchMarks/tm/list/../../tm/bank/../../../core/HyflowObject.h \
  ../src/benchMarks/tm/list/../../tm/bank/../../../core/context/HyflowContext.h \
  ../src/benchMarks/tm/list/../../tm/bank/../../../core/HyflowObjectFuture.h \
+ ../src/benchMarks/tm/list/../../tm/bank/../../../core/helper/BenchMarkArgs.h \
+ ../src/benchMarks/tm/list/../../tm/bank/../../../core/helper/BenchMarkReturn.h \
  ../src/benchMarks/tm/list/../../tm/bank/../../HyflowBenchmark.h \
  ../src/benchMarks/tm/list/../../tm/list/ListBenchmark.h \
  ../src/benchMarks/tm/list/../../tm/test/TestSpeedBenchmark.h \
@@ -40,6 +44,8 @@ src/benchMarks/tm/list/ListBenchmark.d: \
  ../src/benchMarks/tm/list/../../tm/skipList/../../../core/HyflowObject.h \
  ../src/benchMarks/tm/list/../../tm/skipList/../../../core/context/HyflowContext.h \
  ../src/benchMarks/tm/list/../../tm/skipList/../../../core/HyflowObjectFuture.h \
+ ../src/benchMarks/tm/list/../../tm/skipList/../../../core/helper/BenchMarkArgs.h \
+ ../src/benchMarks/tm/list/../../tm/skipList/../../../core/helper/BenchMarkReturn.h \
  ../src/benchMarks/tm/list/../../tm/skipList/../../HyflowBenchmark.h \
  ../src/benchMarks/tm/list/../../tm/skipList/../../../util/concurrent/HyInteger.h \
  ../src/benchMarks/tm/list/../../tm/bst/BstBenchmark.h \
@@ -54,12 +60,16 @@ src/benchMarks/tm/list/ListBenchmark.d: \
  ../src/benchMarks/tm/list/../../tm/loan/../../../core/HyflowObject.h \
  ../src/benchMarks/tm/list/../../tm/loan/../../../core/context/HyflowContext.h \
  ../src/benchMarks/tm/list/../../tm/loan/../../../core/HyflowObjectFuture.h \
+ ../src/benchMarks/tm/list/../../tm/loan/../../../core/helper/BenchMarkArgs.h \
+ ../src/benchMarks/tm/list/../../tm/loan/../../../core/helper/BenchMarkReturn.h \
  ../src/benchMarks/tm/list/../../tm/loan/../../HyflowBenchmark.h \
  ../src/benchMarks/tm/list/../../tm/hashTable/HashTableBenchMark.h \
  ../src/benchMarks/tm/list/../../tm/hashTable/HashTable.h \
  ../src/benchMarks/tm/list/../../tm/hashTable/../../../core/HyflowObject.h \
  ../src/benchMarks/tm/list/../../tm/hashTable/../../../core/context/HyflowContext.h \
  ../src/benchMarks/tm/list/../../tm/hashTable/../../../core/HyflowObjectFuture.h \
+ ../src/benchMarks/tm/list/../../tm/hashTable/../../../core/helper/BenchMarkArgs.h \
+ ../src/benchMarks/tm/list/../../tm/hashTable/../../../core/helper/BenchMarkReturn.h \
  ../src/benchMarks/tm/list/../../tm/hashTable/../../HyflowBenchmark.h \
  ../src/benchMarks/tm/list/../../tm/hashTable/../../../util/concurrent/HyInteger.h \
  ../src/benchMarks/tm/list/../../tm/vacation/VacationBenchmark.h \
@@ -109,6 +119,10 @@ src/benchMarks/tm/list/ListBenchmark.d: \
 
 ../src/benchMarks/tm/list/../../../core/../util/messages/../../core/HyflowObject.h:
 
+../src/benchMarks/tm/list/../../../core/helper/BenchMarkArgs.h:
+
+../src/benchMarks/tm/list/../../../core/helper/BenchMarkReturn.h:
+
 ../src/benchMarks/tm/list/../../HyflowBenchmark.h:
 
 ../src/benchMarks/tm/list/../../../util/concurrent/HyInteger.h:
@@ -149,6 +163,10 @@ src/benchMarks/tm/list/ListBenchmark.d: \
 
 ../src/benchMarks/tm/list/../../tm/bank/../../../core/HyflowObjectFuture.h:
 
+../src/benchMarks/tm/list/../../tm/bank/../../../core/helper/BenchMarkArgs.h:
+
+../src/benchMarks/tm/list/../../tm/bank/../../../core/helper/BenchMarkReturn.h:
+
 ../src/benchMarks/tm/list/../../tm/bank/../../HyflowBenchmark.h:
 
 ../src/benchMarks/tm/list/../../tm/list/ListBenchmark.h:
@@ -166,6 +184,10 @@ src/benchMarks/tm/list/ListBenchmark.d: \
 ../src/benchMarks/tm/list/../../tm/skipList/../../../core/context/HyflowContext.h:
 
 ../src/benchMarks/tm/list/../../tm/skipList/../../../core/HyflowObjectFuture.h:
+
+../src/benchMarks/tm/list/../../tm/skipList/../../../core/helper/BenchMarkArgs.h:
+
+../src/benchMarks/tm/list/../../tm/skipList/../../../core/helper/BenchMarkReturn.h:
 
 ../src/benchMarks/tm/list/../../tm/skipList/../../HyflowBenchmark.h:
 
@@ -195,6 +217,10 @@ src/benchMarks/tm/list/ListBenchmark.d: \
 
 ../src/benchMarks/tm/list/../../tm/loan/../../../core/HyflowObjectFuture.h:
 
+../src/benchMarks/tm/list/../../tm/loan/../../../core/helper/BenchMarkArgs.h:
+
+../src/benchMarks/tm/list/../../tm/loan/../../../core/helper/BenchMarkReturn.h:
+
 ../src/benchMarks/tm/list/../../tm/loan/../../HyflowBenchmark.h:
 
 ../src/benchMarks/tm/list/../../tm/hashTable/HashTableBenchMark.h:
@@ -206,6 +232,10 @@ src/benchMarks/tm/list/ListBenchmark.d: \
 ../src/benchMarks/tm/list/../../tm/hashTable/../../../core/context/HyflowContext.h:
 
 ../src/benchMarks/tm/list/../../tm/hashTable/../../../core/HyflowObjectFuture.h:
+
+../src/benchMarks/tm/list/../../tm/hashTable/../../../core/helper/BenchMarkArgs.h:
+
+../src/benchMarks/tm/list/../../tm/hashTable/../../../core/helper/BenchMarkReturn.h:
 
 ../src/benchMarks/tm/list/../../tm/hashTable/../../HyflowBenchmark.h:
 

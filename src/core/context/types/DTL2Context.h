@@ -15,6 +15,7 @@
 #include "../../helper/ObjectIdComparator.h"
 #include "../HyflowContext.h"
 #include "../../../util/concurrent/HyInteger.h"
+#include "../AbstractLock.h"
 
 namespace vt_dstm {
 
@@ -39,6 +40,20 @@ class DTL2Context: public vt_dstm::HyflowContext {
 	 * List of write locks hold by transaction
 	 */
 	std::set<std::string> lockSet;
+	/*
+	 * Abstract read Locks owned by transaction
+	 */
+	std::map<std::string, AbstractLock*> abstractReadLocks;
+	/*
+	 * Abstract write Locks owned by transaction
+	 */
+	std::map<std::string, AbstractLock*> abstractWriteLocks;
+
+	/*
+	 * Actions on abort or on commit
+	 */
+	std::set<void*> actionList;
+	void* currentAction;
 	int tnxClock;
 	int highestSenderClock;
 
@@ -58,6 +73,8 @@ class DTL2Context: public vt_dstm::HyflowContext {
 	void mergeIntoParents();
 	void cleanSetTillCheckPoint(int checkPoint);
 	void contextReset();
+	bool doAbstractLock(AbstractLock* absLock, bool read) {}
+	void doAbstractUnLock(AbstractLock* absLock, bool read) {}
 public:
 	DTL2Context();
 	virtual ~DTL2Context();
@@ -81,6 +98,8 @@ public:
 	static void increaseAbortCount();
 	static int getAbortCount();
 	static void resetAbortCount();
+	void onLockAction(std::string benchObject, std::string lockname, bool readlock, bool acquire);
+	void setCurrentAction(void* currentAction);
 };
 
 } /* namespace vt_dstm */

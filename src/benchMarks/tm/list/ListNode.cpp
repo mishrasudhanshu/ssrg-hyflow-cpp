@@ -18,6 +18,7 @@
 #include "../../../core/helper/Atomic.h"
 #include "../../../util/logging/Logger.h"
 #include "../../../util/networking/NetworkManager.h"
+#include "../../BenchmarkExecutor.h"
 #include "ListBenchmark.h"
 
 
@@ -59,8 +60,8 @@ void ListNode::setValue(int value) {
 ListNode::~ListNode() {
 }
 
-void ListNode::addNodeAtomically(HyflowObject* self, void* args, HyflowContext* __context__, void* ignore) {
-	int newNodeValue = *((int*)args);
+void ListNode::addNodeAtomically(HyflowObject* self, BenchMarkArgs* args, HyflowContext* __context__, BenchMarkReturn* ignore) {
+	int newNodeValue = *(((ListArgs*)args)->values);
 	ListNode* currentNode = NULL;
 	std::string head("HEAD");
 	std::string prev = head, next;
@@ -108,13 +109,14 @@ void ListNode::addNodeAtomically(HyflowObject* self, void* args, HyflowContext* 
 }
 
 void ListNode::addNode(int value) {
-	Atomic<void> atomicAdd;
+	Atomic atomicAdd;
+	ListArgs largs(&value, 1);
 	atomicAdd.atomically = ListNode::addNodeAtomically;
-	atomicAdd.execute(NULL, &value, NULL);
+	atomicAdd.execute(NULL, &largs, NULL);
 }
 
-void ListNode::deleteNodeAtomically(HyflowObject* self, void* args, HyflowContext* __context__, void* ignore) {
-	int givenValue = *((int*)args);
+void ListNode::deleteNodeAtomically(HyflowObject* self, BenchMarkArgs* args, HyflowContext* __context__, BenchMarkReturn* ignore) {
+	int givenValue = *(((ListArgs*)args)->values);
 	ListNode* targetNode = NULL;
 	std::string head("HEAD");
 	std::string prev = head, next;
@@ -147,12 +149,14 @@ void ListNode::deleteNodeAtomically(HyflowObject* self, void* args, HyflowContex
 }
 
 void ListNode::deleteNode(int value) {
-	Atomic<void> atomicDelete;
+	Atomic atomicDelete;
+	ListArgs largs(&value, 1);
+
 	atomicDelete.atomically = ListNode::deleteNodeAtomically;
-	atomicDelete.execute(NULL, &value, NULL);
+	atomicDelete.execute(NULL, &largs, NULL);
 }
 
-void ListNode::sumNodesAtomically(HyflowObject* self, void* args, HyflowContext* __context__, void* ignore) {
+void ListNode::sumNodesAtomically(HyflowObject* self, BenchMarkArgs* args, HyflowContext* __context__, BenchMarkReturn* ignore) {
 	ListNode* targetNode = NULL;
 	std::string head("HEAD");
 	std::string prev = head, next;
@@ -176,14 +180,14 @@ void ListNode::sumNodesAtomically(HyflowObject* self, void* args, HyflowContext*
 }
 
 void ListNode::sumNodes() {
-	Atomic<void> atomicSum;
+	Atomic atomicSum;
 	atomicSum.atomically = ListNode::sumNodesAtomically;
 	atomicSum.execute(NULL, NULL, NULL);
 }
 
-void ListNode::findNodeAtomically(HyflowObject* self, void* args, HyflowContext* __context__, void* ignore) {
-	int givenValue = *((int*)args);
-	bool isPresent = false;
+void ListNode::findNodeAtomically(HyflowObject* self, BenchMarkArgs* args, HyflowContext* __context__, BenchMarkReturn* ignore) {
+	int givenValue = *(((ListArgs*)args)->values);
+
 	ListNode* targetNode = NULL;
 	std::string head("HEAD");
 	std::string prev = head, next;
@@ -198,7 +202,6 @@ void ListNode::findNodeAtomically(HyflowObject* self, void* args, HyflowContext*
 		targetNode = (ListNode*)HYFLOW_ON_READ(next);
 		int nodeValue = targetNode->getValue();
 		if (nodeValue == givenValue) {
-			isPresent = true;
 			LOG_DEBUG("LIST :Found Value %d in %s\n", nodeValue, targetNode->getId().c_str());
 			break;
 		}
@@ -209,33 +212,35 @@ void ListNode::findNodeAtomically(HyflowObject* self, void* args, HyflowContext*
 }
 
 void ListNode::findNode(int nodeValue) {
-	Atomic<void> atomicfind;
+	Atomic atomicfind;
+	ListArgs largs(&nodeValue, 1);
+
 	atomicfind.atomically = ListNode::findNodeAtomically;
-	atomicfind.execute(NULL, &nodeValue, NULL);
+	atomicfind.execute(NULL, &largs, NULL);
 }
 
-void ListNode::addNodeMultiAtomically(HyflowObject* self, void* args, HyflowContext* c, void* ignore) {
+void ListNode::addNodeMultiAtomically(HyflowObject* self, BenchMarkArgs* args, HyflowContext* c, BenchMarkReturn* ignore) {
 	ListArgs* largs = (ListArgs*)args;
 	for (int txns = 0; txns < largs->size ; txns+=1) {
 		addNode(largs->values[txns]);
 	}
 }
 
-void ListNode::deleteNodeMultiAtomically(HyflowObject* self, void* args, HyflowContext* c, void* ignore) {
+void ListNode::deleteNodeMultiAtomically(HyflowObject* self, BenchMarkArgs* args, HyflowContext* c, BenchMarkReturn* ignore) {
 	ListArgs* largs = (ListArgs*)args;
 	for (int txns = 0; txns < largs->size ; txns+=1) {
 		deleteNode(largs->values[txns]);
 	}
 }
 
-void ListNode::sumNodesMultiAtomically(HyflowObject* self, void* args, HyflowContext* c, void* ignore) {
+void ListNode::sumNodesMultiAtomically(HyflowObject* self, BenchMarkArgs* args, HyflowContext* c, BenchMarkReturn* ignore) {
 	ListArgs* largs = (ListArgs*)args;
 	for (int txns = 0; txns < largs->size ; txns+=1) {
 		sumNodes();
 	}
 }
 
-void ListNode::findNodeMultiAtomically(HyflowObject* self, void* args, HyflowContext* c, void* ignore) {
+void ListNode::findNodeMultiAtomically(HyflowObject* self, BenchMarkArgs* args, HyflowContext* c, BenchMarkReturn* ignore) {
 	ListArgs* largs = (ListArgs*)args;
 	for (int txns = 0; txns < largs->size ; txns+=1) {
 		findNode(largs->values[txns]);
@@ -256,7 +261,7 @@ void ListNode::addNodeMulti(int values[], int size) {
 		}HYFLOW_ATOMIC_END;
 	}else {
 		ListArgs largs(values, size);
-		Atomic<void> atomicAddMulti;
+		Atomic atomicAddMulti;
 		atomicAddMulti.atomically = ListNode::addNodeMultiAtomically;
 		atomicAddMulti.execute(NULL, &largs, NULL);
 	}
@@ -276,7 +281,7 @@ void ListNode::deleteNodeMulti(int values[], int size) {
 		}HYFLOW_ATOMIC_END;
 	}else {
 		ListArgs largs(values, size);
-		Atomic<void> atomicDeleteMulti;
+		Atomic atomicDeleteMulti;
 		atomicDeleteMulti.atomically = ListNode::deleteNodeMultiAtomically;
 		atomicDeleteMulti.execute(NULL, &largs, NULL);
 	}
@@ -296,7 +301,7 @@ void ListNode::sumNodesMulti(int count) {
 		}HYFLOW_ATOMIC_END;
 	}else {
 		ListArgs largs(NULL, count);
-		Atomic<void> atomicSumMulti;
+		Atomic atomicSumMulti;
 		atomicSumMulti.atomically = ListNode::sumNodesMultiAtomically;
 		atomicSumMulti.execute(NULL, &largs, NULL);
 	}
@@ -316,7 +321,7 @@ void ListNode::findNodeMulti(int values[], int size) {
 		}HYFLOW_ATOMIC_END;
 	}else {
 		ListArgs largs(values, size);
-		Atomic<void> atomicfindMulti;
+		Atomic atomicfindMulti;
 		atomicfindMulti.atomically = ListNode::findNodeMultiAtomically;
 		atomicfindMulti.execute(NULL, &largs, NULL);
 	}

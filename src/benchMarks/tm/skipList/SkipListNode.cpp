@@ -18,6 +18,7 @@
 #include "../../../core/helper/Atomic.h"
 #include "../../../util/logging/Logger.h"
 #include "../../../util/networking/NetworkManager.h"
+#include "../../BenchmarkExecutor.h"
 #include "SkipListBenchmark.h"
 
 
@@ -80,8 +81,8 @@ void SkipListNode::setValue(int value) {
 
 SkipListNode::~SkipListNode() {}
 
-void SkipListNode::addNodeAtomically(HyflowObject* self, void* args, HyflowContext* __context__, void* ignore) {
-	int givenValue = *((int*)args);
+void SkipListNode::addNodeAtomically(HyflowObject* self, BenchMarkArgs* args, HyflowContext* __context__, BenchMarkReturn* ignore) {
+	int givenValue = *(((SkipListArgs*)args)->values);
 
 	std::string head="HEAD";
 	HYFLOW_FETCH(head, false);
@@ -116,13 +117,15 @@ void SkipListNode::addNodeAtomically(HyflowObject* self, void* args, HyflowConte
 }
 
 void SkipListNode::addNode(int nodeValue) {
-	Atomic<void> atomicfind;
+	SkipListArgs sArgs(&nodeValue, 1);
+	Atomic atomicfind;
+
 	atomicfind.atomically = SkipListNode::findNodeAtomically;
-	atomicfind.execute(NULL, &nodeValue, NULL);
+	atomicfind.execute(NULL, &sArgs, NULL);
 }
 
-void SkipListNode::deleteNodeAtomically(HyflowObject* self, void* args, HyflowContext* __context__, void* ignore) {
-	int givenValue = *((int*)args);
+void SkipListNode::deleteNodeAtomically(HyflowObject* self, BenchMarkArgs* args, HyflowContext* __context__, BenchMarkReturn* ignore) {
+	int givenValue = *(((SkipListArgs*)args)->values);
 
 	std::string head="HEAD";
 	HYFLOW_FETCH(head, true);
@@ -168,13 +171,14 @@ void SkipListNode::deleteNodeAtomically(HyflowObject* self, void* args, HyflowCo
 }
 
 void SkipListNode::deleteNode(int nodeValue) {
-	Atomic<void> atomicfind;
+	SkipListArgs sArgs(&nodeValue, 1);
+	Atomic atomicfind;
 	atomicfind.atomically = SkipListNode::findNodeAtomically;
-	atomicfind.execute(NULL, &nodeValue, NULL);
+	atomicfind.execute(NULL, &sArgs, NULL);
 }
 
-void SkipListNode::findNodeAtomically(HyflowObject* self, void* args, HyflowContext* __context__, void* ignore) {
-	int givenValue = *((int*)args);
+void SkipListNode::findNodeAtomically(HyflowObject* self, BenchMarkArgs* args, HyflowContext* __context__, BenchMarkReturn* ignore) {
+	int givenValue = *(((SkipListArgs*)args)->values);
 
 	std::string head="HEAD";
 	HYFLOW_FETCH(head, true);
@@ -208,26 +212,27 @@ void SkipListNode::findNodeAtomically(HyflowObject* self, void* args, HyflowCont
 }
 
 void SkipListNode::findNode(int nodeValue) {
-	Atomic<void> atomicfind;
+	SkipListArgs sArgs(&nodeValue, 1);
+	Atomic atomicfind;
 	atomicfind.atomically = SkipListNode::findNodeAtomically;
-	atomicfind.execute(NULL, &nodeValue, NULL);
+	atomicfind.execute(NULL, &sArgs, NULL);
 }
 
-void SkipListNode::addNodeMultiAtomically(HyflowObject* self, void* args, HyflowContext* c, void* ignore) {
+void SkipListNode::addNodeMultiAtomically(HyflowObject* self, BenchMarkArgs* args, HyflowContext* c, BenchMarkReturn* ignore) {
 	SkipListArgs* slargs = (SkipListArgs*)args;
 	for (int txns = 0; txns < slargs->size ; txns+=1) {
 		addNode(slargs->values[txns]);
 	}
 }
 
-void SkipListNode::deleteNodeMultiAtomically(HyflowObject* self, void* args, HyflowContext* c, void* ignore) {
+void SkipListNode::deleteNodeMultiAtomically(HyflowObject* self, BenchMarkArgs* args, HyflowContext* c, BenchMarkReturn* ignore) {
 	SkipListArgs* slargs = (SkipListArgs*)args;
 	for (int txns = 0; txns < slargs->size ; txns+=1) {
 		deleteNode(slargs->values[txns]);
 	}
 }
 
-void SkipListNode::findNodeMultiAtomically(HyflowObject* self, void* args, HyflowContext* c, void* ignore) {
+void SkipListNode::findNodeMultiAtomically(HyflowObject* self, BenchMarkArgs* args, HyflowContext* c, BenchMarkReturn* ignore) {
 	SkipListArgs* slargs = (SkipListArgs*)args;
 	for (int txns = 0; txns < slargs->size ; txns+=1) {
 		findNode(slargs->values[txns]);
@@ -248,7 +253,7 @@ void SkipListNode::addNodeMulti(int* values, int size) {
 		}HYFLOW_ATOMIC_END;
 	}else {
 		SkipListArgs slargs(values, size);
-		Atomic<void> atomicAddMulti;
+		Atomic atomicAddMulti;
 		atomicAddMulti.atomically = SkipListNode::addNodeMultiAtomically;
 		atomicAddMulti.execute(NULL, &slargs, NULL);
 	}
@@ -268,7 +273,7 @@ void SkipListNode::deleteNodeMulti(int* values, int size) {
 		}HYFLOW_ATOMIC_END;
 	}else {
 		SkipListArgs slargs(values, size);
-		Atomic<void> atomicDeleteMulti;
+		Atomic atomicDeleteMulti;
 		atomicDeleteMulti.atomically = SkipListNode::deleteNodeMultiAtomically;
 		atomicDeleteMulti.execute(NULL, &slargs, NULL);
 	}
@@ -288,7 +293,7 @@ void SkipListNode::findNodeMulti(int* values, int size) {
 		}HYFLOW_ATOMIC_END;
 	}else {
 		SkipListArgs slargs(values, size);
-		Atomic<void> atomicfindMulti;
+		Atomic atomicfindMulti;
 		atomicfindMulti.atomically = SkipListNode::findNodeMultiAtomically;
 		atomicfindMulti.execute(NULL, &slargs, NULL);
 	}

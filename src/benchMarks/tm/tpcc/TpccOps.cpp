@@ -9,6 +9,8 @@
 #include <set>
 #include "../../../core/helper/Atomic.h"
 #include "../../../util/logging/Logger.h"
+#include "../../BenchmarkExecutor.h"
+
 #include "TpccOrder.h"
 #include "TpccDistrict.h"
 #include "TpccItem.h"

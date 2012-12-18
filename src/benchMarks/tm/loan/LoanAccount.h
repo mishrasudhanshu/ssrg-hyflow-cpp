@@ -16,12 +16,14 @@
 #include "../../../core/HyflowObject.h"
 #include "../../../core/context/HyflowContext.h"
 #include "../../../core/HyflowObjectFuture.h"
+#include "../../../core/helper/BenchMarkArgs.h"
+#include "../../../core/helper/BenchMarkReturn.h"
 
 #define AMOUNT 100000
 
 namespace vt_dstm {
 
-class LoanArgs {
+class LoanArgs: public BenchMarkArgs {
 public:
 	uint64_t money;
 	bool initiator;
@@ -37,6 +39,19 @@ public:
 		borrower = i1;
 		lenders = ld;
 		initiator = false;
+	}
+
+	void getClone(BenchMarkArgs** args) {
+
+	}
+};
+
+class LoanBalance: public BenchMarkReturn {
+public:
+	uint64_t money;
+
+	void getClone(BenchMarkReturn **ret) {
+
 	}
 };
 
@@ -57,16 +72,16 @@ class LoanAccount: public HyflowObject {
 	void depositInternal(uint64_t money);
 	void withdrawInternal(uint64_t money);
 
-	static void checkBalanceAtomic(HyflowObject* self, void *args, HyflowContext* c, uint64_t* balance);
-	static void depositAtomic(HyflowObject* self, void* args, HyflowContext* c, void* ignore);
-	static void withdrawAtomic(HyflowObject* self, void* args, HyflowContext* c, void* ignore);
+	static void checkBalanceAtomic(HyflowObject* self, BenchMarkArgs *args, HyflowContext* c, BenchMarkReturn* balance);
+	static void depositAtomic(HyflowObject* self, BenchMarkArgs* args, HyflowContext* c, BenchMarkReturn* ignore);
+	static void withdrawAtomic(HyflowObject* self, BenchMarkArgs* args, HyflowContext* c, BenchMarkReturn* ignore);
 
 	static uint64_t checkBalance(std::string account);
 	static void deposit(uint64_t money, std::string account);
 	static void withdraw(uint64_t money, std::string account);
 
-	static void sumAtomically(HyflowObject* self, void* args, HyflowContext* c, uint64_t* balance);
-	static void borrowAtomically(HyflowObject* self, void* args, HyflowContext* c, void* ignore);
+	static void sumAtomically(HyflowObject* self, BenchMarkArgs* args, HyflowContext* c, BenchMarkReturn* balance);
+	static void borrowAtomically(HyflowObject* self, BenchMarkArgs* args, HyflowContext* c, BenchMarkReturn* ignore);
 	static double getRandom();
 public:
 	LoanAccount() {};

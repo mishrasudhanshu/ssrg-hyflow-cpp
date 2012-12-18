@@ -14,6 +14,7 @@
 namespace vt_dstm {
 /*
  * Helper class to sort the object Id string
+ * Supports any Node-*****-objectNo type Id
  */
 class ObjectIdComparator {
    int sign;
@@ -30,8 +31,8 @@ public:
 	   }else if(id2.compare("HEAD") == 0) {
 		   return true;
 	   }
-	   int obj1 = atoi(id1.substr(id1.find('-')+1).c_str());
-	   int obj2 = atoi(id2.substr(id2.find('-')+1).c_str());
+	   int obj1 = atoi(id1.substr(id1.find_last_of('-')+1).c_str());
+	   int obj2 = atoi(id2.substr(id2.find_last_of('-')+1).c_str());
 	   if ( obj1==obj2 ) {
 		   int node1 = atoi(id1.substr(0, id1.find('-')).c_str());
 		   int node2 = atoi(id2.substr(0, id2.find('-')).c_str());

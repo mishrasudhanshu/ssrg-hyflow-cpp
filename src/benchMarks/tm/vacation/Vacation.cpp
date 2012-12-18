@@ -7,9 +7,13 @@
 
 #include "Vacation.h"
 #include "../../../core/helper/Atomic.h"
+
 #include "Resource.h"
 #include "ReservationInfo.h"
 #include "Customer.h"
+#include "../../../util/logging/Logger.h"
+#include "../../BenchmarkExecutor.h"
+
 
 namespace vt_dstm {
 

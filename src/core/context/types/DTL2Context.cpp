@@ -32,6 +32,7 @@ DTL2Context::DTL2Context() {
 	contextExecutionDepth = -1;
 	subTxnIndex = 0;
 	isWrite = false;
+	currentAction = NULL;
 }
 
 DTL2Context::~DTL2Context() {
@@ -114,6 +115,11 @@ void DTL2Context::contextDeinit() {
 		ContextManager::unregisterContext(this);
 	}
 }
+
+void DTL2Context::setCurrentAction(void* cAction) {
+//	cAction->getClone(&currentAction);
+}
+
 /*
  * Add the given object copy in read set. No need to create a copy for read set as
  * it will not manipulate the original object
@@ -381,6 +387,10 @@ HyflowObject* DTL2Context::onWriteAccess(std::string id){
 		return writeMap.at(id);
 	}
 	return NULL;
+}
+
+void DTL2Context::onLockAction(std::string objname, std::string lockname, bool readlock, bool acquire) {
+
 }
 
 bool DTL2Context::lockObject(HyflowObject* obj) {
@@ -809,14 +819,6 @@ void DTL2Context::reallyCommit() {
 		// Check if this object was deleted in same transaction, if so don't register
 		// Actually we can skip as, delete commit happens at last
 
-		// Check if this object was updated later and is part of write set, don't publish old copy
-		// While tryCommit we copy the latest copy of object to publish set
-//		ti = writeMap.find(wi->first);
-//		if ( ti != writeMap.end()) {
-//			LOG_DEBUG("DTL :Not publishing Old object copy %s, it is published in writeSet\n", wi->first.c_str());
-//			continue;
-//		}
-
 		// otherwise tackle usually
 		wi->second->setVersion(version);
 		DirectoryManager::registerObject(wi->second, txnId);
@@ -899,11 +901,167 @@ void DTL2Context::mergeIntoParents() {
 }
 
 void DTL2Context::tryCommitON() {
+	std::vector<HyflowObject *> lockedObjects;
+	std::vector<std::string> lockedReadAbstractLock;
+	std::vector<std::string> lockedWriteAbstractLock;
 
+	if (getStatus() == TXN_ABORTED) {
+		LOG_DEBUG ("Commit :Transaction is already aborted\n");
+		TransactionException alreadyAborted("Commit :Transaction Already aborted by forwarding\n");
+		throw alreadyAborted;
+	}
+
+	try {
+		std::map<std::string, HyflowObject*, ObjectIdComparator>::reverse_iterator wi;
+		// Try to acquire the locks on object in lazy fashion
+		// TODO: Make it asynchronous
+		for( wi = writeMap.rbegin() ; wi != writeMap.rend() ; wi++ ) {
+			// Remove same object from readSet as we use version locks
+			std::map<std::string, HyflowObject*, ObjectIdComparator>::iterator itr = readMap.find(wi->first) ;
+			if ( itr != readMap.end()) {
+				HyflowObject *readObject = itr->second;
+				itr->second = NULL;
+				readMap.erase(itr);
+				delete readObject;
+			}
+
+			isWrite = true;
+			// If same object exist in publish set of my or another innerTxn don't take lock on it
+			// It might have been copied to write Map when manipulated by other transaction
+			if (wi->second->getOwnerNode() == -1) {
+				LOG_DEBUG("Commit :Publish set object %s, lock not required\n", wi->first.c_str());
+				continue;
+			}
+
+			if (!lockObject(wi->second)) {
+				setStatus(TXN_ABORTED);
+				LOG_DEBUG("Commit :Unable to get WriteLock for %s\n", wi->first.c_str());
+				TransactionException unableToWriteLock("Commit :Unable to get WriteLock for "+wi->first + "\n");
+				throw unableToWriteLock;
+			}
+			lockedObjects.push_back(wi->second);
+
+		}
+		LOG_DEBUG("Commit :Lock Acquisition complete, verifying read Set\n");
+		// FIXME: Don't Perform context forwarding here
+//		forward(highestSenderClock);
+		// Try to verify read versions of all the objects.
+		std::map<std::string, HyflowObject*, ObjectIdComparator>::reverse_iterator ri;
+		for ( ri = readMap.rbegin() ; ri != readMap.rend() ; ri++) {
+			// If same object exist in publish set of my or another innerTxn don't validate
+			// It might have been copied to write Map when manipulated by other transaction
+			if (ri->second->getOwnerNode() == -1) {
+				LOG_DEBUG("Commit :Publish set object %s in read Set validation not required\n", ri->first.c_str());
+				continue;
+			}
+
+			if (!validateObject(ri->second)) {
+				setStatus(TXN_ABORTED);
+				LOG_DEBUG("Commit :Unable to validate for %s, version %d with txn %ull\n", ri->first.c_str(), ri->second->getVersion(), txnId);
+				TransactionException readValidationFail("Commit :Unable to validate for "+ri->first+"\n");
+				throw readValidationFail;
+			}
+		}
+		// Obtain the abstract locks
+		std::map<std::string, AbstractLock*>::iterator arItr;
+		for ( arItr = abstractReadLocks.begin() ; arItr != abstractReadLocks.end() ; arItr++) {
+			if (!doAbstractLock(arItr->second, true)) {
+				setStatus(TXN_ABORTED);
+				LOG_DEBUG("Commit :Unable to geAtomict AbstractReadLock for %s\n", arItr->first.c_str());
+				TransactionException unableToAbsReadLock("Commit :Unable to get abstract readLock for "+arItr->first + "\n");
+				throw unableToAbsReadLock;
+			}
+			lockedReadAbstractLock.push_back(arItr->first);
+		}
+		std::map<std::string, AbstractLock*>::iterator awItr;
+		for ( awItr = abstractWriteLocks.begin() ; awItr != abstractWriteLocks.end() ; awItr++) {
+			if (!doAbstractLock(awItr->second, false)) {
+				setStatus(TXN_ABORTED);
+				LOG_DEBUG("Commit :Unable to get AbstractWriteLock for %s\n", awItr->first.c_str());
+				TransactionException unableToAbsWriteLock("Commit :Unable to get abstract writeLock for "+awItr->first + "\n");
+				throw unableToAbsWriteLock;
+			}
+			lockedWriteAbstractLock.push_back(awItr->first);
+		}
+	} catch (TransactionException& e) {
+		// Free all acquired locks
+		LOG_DEBUG("Commit :Transaction failed, freeing the locks\n");
+		std::vector<HyflowObject *>::iterator vi;
+		for ( vi = lockedObjects.begin(); vi != lockedObjects.end(); vi++) {
+			unlockObjectOnFail(*vi);
+		}
+		for (std::vector<std::string>::iterator rabsItr = lockedReadAbstractLock.begin() ; rabsItr != lockedReadAbstractLock.end() ; rabsItr++ ) {
+			doAbstractUnLock(abstractReadLocks.at(*rabsItr), true);
+		}
+		for (std::vector<std::string>::iterator wabsItr = lockedWriteAbstractLock.begin() ; wabsItr != lockedWriteAbstractLock.end() ; wabsItr++ ) {
+			doAbstractUnLock(abstractWriteLocks.at(*wabsItr), true);
+		}
+		throw;
+	}
 }
 
 void DTL2Context::reallyCommitON() {
+	// Transaction Completed Successfully
+	// Increase the Node clock
+	if (isWrite) {
+		ContextManager::atomicIncreaseClock();
+	}
 
+	// Register yourself as owner of write set objects
+	std::map<std::string, HyflowObject*, ObjectIdComparator>::reverse_iterator wi;
+	// Update object version
+	int version = ContextManager::getClock();
+	LOG_DEBUG("DTL :Commit write Set Objects\n");
+	for( wi = writeMap.rbegin() ; wi != writeMap.rend() ; wi++ ) {
+		// LESSON : Use node clock instead of transaction clock to make sure to
+		// transaction threads set different object version after commit and object
+		// version must increase after each commit.
+		wi->second->setVersion(version);
+		LOG_DEBUG("Set object %s version %d\n",wi->first.c_str(), version);
+		// Register object
+		DirectoryManager::registerObject(wi->second, txnId);
+
+		// Check if updated object was part of publish set too, if so delete from there as that is older
+		// Don't need to it with delete set object as they commit at last
+		std::map<std::string, HyflowObject*>::iterator ti = publishMap.find(wi->first);
+		if ( ti != publishMap.end()) {
+			LOG_DEBUG("DTL :Deleting from publish set object %s copy\n", wi->first.c_str());
+			publishMap.erase(ti);
+		}
+	}
+
+	// Publish new created objects and wait of ownership change
+	LOG_DEBUG("DTL :Commit publish Set Objects\n");
+	for( wi = publishMap.rbegin() ; wi != publishMap.rend() ; wi++ ) {
+		// Check if this object was deleted in same transaction, if so don't register
+		// Actually we can skip as, delete commit happens at last
+
+		// Check if this object was updated later and is part of write set, don't publish old copy
+		// While tryCommit we copy the latest copy of object to publish set
+//		ti = writeMap.find(wi->first);
+//		if ( ti != writeMap.end()) {
+//			LOG_DEBUG("DTL :Not publishing Old object copy %s, it is published in writeSet\n", wi->first.c_str());
+//			continue;
+//		}
+
+		// otherwise tackle usually
+		wi->second->setVersion(version);
+		DirectoryManager::registerObject(wi->second, txnId);
+	}
+
+	// Unregister deleted objects
+	LOG_DEBUG("DTL :Commit delete Set Objects\n");
+	for( wi = deleteMap.rbegin() ; wi != deleteMap.rend() ; wi++ ) {
+		DirectoryManager::unregisterObject(wi->second, txnId);
+	}
+
+	// Commit the Inner transaction abstract lock and actions to parent
+
+
+	// Release all held locks by this transaction
+	for( wi = writeMap.rbegin() ; wi != writeMap.rend() ; wi++ ) {
+		unlockObject(wi->second);
+	}
 }
 
 void DTL2Context::commit(){
@@ -931,6 +1089,7 @@ void DTL2Context::commit(){
 	}else if (ContextManager::getNestingModel() == HYFLOW_NESTING_OPEN) {
 		tryCommitON();
 		reallyCommitON();
+		// merge inner transaction actions in parent
 	}else if (ContextManager::getNestingModel() == HYFLOW_CHECKPOINTING) {
 		tryCommitCP();
 		reallyCommit();
@@ -980,7 +1139,28 @@ bool DTL2Context::checkParent() {
 			}
 		}
 	}else if (ContextManager::getNestingModel() == HYFLOW_NESTING_OPEN) {
-		Logger::fatal("DTL :Open nesting not supported currently\n");
+		if (!parentContext) {	// Top context commit here
+			LOG_DEBUG("DTL :Top context Check Parent not throwing exception\n");
+			return false;
+		} else {
+			// If parent transaction is also aborted then we can not
+			// retry on same level therefore throw exception
+			if (parentContext->getStatus() == TXN_ABORTED) {
+				LOG_DEBUG("DTL :Check Parent throwing exception\n");
+				return true;
+			} else {
+				// Inner transaction abort count
+				increaseAbortCount();
+				int aborts = getAbortCount();
+				if (aborts > 3 ) {
+					LOG_DEBUG("DTL :Repeated Inner transaction Abort=%d, full abort\n", aborts);
+					resetAbortCount();
+					return true;
+				}
+				LOG_DEBUG("DTL :Check Parent not throwing exception as parent Active, abort Count %d\n", aborts);
+				return false;
+			}
+		}
 	}else {
 		Logger::fatal("DTL :Invalid Nesting Model\n");
 	}

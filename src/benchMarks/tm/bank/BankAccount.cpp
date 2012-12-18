@@ -17,8 +17,8 @@
 #include "../../../core/HyflowObjectFuture.h"
 #include "../../../core/directory/DirectoryManager.h"
 #include "../../../core/helper/Atomic.h"
-#include "../../../util/logging/Logger.h"
 #include "../../../util/networking/NetworkManager.h"
+#include "../../../util/logging/Logger.h"
 #include "../../BenchmarkExecutor.h"
 #include "../../../core/helper/CheckPointProvider.h"
 
@@ -62,15 +62,16 @@ void BankAccount::withdraw(uint64_t money) {
 	amount -= money;
 }
 
-void BankAccount::checkBalanceAtomic(HyflowObject* self, void *args, HyflowContext* context, uint64_t* balance) {
-	std::string* id = (std::string*) args;
-	context->fetchObject(*id);
+void BankAccount::checkBalanceAtomic(HyflowObject* self, BenchMarkArgs *args, HyflowContext* context, BenchMarkReturn* balance) {
+	BankArgs* bargs = (BankArgs*) args;
+	std::string id = bargs->ids[bargs->select];
+	context->fetchObject(id);
 
-	BankAccount* ba = (BankAccount*)context->onReadAccess(*id);
-	(*balance) += ba->checkBalance();
+	BankAccount* ba = (BankAccount*)context->onReadAccess(id);
+	((BankBalance*)balance)->money += ba->checkBalance();
 }
 
-void BankAccount::depositAtomic(HyflowObject* self, void* args, HyflowContext* context, uint64_t* ignore) {
+void BankAccount::depositAtomic(HyflowObject* self, BenchMarkArgs* args, HyflowContext* context, BenchMarkReturn* ignore) {
 	uint64_t money = ((BankArgs*)args)->money;
 	std::string id = ((BankArgs*)args)->ids[1];
 
@@ -84,7 +85,7 @@ void BankAccount::depositAtomic(HyflowObject* self, void* args, HyflowContext* c
 	LOG_DEBUG("Bank :In %s Money %llu deposit change %llu to %llu\n", id.c_str(), money, baCurrent->amount, ba->amount);
 }
 
-void BankAccount::withdrawAtomic(HyflowObject* self, void* args, HyflowContext* context, uint64_t* ignore) {
+void BankAccount::withdrawAtomic(HyflowObject* self, BenchMarkArgs* args, HyflowContext* context, BenchMarkReturn* ignore) {
 	uint64_t money = ((BankArgs*)args)->money;
 	std::string id = ((BankArgs*)args)->ids[0];
 
@@ -98,53 +99,50 @@ void BankAccount::withdrawAtomic(HyflowObject* self, void* args, HyflowContext* 
 	LOG_DEBUG("Bank :In %s Money %llu withdraw change %llu to %llu\n", id.c_str(), money, baCurrent->amount, ba->amount);
 }
 
-void BankAccount::totalBalanceAtomically(HyflowObject* self, void* bankArgs, HyflowContext* c, uint64_t* balance) {
-	Atomic<uint64_t> atomicCheckBalance1, atomicCheckBalance2;
-	BankArgs* args= (BankArgs*)bankArgs;
+void BankAccount::totalBalanceAtomically(HyflowObject* self, BenchMarkArgs* bankArgs, HyflowContext* c, BenchMarkReturn* balance) {
+	Atomic atomicCheckBalance1, atomicCheckBalance2;
 
 	LOG_DEBUG("BANK : Call check Balance1\n");
 	atomicCheckBalance1.atomically = BankAccount::checkBalanceAtomic;
 	for(int i=0 ; i < BenchmarkExecutor::getCalls(); i++) {
-		//usleep(2000);
-		atomicCheckBalance1.execute(NULL, &args->ids[0], balance);
+		((BankArgs*)bankArgs)->select = 0;
+		atomicCheckBalance1.execute(NULL, bankArgs, balance);
 	}
 
 	LOG_DEBUG("BANK : Call check Balance2\n");
 	atomicCheckBalance2.atomically = BankAccount::checkBalanceAtomic;
 	for(int i=0 ; i < BenchmarkExecutor::getCalls(); i++) {
-		//usleep(2000);
-		atomicCheckBalance2.execute(NULL, &args->ids[1], balance);
+		((BankArgs*)bankArgs)->select = 1;
+		atomicCheckBalance2.execute(NULL, bankArgs, balance);
 	}
 }
 
-void BankAccount::transferAtomically(HyflowObject* self, void* bankArgs, HyflowContext* c, void* ignore) {
-	Atomic<uint64_t> atomicWithdraw, atomicDeposit;
+void BankAccount::transferAtomically(HyflowObject* self, BenchMarkArgs* bankArgs, HyflowContext* c, BenchMarkReturn* ignore) {
+	Atomic atomicWithdraw, atomicDeposit;
 
 	LOG_DEBUG("BANK :Call Withdraw\n");
 	atomicWithdraw.atomically = BankAccount::withdrawAtomic;
 	for(int i=0 ; i < BenchmarkExecutor::getCalls(); i++) {
-		//usleep(2000);
 		atomicWithdraw.execute(NULL, bankArgs, NULL);
 	}
 
 	LOG_DEBUG("BANK :Call Deposit\n");
 	atomicDeposit.atomically = BankAccount::depositAtomic;
 	for(int i=0 ; i < BenchmarkExecutor::getCalls(); i++) {
-		//usleep(2000);
 		atomicDeposit.execute(NULL, bankArgs, NULL);
 	}
 }
 
 uint64_t BankAccount::totalBalance(std::string id1, std::string id2) {
-	uint64_t balance=0;
+	BankBalance bBal;
 	std::string ids[2] = {id1, id2};
 	BankArgs baArgs(0, ids, 2);
 
-	Atomic<uint64_t> atomicBalance;
+	Atomic atomicBalance;
 	atomicBalance.atomically = BankAccount::totalBalanceAtomically;
-	atomicBalance.execute(NULL, &baArgs, &balance);
+	atomicBalance.execute(NULL, &baArgs, &bBal);
 
-	return balance;
+	return bBal.money;
 }
 
 void BankAccount::transfer(std::string id1, std::string id2,
@@ -152,20 +150,21 @@ void BankAccount::transfer(std::string id1, std::string id2,
 	std::string ids[2] = {id1, id2};
 	BankArgs baArgs(money, ids, 2);
 
-	Atomic<void> atomicTransfer;
+	Atomic atomicTransfer;
 	atomicTransfer.atomically = BankAccount::transferAtomically;
 	atomicTransfer.execute(NULL, &baArgs, NULL);
 }
 
-void BankAccount::totalBalanceMultiAtomically(HyflowObject* self, void* bankArgs, HyflowContext* c, uint64_t* balance) {
+void BankAccount::totalBalanceMultiAtomically(HyflowObject* self, BenchMarkArgs* bankArgs, HyflowContext* c, BenchMarkReturn* balance) {
 	BankArgs* bArgs = (BankArgs*)bankArgs;
+	BankBalance* bRet = (BankBalance*)balance;
 	std::string* ids = bArgs->ids;
 	for(int txns=0 ; txns<bArgs->size ; txns+=2 ) {
-		*balance += totalBalance(ids[txns], ids[txns+1]);
+		bRet->money += totalBalance(ids[txns], ids[txns+1]);
 	}
 }
 
-void BankAccount::transferMultiAtomically(HyflowObject* self, void* bankArgs, HyflowContext* c, void* ignore) {
+void BankAccount::transferMultiAtomically(HyflowObject* self, BenchMarkArgs* bankArgs, HyflowContext* c, BenchMarkReturn* ignore) {
 	BankArgs* bArgs = (BankArgs*)bankArgs;
 	std::string* ids = bArgs->ids;
 	int money = bArgs->money;
@@ -177,15 +176,15 @@ void BankAccount::transferMultiAtomically(HyflowObject* self, void* bankArgs, Hy
 
 
 void BankAccount::totalBalanceMulti(std::string ids[], int size) {
-	uint64_t balance=0;
+	BankBalance balance;
 	if (ContextManager::getNestingModel() == HYFLOW_CHECKPOINTING) {
 		HYFLOW_ATOMIC_START {
 			HYFLOW_CHECKPOINT_INIT;
 			for(int txns=0 ; txns<size ; txns+=2 ) {
 				LOG_DEBUG("BANK :Call CheckBalance in txns %d\n", txns);
 				for(int i=0 ; i < BenchmarkExecutor::getCalls(); i++) {
-					//usleep(2000);
-					checkBalanceAtomic(NULL, &(ids[txns]), __context__, &balance);
+					BankArgs baArgs(0, &ids[txns], 1);
+					checkBalanceAtomic(NULL, &baArgs, __context__, &balance);
 				}
 
 				HYFLOW_STORE(&txns, txns);
@@ -193,8 +192,8 @@ void BankAccount::totalBalanceMulti(std::string ids[], int size) {
 
 				LOG_DEBUG("BANK :Call CheckBalance in txns %d\n", txns);
 				for(int i=0 ; i < BenchmarkExecutor::getCalls(); i++) {
-					//usleep(2000);
-					checkBalanceAtomic(NULL, &(ids[txns+1]), __context__, &balance);
+					BankArgs baArgs(0, &ids[txns+1], 1);
+					checkBalanceAtomic(NULL, &baArgs, __context__, &balance);
 				}
 
 				HYFLOW_STORE(&txns, txns);
@@ -203,7 +202,7 @@ void BankAccount::totalBalanceMulti(std::string ids[], int size) {
 		}HYFLOW_ATOMIC_END;
 	}else {
 		BankArgs baArgs(0, ids, size);
-		Atomic<uint64_t> atomicTransfer;
+		Atomic atomicTransfer;
 		atomicTransfer.atomically = BankAccount::totalBalanceMultiAtomically;
 		atomicTransfer.execute(NULL, &baArgs, &balance);
 	}
@@ -236,7 +235,7 @@ void BankAccount::transferMulti(std::string ids[], int size, int money) {
 		}HYFLOW_ATOMIC_END;
 	}else {
 		BankArgs baArgs(money, ids, size);
-		Atomic<void> atomicTransfer;
+		Atomic atomicTransfer;
 		atomicTransfer.atomically = BankAccount::transferMultiAtomically;
 		atomicTransfer.execute(NULL, &baArgs, NULL);
 	}

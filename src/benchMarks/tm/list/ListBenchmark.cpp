@@ -60,13 +60,13 @@ void ListBenchmark::writeOperation(std::string ids[], int size){
 
 	if (select%2 == 1 ) {
 		for(int txns = 0; txns<multiCount ; txns++) {
-			values[txns] = (random+txns)%objectCount;
+			values[txns] = (random+multiCount)%objectCount;
 			LOG_DEBUG("LIST :ADD[%d] Node\n", values[txns]);
 		}
 		ListNode::addNodeMulti(values,multiCount);
 	}else {
 		for(int txns = 0; txns<multiCount ; txns++) {
-			values[txns] = (random+txns)%objectCount;
+			values[txns] = (random+multiCount)%objectCount;
 			LOG_DEBUG("LIST :DEL[%d] Node\n", values[txns]);
 		}
 		ListNode::deleteNodeMulti(values, multiCount);

@@ -2,7 +2,7 @@
 
 #Run all benchmarks
 
-benchmarks="bank list skipList bst loan tpcc hashTable"
+benchmarks="bank list skipList bst loan tpcc hashTable vacation"
 
 
 for bench in $benchmarks

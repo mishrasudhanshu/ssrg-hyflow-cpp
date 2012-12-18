@@ -4,12 +4,15 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
+../src/core/helper/Atomic.cpp \
 ../src/core/helper/CheckPointProvider.cpp 
 
 OBJS += \
+./src/core/helper/Atomic.o \
 ./src/core/helper/CheckPointProvider.o 
 
 CPP_DEPS += \
+./src/core/helper/Atomic.d \
 ./src/core/helper/CheckPointProvider.d 
 
 

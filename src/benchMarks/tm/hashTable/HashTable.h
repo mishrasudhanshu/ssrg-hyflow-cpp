@@ -17,10 +17,12 @@
 #include "../../../core/HyflowObject.h"
 #include "../../../core/context/HyflowContext.h"
 #include "../../../core/HyflowObjectFuture.h"
+#include "../../../core/helper/BenchMarkArgs.h"
+#include "../../../core/helper/BenchMarkReturn.h"
 
 namespace vt_dstm {
 
-class HTArgs{
+class HTArgs: public BenchMarkArgs{
 public:
 	int* key1;
 	int* key2;
@@ -34,6 +36,25 @@ public:
 		size = s;
 	}
 
+	HTArgs(std::pair<int, double> *entry) {
+		key1 = NULL;
+		key2 = NULL;
+		size = 1;
+		entries = entry;
+	}
+
+	void getClone(BenchMarkArgs **args) {
+
+	}
+};
+
+class HTReturn: public BenchMarkReturn {
+public:
+	std::pair<int, double> entry;
+
+	void getClone(BenchMarkReturn **benchArgs) {
+
+	}
 };
 
 class HashBucket: public vt_dstm::HyflowObject {
@@ -52,15 +73,15 @@ class HashBucket: public vt_dstm::HyflowObject {
 	void removeInternal(int key);
 	std::pair<int, double> getInternal(int key);
 
-	static void putAtomically(HyflowObject* self, void* args, HyflowContext* __context__, void* ignore);
-	static void removeAtomically(HyflowObject* self, void* args, HyflowContext* __context__, void* ignore);
-	static void moveAtomically(HyflowObject* self, void* args, HyflowContext* __context__, void* ignore);
-	static void getAtomically(HyflowObject* self, void* args, HyflowContext* __context__, std::pair<int, double>* pair);
+	static void putAtomically(HyflowObject* self, BenchMarkArgs* args, HyflowContext* __context__, BenchMarkReturn* ignore);
+	static void removeAtomically(HyflowObject* self, BenchMarkArgs* args, HyflowContext* __context__, BenchMarkReturn* ignore);
+	static void moveAtomically(HyflowObject* self, BenchMarkArgs* args, HyflowContext* __context__, BenchMarkReturn* ignore);
+	static void getAtomically(HyflowObject* self, BenchMarkArgs* args, HyflowContext* __context__, BenchMarkReturn* pair);
 
-	static void putMultiAtomically(HyflowObject* self, void* args, HyflowContext* __context__, void* ignore);
-	static void removeMultiAtomically(HyflowObject* self, void* args, HyflowContext* __context__, void* ignore);
-	static void moveMultiAtomically(HyflowObject* self, void* args, HyflowContext* __context__, void* ignore);
-	static void getMultiAtomically(HyflowObject* self, void* args, HyflowContext* __context__, std::pair<int, double>* ignore);
+	static void putMultiAtomically(HyflowObject* self, BenchMarkArgs* args, HyflowContext* __context__, BenchMarkReturn* ignore);
+	static void removeMultiAtomically(HyflowObject* self, BenchMarkArgs* args, HyflowContext* __context__, BenchMarkReturn* ignore);
+	static void moveMultiAtomically(HyflowObject* self, BenchMarkArgs* args, HyflowContext* __context__, BenchMarkReturn* ignore);
+	static void getMultiAtomically(HyflowObject* self, BenchMarkArgs* args, HyflowContext* __context__, BenchMarkReturn* ignore);
 
 	static void put(std::pair<int, double> entry);
 	static void remove(int value);
@@ -73,6 +94,16 @@ public:
 
 	void print();
 	void getClone(HyflowObject **obj);
+
+	static void getMultiAbort(HyflowObject* self, BenchMarkArgs* args, HyflowContext* __context__);
+	static void putMultiAbort(HyflowObject* self, BenchMarkArgs* args, HyflowContext* __context__);
+	static void removeMultiAbort(HyflowObject* self, BenchMarkArgs* args, HyflowContext* __context__);
+	static void moveMultiAbort(HyflowObject* self, BenchMarkArgs* args, HyflowContext* __context__);
+
+	static void getMultiCommit(HyflowObject* self, BenchMarkArgs* args, HyflowContext* __context__);
+	static void putMultiCommit(HyflowObject* self, BenchMarkArgs* args, HyflowContext* __context__);
+	static void removeMultiCommit(HyflowObject* self, BenchMarkArgs* args, HyflowContext* __context__);
+	static void moveMultiCommit(HyflowObject* self, BenchMarkArgs* args, HyflowContext* __context__);
 
 	static void putMulti(std::pair<int, double> entry[], int size);
 	static void removeMulti(int values[], int size);

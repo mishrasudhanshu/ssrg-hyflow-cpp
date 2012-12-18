@@ -15,21 +15,46 @@
 #include "../../../core/HyflowObject.h"
 #include "../../../core/context/HyflowContext.h"
 #include "../../../core/HyflowObjectFuture.h"
+#include "../../../core/helper/BenchMarkArgs.h"
+#include "../../../core/helper/BenchMarkReturn.h"
 
 #define AMOUNT 100000
 
 namespace vt_dstm {
 
-class BankArgs {
+class BankArgs: public BenchMarkArgs{
 public:
 	uint64_t money;
 	std::string* ids;
 	int  size;
+	int select;
 
 	BankArgs(int m, std::string* ides, int s) {
 		money= m;
 		ids = ides;
 		size = s;
+		select = 0;
+	}
+
+	void getClone(BenchMarkArgs** args) {
+
+	}
+};
+
+class BankBalance: public BenchMarkReturn {
+public:
+	uint64_t money;
+
+	BankBalance() {
+		money = 0;
+	}
+
+	BankBalance(uint64_t balance) {
+		money = balance;
+	}
+
+	void getClone(BenchMarkReturn** args) {
+
 	}
 };
 
@@ -50,14 +75,14 @@ class BankAccount: public HyflowObject {
 	void deposit(uint64_t money);
 	void withdraw(uint64_t money);
 
-	static void checkBalanceAtomic(HyflowObject* self, void *args, HyflowContext* c, uint64_t* balance);
-	static void depositAtomic(HyflowObject* self, void* args, HyflowContext* c, uint64_t* ignore);
-	static void withdrawAtomic(HyflowObject* self, void* args, HyflowContext* c, uint64_t* ignore);
+	static void checkBalanceAtomic(HyflowObject* self, BenchMarkArgs *args, HyflowContext* c, BenchMarkReturn* balance);
+	static void depositAtomic(HyflowObject* self, BenchMarkArgs* args, HyflowContext* c, BenchMarkReturn* ignore);
+	static void withdrawAtomic(HyflowObject* self, BenchMarkArgs* args, HyflowContext* c, BenchMarkReturn* ignore);
 
-	static void totalBalanceAtomically(HyflowObject* self, void* args, HyflowContext* c, uint64_t* balance);
-	static void transferAtomically(HyflowObject* self, void* args, HyflowContext* c, void* ignore);
-	static void totalBalanceMultiAtomically(HyflowObject* self, void* args, HyflowContext* c, uint64_t* balance);
-	static void transferMultiAtomically(HyflowObject* self, void* args, HyflowContext* c, void* ignore);
+	static void totalBalanceAtomically(HyflowObject* self, BenchMarkArgs* args, HyflowContext* c, BenchMarkReturn* balance);
+	static void transferAtomically(HyflowObject* self, BenchMarkArgs* args, HyflowContext* c, BenchMarkReturn* ignore);
+	static void totalBalanceMultiAtomically(HyflowObject* self, BenchMarkArgs* args, HyflowContext* c, BenchMarkReturn* balance);
+	static void transferMultiAtomically(HyflowObject* self, BenchMarkArgs* args, HyflowContext* c, BenchMarkReturn* ignore);
 public:
 	BankAccount() {};
 	BankAccount(uint64_t amount, const std::string & Id);

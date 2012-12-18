@@ -9,7 +9,9 @@
 #define ABSTRACTCONTEXT_H_
 
 #include <map>
+#include <string>
 #include "../HyflowObject.h"
+//#include "../helper/Atomic.h"
 
 namespace vt_dstm {
 
@@ -150,7 +152,18 @@ public:
 	void setRootContext(HyflowContext* rootContext) {
 		this->rootContext = rootContext;
 	}
-	//TODO: Provide a function for user to just look up object without adding to read or write set
+	/**
+	 * Provides the open nesting model, a call to add transaction specific abstract lock in abstract lock
+	 * Map. It just creates a entry in context abstract lock Map, it don't locks or unlocks it.
+	 *
+	 * benchObject	: High level of abstraction of benchmark all the named object are available under it
+	 * lockName : lockName is created by benchmark to define abstract lock like (add-after-0-1) can be used
+	 * in list to lock any addition after 0-1.
+	 * readLock : To get read lock or write lock on abstract lock
+	 * acquire : To acquire lock true or false
+	 */
+	virtual void onLockAction(std::string benchObject, std::string lockName, bool readLock, bool acquire) {}
+	virtual void setCurrentAction(void* currentAction) {}
 };
 
 } /* namespace vt_dstm */
