@@ -50,11 +50,13 @@ void LockAccessMsg::setObjectId(std::string objectId) {
 void LockAccessMsg::lockAccessHandler(HyflowMessage& m) {
 	LockAccessMsg *lmsg = (LockAccessMsg*) (m.getMsg());
 	if (lmsg->request) {
-		LOG_DEBUG ("Got a Lock request: %s for %s from %d for version%d\n", lmsg->lock?"lock":"unlock", lmsg->objectId.c_str(), m.fromNode, lmsg->objVersion);
-		if (lmsg->lock)
+		if (lmsg->lock) {
+			LOG_DEBUG ("Got a Lock request for %s from %d for version%d\n", lmsg->objectId.c_str(), m.fromNode, lmsg->objVersion);
 			lmsg->locked = LockTable::tryLock(lmsg->objectId, lmsg->objVersion, lmsg->txnId);
-		else
+		} else {
+			LOG_DEBUG ("Got an unlock request for %s from %d for version%d\n", lmsg->objectId.c_str(), m.fromNode, lmsg->objVersion);
 			LockTable::tryUnlock(lmsg->objectId,  lmsg->objVersion, lmsg->txnId);
+		}
 
 		lmsg->setRequest(false);
 		/* If message as callback and network library don't support the callback, we need to reply manually*/
@@ -64,8 +66,8 @@ void LockAccessMsg::lockAccessHandler(HyflowMessage& m) {
 			}
 		}
 	} else {
-		LOG_DEBUG ("Got a Lock response: %s for %s\n", lmsg->lock?"lock":"unlock", lmsg->objectId.c_str());
 		if (lmsg->lock) {
+			LOG_DEBUG ("Got a Lock response for %s\n", lmsg->objectId.c_str());
 			HyflowMessageFuture* cbfmsg = MessageMaps::getMessageFuture(m.msg_id,
 					m.msg_t);
 			if (cbfmsg) {
@@ -74,8 +76,10 @@ void LockAccessMsg::lockAccessHandler(HyflowMessage& m) {
 			} else {
 				Logger::fatal("Can not find Lock access future for m_id %s\n", m.msg_id.c_str());
 			}
+		}else {
+			// Unlock response can be ignored
+			LOG_DEBUG ("Got a unlock response for %s\n", lmsg->objectId.c_str());
 		}
-		// Unlock response can be ignored
 	}
 }
 

@@ -11,11 +11,21 @@
 namespace vt_dstm {
 
 class BenchMarkArgs {
+protected:
+	bool onHeap;
 public:
-	BenchMarkArgs() {}
+	BenchMarkArgs() {onHeap = false;}
 	virtual ~BenchMarkArgs() {}
 
 	virtual void getClone(BenchMarkArgs** bmr) = 0;
+
+	bool isOnHeap() const {
+		return onHeap;
+	}
+
+	void setOnHeap(bool onHeap) {
+		this->onHeap = onHeap;
+	}
 };
 
 } /* namespace vt_dstm */

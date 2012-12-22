@@ -17,7 +17,7 @@
 #include "../../../core/HyflowObjectFuture.h"
 #include "../../../core/directory/DirectoryManager.h"
 #include "../../../core/helper/Atomic.h"
-#include "../../../util/logging/Logger.h"
+//#include "../../../util/logging/Logger.h"
 #include "../../../util/networking/NetworkManager.h"
 #include "../../BenchmarkExecutor.h"
 #include "HashTableBenchMark.h"
@@ -34,7 +34,7 @@ HashBucket::HashBucket(std::string id) {
 HashBucket::~HashBucket() {
 }
 
-void HashBucket::putInternal(std::pair<int, double> entry) {
+bool HashBucket::putInternal(std::pair<int, double> entry) {
 	std::vector<int>::iterator bucketItr;
 	bool found = false;
 	for ( bucketItr = bucketKeys.begin(); bucketItr != bucketKeys.end() ; bucketItr++ ) {
@@ -49,9 +49,11 @@ void HashBucket::putInternal(std::pair<int, double> entry) {
 		bucketKeys.push_back(entry.first);
 		bucketValues.push_back(entry.second);
 	}
+
+	return !found;
 }
 
-void HashBucket::removeInternal(int key) {
+bool HashBucket::removeInternal(int key) {
 	std::vector<int>::iterator bucketItr;
 	bool found = false;
 	int pos=0;
@@ -67,6 +69,7 @@ void HashBucket::removeInternal(int key) {
 		bucketKeys.erase(bucketKeys.begin()+pos);
 		bucketValues.erase(bucketValues.begin()+pos);
 	}
+	return found;
 }
 
 std::pair<int, double> HashBucket::getInternal(int key) {
@@ -89,44 +92,44 @@ std::pair<int, double> HashBucket::getInternal(int key) {
 	return entry;
 }
 
-void HashBucket::putAtomically(HyflowObject* self, BenchMarkArgs* args, HyflowContext* __context__, BenchMarkReturn* ignore) {
+void HashBucket::putAtomically(HyflowObject* self, BenchMarkArgs* args, HyflowContext* __context__, BenchMarkReturn* pRet) {
 	std::pair<int, double> entry = *(((HTArgs*)args)->entries);
+	HTReturn *hrt = (HTReturn*) pRet;
+
+	if (__context__->getNestingModel() == HYFLOW_NESTING_OPEN ) {
+		// Create unique abstract lock for this transaction
+		std::stringstream absLockStr;
+		absLockStr<<entry.first;
+		std::string lockName = absLockStr.str();
+		__context__->onLockAccess("HT0", lockName, false);
+	}
 
 	std::string targetBucket = HashTableBenchmark::getBucketId(entry.first);
 	HYFLOW_FETCH(targetBucket, false);
 
 	HashBucket* bucket =  (HashBucket*)HYFLOW_ON_WRITE(targetBucket);
-	bucket->putInternal(entry);
+	hrt->success = bucket->putInternal(entry);
 	LOG_DEBUG("HashMap :Put in bucket %s value %d\n", bucket->getId().c_str(), entry.first);
 }
 
-void HashBucket::removeAtomically(HyflowObject* self, BenchMarkArgs* args, HyflowContext* __context__, BenchMarkReturn* ignore) {
+void HashBucket::removeAtomically(HyflowObject* self, BenchMarkArgs* args, HyflowContext* __context__, BenchMarkReturn* rRet) {
 	int key = *(((HTArgs*)args)->key1);
+	HTReturn *hrt = (HTReturn*) rRet;
+
+	if (__context__->getNestingModel() == HYFLOW_NESTING_OPEN ) {
+		// Create unique abstract lock for this transaction
+		std::stringstream absLockStr;
+		absLockStr<<key;
+		std::string lockName = absLockStr.str();
+		__context__->onLockAccess("HT0", lockName, false);
+	}
 
 	std::string targetBucket = HashTableBenchmark::getBucketId(key);
 	HYFLOW_FETCH(targetBucket, false);
 
 	HashBucket* bucket =  (HashBucket*)HYFLOW_ON_WRITE(targetBucket);
-	bucket->removeInternal(key);
-	LOG_DEBUG("HashMap :Remove in bucket %s value %d\n", bucket->getId().c_str(), key);
-}
-
-void HashBucket::moveAtomically(HyflowObject* self, BenchMarkArgs* args, HyflowContext* __context__, BenchMarkReturn* ignore) {
-	HTArgs* htArgs = (HTArgs*)args;
-
-	std::string currentBucket = HashTableBenchmark::getBucketId(htArgs->key1[0]);
-	std::string targetBucket = HashTableBenchmark::getBucketId(htArgs->key2[0]);
-	HYFLOW_FETCH(currentBucket, false);
-	HYFLOW_FETCH(targetBucket, false);
-
-	HashBucket* fromBucket = (HashBucket*)HYFLOW_ON_WRITE(currentBucket);
-	HashBucket* toBucket =  (HashBucket*)HYFLOW_ON_WRITE(targetBucket);
-	std::pair<int ,double> entry = fromBucket->getInternal(htArgs->key1[0]);
-	if (entry.first != -1) {
-		fromBucket->removeInternal(htArgs->key1[0]);
-		toBucket->putInternal(entry);
-	}
-	LOG_DEBUG("HashMap :Move from %s to %s\n", fromBucket->getId().c_str(), toBucket->getId().c_str());
+	hrt->success = bucket->removeInternal(key);
+	LOG_DEBUG("HashMap :Remove %s in bucket %s value %d\n", hrt->success?"true":"false", bucket->getId().c_str(), key);
 }
 
 void HashBucket::getAtomically(HyflowObject* self, BenchMarkArgs* args, HyflowContext* __context__, BenchMarkReturn* hRet) {
@@ -134,42 +137,48 @@ void HashBucket::getAtomically(HyflowObject* self, BenchMarkArgs* args, HyflowCo
 	std::string targetBucket = HashTableBenchmark::getBucketId(key);
 	HYFLOW_FETCH(targetBucket, false);
 
+	if (__context__->getNestingModel() == HYFLOW_NESTING_OPEN ) {
+		// Create unique abstract lock for this transaction
+		std::stringstream absLockStr;
+		absLockStr<<key;
+		std::string lockName = absLockStr.str();
+		__context__->onLockAccess("HT0", lockName, true);
+	}
+
 	HashBucket* bucket =  (HashBucket*)HYFLOW_ON_WRITE(targetBucket);
 	((HTReturn*)hRet)->entry = bucket->getInternal(key);
 	LOG_DEBUG("HashMap :Get in bucket %s value %d\n", bucket->getId().c_str(), key);
 }
 
-void HashBucket::put(std::pair<int, double> entry) {
+bool HashBucket::put(std::pair<int, double> entry) {
 	HTArgs hArgs(&entry);
+	HTReturn hret;
 	Atomic atomicPut;
 
 	atomicPut.atomically = HashBucket::putAtomically;
-	atomicPut.execute(NULL, &hArgs, NULL);
+	atomicPut.onAbort = HashBucket::putAbort;
+	atomicPut.execute(NULL, &hArgs, &hret);
+	return hret.success;
 }
 
-void HashBucket::remove(int key) {
+bool HashBucket::remove(int key) {
 	HTArgs hArgs(&key, NULL, 1);
-	Atomic atomicPut;
+	HTReturn hRet;
+	Atomic atomicRemove;
 
-	atomicPut.atomically = HashBucket::removeAtomically;
-	atomicPut.execute(NULL, &hArgs, NULL);
-}
-
-void HashBucket::move(int key1, int key2) {
-	HTArgs htArgs(&key1,&key2,0);
-	Atomic atomicPut;
-
-	atomicPut.atomically = HashBucket::moveAtomically;
-	atomicPut.execute(NULL, &htArgs, NULL);
+	atomicRemove.atomically = HashBucket::removeAtomically;
+	atomicRemove.onAbort = HashBucket::removeAbort;
+	atomicRemove.execute(NULL, &hArgs, &hRet);
+	return hRet.success;
 }
 
 std::pair<int, double> HashBucket::get(int key) {
 	HTReturn hRet;
 	HTArgs hArgs(&key, NULL, 1);
-	Atomic atomicPut;
+	Atomic atomicGet;
 
-	atomicPut.atomically = HashBucket::getAtomically;
-	atomicPut.execute(NULL, &hArgs, &hRet);
+	atomicGet.atomically = HashBucket::getAtomically;
+	atomicGet.execute(NULL, &hArgs, &hRet);
 	return hRet.entry;
 }
 
@@ -185,12 +194,7 @@ void HashBucket::removeMultiAtomically(HyflowObject* self, BenchMarkArgs* args, 
 		remove(htArgs->key1[txns]);
 	}
 }
-void HashBucket::moveMultiAtomically(HyflowObject* self, BenchMarkArgs* args, HyflowContext* __context__, BenchMarkReturn* ignore) {
-	HTArgs* htArgs = (HTArgs*)args;
-	for (int txns = 0; txns < htArgs->size ; txns+=1) {
-		move(htArgs->key1[txns], htArgs->key2[txns]);
-	}
-}
+
 void HashBucket::getMultiAtomically(HyflowObject* self, BenchMarkArgs* args, HyflowContext* __context__, BenchMarkReturn* entry) {
 	HTArgs* htArgs = (HTArgs*)args;
 	for (int txns = 0; txns < htArgs->size ; txns+=1) {
@@ -215,11 +219,12 @@ void HashBucket::putMulti(std::pair<int, double> entry[], int size) {
 		htArgs.entries = entry;
 		Atomic atomicPutMulti;
 		atomicPutMulti.atomically = HashBucket::putMultiAtomically;
-		atomicPutMulti.onAbort = HashBucket::putMultiAbort;
-		atomicPutMulti.onCommit = HashBucket::putMultiCommit;
+		// Don't need to assign onAbort & onCommit as nothing specific required
+		// lock handling is automatically done by context level, not in onAbort etc.
 		atomicPutMulti.execute(NULL, &htArgs, NULL);
 	}
 }
+
 void HashBucket::removeMulti(int values[], int size) {
 	if (ContextManager::getNestingModel() == HYFLOW_CHECKPOINTING) {
 		HYFLOW_ATOMIC_START {
@@ -236,32 +241,10 @@ void HashBucket::removeMulti(int values[], int size) {
 		HTArgs htArgs(values, NULL, size);
 		Atomic atomicRemoveMulti;
 		atomicRemoveMulti.atomically = HashBucket::removeMultiAtomically;
-		atomicRemoveMulti.onAbort = HashBucket::removeMultiAbort;
-		atomicRemoveMulti.onCommit = HashBucket::removeMultiCommit;
 		atomicRemoveMulti.execute(NULL, &htArgs, NULL);
 	}
 }
-void HashBucket::moveMulti(int key1[], int key2[], int size) {
-	if (ContextManager::getNestingModel() == HYFLOW_CHECKPOINTING) {
-		HYFLOW_ATOMIC_START {
-			HYFLOW_CHECKPOINT_INIT;
-			for(int txns=0 ; txns<size ; txns+=1 ) {
-				LOG_DEBUG("HT :Call Get Node with %d in txns %d\n", key1[txns], txns);
-				move(key1[txns], key2[txns]);
 
-				HYFLOW_STORE(&txns, txns);
-				HYFLOW_CHECKPOINT_HERE;
-			}
-		}HYFLOW_ATOMIC_END;
-	}else {
-		HTArgs keys(key1, key2, size);
-		Atomic atomicMoveMulti;
-		atomicMoveMulti.atomically = HashBucket::moveMultiAtomically;
-		atomicMoveMulti.onAbort = HashBucket::moveMultiAbort;
-		atomicMoveMulti.onCommit = HashBucket::moveMultiCommit;
-		atomicMoveMulti.execute(NULL, &keys, NULL);
-	}
-}
 void HashBucket::getMulti(int values[], int size) {
 	if (ContextManager::getNestingModel() == HYFLOW_CHECKPOINTING) {
 		HYFLOW_ATOMIC_START {
@@ -278,8 +261,6 @@ void HashBucket::getMulti(int values[], int size) {
 		HTArgs htArgs(values, NULL, size);
 		Atomic atomicGetMulti;
 		atomicGetMulti.atomically = HashBucket::getMultiAtomically;
-		atomicGetMulti.onAbort = HashBucket::getMultiAbort;
-		atomicGetMulti.onCommit = HashBucket::getMultiCommit;
 		atomicGetMulti.execute(NULL, &htArgs, NULL);
 	}
 }
@@ -311,7 +292,7 @@ void HashBucket::test() {
 		// archive and stream closed when destructors are called
 	}
 
-	// ... some time later restore the class instance to its orginal state
+	// ... some time later restore the class instance to its original state
 	vt_dstm::HashBucket l1;
 	{
 		// create and open an archive for input
@@ -324,37 +305,43 @@ void HashBucket::test() {
 	}
 }
 
-void HashBucket::getMultiAbort(HyflowObject* self, BenchMarkArgs* args, HyflowContext* __context__) {
+void HashBucket::putAbort(HyflowObject* self, BenchMarkArgs* args, HyflowContext* __context__, BenchMarkReturn* rt) {
+	HTArgs *hargs = (HTArgs*) args;
+	HTReturn* hrt = (HTReturn*) rt;
+	if (hrt->success) {
+		int key = hargs->entries[0].first;
 
+		std::string targetBucket = HashTableBenchmark::getBucketId(key);
+		HYFLOW_FETCH(targetBucket, false);
+
+		HashBucket* bucket =  (HashBucket*)HYFLOW_ON_WRITE(targetBucket);
+		bool result = bucket->removeInternal(key);
+		if (!result) {
+			// Sort of sanity check, if it fails issue in implementation
+			Logger::fatal("HashMap :Rollback of put = remove %d operation failed\n", key);
+		}
+		LOG_DEBUG("HashMap :Remove %s in bucket %s value %d\n", hrt->success?"true":"false", bucket->getId().c_str(), key);
+	}
 }
 
-void HashBucket::putMultiAbort(HyflowObject* self, BenchMarkArgs* args, HyflowContext* __context__) {
+void HashBucket::removeAbort(HyflowObject* self, BenchMarkArgs* args, HyflowContext* __context__, BenchMarkReturn* rt) {
+	HTArgs *hargs = (HTArgs*) args;
+	HTReturn* hrt = (HTReturn*) rt;
+	if (hrt->success) {
+		//TODO: Return the value instead of success, it can be used to create entry
+		std::pair<int, double> entry(*(hargs->key1),0.1);
 
+		std::string targetBucket = HashTableBenchmark::getBucketId(entry.first);
+		HYFLOW_FETCH(targetBucket, false);
+
+		HashBucket* bucket =  (HashBucket*)HYFLOW_ON_WRITE(targetBucket);
+		bool result = bucket->putInternal(entry);
+		if (!result) {
+			// Sort of sanity check, if it fails issue in implementation
+			Logger::fatal("HashMap :Rollback of remove = put %d operation failed\n", entry.first);
+		}
+		LOG_DEBUG("HashMap :Put in bucket %s value %d\n", bucket->getId().c_str(), entry.first);
+	}
 }
-
-void HashBucket::removeMultiAbort(HyflowObject* self, BenchMarkArgs* args, HyflowContext* __context__) {
-
-}
-
-void HashBucket::moveMultiAbort(HyflowObject* self, BenchMarkArgs* args, HyflowContext* __context__) {
-
-}
-
-void HashBucket::getMultiCommit(HyflowObject* self, BenchMarkArgs* args, HyflowContext* __context__) {
-
-}
-
-void HashBucket::putMultiCommit(HyflowObject* self, BenchMarkArgs* args, HyflowContext* __context__) {
-
-}
-
-void HashBucket::removeMultiCommit(HyflowObject* self, BenchMarkArgs* args, HyflowContext* __context__) {
-
-}
-
-void HashBucket::moveMultiCommit(HyflowObject* self, BenchMarkArgs* args, HyflowContext* __context__) {
-
-}
-
 
 } /* namespace vt_dstm */

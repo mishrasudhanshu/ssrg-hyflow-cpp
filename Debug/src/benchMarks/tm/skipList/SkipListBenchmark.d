@@ -70,6 +70,7 @@ src/benchMarks/tm/skipList/SkipListBenchmark.d: \
  ../src/benchMarks/tm/skipList/../../tm/hashTable/../../../core/HyflowObjectFuture.h \
  ../src/benchMarks/tm/skipList/../../tm/hashTable/../../../core/helper/BenchMarkArgs.h \
  ../src/benchMarks/tm/skipList/../../tm/hashTable/../../../core/helper/BenchMarkReturn.h \
+ ../src/benchMarks/tm/skipList/../../tm/hashTable/../../../util/logging/Logger.h \
  ../src/benchMarks/tm/skipList/../../tm/hashTable/../../HyflowBenchmark.h \
  ../src/benchMarks/tm/skipList/../../tm/hashTable/../../../util/concurrent/HyInteger.h \
  ../src/benchMarks/tm/skipList/../../tm/vacation/VacationBenchmark.h \
@@ -236,6 +237,8 @@ src/benchMarks/tm/skipList/SkipListBenchmark.d: \
 ../src/benchMarks/tm/skipList/../../tm/hashTable/../../../core/helper/BenchMarkArgs.h:
 
 ../src/benchMarks/tm/skipList/../../tm/hashTable/../../../core/helper/BenchMarkReturn.h:
+
+../src/benchMarks/tm/skipList/../../tm/hashTable/../../../util/logging/Logger.h:
 
 ../src/benchMarks/tm/skipList/../../tm/hashTable/../../HyflowBenchmark.h:
 

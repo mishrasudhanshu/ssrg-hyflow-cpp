@@ -22,6 +22,7 @@ class MessageMaps {
 	tbb::concurrent_hash_map<std::string, HyflowMessageFuture*>* readValidCallbackMap;
 	tbb::concurrent_hash_map<std::string, HyflowMessageFuture*>* registerCallbackMap;
 	tbb::concurrent_hash_map<std::string, HyflowMessageFuture*>* dummyCallbackMap;
+	tbb::concurrent_hash_map<std::string, HyflowMessageFuture*>* AbstractLockCallbackMap;
 	static MessageMaps* instance;
 	MessageMaps();
 public:

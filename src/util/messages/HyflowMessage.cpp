@@ -20,6 +20,7 @@
 #include "types/LockAccessMsg.h"
 #include "types/ReadValidationMsg.h"
 #include "types/DummyTestMsg.h"
+#include "types/AbstractLockMsg.h"
 #include "../../core/context/ContextManager.h"
 
 namespace vt_dstm{
@@ -59,6 +60,7 @@ void HyflowMessage::registerMessageHandlers()	{
 		MessageMaps::registerHandler(MSG_LOCK_ACCESS, &LockAccessMsg::lockAccessHandler);
 		MessageMaps::registerHandler(MSG_READ_VALIDATE, &ReadValidationMsg::readValidationHandle);
 		MessageMaps::registerHandler(MSG_TYPE_DUMMY, &DummyTestMsg::DummyTestMsgHandler);
+		MessageMaps::registerHandler(MSG_ABSTRACT_LOCK, &AbstractLockMsg::absLockAccessHandler);
 		isMessageInit = true;
 	}
 }
@@ -72,6 +74,7 @@ void HyflowMessage::registerMessageTypes(Archive & ar){
 	ar.register_type(static_cast<LockAccessMsg*>(NULL));
 	ar.register_type(static_cast<ReadValidationMsg*>(NULL));
 	ar.register_type(static_cast<DummyTestMsg*>(NULL));
+	ar.register_type(static_cast<AbstractLockMsg*>(NULL));
 }
 
 void  HyflowMessage::syncClocks()	{
@@ -111,6 +114,8 @@ void HyflowMessage::test() {
 	lamsg.serializationTest();
 	ReadValidationMsg rvmsg;
 	rvmsg.serializationTest();
+	AbstractLockMsg absmsg;
+	absmsg.serializationTest();
 	// create and open a character archive for output
 	std::ofstream ofs("/tmp/HyflowMessage", std::ios::out);
 	// create class instance

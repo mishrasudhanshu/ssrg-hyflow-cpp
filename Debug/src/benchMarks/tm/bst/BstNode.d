@@ -78,6 +78,7 @@ src/benchMarks/tm/bst/BstNode.d: ../src/benchMarks/tm/bst/BstNode.cpp \
  ../src/benchMarks/tm/bst/../../tm/hashTable/../../../core/HyflowObjectFuture.h \
  ../src/benchMarks/tm/bst/../../tm/hashTable/../../../core/helper/BenchMarkArgs.h \
  ../src/benchMarks/tm/bst/../../tm/hashTable/../../../core/helper/BenchMarkReturn.h \
+ ../src/benchMarks/tm/bst/../../tm/hashTable/../../../util/logging/Logger.h \
  ../src/benchMarks/tm/bst/../../tm/hashTable/../../HyflowBenchmark.h \
  ../src/benchMarks/tm/bst/../../tm/hashTable/../../../util/concurrent/HyInteger.h \
  ../src/benchMarks/tm/bst/../../tm/vacation/VacationBenchmark.h \
@@ -263,6 +264,8 @@ src/benchMarks/tm/bst/BstNode.d: ../src/benchMarks/tm/bst/BstNode.cpp \
 ../src/benchMarks/tm/bst/../../tm/hashTable/../../../core/helper/BenchMarkArgs.h:
 
 ../src/benchMarks/tm/bst/../../tm/hashTable/../../../core/helper/BenchMarkReturn.h:
+
+../src/benchMarks/tm/bst/../../tm/hashTable/../../../util/logging/Logger.h:
 
 ../src/benchMarks/tm/bst/../../tm/hashTable/../../HyflowBenchmark.h:
 

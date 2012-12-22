@@ -22,13 +22,15 @@ class HyflowContextFactory {
 	int txnIndex;
 	HyflowContext* getContextFromStack();
 	HyflowContext* getFreshContext();
+	HyflowContext* getFreshContext(Hyflow_NestingModel nm);
 public:
 	HyflowContextFactory();
 	virtual ~HyflowContextFactory();
 
 	bool isContextInit();
 	HyflowContext* getContextInstance();
-	void releaseContextInstance();
+	HyflowContext* getContextInstance(Hyflow_NestingModel nm);
+	void releaseContextInstance(Hyflow_NestingModel nm);
 
 	int getTxnIndex() const {
 		return txnIndex;

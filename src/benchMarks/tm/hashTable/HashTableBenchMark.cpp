@@ -45,7 +45,7 @@ void HashTableBenchmark::readOperation(std::string ids[], int size){
 void HashTableBenchmark::writeOperation(std::string ids[], int size){
 	int select = abs(Logger::getCurrentMicroSec());
 	int txnsCount = getOperandsCount();
-	if (select%3 == 0 ) {
+	if (select%2 == 0 ) {
 		std::pair<int, double> *entries = new std::pair<int, double>[txnsCount];
 		for ( int txns=0 ; txns<txnsCount ; txns++) {
 			// Make access to random buckets
@@ -56,7 +56,7 @@ void HashTableBenchmark::writeOperation(std::string ids[], int size){
 		}
 		HashBucket::putMulti(entries, txnsCount);
 		delete[] entries;
-	}else if(select%3 == 1){
+	}else {
 		int *keys = new int[txnsCount];
 		for ( int txns=0 ; txns<txnsCount ; txns++) {
 			// Make access to random buckets
@@ -65,18 +65,6 @@ void HashTableBenchmark::writeOperation(std::string ids[], int size){
 		}
 		HashBucket::removeMulti(keys, txnsCount);
 		delete[] keys;
-	}else {
-		int *keys1 = new int[txnsCount];
-		int *keys2 = new int[txnsCount];
-		for ( int txns=0 ; txns<txnsCount ; txns++) {
-			// Make access to random buckets
-			keys1[txns] = (abs(Logger::getCurrentMicroSec())+txns)%objectCount;
-			keys2[txns] = (abs(Logger::getCurrentMicroSec())+txns+txnsCount)%objectCount;
-			LOG_DEBUG("HashTable :MV[%d][%d] Nodes\n", keys1[txns], keys2[txns]);
-		}
-		HashBucket::moveMulti(keys1, keys2, txnsCount);
-		delete[] keys1;
-		delete[] keys2;
 	}
 }
 

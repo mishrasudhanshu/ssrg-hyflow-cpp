@@ -16,6 +16,7 @@
 #include "../HyflowContext.h"
 #include "../../../util/concurrent/HyInteger.h"
 #include "../AbstractLock.h"
+#include "../../helper/Atomic.h"
 
 namespace vt_dstm {
 
@@ -37,7 +38,7 @@ class DTL2Context: public vt_dstm::HyflowContext {
 	 */
 	std::map<std::string, HyflowObject*, ObjectIdComparator> deleteMap;
 	/**
-	 * List of write locks hold by transaction
+	 * TODO: Remove :List of write locks hold by transaction
 	 */
 	std::set<std::string> lockSet;
 	/*
@@ -52,7 +53,7 @@ class DTL2Context: public vt_dstm::HyflowContext {
 	/*
 	 * Actions on abort or on commit
 	 */
-	std::set<void*> actionList;
+	std::vector<Atomic*> actionList;
 	void* currentAction;
 	int tnxClock;
 	int highestSenderClock;
@@ -73,10 +74,12 @@ class DTL2Context: public vt_dstm::HyflowContext {
 	void mergeIntoParents();
 	void cleanSetTillCheckPoint(int checkPoint);
 	void contextReset();
-	bool doAbstractLock(AbstractLock* absLock, bool read) {}
-	void doAbstractUnLock(AbstractLock* absLock, bool read) {}
+	bool doAbstractLock(AbstractLock* absLock, bool read);
+	void doAbstractUnLock(AbstractLock* absLock, bool read);
+	unsigned long long getRootTxnId();
 public:
 	DTL2Context();
+	DTL2Context(Hyflow_NestingModel nm);
 	virtual ~DTL2Context();
 
 	void contextInit();
@@ -98,8 +101,10 @@ public:
 	static void increaseAbortCount();
 	static int getAbortCount();
 	static void resetAbortCount();
-	void onLockAction(std::string benchObject, std::string lockname, bool readlock, bool acquire);
+	void onLockAccess(std::string benchObject, std::string lockname, bool readlock);
 	void setCurrentAction(void* currentAction);
+	void addAbstractLock(std::string lockName, void* abstractLock, bool read);
+	virtual void addAction(void* action);
 };
 
 } /* namespace vt_dstm */

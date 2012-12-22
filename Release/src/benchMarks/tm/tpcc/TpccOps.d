@@ -69,6 +69,7 @@ src/benchMarks/tm/tpcc/TpccOps.d: ../src/benchMarks/tm/tpcc/TpccOps.cpp \
  ../src/benchMarks/tm/tpcc/../../tm/hashTable/../../../core/HyflowObjectFuture.h \
  ../src/benchMarks/tm/tpcc/../../tm/hashTable/../../../core/helper/BenchMarkArgs.h \
  ../src/benchMarks/tm/tpcc/../../tm/hashTable/../../../core/helper/BenchMarkReturn.h \
+ ../src/benchMarks/tm/tpcc/../../tm/hashTable/../../../util/logging/Logger.h \
  ../src/benchMarks/tm/tpcc/../../tm/hashTable/../../HyflowBenchmark.h \
  ../src/benchMarks/tm/tpcc/../../tm/hashTable/../../../util/concurrent/HyInteger.h \
  ../src/benchMarks/tm/tpcc/../../tm/vacation/VacationBenchmark.h \
@@ -247,6 +248,8 @@ src/benchMarks/tm/tpcc/TpccOps.d: ../src/benchMarks/tm/tpcc/TpccOps.cpp \
 ../src/benchMarks/tm/tpcc/../../tm/hashTable/../../../core/helper/BenchMarkArgs.h:
 
 ../src/benchMarks/tm/tpcc/../../tm/hashTable/../../../core/helper/BenchMarkReturn.h:
+
+../src/benchMarks/tm/tpcc/../../tm/hashTable/../../../util/logging/Logger.h:
 
 ../src/benchMarks/tm/tpcc/../../tm/hashTable/../../HyflowBenchmark.h:
 

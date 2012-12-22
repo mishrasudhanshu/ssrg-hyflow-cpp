@@ -21,6 +21,7 @@ MessageMaps::MessageMaps() {
 	readValidCallbackMap = new tbb::concurrent_hash_map<std::string, HyflowMessageFuture *>(1024);
 	registerCallbackMap = new tbb::concurrent_hash_map<std::string, HyflowMessageFuture *>(1024);
 	dummyCallbackMap = new tbb::concurrent_hash_map<std::string, HyflowMessageFuture *>(1024);
+	AbstractLockCallbackMap = new tbb::concurrent_hash_map<std::string, HyflowMessageFuture *>(1024);
 }
 
 MessageMaps::~MessageMaps() {
@@ -31,6 +32,7 @@ MessageMaps::~MessageMaps() {
 	delete lockCallbackMap;
 	delete readValidCallbackMap;
 	delete registerCallbackMap;
+	delete AbstractLockCallbackMap;
 }
 
 void MessageMaps::registerHandler(HyMessageType msg_t, void (*handlerFunc)(HyflowMessage &)){
@@ -110,6 +112,13 @@ void MessageMaps::registerMessageFuture(const std::string & m_id, HyMessageType 
 			a->second = &fu;
 		}
 		break;
+	case MSG_ABSTRACT_LOCK:
+		if (!instance->AbstractLockCallbackMap->insert(a, m_id)) {
+			Logger::fatal("AbstractLockCallbackMap already exist with same m_id %s\n",m_id.c_str());
+		}else {
+			a->second = &fu;
+		}
+		break;
 	default:
 		Logger::fatal("MSCN :registerMessageFuture :Invalid type message request to getbyId %s\n",m_id.c_str());
 		break;
@@ -171,6 +180,13 @@ HyflowMessageFuture* MessageMaps::getMessageFuture(const std::string & m_id, HyM
 			Logger::fatal("Future don't exist for dummyCallbackMap m_id %s\n",m_id.c_str());
 		}
 		break;
+	case MSG_ABSTRACT_LOCK:
+		if (instance->AbstractLockCallbackMap->find(a, m_id)) {
+				future = a->second;
+		}else {
+			Logger::fatal("Future don't exist for AbstractLockCallbackMap m_id %s\n",m_id.c_str());
+		}
+		break;
 	default:
 		Logger::fatal("MSCN :GetMessageFuture :Invalid type message request to getbyId %s\n", m_id.c_str());
 		break;
@@ -207,6 +223,10 @@ void MessageMaps::removeMessageFuture(const std::string & m_id, HyMessageType t)
 	case MSG_TYPE_DUMMY:
 		if(!instance->dummyCallbackMap->erase(m_id))
 			Logger::fatal("dummy Callback already deleted for m_id %s\n",m_id.c_str());
+		break;
+	case MSG_ABSTRACT_LOCK:
+		if(!instance->AbstractLockCallbackMap->erase(m_id))
+			Logger::fatal("AbstractLock CallbackMap already deleted for m_id %s\n",m_id.c_str());
 		break;
 	default:
 		Logger::fatal("MSCN :RemoveMessageFuture :Invalid type message request to getbyId %s\n", m_id.c_str());

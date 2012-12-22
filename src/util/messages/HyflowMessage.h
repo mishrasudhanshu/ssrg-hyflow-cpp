@@ -26,6 +26,7 @@ enum HyMessageType {
 	MSG_REGISTER_OBJ, /*Register or Unregister object in cluster*/
 	MSG_LOCK_ACCESS,  /*Request object lock unlock*/
 	MSG_READ_VALIDATE, /*Validate a object version*/
+	MSG_ABSTRACT_LOCK, /*To lock or Unlock remote Abstract lock */
 };
 
 class HyflowMessage {

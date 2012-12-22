@@ -83,6 +83,7 @@ src/benchMarks/tm/vacation/Customer.d: \
  ../src/benchMarks/tm/vacation/../../tm/hashTable/../../../core/HyflowObjectFuture.h \
  ../src/benchMarks/tm/vacation/../../tm/hashTable/../../../core/helper/BenchMarkArgs.h \
  ../src/benchMarks/tm/vacation/../../tm/hashTable/../../../core/helper/BenchMarkReturn.h \
+ ../src/benchMarks/tm/vacation/../../tm/hashTable/../../../util/logging/Logger.h \
  ../src/benchMarks/tm/vacation/../../tm/hashTable/../../HyflowBenchmark.h \
  ../src/benchMarks/tm/vacation/../../tm/hashTable/../../../util/concurrent/HyInteger.h \
  ../src/benchMarks/tm/vacation/../../tm/vacation/VacationBenchmark.h \
@@ -276,6 +277,8 @@ src/benchMarks/tm/vacation/Customer.d: \
 ../src/benchMarks/tm/vacation/../../tm/hashTable/../../../core/helper/BenchMarkArgs.h:
 
 ../src/benchMarks/tm/vacation/../../tm/hashTable/../../../core/helper/BenchMarkReturn.h:
+
+../src/benchMarks/tm/vacation/../../tm/hashTable/../../../util/logging/Logger.h:
 
 ../src/benchMarks/tm/vacation/../../tm/hashTable/../../HyflowBenchmark.h:
 

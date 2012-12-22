@@ -65,7 +65,17 @@ HyflowContext* ContextManager::getInstance() {
 	return contextFactory->getContextInstance();
 }
 
+HyflowContext* ContextManager::getInstance(Hyflow_NestingModel nm) {
+	HyflowContextFactory *contextFactory = threadContextFactory.get();
+	if (!contextFactory) {
+		contextFactory = new HyflowContextFactory();
+		threadContextFactory.reset(contextFactory);
+	}
+	return contextFactory->getContextInstance(nm);
+}
+
 void ContextManager::releaseInstance(HyflowContext **c) {
+	Hyflow_NestingModel nm = (*c)->getNestingModel();
 	if (*c) {
 		(*c)->contextDeinit();
 		// Following part is just for debugging, can be commented
@@ -79,14 +89,22 @@ void ContextManager::releaseInstance(HyflowContext **c) {
 		}
 	}
 	HyflowContextFactory *contextFactory = threadContextFactory.get();
-	// We will the context using the contextFactory reference
-	contextFactory->releaseContextInstance();
+	// We will release the context using the contextFactory reference
+	contextFactory->releaseContextInstance(nm);
 }
 
 HyflowContext* ContextManager::createContext() {
 	HyflowContext *context = NULL;
 	if (ConfigFile::Value(CONTEXT).compare(DTL2) == 0 ) {
 		context = new DTL2Context();
+	}
+	return context;
+}
+
+HyflowContext* ContextManager::createContext(Hyflow_NestingModel nm) {
+	HyflowContext *context = NULL;
+	if (ConfigFile::Value(CONTEXT).compare(DTL2) == 0 ) {
+		context = new DTL2Context(nm);
 	}
 	return context;
 }

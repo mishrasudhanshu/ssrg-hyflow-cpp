@@ -31,7 +31,9 @@ public:
 	static void ContextManagerInit();
 	static unsigned long long createTid(HyflowContext* c);
 	static HyflowContext* getInstance();
+	static HyflowContext* getInstance(Hyflow_NestingModel nm);
 	static HyflowContext* createContext();
+	static HyflowContext* createContext(Hyflow_NestingModel nm);
 	static void deleteContext(HyflowContext **c);
 	static void releaseInstance(HyflowContext **c);
 	/*

@@ -11,7 +11,6 @@
 #include <map>
 #include <string>
 #include "../HyflowObject.h"
-//#include "../helper/Atomic.h"
 
 namespace vt_dstm {
 
@@ -20,10 +19,11 @@ enum TxnStatus {
 };
 
 enum Hyflow_NestingModel {
-	HYFLOW_NO_NESTING,
+	HYFLOW_NO_NESTING,		//TODO: Remove this model, flat is sufficient
 	HYFLOW_NESTING_FLAT,
 	HYFLOW_NESTING_CLOSED,
 	HYFLOW_NESTING_OPEN,
+	HYFLOW_INTERNAL_OPEN,	//No required, Flat or Open can be Used, Good for meta data collection
 	HYFLOW_CHECKPOINTING
 };
 
@@ -113,6 +113,14 @@ public:
 	virtual void fetchObjects(std::string objIds[], int objCount, bool isRead =
 			true) = 0;
 
+	Hyflow_NestingModel getNestingModel() const {
+		return nestingModel;
+	}
+
+	void setNestingModel(Hyflow_NestingModel nestingModel) {
+		this->nestingModel = nestingModel;
+	}
+
 	int getSubTxnIndex() const {
 		return subTxnIndex;
 	}
@@ -162,8 +170,10 @@ public:
 	 * readLock : To get read lock or write lock on abstract lock
 	 * acquire : To acquire lock true or false
 	 */
-	virtual void onLockAction(std::string benchObject, std::string lockName, bool readLock, bool acquire) {}
+	virtual void onLockAccess(std::string benchObject, std::string lockName, bool readLock) {}
 	virtual void setCurrentAction(void* currentAction) {}
+	virtual void addAction(void* action) {}
+	virtual void addAbstractLock(std::string lockName, void* abstractLock, bool read) {}
 };
 
 } /* namespace vt_dstm */

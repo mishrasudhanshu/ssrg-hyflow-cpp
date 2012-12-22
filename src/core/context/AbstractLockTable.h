@@ -21,7 +21,7 @@ class AbstractLockTable {
 	 * lock name : is unique name to access abstract lock
 	 * AbstrackLock : is created to support higher level locking in open nesting
 	 */
-	static tbb::concurrent_hash_map<std::string, AbstractLock*> lockmap;
+	static tbb::concurrent_hash_map<std::string, AbstractLock*> absLockmap;
 public:
 	AbstractLockTable();
 	virtual ~AbstractLockTable();
@@ -30,7 +30,7 @@ public:
 	 * If lock is successful, the Abstract lock values will be used
 	 */
 	static bool isLocked(std::string lockName);
-	static bool tryLock(std::string lockName, AbstractLock & lock, bool isRead);
+	static bool tryLock(std::string lockName, AbstractLock *lock, bool isRead);
 	static void unlock(std::string lockName);
 };
 

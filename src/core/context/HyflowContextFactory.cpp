@@ -25,14 +25,18 @@ bool HyflowContextFactory::isContextInit() {
 }
 
 HyflowContext* HyflowContextFactory::getContextInstance() {
+	return getContextInstance(ContextManager::getNestingModel());
+}
+
+HyflowContext* HyflowContextFactory::getContextInstance(Hyflow_NestingModel nestingModel) {
 	HyflowContext* context = NULL;
-	if  (ContextManager::getNestingModel() == HYFLOW_NO_NESTING) {
+	if  ( nestingModel == HYFLOW_NO_NESTING) {
 		if( contextStackIndex==-1 ) {
 			context = getFreshContext();
 		}else {
 			context = contextStack.at(contextStackIndex);
 		}
-	}else if (ContextManager::getNestingModel() == HYFLOW_NESTING_FLAT) {
+	}else if (nestingModel == HYFLOW_NESTING_FLAT) {
 		if( contextStackIndex==-1 ) {
 			context = getFreshContext();
 		}else {
@@ -40,7 +44,7 @@ HyflowContext* HyflowContextFactory::getContextInstance() {
 			contextStackIndex++;
 		}
 		context->setContextExecutionDepth(contextStackIndex);
-	}else if (ContextManager::getNestingModel() == HYFLOW_NESTING_CLOSED) {
+	}else if (nestingModel == HYFLOW_NESTING_CLOSED) {
 		txnIndex++;
 		// In close nesting we don't check execution depth instead check parent NULL
 		// except in context.Init() which checks its depth
@@ -50,7 +54,7 @@ HyflowContext* HyflowContextFactory::getContextInstance() {
 		}
 		// Otherwise for top context parent is set to be NULL by default
 		context->setContextExecutionDepth(contextStackIndex);
-	}else if (ContextManager::getNestingModel() == HYFLOW_NESTING_OPEN) {
+	}else if (nestingModel == HYFLOW_NESTING_OPEN) {
 		txnIndex++;
 		// In open nesting we don't check execution depth instead check parent NULL
 		// except in context.Init() which checks its depth
@@ -60,7 +64,15 @@ HyflowContext* HyflowContextFactory::getContextInstance() {
 		}
 		// Otherwise for top context parent is set to be NULL by default
 		context->setContextExecutionDepth(contextStackIndex);
-	}else if (ContextManager::getNestingModel() == HYFLOW_CHECKPOINTING) {
+	}else if ( nestingModel == HYFLOW_INTERNAL_OPEN ) {
+		txnIndex++;
+		// In open nesting we don't check execution depth instead check parent NULL
+		// except in context.Init() which checks its depth
+		context = getFreshContext(nestingModel);
+
+		// Otherwise for top context parent is set to be NULL by default
+		context->setContextExecutionDepth(contextStackIndex);
+	}else if (nestingModel == HYFLOW_CHECKPOINTING) {
 		if( contextStackIndex==-1 ) {
 			context = getFreshContext();
 		}else {
@@ -76,16 +88,16 @@ HyflowContext* HyflowContextFactory::getContextInstance() {
 /*
  *  Perform all cleanUp and free the heap Memory, if required
  */
-void HyflowContextFactory::releaseContextInstance(){
+void HyflowContextFactory::releaseContextInstance(Hyflow_NestingModel nestingModel){
 	bool throwException = false;
-	if  (ContextManager::getNestingModel() == HYFLOW_NO_NESTING) {
+	if  (nestingModel == HYFLOW_NO_NESTING) {
 		HyflowContext* context = contextStack[0];
 		if (context->getStatus() != TXN_ABORTED) {
 			contextStackIndex--;
 			contextStack.clear();
 			ContextManager::deleteContext(&context);
 		}
-	}else if (ContextManager::getNestingModel() == HYFLOW_NESTING_FLAT) {
+	}else if ( nestingModel == HYFLOW_NESTING_FLAT) {
 		HyflowContext* context = contextStack[0];
 		// If releasing a instance of aborted transaction, check if we require
 		// to throw transaction exception, after context clean-up
@@ -109,7 +121,7 @@ void HyflowContextFactory::releaseContextInstance(){
 			contextStack.clear();
 			ContextManager::deleteContext(&context);
 		}
-	}else if (ContextManager::getNestingModel() == HYFLOW_NESTING_CLOSED) {
+	}else if ( nestingModel == HYFLOW_NESTING_CLOSED) {
 		HyflowContext* context = contextStack[contextStackIndex];
 		// If releasing a instance of aborted transaction, check if we require
 		// to throw transaction exception, after context clean-up
@@ -133,7 +145,7 @@ void HyflowContextFactory::releaseContextInstance(){
 				txnIndex = 0;
 			}
 		}
-	}else if (ContextManager::getNestingModel() == HYFLOW_NESTING_OPEN) {
+	}else if ( nestingModel == HYFLOW_NESTING_OPEN) {
 		HyflowContext* context = contextStack[contextStackIndex];
 		// If releasing a instance of aborted transaction, check if we require
 		// to throw transaction exception, after context clean-up
@@ -157,7 +169,31 @@ void HyflowContextFactory::releaseContextInstance(){
 				txnIndex = 0;
 			}
 		}
-	}else if (ContextManager::getNestingModel() == HYFLOW_CHECKPOINTING) {
+	}else if ( nestingModel == HYFLOW_INTERNAL_OPEN ) {
+		HyflowContext* context = contextStack[contextStackIndex];
+		// If releasing a instance of aborted transaction, check if we require
+		// to throw transaction exception, after context clean-up
+		if (context->getStatus() == TXN_ABORTED) {
+				LOG_DEBUG("HCF :Performing the checkParent\n");
+				throwException = context->checkParent();
+				if (throwException) {
+				// In close nesting each transaction try is given new context
+					// Set parent to abort, so that it is retried as required
+					if (context->getParentContext())
+						context->getParentContext()->setStatus(TXN_ABORTED);
+					contextStack.pop_back();
+					contextStackIndex--;
+					ContextManager::deleteContext(&context);
+				}
+		}else {
+			contextStack.pop_back();
+			contextStackIndex--;
+			ContextManager::deleteContext(&context);
+			if (contextStackIndex == -1) {
+				txnIndex = 0;
+			}
+		}
+	}else if ( nestingModel == HYFLOW_CHECKPOINTING) {
 		HyflowContext* context = contextStack[0];
 		if (context->getStatus() != TXN_ABORTED) {
 			contextStackIndex--;
@@ -186,6 +222,15 @@ HyflowContext* HyflowContextFactory::getContextFromStack() {
 
 HyflowContext* HyflowContextFactory::getFreshContext() {
 	HyflowContext* context = ContextManager::createContext();
+	context->setSubTxnIndex(txnIndex);
+	contextStack.push_back(context);
+	contextStackIndex++;
+	LOG_DEBUG("HCF : Providing fresh context\n");
+	return context;
+}
+
+HyflowContext* HyflowContextFactory::getFreshContext(Hyflow_NestingModel nm) {
+	HyflowContext* context = ContextManager::createContext(nm);
 	context->setSubTxnIndex(txnIndex);
 	contextStack.push_back(context);
 	contextStackIndex++;

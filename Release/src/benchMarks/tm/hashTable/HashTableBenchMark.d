@@ -13,6 +13,7 @@ src/benchMarks/tm/hashTable/HashTableBenchMark.d: \
  ../src/benchMarks/tm/hashTable/../../../core/../util/messages/../../core/HyflowObject.h \
  ../src/benchMarks/tm/hashTable/../../../core/helper/BenchMarkArgs.h \
  ../src/benchMarks/tm/hashTable/../../../core/helper/BenchMarkReturn.h \
+ ../src/benchMarks/tm/hashTable/../../../util/logging/Logger.h \
  ../src/benchMarks/tm/hashTable/../../HyflowBenchmark.h \
  ../src/benchMarks/tm/hashTable/../../../util/concurrent/HyInteger.h \
  ../src/benchMarks/tm/hashTable/../../../util/concurrent/ThreadMeta.h \
@@ -25,7 +26,6 @@ src/benchMarks/tm/hashTable/HashTableBenchMark.d: \
  ../src/benchMarks/tm/hashTable/../../../core/directory/../HyflowObject.h \
  ../src/benchMarks/tm/hashTable/../../../core/directory/HyflowDirectory.h \
  ../src/benchMarks/tm/hashTable/../../../core/directory/../HyflowObjectFuture.h \
- ../src/benchMarks/tm/hashTable/../../../util/logging/Logger.h \
  ../src/benchMarks/tm/hashTable/../../BenchmarkExecutor.h \
  ../src/benchMarks/tm/hashTable/../../HyflowBenchmark.h \
  ../src/benchMarks/tm/hashTable/../../tm/bank/BankBenchmark.h \
@@ -123,6 +123,8 @@ src/benchMarks/tm/hashTable/HashTableBenchMark.d: \
 
 ../src/benchMarks/tm/hashTable/../../../core/helper/BenchMarkReturn.h:
 
+../src/benchMarks/tm/hashTable/../../../util/logging/Logger.h:
+
 ../src/benchMarks/tm/hashTable/../../HyflowBenchmark.h:
 
 ../src/benchMarks/tm/hashTable/../../../util/concurrent/HyInteger.h:
@@ -146,8 +148,6 @@ src/benchMarks/tm/hashTable/HashTableBenchMark.d: \
 ../src/benchMarks/tm/hashTable/../../../core/directory/HyflowDirectory.h:
 
 ../src/benchMarks/tm/hashTable/../../../core/directory/../HyflowObjectFuture.h:
-
-../src/benchMarks/tm/hashTable/../../../util/logging/Logger.h:
 
 ../src/benchMarks/tm/hashTable/../../BenchmarkExecutor.h:
 

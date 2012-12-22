@@ -79,6 +79,7 @@ src/benchMarks/tm/bank/BankAccount.d: \
  ../src/benchMarks/tm/bank/../../tm/hashTable/../../../core/HyflowObjectFuture.h \
  ../src/benchMarks/tm/bank/../../tm/hashTable/../../../core/helper/BenchMarkArgs.h \
  ../src/benchMarks/tm/bank/../../tm/hashTable/../../../core/helper/BenchMarkReturn.h \
+ ../src/benchMarks/tm/bank/../../tm/hashTable/../../../util/logging/Logger.h \
  ../src/benchMarks/tm/bank/../../tm/hashTable/../../HyflowBenchmark.h \
  ../src/benchMarks/tm/bank/../../tm/hashTable/../../../util/concurrent/HyInteger.h \
  ../src/benchMarks/tm/bank/../../tm/vacation/VacationBenchmark.h \
@@ -264,6 +265,8 @@ src/benchMarks/tm/bank/BankAccount.d: \
 ../src/benchMarks/tm/bank/../../tm/hashTable/../../../core/helper/BenchMarkArgs.h:
 
 ../src/benchMarks/tm/bank/../../tm/hashTable/../../../core/helper/BenchMarkReturn.h:
+
+../src/benchMarks/tm/bank/../../tm/hashTable/../../../util/logging/Logger.h:
 
 ../src/benchMarks/tm/bank/../../tm/hashTable/../../HyflowBenchmark.h:
 

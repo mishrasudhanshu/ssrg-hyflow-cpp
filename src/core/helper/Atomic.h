@@ -22,7 +22,7 @@ for (int i = 0; i < 0x7fffffff; i++) { \
 	try { \
 
 #define HYFLOW_ATOMIC_END \
-		} catch (TransactionException & ex) { \
+	} catch (TransactionException & ex) { \
 		ex.print();\
 		commit = false;\
 	}\
@@ -85,39 +85,63 @@ namespace vt_dstm {
  */
 class Atomic {
 	Hyflow_NestingModel nestingModel;
-	bool m_hasOnCommit;
-	bool m_hasOnAbort;
+	bool completed;	// To suggest whether belonging transaction got committed
+	bool onHeap;
 
-	void* arguements;
-	BenchMarkReturn* returnType;
+	BenchMarkArgs* arguements;
+	BenchMarkReturn* returnValue;
 	HyflowObject* selfPointer;
 
 
-	static void defaultOnCommit(HyflowObject* self, BenchMarkArgs* args, HyflowContext* context) {}
-	static void defaultOnAbort(HyflowObject* self, BenchMarkArgs* args, HyflowContext* context) {}
+	static void defaultOnCommit(HyflowObject* self, BenchMarkArgs* args, HyflowContext* context, BenchMarkReturn* rt) {}
+	static void defaultOnAbort(HyflowObject* self, BenchMarkArgs* args, HyflowContext* context, BenchMarkReturn* rt) {}
 public:
 	void (*atomically)(HyflowObject* self, BenchMarkArgs* args, HyflowContext* context, BenchMarkReturn* rt);
 
-	void (*onCommit)(HyflowObject* self, BenchMarkArgs* args, HyflowContext* context);
-	void (*onAbort)(HyflowObject* self, BenchMarkArgs* args, HyflowContext* context);
+	void (*onCommit)(HyflowObject* self, BenchMarkArgs* args, HyflowContext* context, BenchMarkReturn* rt);
+	void (*onAbort)(HyflowObject* self, BenchMarkArgs* args, HyflowContext* context, BenchMarkReturn* rt);
 
 	Atomic();
 
 	Atomic(Hyflow_NestingModel model);
-	virtual ~Atomic() {}
+	virtual ~Atomic();
 
 	void execute(HyflowObject* self, BenchMarkArgs* args, BenchMarkReturn* retValue);
 
-	bool hasOnCommit() {
-		return m_hasOnCommit;
-	}
-
-	bool hasOnAbort() {
-		return m_hasOnAbort;
-	}
-
 	void getClone(Atomic** atomicObject);
 	static void test();
+
+	bool isOnHeap() const {
+		return onHeap;
+	}
+
+	void setOnHeap(bool onHeap) {
+		this->onHeap = onHeap;
+	}
+
+	bool isCompleted() const {
+		return completed;
+	}
+
+	void setCompleted(bool completed) {
+		this->completed = completed;
+	}
+
+	BenchMarkArgs* getArguements() const {
+		return arguements;
+	}
+
+	void setArguements(BenchMarkArgs* arguements) {
+		this->arguements = arguements;
+	}
+
+	BenchMarkReturn* getReturnValue() const {
+		return returnValue;
+	}
+
+	void setReturnValue(BenchMarkReturn* returnValue) {
+		this->returnValue = returnValue;
+	}
 };
 
 } /* namespace vt_dstm */

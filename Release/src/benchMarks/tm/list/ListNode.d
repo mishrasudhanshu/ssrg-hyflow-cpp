@@ -78,6 +78,7 @@ src/benchMarks/tm/list/ListNode.d: ../src/benchMarks/tm/list/ListNode.cpp \
  ../src/benchMarks/tm/list/../../tm/hashTable/../../../core/HyflowObjectFuture.h \
  ../src/benchMarks/tm/list/../../tm/hashTable/../../../core/helper/BenchMarkArgs.h \
  ../src/benchMarks/tm/list/../../tm/hashTable/../../../core/helper/BenchMarkReturn.h \
+ ../src/benchMarks/tm/list/../../tm/hashTable/../../../util/logging/Logger.h \
  ../src/benchMarks/tm/list/../../tm/hashTable/../../HyflowBenchmark.h \
  ../src/benchMarks/tm/list/../../tm/hashTable/../../../util/concurrent/HyInteger.h \
  ../src/benchMarks/tm/list/../../tm/vacation/VacationBenchmark.h \
@@ -263,6 +264,8 @@ src/benchMarks/tm/list/ListNode.d: ../src/benchMarks/tm/list/ListNode.cpp \
 ../src/benchMarks/tm/list/../../tm/hashTable/../../../core/helper/BenchMarkArgs.h:
 
 ../src/benchMarks/tm/list/../../tm/hashTable/../../../core/helper/BenchMarkReturn.h:
+
+../src/benchMarks/tm/list/../../tm/hashTable/../../../util/logging/Logger.h:
 
 ../src/benchMarks/tm/list/../../tm/hashTable/../../HyflowBenchmark.h:
 

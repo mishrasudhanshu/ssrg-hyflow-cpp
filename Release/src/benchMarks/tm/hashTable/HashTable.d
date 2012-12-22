@@ -12,6 +12,7 @@ src/benchMarks/tm/hashTable/HashTable.d: \
  ../src/benchMarks/tm/hashTable/../../../core/../util/messages/../../core/HyflowObject.h \
  ../src/benchMarks/tm/hashTable/../../../core/helper/BenchMarkArgs.h \
  ../src/benchMarks/tm/hashTable/../../../core/helper/BenchMarkReturn.h \
+ ../src/benchMarks/tm/hashTable/../../../util/logging/Logger.h \
  ../src/benchMarks/tm/hashTable/../../../core/context/ContextManager.h \
  ../src/benchMarks/tm/hashTable/../../../core/context/HyflowContext.h \
  ../src/benchMarks/tm/hashTable/../../../core/context/HyflowContextFactory.h \
@@ -27,7 +28,6 @@ src/benchMarks/tm/hashTable/HashTable.d: \
  ../src/benchMarks/tm/hashTable/../../../core/helper/BenchMarkReturn.h \
  ../src/benchMarks/tm/hashTable/../../../core/helper/CheckPointProvider.h \
  ../src/benchMarks/tm/hashTable/../../../core/helper/../context/ContextManager.h \
- ../src/benchMarks/tm/hashTable/../../../util/logging/Logger.h \
  ../src/benchMarks/tm/hashTable/../../../util/networking/NetworkManager.h \
  ../src/benchMarks/tm/hashTable/../../../util/networking/AbstractNetwork.h \
  ../src/benchMarks/tm/hashTable/../../../util/networking/../messages/HyflowMessage.h \
@@ -131,6 +131,8 @@ src/benchMarks/tm/hashTable/HashTable.d: \
 
 ../src/benchMarks/tm/hashTable/../../../core/helper/BenchMarkReturn.h:
 
+../src/benchMarks/tm/hashTable/../../../util/logging/Logger.h:
+
 ../src/benchMarks/tm/hashTable/../../../core/context/ContextManager.h:
 
 ../src/benchMarks/tm/hashTable/../../../core/context/HyflowContext.h:
@@ -160,8 +162,6 @@ src/benchMarks/tm/hashTable/HashTable.d: \
 ../src/benchMarks/tm/hashTable/../../../core/helper/CheckPointProvider.h:
 
 ../src/benchMarks/tm/hashTable/../../../core/helper/../context/ContextManager.h:
-
-../src/benchMarks/tm/hashTable/../../../util/logging/Logger.h:
 
 ../src/benchMarks/tm/hashTable/../../../util/networking/NetworkManager.h:
 

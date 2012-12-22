@@ -11,11 +11,13 @@
 #include "../../helper/CheckPointProvider.h"
 #include "../../../util/messages/HyflowMessageFuture.h"
 #include "../../../util/messages/types/LockAccessMsg.h"
+#include "../../../util/messages/types/AbstractLockMsg.h"
 #include "../../../util/messages/types/ReadValidationMsg.h"
 #include "../../../util/networking/NetworkManager.h"
 #include "../../../util/logging/Logger.h"
 #include "../LockTable.h"
 #include "../ContextManager.h"
+#include "../AbstractLockTable.h"
 
 namespace vt_dstm {
 
@@ -35,9 +37,24 @@ DTL2Context::DTL2Context() {
 	currentAction = NULL;
 }
 
+DTL2Context::DTL2Context(Hyflow_NestingModel nm) {
+	status = TXN_ACTIVE;
+	tnxClock = ContextManager::getClock();
+	highestSenderClock = tnxClock;
+	txnId = 0;
+	nestingModel = nm;
+	parentContext = NULL;
+	rootContext = NULL;
+	contextExecutionDepth = -1;
+	subTxnIndex = 0;
+	isWrite = false;
+	currentAction = NULL;
+}
+
 DTL2Context::~DTL2Context() {
 	LOG_DEBUG("DTL :Destroying Context\n");
 	cleanAllMaps();
+	delete (Atomic*)currentAction;
 }
 
 void DTL2Context::cleanAllMaps(){
@@ -78,6 +95,39 @@ void DTL2Context::cleanAllMaps(){
 		}
 	}
 	deleteMap.clear();
+
+	for (std::map<std::string, AbstractLock*>::iterator arItr = abstractReadLocks.begin() ; arItr != abstractReadLocks.end() ; arItr++ ) {
+		if (arItr->second) {
+			AbstractLock* saveReadAbstract = arItr->second;
+			arItr->second = NULL;
+			delete saveReadAbstract;
+		}
+	}
+	abstractReadLocks.clear();
+
+	for (std::map<std::string, AbstractLock*>::iterator awItr = abstractWriteLocks.begin() ; awItr != abstractWriteLocks.end() ; awItr++ ) {
+		if (awItr->second) {
+			AbstractLock* saveReadAbstract = awItr->second;
+			awItr->second = NULL;
+			delete saveReadAbstract;
+		}
+	}
+	abstractWriteLocks.clear();
+
+	for (std::vector<Atomic*>::iterator aItr=actionList.begin() ; aItr != actionList.end() ; aItr++ ) {
+		if (*aItr == NULL) {
+			Atomic* saveAtomic = *aItr;
+			*aItr = NULL;
+			delete saveAtomic;
+		}
+	}
+	actionList.clear();
+
+	if (currentAction) {
+		Atomic* axn = (Atomic*) currentAction;
+		currentAction = NULL;
+		delete axn;
+	}
 }
 
 void DTL2Context::contextReset() {
@@ -91,7 +141,7 @@ void DTL2Context::contextReset() {
 	txnId = ContextManager::createTid(this);
 	ContextManager::registerContext(this);
 
-	LOG_DEBUG("DTL :Context initialize with id %llu\n", txnId);
+	LOG_DEBUG("DTL :Context of model %d initialize with id %llu\n", nestingModel, txnId);
 }
 
 void DTL2Context::contextInit(){
@@ -107,6 +157,10 @@ void DTL2Context::contextInit(){
 }
 
 void DTL2Context::contextDeinit() {
+	if ((nestingModel == HYFLOW_NESTING_OPEN) && (status == TXN_ABORTED)) {
+		rollback();
+	}
+
 	if (nestingModel == HYFLOW_NESTING_FLAT) {
 		if (contextExecutionDepth <= 0) {
 			ContextManager::unregisterContext(this);
@@ -117,7 +171,7 @@ void DTL2Context::contextDeinit() {
 }
 
 void DTL2Context::setCurrentAction(void* cAction) {
-//	cAction->getClone(&currentAction);
+	currentAction = cAction;
 }
 
 /*
@@ -162,14 +216,19 @@ void DTL2Context::addToDelete(HyflowObject *deleteObject) {
 	deleteMap[deleteObject->getId()] = delObject;
 }
 
+void DTL2Context::addAction(void* action) {
+	Atomic *axn = (Atomic*)action;
+	actionList.push_back(axn);
+}
+
 /*
- * TODO: Optimize, no forwarding if objects/node*threads*benchmarkOperands > 10
+ * TODO: Optimise, no forwarding if objects/node*threads*benchmarkOperands > 10
  * Performs the early validation of object at before read time itself and on finding
  * stale object aborts the transaction.
  */
 void DTL2Context::forward(int senderClock) {
 	if ((nestingModel == HYFLOW_NESTING_FLAT)||
-			(nestingModel == HYFLOW_NO_NESTING)) {
+			(nestingModel == HYFLOW_NO_NESTING) || (nestingModel == HYFLOW_INTERNAL_OPEN) || (nestingModel == HYFLOW_NESTING_OPEN)) {
 		if (tnxClock < senderClock) {
 			std::map<std::string, HyflowObject*>::iterator i;
 			for (i = readMap.begin(); i != readMap.end(); i++) {
@@ -184,8 +243,6 @@ void DTL2Context::forward(int senderClock) {
 				 * Even though chances of this happening is rare, mostly write lock on opening
 				 * object itself will force the transaction to abort
 				 */
-//			int32_t version = i->second->getVersion();
-//			if ( version > senderClock) {
 			if (!validateObject(i->second)) {
 					LOG_DEBUG(
 							"Forward :Aborting version %d < senderClock %d\n", i->second->getVersion(), senderClock);
@@ -279,8 +336,6 @@ void DTL2Context::forward(int senderClock) {
 			LOG_DEBUG("Forward :Context from %d to %d\n", tnxClock, senderClock);
 			tnxClock = senderClock;
 		}
-	}else if (nestingModel == HYFLOW_NESTING_OPEN) {
-		Logger::fatal("FORWARD :Open nesting not supported currently\n");
 	}else if (nestingModel == HYFLOW_CHECKPOINTING) {
 		if (tnxClock < senderClock) {
 			int availableCheckPoint = CheckPointProvider::getCheckPointIndex()+1;
@@ -389,8 +444,41 @@ HyflowObject* DTL2Context::onWriteAccess(std::string id){
 	return NULL;
 }
 
-void DTL2Context::onLockAction(std::string objname, std::string lockname, bool readlock, bool acquire) {
+unsigned long long DTL2Context::getRootTxnId() {
+	HyflowContext* topContext = this;
+	while (topContext->getParentContext()) {
+		topContext = topContext->getParentContext();
+	}
+	return topContext->getTxnId();
+}
 
+void DTL2Context::onLockAccess(std::string objname, std::string lockname, bool readlock) {
+	std::stringstream absLockNameStr;
+	absLockNameStr<<lockname<<"-"<<objname;
+	std::string absLockName = absLockNameStr.str();
+	// Use topTxnId for abstract locking to stop any possible deadlock between innerTxns
+	unsigned long long topTxnId = getRootTxnId();
+	AbstractLock* abLock = new AbstractLock(objname, absLockName, topTxnId);
+	LOG_DEBUG("DTL :Created new abstractLock %s for %llu\n", absLockName.c_str(), topTxnId);
+	addAbstractLock(absLockName, abLock, readlock);
+}
+
+void DTL2Context::addAbstractLock(std::string lockName, void* abstractLock, bool read) {
+	AbstractLock *absLock = (AbstractLock*) abstractLock;
+	std::map<std::string, AbstractLock*>::iterator i;
+	if (read) {
+		i = abstractReadLocks.find(lockName);
+		if ( i != abstractReadLocks.end()) {
+			LOG_DEBUG("DTL :Given read abstract lock %s Already exist in context\n", lockName.c_str());
+		}
+		abstractReadLocks[lockName] = absLock;
+	}else {
+		i = abstractWriteLocks.find(lockName);
+		if ( i != abstractWriteLocks.end()) {
+			LOG_DEBUG("DTL :Given write abstract lock %s Already exist in context\n", lockName.c_str());
+		}
+		abstractWriteLocks[lockName] = absLock;
+	}
 }
 
 bool DTL2Context::lockObject(HyflowObject* obj) {
@@ -446,6 +534,42 @@ void  DTL2Context::unlockObjectOnFail(HyflowObject *obj) {
 void DTL2Context::unlockObject(HyflowObject* obj) {
 	if (obj->getOldOwnerNode() == obj->getOwnerNode()) {
 		LockTable::tryUnlock(obj->getId(), obj->getOldHyVersion(), txnId);
+	}
+}
+
+bool DTL2Context::doAbstractLock(AbstractLock* absLock, bool read) {
+	int myNode = NetworkManager::getNodeId();
+	int tracker = absLock->getTracker();
+	if ( myNode == tracker) {
+		LOG_DEBUG("DTL :Lock :Got local AbstractLock %s\n", absLock->getLockName().c_str());
+		return AbstractLockTable::tryLock(absLock->getLockName(), absLock, read);
+	}else {
+		LOG_DEBUG("DTL :Lock :Got AbstractLock %s tracker as %d\n", absLock->getLockName().c_str(), tracker);
+		HyflowMessageFuture mFu;
+		HyflowMessage hmsg(absLock->getLockName());
+		hmsg.init(MSG_ABSTRACT_LOCK, true);
+		AbstractLockMsg almsg(absLock,txnId, true);
+		hmsg.setMsg(&almsg);
+		NetworkManager::sendCallbackMessage(tracker, hmsg, mFu);
+		mFu.waitOnFuture();
+		return mFu.isBoolResponse();
+	}
+	return false;
+}
+
+void DTL2Context::doAbstractUnLock(AbstractLock* absLock, bool read) {
+	int myNode = NetworkManager::getNodeId();
+	int tracker = absLock->getTracker();
+	if ( myNode == tracker) {
+		LOG_DEBUG("DTL :Unlock :Got local AbstractLock %s\n", absLock->getLockName().c_str());
+		AbstractLockTable::unlock(absLock->getLockName());
+	}else {
+		LOG_DEBUG("DTL :Unlock :Got AbstractLock %s tracker as %d\n", absLock->getLockName().c_str(), tracker);
+		HyflowMessage hmsg(absLock->getLockName());
+		hmsg.init(MSG_ABSTRACT_LOCK, false);
+		AbstractLockMsg almsg(absLock,txnId, false);
+		hmsg.setMsg(&almsg);
+		NetworkManager::sendMessage(tracker, hmsg);
 	}
 }
 
@@ -514,21 +638,6 @@ void DTL2Context::tryCommit() {
 				LOG_DEBUG("Commit :Publish set object %s, lock not required\n", wi->first.c_str());
 				// Copy it to publish set object, delete old publish copy
 				// Don't do anything, it may create issue for checkPointing, do all in really commit
-//				std::map<std::string, HyflowObject*, ObjectIdComparator>::iterator pub_i = publishMap.find(wi->first);
-//				if (pub_i == publishMap.end()) {
-//					// We would have got this object from parent
-//					// For now just copy to publish set, while merge to parent we will overwrite
-//					LOG_DEBUG("Commit :Got parent publish set object\n");
-//					HyflowObject* writeObject = NULL;
-//					wi->second->getClone(&writeObject);
-//					publishMap[wi->first] = writeObject;
-//				} else {
-//					HyflowObject* oldObject = publishMap.at(wi->first);
-//					HyflowObject* writeObject = NULL;
-//					wi->second->getClone(&writeObject);
-//					publishMap[wi->first] = writeObject;
-//					delete oldObject;
-//				}
 				continue;
 			}
 
@@ -673,22 +782,6 @@ void DTL2Context::tryCommitCP() {
 			// It might have been copied to write Map when manipulated by other transaction
 			if (rev_wi->second->getOwnerNode() == -1) {
 				LOG_DEBUG("Commit :Publish set object %s, lock not required\n",rev_wi->first.c_str());
-				// Copy it to publish set object, delete old publish copy
-//				std::map<std::string, HyflowObject*, ObjectIdComparator>::iterator pub_i = publishMap.find(rev_wi->first);
-//				if (pub_i == publishMap.end()) {
-//					// We would have got this object from parent
-//					// For now just copy to publish set, while merge to parent we will overwrite
-//					LOG_DEBUG("Commit :Got parent publish set object\n");
-//					HyflowObject* writeObject = NULL;
-//					rev_wi->second->getClone(&writeObject);
-//					publishMap[rev_wi->first] = writeObject;
-//				} else {
-//					HyflowObject* oldObject = publishMap.at(rev_wi->first);
-//					HyflowObject* writeObject = NULL;
-//					rev_wi->second->getClone(&writeObject);
-//					publishMap[rev_wi->first] = writeObject;
-//					delete oldObject;
-//				}
 				rev_wi++;
 				continue;
 			}
@@ -965,25 +1058,32 @@ void DTL2Context::tryCommitON() {
 		// Obtain the abstract locks
 		std::map<std::string, AbstractLock*>::iterator arItr;
 		for ( arItr = abstractReadLocks.begin() ; arItr != abstractReadLocks.end() ; arItr++) {
-			if (!doAbstractLock(arItr->second, true)) {
-				setStatus(TXN_ABORTED);
-				LOG_DEBUG("Commit :Unable to geAtomict AbstractReadLock for %s\n", arItr->first.c_str());
-				TransactionException unableToAbsReadLock("Commit :Unable to get abstract readLock for "+arItr->first + "\n");
-				throw unableToAbsReadLock;
+			if (!arItr->second->isLocked()) {
+				if (!doAbstractLock(arItr->second, true)) {
+					setStatus(TXN_ABORTED);
+					LOG_DEBUG("Commit :Unable to get Atomic AbstractReadLock for %s\n", arItr->first.c_str());
+					TransactionException unableToAbsReadLock("Commit :Unable to get abstract readLock for "+arItr->first + "\n");
+					throw unableToAbsReadLock;
+				}
+				lockedReadAbstractLock.push_back(arItr->first);
 			}
-			lockedReadAbstractLock.push_back(arItr->first);
 		}
 		std::map<std::string, AbstractLock*>::iterator awItr;
 		for ( awItr = abstractWriteLocks.begin() ; awItr != abstractWriteLocks.end() ; awItr++) {
-			if (!doAbstractLock(awItr->second, false)) {
-				setStatus(TXN_ABORTED);
-				LOG_DEBUG("Commit :Unable to get AbstractWriteLock for %s\n", awItr->first.c_str());
-				TransactionException unableToAbsWriteLock("Commit :Unable to get abstract writeLock for "+awItr->first + "\n");
-				throw unableToAbsWriteLock;
+			if (!awItr->second->isLocked()) {
+				if (!doAbstractLock(awItr->second, false)) {
+					setStatus(TXN_ABORTED);
+					LOG_DEBUG("Commit :Unable to get AbstractWriteLock for %s\n", awItr->first.c_str());
+					TransactionException unableToAbsWriteLock("Commit :Unable to get abstract writeLock for "+awItr->first + "\n");
+					throw unableToAbsWriteLock;
+				}
+				lockedWriteAbstractLock.push_back(awItr->first);
 			}
-			lockedWriteAbstractLock.push_back(awItr->first);
 		}
 	} catch (TransactionException& e) {
+		// Perform Rollback
+		rollback();
+
 		// Free all acquired locks
 		LOG_DEBUG("Commit :Transaction failed, freeing the locks\n");
 		std::vector<HyflowObject *>::iterator vi;
@@ -994,7 +1094,7 @@ void DTL2Context::tryCommitON() {
 			doAbstractUnLock(abstractReadLocks.at(*rabsItr), true);
 		}
 		for (std::vector<std::string>::iterator wabsItr = lockedWriteAbstractLock.begin() ; wabsItr != lockedWriteAbstractLock.end() ; wabsItr++ ) {
-			doAbstractUnLock(abstractWriteLocks.at(*wabsItr), true);
+			doAbstractUnLock(abstractWriteLocks.at(*wabsItr), false);
 		}
 		throw;
 	}
@@ -1056,7 +1156,46 @@ void DTL2Context::reallyCommitON() {
 	}
 
 	// Commit the Inner transaction abstract lock and actions to parent
+	if (contextExecutionDepth == 0) {
+		// Release all the abstract locks
+		for ( std::map<std::string, AbstractLock*>::iterator arItr = abstractReadLocks.begin() ; arItr != abstractReadLocks.end() ; arItr++) {
+			doAbstractUnLock(arItr->second, true);
+		}
+		for ( std::map<std::string, AbstractLock*>::iterator awItr = abstractWriteLocks.begin() ; awItr != abstractWriteLocks.end() ; awItr++) {
+			doAbstractUnLock(awItr->second, false);
+		}
+	}else {
+		// Merge locks and actions into parents
+		if (parentContext) {
+			// Abstract Read locks
+			LOG_DEBUG("DTL :Merge the Abstract Locks and Actions at depth %d\n", contextExecutionDepth);
+			for ( std::map<std::string, AbstractLock*>::iterator arItr = abstractReadLocks.begin() ; arItr != abstractReadLocks.end() ; arItr++) {
+				AbstractLock *absRCopy = NULL;
+				arItr->second->getClone(&absRCopy);
+				absRCopy->setAbsLock(true);
+				parentContext->addAbstractLock(arItr->first, absRCopy, true);
+			}
+			// Abstract Write locks
+			for ( std::map<std::string, AbstractLock*>::iterator awItr = abstractWriteLocks.begin() ; awItr != abstractWriteLocks.end() ; awItr++) {
+				AbstractLock *absWCopy = NULL;
+				awItr->second->getClone(&absWCopy);
+				absWCopy->setAbsLock(true);
+				parentContext->addAbstractLock(awItr->first, absWCopy, false);
+			}
+			// current Actions
+			actionList.push_back((Atomic*)currentAction);
 
+			for ( std::vector<Atomic*>::iterator aItr = actionList.begin() ;  aItr != actionList.end() ; aItr++ ) {
+				Atomic* actionCopy = NULL;
+				Atomic* actual = *aItr;
+				actual->getClone(&actionCopy);
+				actionCopy->setCompleted(true);
+				parentContext->addAction(actionCopy);
+			}
+		}else {
+			Logger::fatal("DTL :Parent Context of open nested inner txn not found\n");
+		}
+	}
 
 	// Release all held locks by this transaction
 	for( wi = writeMap.rbegin() ; wi != writeMap.rend() ; wi++ ) {
@@ -1065,11 +1204,11 @@ void DTL2Context::reallyCommitON() {
 }
 
 void DTL2Context::commit(){
-	if (ContextManager::getNestingModel() == HYFLOW_NO_NESTING) {
+	if ((nestingModel == HYFLOW_NO_NESTING) || (nestingModel == HYFLOW_INTERNAL_OPEN)) {
 		// Top context commit here
 		tryCommit();
 		reallyCommit();
-	}else if (ContextManager::getNestingModel() == HYFLOW_NESTING_FLAT) {
+	}else if (nestingModel == HYFLOW_NESTING_FLAT) {
 		if (getContextExecutionDepth() > 0) {
 			// If not top context do nothing
 			LOG_DEBUG("DTL :FLAT Context Call, actual commit postponed\n");
@@ -1077,7 +1216,7 @@ void DTL2Context::commit(){
 			tryCommit();
 			reallyCommit();
 		}
-	}else if (ContextManager::getNestingModel() == HYFLOW_NESTING_CLOSED) {
+	}else if (nestingModel == HYFLOW_NESTING_CLOSED) {
 		if (!parentContext) {	// Top context commit here
 			tryCommit();
 			reallyCommit();
@@ -1086,20 +1225,45 @@ void DTL2Context::commit(){
 			mergeIntoParents();
 			resetAbortCount();
 		}
-	}else if (ContextManager::getNestingModel() == HYFLOW_NESTING_OPEN) {
+	}else if (nestingModel == HYFLOW_NESTING_OPEN) {
 		tryCommitON();
 		reallyCommitON();
 		// merge inner transaction actions in parent
-	}else if (ContextManager::getNestingModel() == HYFLOW_CHECKPOINTING) {
+	}else if (nestingModel == HYFLOW_CHECKPOINTING) {
 		tryCommitCP();
 		reallyCommit();
 	}else{
-		Logger::fatal("DTL :Invalid Nesting Model\n");
+		Logger::fatal("DTL :Commit call faced Invalid Nesting Model\n");
 	}
 }
 
 void DTL2Context::rollback() {
-	// Currently nothing to do
+	if (nestingModel == HYFLOW_NESTING_OPEN) {
+		for ( std::vector<Atomic*>::iterator sItr = actionList.begin() ; sItr != actionList.end() ; sItr++ ) {
+			Atomic* abortAction = *sItr;
+			if (abortAction->isCompleted()) {
+				LOG_DEBUG("DTL :Performing rollback action\n");
+				Atomic atomicAction(HYFLOW_INTERNAL_OPEN);
+				atomicAction.atomically = abortAction->onAbort;
+				atomicAction.execute(NULL, abortAction->getArguements(), abortAction->getReturnValue());
+			}
+			abortAction->setCompleted(false);
+		}
+
+		for (std::map<std::string, AbstractLock*>::iterator arItr = abstractReadLocks.begin() ; arItr != abstractReadLocks.end() ; arItr++ ) {
+			if (arItr->second->isLocked()) {
+				doAbstractUnLock(arItr->second, true);
+			}
+			arItr->second->setAbsLock(false);
+		}
+
+		for (std::map<std::string, AbstractLock*>::iterator awItr = abstractWriteLocks.begin() ; awItr != abstractWriteLocks.end() ; awItr++ ) {
+			if (awItr->second->isLocked()) {
+				doAbstractUnLock(awItr->second, true);
+			}
+			awItr->second->setAbsLock(false);
+		}
+	}
 }
 
 /*
@@ -1107,7 +1271,7 @@ void DTL2Context::rollback() {
  * It return true, if context requires to throw an transaction Exception
  */
 bool DTL2Context::checkParent() {
-	if (ContextManager::getNestingModel() == HYFLOW_NESTING_FLAT) {
+	if (nestingModel == HYFLOW_NESTING_FLAT) {
 		if (getContextExecutionDepth() > 0) {
 			LOG_DEBUG("DTL :Check Parent throwing exception\n");
 			return true;
@@ -1115,7 +1279,7 @@ bool DTL2Context::checkParent() {
 			LOG_DEBUG("DTL :Check Parent not throwing exception\n");
 			return false;
 		}
-	}else if (ContextManager::getNestingModel() == HYFLOW_NESTING_CLOSED) {
+	}else if (nestingModel == HYFLOW_NESTING_CLOSED) {
 		if (!parentContext) {	// Top context commit here
 			LOG_DEBUG("DTL :Top context Check Parent not throwing exception\n");
 			return false;
@@ -1138,31 +1302,20 @@ bool DTL2Context::checkParent() {
 				return false;
 			}
 		}
-	}else if (ContextManager::getNestingModel() == HYFLOW_NESTING_OPEN) {
+	}else if (nestingModel == HYFLOW_NESTING_OPEN) {
 		if (!parentContext) {	// Top context commit here
 			LOG_DEBUG("DTL :Top context Check Parent not throwing exception\n");
 			return false;
 		} else {
-			// If parent transaction is also aborted then we can not
-			// retry on same level therefore throw exception
-			if (parentContext->getStatus() == TXN_ABORTED) {
-				LOG_DEBUG("DTL :Check Parent throwing exception\n");
-				return true;
-			} else {
-				// Inner transaction abort count
-				increaseAbortCount();
-				int aborts = getAbortCount();
-				if (aborts > 3 ) {
-					LOG_DEBUG("DTL :Repeated Inner transaction Abort=%d, full abort\n", aborts);
-					resetAbortCount();
-					return true;
-				}
-				LOG_DEBUG("DTL :Check Parent not throwing exception as parent Active, abort Count %d\n", aborts);
-				return false;
-			}
+			// If not the top, we always throw exception on child abort
+			LOG_DEBUG("DTL :Check Parent throwing exception\n");
+			return true;
 		}
+	}else if (nestingModel == HYFLOW_INTERNAL_OPEN) {
+		// We never throw exception in Internal open, we just keep retrying
+		return false;
 	}else {
-		Logger::fatal("DTL :Invalid Nesting Model\n");
+		Logger::fatal("DTL :Check Parent :Invalid Nesting Model\n");
 	}
 	return false;
 }
