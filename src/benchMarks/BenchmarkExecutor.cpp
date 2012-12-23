@@ -37,6 +37,7 @@ int BenchmarkExecutor::retryCount = 0;
 int BenchmarkExecutor::transactionLength=0;
 int BenchmarkExecutor::checkPointResume = 0;
 int BenchmarkExecutor::innerTxns=1;
+int BenchmarkExecutor::itcpr=1;
 
 std::string BenchmarkExecutor::benchMarkName;
 
@@ -120,7 +121,7 @@ void BenchmarkExecutor::initExecutor(){
 		if (it>0) {
 			innerTxns = it;
 		}
-
+		itcpr = atoi(ConfigFile::Value(ITCPR).c_str());
 		writeConfig();
 	}
 }
@@ -134,6 +135,8 @@ void BenchmarkExecutor::writeConfig() {
 	Logger::result("Threads=%d\n",threadCount);
 	Logger::result("Nodes=%d\n",NetworkManager::getNodeCount());
 	Logger::result("Nesting=%s\n",ConfigFile::Value(NESTING_MODEL).c_str());
+	Logger::result("InnerTxns=%d\n", innerTxns);
+	Logger::result("ITCPR=%d\n", itcpr);
 }
 
 void BenchmarkExecutor::createObjects(){
@@ -182,6 +185,7 @@ void BenchmarkExecutor::execute(int id){
 	ThreadMeta::threadInit(id, TRANSACTIONAL_THREAD);
 
 	int argsCount = benchmark->getOperandsCount();
+
 	LOG_DEBUG("BNCH_EXE %d:------------------------------>\n", id);
 	unsigned long long start = getTime();
 	std::string** argsArray = threadArgsArray[id];
@@ -226,7 +230,7 @@ void BenchmarkExecutor::countCheckpointResume() {
 	checkResume.get()->increaseValue();
 	LOG_DEBUG("BE:---Checkpoint++-->%d\n", checkResume.get()->getValue());
 }
-
+//	benchmark->warmUp();
 
 void BenchmarkExecutor::executeThreads() {
 	// Read all the configuration settings
@@ -234,6 +238,7 @@ void BenchmarkExecutor::executeThreads() {
 	// Create objects and then make all nodes done populating objects
 	createObjects();
 	prepareArgs();
+	benchmark->warmUp();
 
 	NetworkManager::synchronizeCluster();
 	sleep(2);

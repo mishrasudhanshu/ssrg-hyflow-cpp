@@ -53,9 +53,6 @@ void NetworkManager::NetworkInit() {
 		synchronizeCluster();
 	}else if (strcmp(ConfigFile::Value(NETWORK).c_str(), ZERO_MQ) == 0) {
 		futureWaitRequired = false;
-//		network = new ZMQNetwork();
-//		network = new ZMQNetworkAsyncSimple();
-//		network = new ZMQNetworkAsync();
 		network = new ZMQNetworkAsyncPoll();
 		HyflowMessage::registerMessageHandlers();
 		sleep(4);

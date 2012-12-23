@@ -30,6 +30,14 @@ CheckPointProvider::CheckPointProvider() {}
 
 CheckPointProvider::~CheckPointProvider() {}
 
+bool CheckPointProvider::isCheckPointingEnabled(){
+	if (ThreadMeta::getThreadId() == NetworkManager::getThreadCount()) {
+		return false;
+	}
+	return checkPointingEnabled;
+}
+
+
 // TODO: Add some way to free up memory, currently just leaking
 void CheckPointProvider::checkPointProviderInit() {
 	if (!checkPointingEnabled) {

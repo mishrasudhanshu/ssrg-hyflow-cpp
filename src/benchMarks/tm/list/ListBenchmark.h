@@ -17,7 +17,7 @@ namespace vt_dstm {
 
 class ListBenchmark: public vt_dstm::HyflowBenchmark {
 	std::string* ids;
-	int objectCount;
+	static int objectCount;
 	static boost::thread_specific_ptr<HyInteger> objectCreated;
 public:
 	ListBenchmark();
@@ -29,6 +29,7 @@ public:
 	}
 
 	int getOperandsCount();
+	void warmUp();
 	void readOperation(std::string ids[], int size);
 	void writeOperation(std::string ids[], int size);
 	void checkSanity();

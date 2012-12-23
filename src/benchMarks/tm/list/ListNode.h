@@ -57,10 +57,6 @@ class ListNode: public vt_dstm::HyflowObject {
 	static void sumNodesMultiAtomically(HyflowObject* self, BenchMarkArgs* args, HyflowContext* c, BenchMarkReturn* ignore);
 	static void findNodeMultiAtomically(HyflowObject* self, BenchMarkArgs* args, HyflowContext* c, BenchMarkReturn* ignore);
 	/*
-	 * Adds the given value in the list
-	 */
-	static void addNode(int value);
-	/*
 	 * Deletes the first occurrence of value in list
 	 */
 	static void deleteNode(int value);
@@ -85,6 +81,10 @@ public:
 	void print();
 	void getClone(HyflowObject **obj);
 
+	/*
+	 * Adds the given value in the list
+	 */
+	static void addNode(int value);
 	static void addNodeMulti(int values[], int size);
 	static void deleteNodeMulti(int values[], int size);
 	static void sumNodesMulti(int count);

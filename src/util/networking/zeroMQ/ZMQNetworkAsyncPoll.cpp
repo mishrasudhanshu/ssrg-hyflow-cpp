@@ -349,8 +349,7 @@ void ZMQNetworkAsyncPoll::sendMessage(int toNodeId, HyflowMessage & message){
 	zmq::message_t zmqmsgAddr(socketAddr.size());
 	memcpy(zmqmsgAddr.data(), socketAddr.data(), socketAddr.size());
 
-	int threadId = ThreadMeta::getThreadId();
-	LOG_DEBUG("ZMQA :Message send to %s using socket %d\n", socketAddr.c_str(), threadId);
+	//LOG_DEBUG("ZMQA :Message send to %s using socket %d\n", socketAddr.c_str(), ThreadMeta::getThreadId());
 	zmq::socket_t* senderSocket = getThreadSocket();
 	senderSocket->send(zmqmsgAddr, ZMQ_SNDMORE);
 	senderSocket->send(zmqmsgBase);
@@ -373,21 +372,20 @@ void ZMQNetworkAsyncPoll::sendCallbackMessage(int toNodeId, HyflowMessage & mess
 	zmq::message_t zmqmsgAddr(socketAddr.size());
 	memcpy(zmqmsgAddr.data(), socketAddr.data(), socketAddr.size());
 
-	int threadId = ThreadMeta::getThreadId();
-	LOG_DEBUG("ZMQA :Message send to %s using socket %d\n", socketAddr.c_str(), threadId);
+	LOG_DEBUG("ZMQA :Message send to %s using socket %d\n", socketAddr.c_str(), ThreadMeta::getThreadId());
 	zmq::socket_t* senderSocket = getThreadSocket();
 	senderSocket->send(zmqmsgAddr, ZMQ_SNDMORE);
 	senderSocket->send(zmqmsg);
 	while (1){
 		zmq::message_t zmqReply;
 		senderSocket->recv(&zmqReply);
-		LOG_DEBUG("ZMQA : Got send callback response\n");
+		//LOG_DEBUG("ZMQA : Got send callback response\n");
 	    int64_t more = 1;
 	    size_t more_size = sizeof (more);
 	    senderSocket->getsockopt(ZMQ_RCVMORE, &more, &more_size);
 	    if (!more) {
 			// Pass the last message part to callbackHandler
-	    	LOG_DEBUG("ZMQA : Handling callback response\n");
+	    	//LOG_DEBUG("ZMQA : Handling callback response\n");
 			callbackHandler(zmqReply);
 	        break;      //  Last message frame
 	    }
@@ -418,7 +416,7 @@ bool ZMQNetworkAsyncPoll::defaultHandler(zmq::message_t & msg) {
 			memcpy(msg.data(), omsg.c_str(), omsg.size());
 			return true;
 		}else {
-			LOG_DEBUG("ZMQA :Received One way message\n");
+			LOG_DEBUG_NETWORK("ZMQA :Received One way message\n");
 			return false;
 		}
 	}
@@ -426,7 +424,7 @@ bool ZMQNetworkAsyncPoll::defaultHandler(zmq::message_t & msg) {
 }
 
 void ZMQNetworkAsyncPoll::callbackHandler(zmq::message_t & msg){
-	LOG_DEBUG("ZMQA :Got the Network Callback\n");
+	LOG_DEBUG_NETWORK("ZMQA :Got the Network Callback\n");
 	if(msg.data() && (msg.size() > 0)) {
 		std::string data(static_cast<char*>(msg.data()), msg.size());
 		std::istringstream data_stream(data);
@@ -434,8 +432,7 @@ void ZMQNetworkAsyncPoll::callbackHandler(zmq::message_t & msg){
 		vt_dstm::HyflowMessage req;
 		ia >> req;
 
-		LOG_DEBUG("ZMQA : Callback from node %d\n", req.toNode);
-//		if (req.msg_t != MSG_TYPE_DUMMY)
+		LOG_DEBUG_NETWORK("ZMQA : Callback from node %d\n", req.toNode);
 		MessageHandler::callbackHandler(req);
 	}
 }
@@ -527,10 +524,10 @@ void* ZMQNetworkAsyncPoll::forwarderThread(void *param) {
 							toNodesSocket.send(toNodeMeta, ZMQ_SNDMORE);
 							toNodesSocket.send(senderMeta, ZMQ_SNDMORE);
 							toNodesSocket.send(workLoad);
-							LOG_DEBUG_NETWORK("ZMQAP :Forwarder send Message\n");
-							LOG_DEBUG_NETWORK("ZMQAP :%s\n", toNode.c_str());
-							LOG_DEBUG_NETWORK("ZMQAP :%s\n", sender.c_str());
-							LOG_DEBUG_NETWORK("ZMQAP :%s\n", work.c_str());
+//							LOG_DEBUG_NETWORK("ZMQAP :Forwarder send Message\n");
+//							LOG_DEBUG_NETWORK("ZMQAP :%s\n", toNode.c_str());
+//							LOG_DEBUG_NETWORK("ZMQAP :%s\n", sender.c_str());
+//							LOG_DEBUG_NETWORK("ZMQAP :%s\n", work.c_str());
 						}
 					}
 				}
@@ -558,7 +555,7 @@ void* ZMQNetworkAsyncPoll::forwarderThread(void *param) {
 						}else {
 							fromThreadSocket.send(threadMeta, ZMQ_SNDMORE);
 							fromThreadSocket.send(workLoadResponse);
-							LOG_DEBUG("ZMQAP :Forwarder replied response Message\n");
+//							LOG_DEBUG("ZMQAP :Forwarder replied response Message\n");
 						}
 					}
 				}
@@ -568,7 +565,7 @@ void* ZMQNetworkAsyncPoll::forwarderThread(void *param) {
 		} catch(zmq::error_t & e) {
 			if (hyflowShutdown) {
 //				Logger::fatal("Forwarder time spent=%f sec in %d runs\n",time, runs);
-				LOG_DEBUG("ZMQAP :Forwarder %d exiting\n", forwarderId);
+//				LOG_DEBUG("ZMQAP :Forwarder %d exiting\n", forwarderId);
 				break;
 			}else {
 				throw e;
@@ -646,7 +643,7 @@ void* ZMQNetworkAsyncPoll::catcherThread(void *param) {
 		zmq::message_t workerIdMsg1, startMessage;
 		catcherMessagingSocket.recv(&workerIdMsg1);
 		std::string workerIdMsgStr(static_cast<char*>(workerIdMsg1.data()), workerIdMsg1.size());
-		LOG_DEBUG("ZMQAP :Catcher Received from worker %s\n", workerIdMsgStr.c_str());
+//		LOG_DEBUG("ZMQAP :Catcher Received from worker %s\n", workerIdMsgStr.c_str());
 		catcherMessagingSocket.getsockopt(ZMQ_RCVMORE, &more, &more_size);
 		if(!more) {
 			Logger::fatal("ZMQAP : Received incomplete start message from worker\n");
@@ -732,7 +729,7 @@ void* ZMQNetworkAsyncPoll::catcherThread(void *param) {
 							catcherMessagingSocket.send(fromForwarder, ZMQ_SNDMORE);
 							catcherMessagingSocket.send(senderMeta, ZMQ_SNDMORE);
 							catcherMessagingSocket.send(workLoad);
-							LOG_DEBUG("ZMQAP :Catcher sending Message to workerId-> %s\n", readyWorkerStr.c_str());
+							LOG_DEBUG_NETWORK("ZMQAP :Catcher sending Message to workerId-> %s\n", readyWorkerStr.c_str());
 						}
 					}
 				}
@@ -767,7 +764,7 @@ void* ZMQNetworkAsyncPoll::catcherThread(void *param) {
 								fromNodesSocket.send(fromForwarder, ZMQ_SNDMORE);
 								fromNodesSocket.send(senderMeta, ZMQ_SNDMORE);
 								fromNodesSocket.send(workLoadResponse);
-								LOG_DEBUG("ZMQAP :Catcher replied Message\n");
+								LOG_DEBUG_NETWORK("ZMQAP :Catcher replied Message\n");
 							}
 						}
 					}
@@ -839,7 +836,7 @@ void* ZMQNetworkAsyncPoll::workLoadProcessor(void *param) {
 //	int runs=0;	double time=0;
 	while(!hyflowShutdown) {
 		try {
-			LOG_DEBUG_NETWORK("ZMQA :Worker Asking for work by sending its load socket Id\n");
+//			LOG_DEBUG_NETWORK("ZMQA :Worker Asking for work by sending its load socket Id\n");
 			zmq::message_t workerMessage(wlId.size());
 			memcpy(workerMessage.data(), wlId.data(), wlId.size());
 			//Send Request to WorkDistributer requesting work
@@ -905,7 +902,7 @@ void ZMQNetworkAsyncPoll::s_catch_signals() {
 }
 
 void ZMQNetworkAsyncPoll::s_signal_handler(int signal_value) {
-	LOG_DEBUG("ZMQA :Server Thread Signalled!!\n");
+	LOG_DEBUG_NETWORK("ZMQA :Server Thread Signalled!!\n");
 }
 
 } /* namespace vt_dstm */

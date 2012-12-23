@@ -20,6 +20,7 @@ public:
 	virtual ~HyflowBenchmark(){}
 
 	virtual int getOperandsCount() = 0;
+	virtual void warmUp() {}
 	virtual void readOperation(std::string ids[], int size) = 0;
 	virtual void writeOperation(std::string ids[], int size) = 0;
 	virtual void checkSanity() = 0;

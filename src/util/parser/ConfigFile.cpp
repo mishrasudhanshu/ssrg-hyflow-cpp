@@ -233,6 +233,10 @@ void ConfigFile::UpdateMap() {
 	value = getenv(INNER_TXNS);
 	if (value)
 		Update(INNER_TXNS, value);
+
+	value = getenv(ITCPR);
+	if (value)
+		Update(ITCPR, value);
 }
 
 void ConfigFile::test() {

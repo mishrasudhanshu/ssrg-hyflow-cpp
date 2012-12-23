@@ -45,6 +45,7 @@ class BenchmarkExecutor {
 	static int checkPointResume;
 	static int transactionLength;
 	static int innerTxns;
+	static int itcpr;
 	static boost::mutex execMutex;
 
 	static bool* transactionType;

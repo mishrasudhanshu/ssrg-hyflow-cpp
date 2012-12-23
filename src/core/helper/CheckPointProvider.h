@@ -60,9 +60,7 @@ public:
 	static std::vector<ucontext_t *>** checkPoints;
 	static bool checkPointingEnabled;
 
-	static bool isCheckPointingEnabled(){
-		return checkPointingEnabled;
-	}
+	static bool isCheckPointingEnabled();
 
 	static int getCheckPointIndex();
 	static void setCheckPointIndex(int checkPointIndex);

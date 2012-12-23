@@ -26,7 +26,7 @@ BstBenchmark::BstBenchmark() { objectCount=0; }
 BstBenchmark::~BstBenchmark() {}
 
 int BstBenchmark::getOperandsCount()	{
-	return 1;
+	return 1;//*BenchmarkExecutor::getInnerTxns();
 }
 
 void BstBenchmark::readOperation(std::string ids[], int size){

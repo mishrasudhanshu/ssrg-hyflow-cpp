@@ -40,7 +40,7 @@ void SkipListBenchmark::readOperation(std::string ids[], int size){
 	int random = abs(Logger::getCurrentMicroSec());
 	int* values = new int[multiCount];
 	for(int txns = 0; txns<multiCount ; txns++) {
-		values[txns] = (random+txns)%objectCount;
+		values[txns] = (abs(Logger::getCurrentMicroSec())+txns*multiCount)%objectCount;
 		LOG_DEBUG("SkipLIST :FIND[%d] Node\n", values[txns]);
 	}
 	SkipListNode::findNodeMulti(values, multiCount);
@@ -55,13 +55,13 @@ void SkipListBenchmark::writeOperation(std::string ids[], int size){
 	int* values = new int[multiCount];
 	if (select%2 == 1 ) {
 		for(int txns = 0; txns<multiCount ; txns++) {
-			values[txns] = (random+txns)%objectCount;
+			values[txns] = (abs(Logger::getCurrentMicroSec())+multiCount*txns)%objectCount;
 			LOG_DEBUG("SkipLIST :ADD[%d] Node\n", values[txns]);
 		}
 		SkipListNode::addNodeMulti(values,multiCount);
 	}else {
 		for(int txns = 0; txns<multiCount ; txns++) {
-			values[txns] = (random+txns)%objectCount;
+			values[txns] = (abs(Logger::getCurrentMicroSec())+multiCount*txns)%objectCount;
 			LOG_DEBUG("SkipLIST :DEL[%d] Node\n", values[txns]);
 		}
 		SkipListNode::deleteNodeMulti(values, multiCount);

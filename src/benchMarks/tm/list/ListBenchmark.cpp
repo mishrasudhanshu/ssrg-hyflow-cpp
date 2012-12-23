@@ -21,10 +21,9 @@
 namespace vt_dstm {
 
 boost::thread_specific_ptr<HyInteger> ListBenchmark::objectCreated;
+int ListBenchmark::objectCount = 0 ;
 
-ListBenchmark::ListBenchmark() {
-	objectCount = 0;
-}
+ListBenchmark::ListBenchmark() {}
 
 ListBenchmark::~ListBenchmark() {}
 
@@ -32,41 +31,47 @@ int ListBenchmark::getOperandsCount()	{
 	return 1*BenchmarkExecutor::getInnerTxns();
 }
 
-void ListBenchmark::readOperation(std::string ids[], int size){
-	int multiCount = getOperandsCount();
-	int select = abs(Logger::getCurrentMicroSec()+1);
-	if (select%2 == 1 ) {
-		LOG_DEBUG("LIST :SUM Nodes\n");
-		ListNode::sumNodesMulti(multiCount);
-	}else {
-		int random = abs(Logger::getCurrentMicroSec());
-		int* values = new int[multiCount];
-
-		for(int txns = 0; txns<multiCount ; txns++) {
-			values[txns] = (random+txns)%objectCount;
-			LOG_DEBUG("LIST :FIND[%d] Node\n", values[txns]);
+void ListBenchmark::warmUp() {
+	LOG_DEBUG("***LIST :Warming Up the List Benchmark***\n");
+	int nodeCount = NetworkManager::getNodeCount();
+	int nodeId = NetworkManager::getNodeId();
+	for(int i=0 ; i<objectCount ; i++){
+		if(( i%nodeCount )== nodeId ){
+			int value = i;
+			LOG_DEBUG("LIST :ADD[%d] Node\n", value);
+			ListNode::addNode(value);
 		}
-
-		ListNode::findNodeMulti(values, multiCount);
-		delete[] values;
 	}
 }
 
+void ListBenchmark::readOperation(std::string ids[], int size){
+	int multiCount = getOperandsCount();
+	int* values = new int[multiCount];
+
+	for(int txns = 0; txns<multiCount ; txns++) {
+		values[txns] = (abs(Logger::getCurrentMicroSec()+1)+multiCount*txns)%objectCount;
+		LOG_DEBUG("LIST :FIND[%d] Node\n", values[txns]);
+	}
+
+	ListNode::findNodeMulti(values, multiCount);
+	delete[] values;
+
+}
+
 void ListBenchmark::writeOperation(std::string ids[], int size){
-	int random = abs(Logger::getCurrentMicroSec());
 	int select = abs(Logger::getCurrentMicroSec()+1);
 	int multiCount = getOperandsCount();
 	int* values = new int[multiCount];
 
 	if (select%2 == 1 ) {
 		for(int txns = 0; txns<multiCount ; txns++) {
-			values[txns] = (random+multiCount)%objectCount;
+			values[txns] = (abs(Logger::getCurrentMicroSec()+1)+multiCount*txns)%objectCount;
 			LOG_DEBUG("LIST :ADD[%d] Node\n", values[txns]);
 		}
 		ListNode::addNodeMulti(values,multiCount);
 	}else {
 		for(int txns = 0; txns<multiCount ; txns++) {
-			values[txns] = (random+multiCount)%objectCount;
+			values[txns] = (abs(Logger::getCurrentMicroSec()+1)+multiCount*txns)%objectCount;
 			LOG_DEBUG("LIST :DEL[%d] Node\n", values[txns]);
 		}
 		ListNode::deleteNodeMulti(values, multiCount);
@@ -77,8 +82,8 @@ void ListBenchmark::writeOperation(std::string ids[], int size){
 void ListBenchmark::checkSanity(){}
 
 int ListBenchmark::getId() {
-	HyInteger* objectCount = objectCreated.get();
-	if (!objectCount) {
+	HyInteger* objCount = objectCreated.get();
+	if (!objCount) {
 		objectCreated.reset(new HyInteger(0));
 		objectCreated.get()->setValue(ThreadMeta::getThreadId()*50000);
 	}
@@ -88,19 +93,20 @@ int ListBenchmark::getId() {
 
 std::string* ListBenchmark::createLocalObjects(int objCount) {
 	objectCount = objCount;
+	int nodeId = NetworkManager::getNodeId();
 	ids = new std::string [objCount];
-	if (NetworkManager::getNodeId() == 0 ) {
-		std::string next("NULL");
-		ListNode headNode(0, "HEAD");
-		headNode.setNextId(next);
-		DirectoryManager::registerObject(&headNode, 0);
+
+	if (nodeId == 0) {
+		ListNode listNode(-1, "HEAD");
+		listNode.setNextId("NULL");
+		DirectoryManager::registerObject(&listNode, 0);
+		LOG_DEBUG("Created List Sentinel Node HEAD with next as NULL\n");
 	}
-	// TODO : Don't Provide Random Ids, we don't need
-	for (int i = 0; i < objCount; i++) {
-		std::ostringstream idStream;
-		idStream << 0 << "-" << 0;
-		ids[i] = idStream.str();
+
+	for(int i=0; i<objCount ; i++){
+		ids[i] = "0-0";
 	}
+
 	return ids;
 }
 

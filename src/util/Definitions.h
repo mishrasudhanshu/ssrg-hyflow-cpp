@@ -96,6 +96,7 @@ namespace vt_dstm
 #define NESTING_CHECKPOINT "checkPointing"
 
 #define INNER_TXNS "innerTxns"
+#define ITCPR "ITCPR"
 
 #define TRUE "true"
 #define FALSE "false"
