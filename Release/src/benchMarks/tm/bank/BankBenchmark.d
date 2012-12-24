@@ -51,6 +51,8 @@ src/benchMarks/tm/bank/BankBenchmark.d: \
  ../src/benchMarks/tm/bank/../../tm/bst/../../../core/HyflowObject.h \
  ../src/benchMarks/tm/bank/../../tm/bst/../../../core/context/HyflowContext.h \
  ../src/benchMarks/tm/bank/../../tm/bst/../../../core/HyflowObjectFuture.h \
+ ../src/benchMarks/tm/bank/../../tm/bst/../../../core/helper/BenchMarkArgs.h \
+ ../src/benchMarks/tm/bank/../../tm/bst/../../../core/helper/BenchMarkReturn.h \
  ../src/benchMarks/tm/bank/../../tm/bst/../../HyflowBenchmark.h \
  ../src/benchMarks/tm/bank/../../tm/bst/../../../util/concurrent/HyInteger.h \
  ../src/benchMarks/tm/bank/../../tm/loan/LoanBenchMark.h \
@@ -199,6 +201,10 @@ src/benchMarks/tm/bank/BankBenchmark.d: \
 ../src/benchMarks/tm/bank/../../tm/bst/../../../core/context/HyflowContext.h:
 
 ../src/benchMarks/tm/bank/../../tm/bst/../../../core/HyflowObjectFuture.h:
+
+../src/benchMarks/tm/bank/../../tm/bst/../../../core/helper/BenchMarkArgs.h:
+
+../src/benchMarks/tm/bank/../../tm/bst/../../../core/helper/BenchMarkReturn.h:
 
 ../src/benchMarks/tm/bank/../../tm/bst/../../HyflowBenchmark.h:
 

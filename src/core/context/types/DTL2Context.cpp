@@ -62,6 +62,7 @@ void DTL2Context::cleanAllMaps(){
 	//Delete all heap objects created temporarily
 	for (std::map<std::string, HyflowObject*>::iterator i= readMap.begin(); i != readMap.end(); i++ ) {
 		if (i->second) {
+			LOG_DEBUG("DTL :Deleting Read object %s\n", i->first.c_str());
 			HyflowObject* saveData = i->second;
 			i->second = NULL;
 			delete saveData;
@@ -71,6 +72,7 @@ void DTL2Context::cleanAllMaps(){
 
 	for (std::map<std::string, HyflowObject*>::iterator i= writeMap.begin(); i != writeMap.end(); i++ ) {
 		if (i->second){
+			LOG_DEBUG("DTL :Deleting Write object %s\n", i->first.c_str());
 			HyflowObject* saveData = i->second;
 			i->second = NULL;
 			delete saveData;
@@ -688,6 +690,7 @@ void DTL2Context::cleanSetTillCheckPoint(int availableCheckPoint) {
 			// clean-up and delete
 			LOG_DEBUG("CommitCP :ReadMap had an invalid object %s\n", ri->first.c_str());
 			HyflowObject *saveObject = ri->second;
+			ri->second = NULL;
 			readMap.erase(ri++);
 			delete saveObject;
 			continue;
@@ -702,6 +705,7 @@ void DTL2Context::cleanSetTillCheckPoint(int availableCheckPoint) {
 			LOG_DEBUG("CommitCP :Found writeSet object %s of aborted part %d, while availableCheckPoint %d\n", wi->first.c_str(), wi->second->getAccessCheckPoint(), availableCheckPoint);
 			// clean-up and delete
 			HyflowObject *saveObject = wi->second;
+			wi->second = NULL;
 			writeMap.erase(wi++);
 			delete saveObject;
 			continue;
@@ -717,6 +721,7 @@ void DTL2Context::cleanSetTillCheckPoint(int availableCheckPoint) {
 			// clean-up and delete
 			LOG_DEBUG("CommitCP :PublishMap had an invalid object %s\n", pi->first.c_str());
 			HyflowObject *saveObject = pi->second;
+			pi->second = NULL;
 			publishMap.erase(pi++);
 			delete saveObject;
 			continue;
@@ -732,6 +737,7 @@ void DTL2Context::cleanSetTillCheckPoint(int availableCheckPoint) {
 			// clean-up and delete
 			LOG_DEBUG("CommitCP :DeleteMap had an invalid object %s\n", di->first.c_str());
 			HyflowObject *saveObject = di->second;
+			di->second = NULL;
 			deleteMap.erase(di++);
 			delete saveObject;
 			continue;

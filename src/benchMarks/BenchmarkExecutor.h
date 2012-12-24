@@ -46,6 +46,7 @@ class BenchmarkExecutor {
 	static int transactionLength;
 	static int innerTxns;
 	static int itcpr;
+	static int objectNesting;
 	static boost::mutex execMutex;
 
 	static bool* transactionType;
@@ -91,6 +92,10 @@ public:
 	static void countCheckpointResume();
 
 	static void transactionLengthDelay();
+
+	static int getObjectNesting() {
+		return objectNesting;
+	}
 
 	static int getInnerTxns(){
 		return innerTxns;

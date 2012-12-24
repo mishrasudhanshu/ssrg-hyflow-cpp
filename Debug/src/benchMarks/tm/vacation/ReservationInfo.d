@@ -65,6 +65,8 @@ src/benchMarks/tm/vacation/ReservationInfo.d: \
  ../src/benchMarks/tm/vacation/../../tm/bst/../../../core/HyflowObject.h \
  ../src/benchMarks/tm/vacation/../../tm/bst/../../../core/context/HyflowContext.h \
  ../src/benchMarks/tm/vacation/../../tm/bst/../../../core/HyflowObjectFuture.h \
+ ../src/benchMarks/tm/vacation/../../tm/bst/../../../core/helper/BenchMarkArgs.h \
+ ../src/benchMarks/tm/vacation/../../tm/bst/../../../core/helper/BenchMarkReturn.h \
  ../src/benchMarks/tm/vacation/../../tm/bst/../../HyflowBenchmark.h \
  ../src/benchMarks/tm/vacation/../../tm/bst/../../../util/concurrent/HyInteger.h \
  ../src/benchMarks/tm/vacation/../../tm/loan/LoanBenchMark.h \
@@ -241,6 +243,10 @@ src/benchMarks/tm/vacation/ReservationInfo.d: \
 ../src/benchMarks/tm/vacation/../../tm/bst/../../../core/context/HyflowContext.h:
 
 ../src/benchMarks/tm/vacation/../../tm/bst/../../../core/HyflowObjectFuture.h:
+
+../src/benchMarks/tm/vacation/../../tm/bst/../../../core/helper/BenchMarkArgs.h:
+
+../src/benchMarks/tm/vacation/../../tm/bst/../../../core/helper/BenchMarkReturn.h:
 
 ../src/benchMarks/tm/vacation/../../tm/bst/../../HyflowBenchmark.h:
 

@@ -11,6 +11,7 @@
 #include "../../../util/networking/NetworkManager.h"
 #include "../../../core/directory/DirectoryManager.h"
 #include "../../../util/logging/Logger.h"
+#include "../../BenchmarkExecutor.h"
 
 /*
  * Increasing object count causes the longer lists and more contention
@@ -26,29 +27,42 @@ BstBenchmark::BstBenchmark() { objectCount=0; }
 BstBenchmark::~BstBenchmark() {}
 
 int BstBenchmark::getOperandsCount()	{
-	return 1;//*BenchmarkExecutor::getInnerTxns();
+	return 1*BenchmarkExecutor::getInnerTxns();
 }
 
 void BstBenchmark::readOperation(std::string ids[], int size){
-	int random = abs(Logger::getCurrentMicroSec());
+	int multiCount = getOperandsCount();
+	int* values = new int[multiCount];
 
-	int value = random%objectCount;
-	LOG_DEBUG("BST :FIND[%d] Node\n", value);
-	BstNode::findNode(value);
+	for(int txns = 0; txns<multiCount ; txns++) {
+		values[txns] = (abs(Logger::getCurrentMicroSec()+1)+multiCount*txns)%objectCount;
+		LOG_DEBUG("BST :FIND[%d] Node\n", values[txns]);
+	}
+
+	BstNode::findNodeMulti(values, multiCount);
+	delete[] values;
 
 }
 
 void BstBenchmark::writeOperation(std::string ids[], int size){
-	int random = abs(Logger::getCurrentMicroSec());
-	int value = random%objectCount;
-	int select = abs(Logger::getCurrentMicroSec()+1)%2;
-	if (select) {
-		LOG_DEBUG("BST :ADD[%d] Node\n", value);
-		BstNode::addNode(value);
+	int select = abs(Logger::getCurrentMicroSec()+1);
+	int multiCount = getOperandsCount();
+	int* values = new int[multiCount];
+
+	if (select%2 == 1 ) {
+		for(int txns = 0; txns<multiCount ; txns++) {
+			values[txns] = (abs(Logger::getCurrentMicroSec()+1)+multiCount*txns)%objectCount;
+			LOG_DEBUG("BST :ADD[%d] Node\n", values[txns]);
+		}
+		BstNode::addNodeMulti(values,multiCount);
 	}else {
-		LOG_DEBUG("BST :DEL[%d] Node\n", value);
-		BstNode::deleteNode(value);
+		for(int txns = 0; txns<multiCount ; txns++) {
+			values[txns] = (abs(Logger::getCurrentMicroSec()+1)+multiCount*txns)%objectCount;
+			LOG_DEBUG("BST :DEL[%d] Node\n", values[txns]);
+		}
+		BstNode::deleteNodeMulti(values, multiCount);
 	}
+	delete [] values;
 }
 
 void BstBenchmark::checkSanity(){}

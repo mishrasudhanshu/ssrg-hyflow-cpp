@@ -13,9 +13,6 @@
 #include "../../../util/logging/Logger.h"
 #include "../../BenchmarkExecutor.h"
 
-// Defines the number of elements per bucket
-#define HYFLOW_HASHTABLE_CONTENTION 2
-
 namespace vt_dstm {
 int HashTableBenchmark::objectCount = 0;
 int HashTableBenchmark::bucketCount = 0;
@@ -83,7 +80,7 @@ std::string* HashTableBenchmark::createLocalObjects(int objCount) {
 	objectCount = objCount;
 	int nodeCount =  NetworkManager::getNodeCount();
 	int nodeId = NetworkManager::getNodeId();
-	bucketCount = (int)objCount/HYFLOW_HASHTABLE_CONTENTION;
+	bucketCount = (int)objCount/BenchmarkExecutor::getObjectNesting();
 	for(int i=0; i<bucketCount ; i++){
 		std::ostringstream idStream;
 		idStream << i%nodeCount <<"-"<< i;

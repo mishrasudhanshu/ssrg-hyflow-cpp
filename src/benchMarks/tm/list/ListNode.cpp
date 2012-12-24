@@ -72,6 +72,14 @@ void ListNode::addNodeAtomically(HyflowObject* self, BenchMarkArgs* args, Hyflow
 	next = currentNode->getNextId();
 	LOG_DEBUG("LIST :First Node in List is %s adding new value %d\n", next.c_str(), newNodeValue);
 
+	if (__context__->getNestingModel() == HYFLOW_NESTING_OPEN ) {
+		// Create unique abstract lock for this transaction
+		std::stringstream absLockStr;
+		absLockStr<<newNodeValue;
+		std::string lockName = absLockStr.str();
+		__context__->onLockAccess("BST0", lockName, false);
+	}
+
 	if (next.compare("NULL") == 0) {
 		ListNode* newNode = new ListNode(newNodeValue, ListBenchmark::getId());
 		newNode->setNextId(next);
@@ -120,11 +128,20 @@ void ListNode::deleteNodeAtomically(HyflowObject* self, BenchMarkArgs* args, Hyf
 	ListNode* targetNode = NULL;
 	std::string head("HEAD");
 	std::string prev = head, next;
+
 	//Fetch the Head Node first, It is just a dummy Node
 	HYFLOW_FETCH(head, true);
 	targetNode = (ListNode*)HYFLOW_ON_READ(head);
 	next = targetNode->getNextId();
 	LOG_DEBUG("LIST :First Node is List %s searching for %d\n", next.c_str(), givenValue);
+
+	if (__context__->getNestingModel() == HYFLOW_NESTING_OPEN ) {
+		// Create unique abstract lock for this transaction
+		std::stringstream absLockStr;
+		absLockStr<<givenValue;
+		std::string lockName = absLockStr.str();
+		__context__->onLockAccess("BST0", lockName, false);
+	}
 
 	while(next.compare("NULL") != 0) {
 		LOG_DEBUG("LIST :DEL traverse when prev=%s and next=%s \n", prev.c_str(), next.c_str());
@@ -161,6 +178,7 @@ void ListNode::sumNodesAtomically(HyflowObject* self, BenchMarkArgs* args, Hyflo
 	std::string head("HEAD");
 	std::string prev = head, next;
 	int nodeSum =0 ;
+
 	//Fetch the Head Node first, It is just a dummy Node
 	HYFLOW_FETCH(head, true);
 	targetNode = (ListNode*)HYFLOW_ON_READ(head);
@@ -191,11 +209,20 @@ void ListNode::findNodeAtomically(HyflowObject* self, BenchMarkArgs* args, Hyflo
 	ListNode* targetNode = NULL;
 	std::string head("HEAD");
 	std::string prev = head, next;
+
 	//Fetch the Head Node first, It is just a dummy Node
 	HYFLOW_FETCH(head, true);
 	targetNode = (ListNode*)HYFLOW_ON_READ(head);
 	next = targetNode->getNextId();
 	LOG_DEBUG("LIST :First Node is List %s\n", next.c_str());
+
+	if (__context__->getNestingModel() == HYFLOW_NESTING_OPEN ) {
+		// Create unique abstract lock for this transaction
+		std::stringstream absLockStr;
+		absLockStr<<givenValue;
+		std::string lockName = absLockStr.str();
+		__context__->onLockAccess("BST0", lockName, true);
+	}
 
 	while(next.compare("NULL") != 0) {
 		HYFLOW_FETCH(next, true);

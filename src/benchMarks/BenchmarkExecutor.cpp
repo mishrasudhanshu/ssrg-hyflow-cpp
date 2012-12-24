@@ -38,6 +38,7 @@ int BenchmarkExecutor::transactionLength=0;
 int BenchmarkExecutor::checkPointResume = 0;
 int BenchmarkExecutor::innerTxns=1;
 int BenchmarkExecutor::itcpr=1;
+int BenchmarkExecutor::objectNesting=2;
 
 std::string BenchmarkExecutor::benchMarkName;
 
@@ -122,6 +123,7 @@ void BenchmarkExecutor::initExecutor(){
 			innerTxns = it;
 		}
 		itcpr = atoi(ConfigFile::Value(ITCPR).c_str());
+		objectNesting = atoi(ConfigFile::Value(OBJECT_NESTING).c_str());
 		writeConfig();
 	}
 }

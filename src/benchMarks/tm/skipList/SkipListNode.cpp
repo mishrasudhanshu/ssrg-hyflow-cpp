@@ -91,6 +91,14 @@ void SkipListNode::addNodeAtomically(HyflowObject* self, BenchMarkArgs* args, Hy
 	SkipListNode* currentNode = NULL;
 	SkipListNode* newNode = new SkipListNode(givenValue, SkipListBenchmark::getId());
 
+	if (__context__->getNestingModel() == HYFLOW_NESTING_OPEN ) {
+		// Create unique abstract lock for this transaction
+		std::stringstream absLockStr;
+		absLockStr<<givenValue;
+		std::string lockName = absLockStr.str();
+		__context__->onLockAccess("BST0", lockName, false);
+	}
+
 	//find correct place of object to insert
 	for(int level=SkipListBenchmark::getSkipListLevels() ; level>0 ; level--) {
 		//For given level move until you find the node with just small value
@@ -133,6 +141,15 @@ void SkipListNode::deleteNodeAtomically(HyflowObject* self, BenchMarkArgs* args,
 	SkipListNode* prevNode =  (SkipListNode*)HYFLOW_ON_READ(head);
 	SkipListNode* currentNode = NULL;
 	std::vector<std::string> prevNodes;
+
+	if (__context__->getNestingModel() == HYFLOW_NESTING_OPEN ) {
+		// Create unique abstract lock for this transaction
+		std::stringstream absLockStr;
+		absLockStr<<givenValue;
+		std::string lockName = absLockStr.str();
+		__context__->onLockAccess("BST0", lockName, false);
+	}
+
 	for( int level=0 ; level<=SkipListBenchmark::getSkipListLevels() ; level++ ) {
 		prevNodes.push_back("NULL");
 	}
@@ -185,6 +202,14 @@ void SkipListNode::findNodeAtomically(HyflowObject* self, BenchMarkArgs* args, H
 
 	SkipListNode* prevNode =  (SkipListNode*)HYFLOW_ON_READ(head);
 	SkipListNode* currentNode = NULL;
+
+	if (__context__->getNestingModel() == HYFLOW_NESTING_OPEN ) {
+		// Create unique abstract lock for this transaction
+		std::stringstream absLockStr;
+		absLockStr<<givenValue;
+		std::string lockName = absLockStr.str();
+		__context__->onLockAccess("BST0", lockName, true);
+	}
 
 	bool found=false;
 	//find correct place of object

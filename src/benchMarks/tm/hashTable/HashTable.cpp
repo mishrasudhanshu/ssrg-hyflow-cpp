@@ -145,7 +145,7 @@ void HashBucket::getAtomically(HyflowObject* self, BenchMarkArgs* args, HyflowCo
 		__context__->onLockAccess("HT0", lockName, true);
 	}
 
-	HashBucket* bucket =  (HashBucket*)HYFLOW_ON_WRITE(targetBucket);
+	HashBucket* bucket =  (HashBucket*)HYFLOW_ON_READ(targetBucket);
 	((HTReturn*)hRet)->entry = bucket->getInternal(key);
 	LOG_DEBUG("HashMap :Get in bucket %s value %d\n", bucket->getId().c_str(), key);
 }

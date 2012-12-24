@@ -198,9 +198,9 @@ void ConfigFile::UpdateMap() {
 	if (value)
 		Update(OBJECTS, value);
 
-	value = getenv(NESTING);
+	value = getenv(OBJECT_NESTING);
 	if (value)
-		Update(NESTING, value);
+		Update(OBJECT_NESTING, value);
 
 	value = getenv(CALLS);
 	if (value)
@@ -294,7 +294,7 @@ void ConfigFile::test() {
 		ut = Value(UNIT_TEST);
 		n = Value(NODES);
 		o = Value(OBJECTS);
-		ns = Value(NESTING);
+		ns = Value(OBJECT_NESTING);
 		c = Value(CALLS);
 		r = Value(READS);
 		th = Value(THREADS);
@@ -325,7 +325,7 @@ void ConfigFile::test() {
 	std::cout << UNIT_TEST <<": " << ut << std::endl;
 	std::cout << NODES <<": " << n << std::endl;
 	std::cout << OBJECTS <<": " << o << std::endl;
-	std::cout << NESTING <<": " << ns << std::endl;
+	std::cout << OBJECT_NESTING <<": " << ns << std::endl;
 	std::cout << CALLS <<": " << c << std::endl;
 	std::cout << READS <<": " << r << std::endl;
 	std::cout << THREADS <<": " << th << std::endl;

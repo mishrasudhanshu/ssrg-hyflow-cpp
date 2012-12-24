@@ -9,6 +9,8 @@ src/benchMarks/tm/bst/BstNode.d: ../src/benchMarks/tm/bst/BstNode.cpp \
  ../src/benchMarks/tm/bst/../../../core/../util/messages/HyflowMessage.h \
  ../src/benchMarks/tm/bst/../../../core/../util/messages/BaseMessage.h \
  ../src/benchMarks/tm/bst/../../../core/../util/messages/../../core/HyflowObject.h \
+ ../src/benchMarks/tm/bst/../../../core/helper/BenchMarkArgs.h \
+ ../src/benchMarks/tm/bst/../../../core/helper/BenchMarkReturn.h \
  ../src/benchMarks/tm/bst/../../../core/context/ContextManager.h \
  ../src/benchMarks/tm/bst/../../../core/context/HyflowContext.h \
  ../src/benchMarks/tm/bst/../../../core/context/HyflowContextFactory.h \
@@ -126,6 +128,10 @@ src/benchMarks/tm/bst/BstNode.d: ../src/benchMarks/tm/bst/BstNode.cpp \
 ../src/benchMarks/tm/bst/../../../core/../util/messages/BaseMessage.h:
 
 ../src/benchMarks/tm/bst/../../../core/../util/messages/../../core/HyflowObject.h:
+
+../src/benchMarks/tm/bst/../../../core/helper/BenchMarkArgs.h:
+
+../src/benchMarks/tm/bst/../../../core/helper/BenchMarkReturn.h:
 
 ../src/benchMarks/tm/bst/../../../core/context/ContextManager.h:
 

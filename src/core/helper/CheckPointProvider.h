@@ -36,7 +36,9 @@ do{\
 
 #define HYFLOW_STORE(VAR_REFERENCE, VAR_VALUE) \
 do {\
-	vt_dstm::CheckPointProvider::storeUserValue(VAR_REFERENCE, VAR_VALUE);\
+	if(vt_dstm::CheckPointProvider::isCheckPointingEnabled()) {\
+		vt_dstm::CheckPointProvider::storeUserValue(VAR_REFERENCE, VAR_VALUE);\
+	}\
 }while(0)\
 
 namespace vt_dstm {

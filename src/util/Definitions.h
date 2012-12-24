@@ -69,7 +69,7 @@ namespace vt_dstm
 #define NODES "nodes"
 #define NODE_ID "nodeId"
 #define OBJECTS "objects"
-#define NESTING "nesting"
+#define OBJECT_NESTING "objectNesting"
 #define CALLS "calls"
 #define READS "reads"
 #define THREADS "threads"

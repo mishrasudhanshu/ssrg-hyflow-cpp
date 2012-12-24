@@ -15,18 +15,18 @@
 
 #define HYFLOW_ATOMIC_START \
 HyflowContext* __context__ = ContextManager::getInstance(); \
-for (int i = 0; i < 0x7fffffff; i++) { \
+for (int __hyflow_attempt__ = 0; __hyflow_attempt__ < 0x7fffffff; __hyflow_attempt__++) { \
 	__context__->contextInit(); \
-	bool commit = true; \
+	bool __hyflow_commit__ = true; \
 	BenchmarkExecutor::transactionLengthDelay(); \
 	try { \
 
 #define HYFLOW_ATOMIC_END \
 	} catch (TransactionException & ex) { \
 		ex.print();\
-		commit = false;\
+		__hyflow_commit__ = false;\
 	}\
-	if (commit) {\
+	if (__hyflow_commit__) {\
 		try {\
 			__context__->commit();\
 			if (__context__->getContextExecutionDepth() == 0) {	\
@@ -55,7 +55,7 @@ for (int i = 0; i < 0x7fffffff; i++) { \
 		ContextManager::releaseInstance(&__context__);\
 		continue;\
 	}\
-	if ( i == 0x7fffffff -1) {\
+	if ( __hyflow_attempt__ == 0x7fffffff -1) {\
 		throw new TransactionException("Failed to commit the transaction in the defined retries.");\
 	}\
 }\

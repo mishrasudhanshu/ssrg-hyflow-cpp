@@ -13,8 +13,6 @@
 #include "../../../util/concurrent/ThreadMeta.h"
 #include <vector>
 
-#define HYFLOW_LOAN_NESTING 3
-
 namespace vt_dstm {
 
 LoanBenchmark::LoanBenchmark() {}
@@ -24,7 +22,7 @@ LoanBenchmark::~LoanBenchmark() {
 }
 
 int LoanBenchmark::getOperandsCount() {
-	return HYFLOW_LOAN_NESTING;
+	return BenchmarkExecutor::getObjectNesting();
 }
 
 void LoanBenchmark::readOperation(std::string ids[], int size) {

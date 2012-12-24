@@ -18,13 +18,11 @@
  * Increasing object count causes the longer lists and more contention
  * Higher object count causes the deletion of object less probable
  */
-// TODO: Move to default configuration
-#define HYFLOW_SKIP_LIST_LEVELS 5
 
 namespace vt_dstm {
 
 boost::thread_specific_ptr<HyInteger> SkipListBenchmark::objectCreated;
-int SkipListBenchmark::skipListLevels=HYFLOW_SKIP_LIST_LEVELS;
+int SkipListBenchmark::skipListLevels=5;
 
 SkipListBenchmark::SkipListBenchmark() { objectCount=0; }
 
@@ -37,7 +35,6 @@ int SkipListBenchmark::getOperandsCount()	{
 void SkipListBenchmark::readOperation(std::string ids[], int size){
 	int multiCount = getOperandsCount();
 
-	int random = abs(Logger::getCurrentMicroSec());
 	int* values = new int[multiCount];
 	for(int txns = 0; txns<multiCount ; txns++) {
 		values[txns] = (abs(Logger::getCurrentMicroSec())+txns*multiCount)%objectCount;
@@ -48,7 +45,6 @@ void SkipListBenchmark::readOperation(std::string ids[], int size){
 }
 
 void SkipListBenchmark::writeOperation(std::string ids[], int size){
-	int random = abs(Logger::getCurrentMicroSec());
 	int select = abs(Logger::getCurrentMicroSec()+1);
 	int multiCount = getOperandsCount();
 
@@ -83,6 +79,7 @@ int SkipListBenchmark::getId() {
 
 std::string* SkipListBenchmark::createLocalObjects(int objCount) {
 	objectCount = objCount;
+	skipListLevels = BenchmarkExecutor::getObjectNesting();
 	ids = new std::string [objCount];
 	if (NetworkManager::getNodeId() == 0 ) {
 		SkipListNode headNode(0, "HEAD", skipListLevels);

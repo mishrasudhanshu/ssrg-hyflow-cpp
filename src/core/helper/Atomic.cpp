@@ -13,9 +13,9 @@
 
 #define HYFLOW_ATOMIC_START_INTERNAL \
 	HyflowContext* __context__ = ContextManager::getInstance(nestingModel); \
-	for (int i = 0; i < 0x7fffffff; i++) { \
+	for (int __hyflow_attempt__ = 0; __hyflow_attempt__ < 0x7fffffff; __hyflow_attempt__++) { \
 		__context__->contextInit(); \
-		bool commit = true; \
+		bool __hyflow_commit__ = true; \
 		BenchmarkExecutor::transactionLengthDelay(); \
 		try { \
 
