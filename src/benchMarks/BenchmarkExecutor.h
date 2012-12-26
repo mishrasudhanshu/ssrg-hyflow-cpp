@@ -93,6 +93,10 @@ public:
 
 	static void transactionLengthDelay();
 
+	static int getItcpr(){
+		return itcpr;
+	}
+
 	static int getObjectNesting() {
 		return objectNesting;
 	}

@@ -28,10 +28,40 @@ public:
 	ListArgs(int *v, int s) {
 		values = v ;
 		size = s ;
+		onHeap = false;
+	}
+
+	~ListArgs() {
+		if (onHeap) {
+			delete[] values;
+		}
 	}
 
 	void getClone(BenchMarkArgs** arg) {
+		int* val = new int[size];
+		for (int i = 0 ; i<size ; i++) {
+			val[i] = values[i];
+		}
+		ListArgs* clone = new ListArgs(val, size);
+		clone->onHeap = true;
+		*arg = clone;
+	}
+};
 
+class ListReturn: public BenchMarkReturn {
+public:
+	bool success;
+
+	ListReturn() {
+		success = false;
+		onHeap = false;
+	}
+
+	void getClone(BenchMarkReturn **benchArgs) {
+		ListReturn* lrt = new ListReturn();
+		lrt->success = success;
+		lrt->onHeap = true;
+		*benchArgs = lrt;
 	}
 };
 
@@ -48,7 +78,7 @@ class ListNode: public vt_dstm::HyflowObject {
 	std::string nextId;
 	int value;
 	static void addNodeAtomically(HyflowObject* self, BenchMarkArgs* args, HyflowContext* c, BenchMarkReturn* ignore);
-	static void deleteNodeAtomically(HyflowObject* self, BenchMarkArgs* args, HyflowContext* c, BenchMarkReturn* ignore);
+	static void deleteNodeAtomically(HyflowObject* self, BenchMarkArgs* args, HyflowContext* c, BenchMarkReturn* success);
 	static void sumNodesAtomically(HyflowObject* self, BenchMarkArgs* args, HyflowContext* c, BenchMarkReturn* ignore);
 	static void findNodeAtomically(HyflowObject* self, BenchMarkArgs* args, HyflowContext* c, BenchMarkReturn* ignore);
 
@@ -89,6 +119,10 @@ public:
 	static void deleteNodeMulti(int values[], int size);
 	static void sumNodesMulti(int count);
 	static void findNodeMulti(int values[], int size);
+
+	static void addAbort(HyflowObject* self, BenchMarkArgs* args, HyflowContext* __context__, BenchMarkReturn* rt);
+	static void deleteAbort(HyflowObject* self, BenchMarkArgs* args, HyflowContext* __context__, BenchMarkReturn* rt);
+
 
 	void test();
 };

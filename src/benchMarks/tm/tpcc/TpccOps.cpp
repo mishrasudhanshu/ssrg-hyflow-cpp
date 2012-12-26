@@ -71,7 +71,9 @@ double TpccOps::newOrder() {
     	float W_TAX = warehouse->W_TAX;
 
 		// In DISTRICT table: retrieve D_TAX, get and inc D_NEXT_O_ID
-    	HYFLOW_CHECKPOINT_HERE;
+    	if (0%(BenchmarkExecutor::getItcpr()) == 0) {
+			HYFLOW_CHECKPOINT_HERE;
+    	}
 		std::string districtId = TpccDistrict::getDistrictId(w_id, d_id);
 		HYFLOW_FETCH(districtId, false);
 		TpccDistrict* district = (TpccDistrict*) HYFLOW_ON_WRITE(districtId);
@@ -80,7 +82,9 @@ double TpccOps::newOrder() {
 		district->D_NEXT_O_ID = o_id + 1;
 
 		// In CUSTOMER table: retrieve discount, last name, credit status
-		HYFLOW_CHECKPOINT_HERE;
+		if (1%(BenchmarkExecutor::getItcpr()) == 0) {
+			HYFLOW_CHECKPOINT_HERE;
+		}
 		std::string customerId = TpccCustomer::getCustomerId(w_id, d_id, c_id);
 		HYFLOW_FETCH(customerId, true);
 		TpccCustomer* customer = (TpccCustomer*)HYFLOW_ON_READ(customerId);
@@ -104,8 +108,10 @@ double TpccOps::newOrder() {
 		HYFLOW_PUBLISH_OBJECT(newOrder);
 		double totalAmount = 0;
 		for (int i=1 ; i <= orderLines; i++) {
-			HYFLOW_STORE(&i, i);
-			HYFLOW_CHECKPOINT_HERE;
+			if (i+1%(BenchmarkExecutor::getItcpr()) == 0) {
+				HYFLOW_STORE(&i, i);
+				HYFLOW_CHECKPOINT_HERE;
+			}
 
 			TpccOrderLine* olArg = orders.at(i-1);
 			TpccOrderLine* ol = new TpccOrderLine(w_id, d_id, o_id, i);
@@ -215,14 +221,18 @@ void TpccOps::payment() {
 		warehouse->W_YTD += h_amount;
 
 		// In DISTRICT table
-		HYFLOW_CHECKPOINT_HERE;
+		if (0%(BenchmarkExecutor::getItcpr()) == 0) {
+			HYFLOW_CHECKPOINT_HERE;
+		}
 		std::string districtId = TpccDistrict::getDistrictId(w_id, d_id);
 		HYFLOW_FETCH(districtId, false);
 		TpccDistrict* district = (TpccDistrict*) HYFLOW_ON_WRITE(districtId);
 		district->D_YTD += h_amount;
 
 		// In CUSTOMER table
-		HYFLOW_CHECKPOINT_HERE;
+		if (1%(BenchmarkExecutor::getItcpr()) == 0) {
+			HYFLOW_CHECKPOINT_HERE;
+		}
 		std::string customerId = TpccCustomer::getCustomerId(w_id, d_id, c_id);
 		HYFLOW_FETCH(customerId, false);
 		TpccCustomer* customer = (TpccCustomer*)HYFLOW_ON_WRITE(customerId);
@@ -270,7 +280,9 @@ void TpccOps::orderStatus() {
 		if(o_id <= 1) {
 			LOG_DEBUG("TPCC :Not a single order created for this district to check Status\n");
 		}else {
-			HYFLOW_CHECKPOINT_HERE;
+			if (0%(BenchmarkExecutor::getItcpr()) == 0) {
+				HYFLOW_CHECKPOINT_HERE;
+			}
 			std::string orderId = TpccOrder::getOrderId(w_id, d_id, o_id);
 			LOG_DEBUG("TPCC :OrderStatus Got order for %s\n", orderId.c_str());
 			HYFLOW_FETCH(orderId, true);
@@ -311,16 +323,20 @@ void TpccOps::delivery() {
 					LOG_DEBUG("TPCC :Not a single order created for %d district to check Status\n", d_id);
 					break;
 				} else {
-					HYFLOW_STORE(&ord, ord);
-					HYFLOW_CHECKPOINT_HERE;
+					if (0%(BenchmarkExecutor::getItcpr()) == 0) {
+						HYFLOW_STORE(&ord, ord);
+						HYFLOW_CHECKPOINT_HERE;
+					}
 					district = (TpccDistrict*) HYFLOW_ON_WRITE(districtId);
 					std::string orderId = TpccOrder::getOrderId(w_id, d_id, ord);
 					LOG_DEBUG("TPCC :Delivery district %d Got order for %s\n", d_id, orderId.c_str());
 					HYFLOW_FETCH(orderId, true);
 					TpccOrder* order = (TpccOrder*) HYFLOW_ON_READ(orderId);
 
-					HYFLOW_STORE(&ord, ord);
-					HYFLOW_CHECKPOINT_HERE;
+					if (1%(BenchmarkExecutor::getItcpr()) == 0) {
+						HYFLOW_STORE(&ord, ord);
+						HYFLOW_CHECKPOINT_HERE;
+					}
 					std::string newOrderId = TpccNewOrder::getNewOrderId(w_id, d_id,ord);
 					HYFLOW_FETCH(newOrderId, false);
 					TpccNewOrder* newOrder =
@@ -329,9 +345,11 @@ void TpccOps::delivery() {
 
 					//Select all orderLines --> this is inefficient
 					for (int ordLineNumb = 1; ordLineNumb <= order->O_OL_CNT; ordLineNumb++) {
-						HYFLOW_STORE(&ord, ord);
-						HYFLOW_STORE(&ordLineNumb, ordLineNumb);
-						HYFLOW_CHECKPOINT_HERE;
+						if ((ordLineNumb+1)%(BenchmarkExecutor::getItcpr()) == 0) {
+							HYFLOW_STORE(&ord, ord);
+							HYFLOW_STORE(&ordLineNumb, ordLineNumb);
+							HYFLOW_CHECKPOINT_HERE;
+						}
 						std::string orderLineId =TpccOrderLine::getOrderLineId(w_id, d_id, ord, ordLineNumb);
 						LOG_DEBUG("TPCC :Delivery district %d Got orderLine for %s\n", d_id, orderLineId.c_str());
 						HYFLOW_FETCH(orderLineId, false);
@@ -375,16 +393,20 @@ void TpccOps::stockLevel() {
 			LOG_DEBUG("StockLevel :No orders available in this district\n");
 		} else {
 			for (int o_id = d_next_o_id - 1;(o_id > 1) && ((d_next_o_id - o_id) < 20); o_id--) {
-				HYFLOW_STORE(&o_id, o_id);
-				HYFLOW_CHECKPOINT_HERE;
+				if (0%(BenchmarkExecutor::getItcpr()) == 0) {
+					HYFLOW_STORE(&o_id, o_id);
+					HYFLOW_CHECKPOINT_HERE;
+				}
 				std::string orderId = TpccOrder::getOrderId(w_id, d_id,	o_id);
 				HYFLOW_FETCH(orderId, true);
 				TpccOrder* order = (TpccOrder*) HYFLOW_ON_READ(orderId);
 
 				for (int ol_id = 1; ol_id <= order->O_OL_CNT; ol_id++) {
-					HYFLOW_STORE(&o_id, o_id);
-					HYFLOW_STORE(&ol_id, ol_id);
-					HYFLOW_CHECKPOINT_HERE;
+					if (ol_id%(BenchmarkExecutor::getItcpr()) == 0) {
+						HYFLOW_STORE(&o_id, o_id);
+						HYFLOW_STORE(&ol_id, ol_id);
+						HYFLOW_CHECKPOINT_HERE;
+					}
 					std::string orderLineId = TpccOrderLine::getOrderLineId(
 							w_id, d_id, o_id, ol_id);
 					HYFLOW_FETCH(orderLineId, true);

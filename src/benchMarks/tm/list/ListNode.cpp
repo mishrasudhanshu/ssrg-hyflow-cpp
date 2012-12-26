@@ -120,11 +120,13 @@ void ListNode::addNode(int value) {
 	Atomic atomicAdd;
 	ListArgs largs(&value, 1);
 	atomicAdd.atomically = ListNode::addNodeAtomically;
+	atomicAdd.onAbort = ListNode::addAbort;
 	atomicAdd.execute(NULL, &largs, NULL);
 }
 
-void ListNode::deleteNodeAtomically(HyflowObject* self, BenchMarkArgs* args, HyflowContext* __context__, BenchMarkReturn* ignore) {
+void ListNode::deleteNodeAtomically(HyflowObject* self, BenchMarkArgs* args, HyflowContext* __context__, BenchMarkReturn* rt) {
 	int givenValue = *(((ListArgs*)args)->values);
+	ListReturn *lRet = (ListReturn*) rt;
 	ListNode* targetNode = NULL;
 	std::string head("HEAD");
 	std::string prev = head, next;
@@ -153,6 +155,7 @@ void ListNode::deleteNodeAtomically(HyflowObject* self, BenchMarkArgs* args, Hyf
 			ListNode* currentNode = (ListNode*)HYFLOW_ON_WRITE(next);
 			prevNode->setNextId(currentNode->getNextId());
 			HYFLOW_DELETE_OBJECT(currentNode);
+			lRet->success = true;
 			LOG_DEBUG("LIST :Got the required value %d in node %s\n", givenValue, currentNode->getId().c_str());
 			break;
 		}else if (nodeValue > givenValue) {
@@ -161,16 +164,17 @@ void ListNode::deleteNodeAtomically(HyflowObject* self, BenchMarkArgs* args, Hyf
 		}
 		prev = next;
 		next = targetNode->getNextId();
-		//TODO: Think about removing previous->previous node from read write set
 	}
 }
 
 void ListNode::deleteNode(int value) {
 	Atomic atomicDelete;
 	ListArgs largs(&value, 1);
+	ListReturn lRet;
 
 	atomicDelete.atomically = ListNode::deleteNodeAtomically;
-	atomicDelete.execute(NULL, &largs, NULL);
+	atomicDelete.onAbort = ListNode::deleteAbort;
+	atomicDelete.execute(NULL, &largs, &lRet);
 }
 
 void ListNode::sumNodesAtomically(HyflowObject* self, BenchMarkArgs* args, HyflowContext* __context__, BenchMarkReturn* ignore) {
@@ -282,8 +286,10 @@ void ListNode::addNodeMulti(int values[], int size) {
 				LOG_DEBUG("List :Call Add Node with %d in txns %d\n", values[txns], txns);
 				addNode(values[txns]);
 
-				HYFLOW_STORE(&txns, txns);
-				HYFLOW_CHECKPOINT_HERE;
+				if (txns%(BenchmarkExecutor::getItcpr()) == 0) {
+					HYFLOW_STORE(&txns, txns);
+					HYFLOW_CHECKPOINT_HERE;
+				}
 			}
 		}HYFLOW_ATOMIC_END;
 	}else {
@@ -302,8 +308,10 @@ void ListNode::deleteNodeMulti(int values[], int size) {
 				LOG_DEBUG("List :Call Delete Node with %d in txns %d\n", values[txns], txns);
 				deleteNode(values[txns]);
 
-				HYFLOW_STORE(&txns, txns);
-				HYFLOW_CHECKPOINT_HERE;
+				if (txns%(BenchmarkExecutor::getItcpr()) == 0) {
+					HYFLOW_STORE(&txns, txns);
+					HYFLOW_CHECKPOINT_HERE;
+				}
 			}
 		}HYFLOW_ATOMIC_END;
 	}else {
@@ -322,8 +330,10 @@ void ListNode::sumNodesMulti(int count) {
 				LOG_DEBUG("List :Call sumNodes %d  time\n", txns);
 				sumNodes();
 
-				HYFLOW_STORE(&txns, txns);
-				HYFLOW_CHECKPOINT_HERE;
+				if (txns%(BenchmarkExecutor::getItcpr()) == 0) {
+					HYFLOW_STORE(&txns, txns);
+					HYFLOW_CHECKPOINT_HERE;
+				}
 			}
 		}HYFLOW_ATOMIC_END;
 	}else {
@@ -342,8 +352,10 @@ void ListNode::findNodeMulti(int values[], int size) {
 				LOG_DEBUG("List :Call find Node with %d in txns %d\n", values[txns], txns);
 				findNode(values[txns]);
 
-				HYFLOW_STORE(&txns, txns);
-				HYFLOW_CHECKPOINT_HERE;
+				if (txns%(BenchmarkExecutor::getItcpr()) == 0) {
+					HYFLOW_STORE(&txns, txns);
+					HYFLOW_CHECKPOINT_HERE;
+				}
 			}
 		}HYFLOW_ATOMIC_END;
 	}else {
@@ -365,6 +377,109 @@ void ListNode::getClone(HyflowObject **obj) {
 	this->baseClone(ln);
 	*obj = ln;
 }
+
+void ListNode::addAbort(HyflowObject* self, BenchMarkArgs* args, HyflowContext* __context__, BenchMarkReturn* rt) {
+	int givenValue = *(((ListArgs*)args)->values);
+	bool found = false;
+
+	ListNode* targetNode = NULL;
+	std::string head("HEAD");
+	std::string prev = head, next;
+
+	//Fetch the Head Node first, It is just a dummy Node
+	HYFLOW_FETCH(head, true);
+	targetNode = (ListNode*)HYFLOW_ON_READ(head);
+	next = targetNode->getNextId();
+	LOG_DEBUG("LIST :First Node is List %s searching for %d\n", next.c_str(), givenValue);
+
+	while(next.compare("NULL") != 0) {
+		LOG_DEBUG("LIST :DEL traverse when prev=%s and next=%s \n", prev.c_str(), next.c_str());
+		HYFLOW_FETCH(next, true);
+		targetNode = (ListNode*)HYFLOW_ON_READ(next);
+		int nodeValue = targetNode->getValue();
+		if (nodeValue == givenValue) {
+			ListNode* prevNode = (ListNode*)HYFLOW_ON_WRITE(prev);
+			ListNode* currentNode = (ListNode*)HYFLOW_ON_WRITE(next);
+			prevNode->setNextId(currentNode->getNextId());
+			HYFLOW_DELETE_OBJECT(currentNode);
+			found = true;
+			LOG_DEBUG("LIST :Got the required value %d in node %s\n", givenValue, currentNode->getId().c_str());
+			break;
+		}else if (nodeValue > givenValue) {
+			LOG_DEBUG("LIST :DEL object %d not found in list\n", givenValue);
+			break;
+		}
+		prev = next;
+		next = targetNode->getNextId();
+	}
+
+	if (!found) {
+		Logger::fatal("List :AddAbort unable to delete the %d in open Nesting\n", givenValue);
+	}
+}
+
+void ListNode::deleteAbort(HyflowObject* self, BenchMarkArgs* args, HyflowContext* __context__, BenchMarkReturn* rt) {
+	int newNodeValue = *(((ListArgs*)args)->values);
+	ListReturn *lRet = (ListReturn*) rt;
+
+	if (!lRet->success) {
+		return;
+	}
+
+	ListNode* currentNode = NULL;
+	std::string head("HEAD");
+	std::string prev = head, next;
+
+	//Fetch the Head Node first, It is a sentinel Node
+	HYFLOW_FETCH(head, true);
+	currentNode = (ListNode*)HYFLOW_ON_READ(head);
+	next = currentNode->getNextId();
+	LOG_DEBUG("LIST :First Node in List is %s adding new value %d\n", next.c_str(), newNodeValue);
+
+	if (__context__->getNestingModel() == HYFLOW_NESTING_OPEN ) {
+		// Create unique abstract lock for this transaction
+		std::stringstream absLockStr;
+		absLockStr<<newNodeValue;
+		std::string lockName = absLockStr.str();
+		__context__->onLockAccess("BST0", lockName, false);
+	}
+
+	if (next.compare("NULL") == 0) {
+		ListNode* newNode = new ListNode(newNodeValue, ListBenchmark::getId());
+		newNode->setNextId(next);
+		HYFLOW_PUBLISH_OBJECT(newNode);
+
+		ListNode* headNodeWrite = (ListNode*)HYFLOW_ON_WRITE(head);
+		headNodeWrite->setNextId(newNode->getId());
+		LOG_DEBUG("LIST :In empty list set Head next Id to %s  value %d\n", newNode->getId().c_str(), newNodeValue);
+	}else {
+		// Find the correct place to add
+		while(next.compare("NULL") != 0) {
+			LOG_DEBUG("LIST :Add traverse when prev=%s and next=%s \n", prev.c_str(), next.c_str());
+			HYFLOW_FETCH(next, true);
+			currentNode = (ListNode*)HYFLOW_ON_READ(next);
+			int nextNodeValue = currentNode->getValue();
+			if (nextNodeValue >= newNodeValue) {
+				LOG_DEBUG("LIST :Got the required value %d to add before in node %s\n", newNodeValue, next.c_str());
+				break;
+			}
+			prev = next;
+			next = currentNode->getNextId();
+		}
+
+		ListNode* newNode = new ListNode(newNodeValue, ListBenchmark::getId());
+		newNode->setNextId(next);
+		HYFLOW_PUBLISH_OBJECT(newNode);
+
+		if (next.compare("NULL") == 0) {
+			LOG_DEBUG("LIST :At end of list set %s next Id to %s value %d\n", prev.c_str(), newNode->getId().c_str(), newNodeValue);
+		}
+		ListNode* prevNode = (ListNode*)HYFLOW_ON_WRITE(prev);
+		prevNode->setNextId(newNode->getId());
+		LOG_DEBUG("LIST :Add Set %s next to %s\n", prev.c_str(), newNode->getId().c_str());
+	}
+}
+
 
 void ListNode::test() {
 	// create and open a character archive for output

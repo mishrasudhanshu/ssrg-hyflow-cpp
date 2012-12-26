@@ -28,10 +28,40 @@ public:
 	BstArgs(int *v, int s) {
 		values = v ;
 		size = s ;
+		onHeap = false;
+	}
+
+	~BstArgs() {
+		if (onHeap) {
+			delete[] values;
+		}
 	}
 
 	void getClone(BenchMarkArgs** arg) {
+		int* val = new int[size];
+		for (int i = 0 ; i<size ; i++) {
+			val[i] = values[i];
+		}
+		BstArgs* clone = new BstArgs(val, size);
+		clone->onHeap = true;
+		*arg = clone;
+	}
+};
 
+class BstReturn: public BenchMarkReturn {
+public:
+	bool success;
+
+	BstReturn() {
+		success = false;
+		onHeap = false;
+	}
+
+	void getClone(BenchMarkReturn **benchArgs) {
+		BstReturn* lrt = new BstReturn();
+		lrt->success = success;
+		lrt->onHeap = true;
+		*benchArgs = lrt;
 	}
 };
 
@@ -89,6 +119,9 @@ public:
 	static void addNodeMulti(int values[], int size);
 	static void deleteNodeMulti(int values[], int size);
 	static void findNodeMulti(int values[], int size);
+
+	static void addAbort(HyflowObject* self, BenchMarkArgs* args, HyflowContext* __context__, BenchMarkReturn* rt);
+	static void deleteAbort(HyflowObject* self, BenchMarkArgs* args, HyflowContext* __context__, BenchMarkReturn* rt);
 
 	void test();
 };

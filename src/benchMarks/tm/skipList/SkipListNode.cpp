@@ -126,14 +126,16 @@ void SkipListNode::addNodeAtomically(HyflowObject* self, BenchMarkArgs* args, Hy
 
 void SkipListNode::addNode(int nodeValue) {
 	SkipListArgs sArgs(&nodeValue, 1);
-	Atomic atomicfind;
+	Atomic atomicAdd;
 
-	atomicfind.atomically = SkipListNode::findNodeAtomically;
-	atomicfind.execute(NULL, &sArgs, NULL);
+	atomicAdd.atomically = SkipListNode::addNodeAtomically;
+	atomicAdd.onAbort = SkipListNode::addAbort;
+	atomicAdd.execute(NULL, &sArgs, NULL);
 }
 
-void SkipListNode::deleteNodeAtomically(HyflowObject* self, BenchMarkArgs* args, HyflowContext* __context__, BenchMarkReturn* ignore) {
+void SkipListNode::deleteNodeAtomically(HyflowObject* self, BenchMarkArgs* args, HyflowContext* __context__, BenchMarkReturn* rt) {
 	int givenValue = *(((SkipListArgs*)args)->values);
+	SkipListReturn* slRt = (SkipListReturn*) rt;
 
 	std::string head="HEAD";
 	HYFLOW_FETCH(head, true);
@@ -166,6 +168,7 @@ void SkipListNode::deleteNodeAtomically(HyflowObject* self, BenchMarkArgs* args,
 				break;
 			}else if(currentNode->value == givenValue) {
 				targetNode = currentNode;
+				slRt->success = true;
 				LOG_DEBUG("SKIPLIST :At level %d node %s has value %d\n", level, currentNode->getId().c_str(), givenValue);
 				break;
 			}else {
@@ -189,9 +192,11 @@ void SkipListNode::deleteNodeAtomically(HyflowObject* self, BenchMarkArgs* args,
 
 void SkipListNode::deleteNode(int nodeValue) {
 	SkipListArgs sArgs(&nodeValue, 1);
-	Atomic atomicfind;
-	atomicfind.atomically = SkipListNode::findNodeAtomically;
-	atomicfind.execute(NULL, &sArgs, NULL);
+	SkipListReturn slRt;
+	Atomic atomicDelete;
+	atomicDelete.atomically = SkipListNode::deleteNodeAtomically;
+	atomicDelete.onAbort = SkipListNode::deleteAbort;
+	atomicDelete.execute(NULL, &sArgs, &slRt);
 }
 
 void SkipListNode::findNodeAtomically(HyflowObject* self, BenchMarkArgs* args, HyflowContext* __context__, BenchMarkReturn* ignore) {
@@ -272,8 +277,10 @@ void SkipListNode::addNodeMulti(int* values, int size) {
 				LOG_DEBUG("SkipList :Call Add Node with %d in txns %d\n", values[txns], txns);
 				addNode(values[txns]);
 
-				HYFLOW_STORE(&txns, txns);
-				HYFLOW_CHECKPOINT_HERE;
+				if (txns%(BenchmarkExecutor::getItcpr()) == 0) {
+					HYFLOW_STORE(&txns, txns);
+					HYFLOW_CHECKPOINT_HERE;
+				}
 			}
 		}HYFLOW_ATOMIC_END;
 	}else {
@@ -292,8 +299,10 @@ void SkipListNode::deleteNodeMulti(int* values, int size) {
 				LOG_DEBUG("SkipList :Call Delete Node with %d in txns %d\n", values[txns], txns);
 				deleteNode(values[txns]);
 
-				HYFLOW_STORE(&txns, txns);
-				HYFLOW_CHECKPOINT_HERE;
+				if (txns%(BenchmarkExecutor::getItcpr()) == 0) {
+					HYFLOW_STORE(&txns, txns);
+					HYFLOW_CHECKPOINT_HERE;
+				}
 			}
 		}HYFLOW_ATOMIC_END;
 	}else {
@@ -312,8 +321,10 @@ void SkipListNode::findNodeMulti(int* values, int size) {
 				LOG_DEBUG("SkipList :Call find Node with %d in txns %d\n", values[txns], txns);
 				findNode(values[txns]);
 
-				HYFLOW_STORE(&txns, txns);
-				HYFLOW_CHECKPOINT_HERE;
+				if (txns%(BenchmarkExecutor::getItcpr()) == 0) {
+					HYFLOW_STORE(&txns, txns);
+					HYFLOW_CHECKPOINT_HERE;
+				}
 			}
 		}HYFLOW_ATOMIC_END;
 	}else {
@@ -323,6 +334,94 @@ void SkipListNode::findNodeMulti(int* values, int size) {
 		atomicfindMulti.execute(NULL, &slargs, NULL);
 	}
 }
+
+void SkipListNode::addAbort(HyflowObject* self, BenchMarkArgs* args, HyflowContext* __context__, BenchMarkReturn* rt) {
+	int givenValue = *(((SkipListArgs*)args)->values);
+
+	std::string head="HEAD";
+	HYFLOW_FETCH(head, true);
+
+	SkipListNode* prevNode =  (SkipListNode*)HYFLOW_ON_READ(head);
+	SkipListNode* currentNode = NULL;
+	std::vector<std::string> prevNodes;
+
+	for( int level=0 ; level<=SkipListBenchmark::getSkipListLevels() ; level++ ) {
+		prevNodes.push_back("NULL");
+	}
+
+	SkipListNode* targetNode = NULL;
+	//find objects previous nodes
+	for(int level=SkipListBenchmark::getSkipListLevels() ; level>0 ; level-- ) {
+		//For given level move until you find the node with just small value
+		std::string nextNodeId = prevNode->getNextId(level);
+		while( nextNodeId.compare("NULL")!=0 ) {
+			HYFLOW_FETCH(nextNodeId, true);
+			currentNode = (SkipListNode*)HYFLOW_ON_READ(nextNodeId);
+			if(currentNode->value > givenValue) {
+				break;
+			}else if(currentNode->value == givenValue) {
+				targetNode = currentNode;
+				LOG_DEBUG("SKIPLIST :At level %d node %s has value %d\n", level, currentNode->getId().c_str(), givenValue);
+				break;
+			}else {
+				nextNodeId = currentNode->getNextId(level);
+				prevNode = currentNode;
+			}
+		}
+		prevNodes[level] = prevNode->getId();
+	}
+	if (targetNode) {
+		// Get Writable pointer to targetNode
+		targetNode = (SkipListNode*)HYFLOW_ON_WRITE(targetNode->getId());
+		for(int level=targetNode->highestLevel; level>0 ; level--) {
+			SkipListNode* pvNode = (SkipListNode*)HYFLOW_ON_WRITE(prevNodes[level]);
+			pvNode->setNextId(targetNode->getNextId(level), level);
+			LOG_DEBUG("SKIPLIST :Set next for %s from %s to %s\n", pvNode->getId().c_str(), targetNode->getId().c_str(), pvNode->getNextId(level).c_str());
+		}
+		HYFLOW_DELETE_OBJECT(targetNode);
+	}
+}
+
+void SkipListNode::deleteAbort(HyflowObject* self, BenchMarkArgs* args, HyflowContext* __context__, BenchMarkReturn* rt) {
+	int givenValue = *(((SkipListArgs*)args)->values);
+	SkipListReturn *slRt = (SkipListReturn*) rt;
+
+	if (!slRt->success) {
+		return;
+	}
+
+	std::string head="HEAD";
+	HYFLOW_FETCH(head, false);
+
+	SkipListNode* prevNode =  (SkipListNode*)HYFLOW_ON_READ(head);
+	SkipListNode* currentNode = NULL;
+	SkipListNode* newNode = new SkipListNode(givenValue, SkipListBenchmark::getId());
+
+	//find correct place of object to insert
+	for(int level=SkipListBenchmark::getSkipListLevels() ; level>0 ; level--) {
+		//For given level move until you find the node with just small value
+		std::string nextNodeId = prevNode->getNextId(level);
+		while( nextNodeId.compare("NULL")!=0 ) {
+			HYFLOW_FETCH(nextNodeId, true);
+			currentNode = (SkipListNode*)HYFLOW_ON_READ(nextNodeId);
+			if(currentNode->value >= givenValue) {
+				break;
+			}else {
+				nextNodeId = currentNode->getNextId(level);
+				prevNode = currentNode;
+			}
+		}
+		// For given level prevNode contains just small value
+		if(level <= newNode->highestLevel) {
+			SkipListNode* pNode = (SkipListNode*)HYFLOW_ON_WRITE(prevNode->getId());
+			newNode->setNextId(pNode->getNextId(level), level);
+			pNode->setNextId(newNode->getId(), level);
+			LOG_DEBUG("SKIPLIST :For level %d node %s inserted between %s and %s\n", level, newNode->getId().c_str(), pNode->getId().c_str(), newNode->getNextId(level).c_str());
+		}
+	}
+	HYFLOW_PUBLISH_OBJECT(newNode);
+}
+
 
 void SkipListNode::print() {
 

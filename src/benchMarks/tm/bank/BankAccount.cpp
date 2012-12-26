@@ -187,8 +187,10 @@ void BankAccount::totalBalanceMulti(std::string ids[], int size) {
 					checkBalanceAtomic(NULL, &baArgs, __context__, &balance);
 				}
 
-				HYFLOW_STORE(&txns, txns);
-				HYFLOW_CHECKPOINT_HERE;
+				if (txns%(BenchmarkExecutor::getItcpr()) == 0) {
+					HYFLOW_STORE(&txns, txns);
+					HYFLOW_CHECKPOINT_HERE;
+				}
 
 				LOG_DEBUG("BANK :Call CheckBalance in txns %d\n", txns);
 				for(int i=0 ; i < BenchmarkExecutor::getCalls(); i++) {
@@ -196,8 +198,10 @@ void BankAccount::totalBalanceMulti(std::string ids[], int size) {
 					checkBalanceAtomic(NULL, &baArgs, __context__, &balance);
 				}
 
-				HYFLOW_STORE(&txns, txns);
-				HYFLOW_CHECKPOINT_HERE;
+				if ((txns+1)%(BenchmarkExecutor::getItcpr()) == 0) {
+					HYFLOW_STORE(&txns, txns);
+					HYFLOW_CHECKPOINT_HERE;
+				}
 			}
 		}HYFLOW_ATOMIC_END;
 	}else {
@@ -219,16 +223,21 @@ void BankAccount::transferMulti(std::string ids[], int size, int money) {
 					withdrawAtomic(NULL, &baArgs, __context__, NULL);
 				}
 
-				HYFLOW_STORE(&txns, txns);
-				HYFLOW_CHECKPOINT_HERE;
+				if (txns%(BenchmarkExecutor::getItcpr()) == 0) {
+					HYFLOW_STORE(&txns, txns);
+					HYFLOW_CHECKPOINT_HERE;
+				}
 
 				LOG_DEBUG("BANK :Call Deposit in txns %d\n", txns);
 				for(int i=0 ; i < BenchmarkExecutor::getCalls(); i++) {
 					BankArgs baArgs(money, &ids[txns], 2);
 					depositAtomic(NULL, &baArgs, __context__, NULL);
 				}
-				HYFLOW_STORE(&txns, txns);
-				HYFLOW_CHECKPOINT_HERE;
+
+				if ((txns+1)%(BenchmarkExecutor::getItcpr()) == 0) {
+					HYFLOW_STORE(&txns, txns);
+					HYFLOW_CHECKPOINT_HERE;
+				}
 			}
 		}HYFLOW_ATOMIC_END;
 	}else {

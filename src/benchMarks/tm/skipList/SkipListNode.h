@@ -32,8 +32,37 @@ public:
 		size = s ;
 	}
 
-	void getClone(BenchMarkArgs ** args) {
+	~SkipListArgs() {
+		if (onHeap) {
+			delete[] values;
+		}
+	}
 
+	void getClone(BenchMarkArgs ** args) {
+		int* val = new int[size];
+		for (int i = 0 ; i<size ; i++) {
+			val[i] = values[i];
+		}
+		SkipListArgs* clone = new SkipListArgs(val, size);
+		clone->onHeap = true;
+		*args = clone;
+	}
+};
+
+class SkipListReturn: public BenchMarkReturn {
+public:
+	bool success;
+
+	SkipListReturn() {
+		success = false;
+		onHeap = false;
+	}
+
+	void getClone(BenchMarkReturn **benchArgs) {
+		SkipListReturn* lrt = new SkipListReturn();
+		lrt->success = success;
+		lrt->onHeap = true;
+		*benchArgs = lrt;
 	}
 };
 
@@ -88,6 +117,9 @@ public:
 	 * Finds the first occurrence of value in list
 	 */
 	static void findNodeMulti(int* values, int size);
+
+	static void addAbort(HyflowObject* self, BenchMarkArgs* args, HyflowContext* __context__, BenchMarkReturn* rt);
+	static void deleteAbort(HyflowObject* self, BenchMarkArgs* args, HyflowContext* __context__, BenchMarkReturn* rt);
 
 	void test();
 };

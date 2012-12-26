@@ -18,8 +18,6 @@
 #include "../../../core/directory/DirectoryManager.h"
 #include "../../../core/context/ContextManager.h"
 
-//#include "../../../benchMarks/tm/bank/BankAccount.h"
-
 namespace vt_dstm {
 
 ObjectAccessMsg::ObjectAccessMsg(std::string Id, bool rw) {
