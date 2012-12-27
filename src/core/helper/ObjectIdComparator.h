@@ -38,7 +38,7 @@ public:
 		   int node2 = atoi(id2.substr(0, id2.find('-')).c_str());
 		   return sign*(node1-node2)>0;
 	   }
-	   return sign*(obj1-obj2)>0;
+	   return ((sign*(obj1-obj2)) > 0);
    }
 };
 

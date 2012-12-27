@@ -38,15 +38,15 @@ std::string TpccWareHouse::getWareHouseId(int wareHouse) {
 
 void TpccWareHouse::getClone(HyflowObject **obj) {
 	TpccWareHouse* tw = new TpccWareHouse();
-	tw	->	W_ID	=	W_ID;
-	tw	->	W_NAME	=	W_NAME;
-	tw	->	W_STREET_1	=	W_STREET_1;
-	tw	->	W_STREET_2	=	W_STREET_2;
-	tw	->	W_CITY	=	W_CITY;
-	tw	->	W_STATE	=	W_STATE;
-	tw	->	W_ZIP	=	W_ZIP;
-	tw	->	W_TAX	=	W_TAX;
-	tw	->	W_YTD	=	W_YTD;
+	tw->W_ID	=	W_ID;
+	tw->W_NAME	=	W_NAME;
+	tw->W_STREET_1	=	W_STREET_1;
+	tw->W_STREET_2	=	W_STREET_2;
+	tw->W_CITY	=	W_CITY;
+	tw->W_STATE	=	W_STATE;
+	tw->W_ZIP	=	W_ZIP;
+	tw->W_TAX	=	W_TAX;
+	tw->W_YTD	=	W_YTD;
 	this->baseClone(tw);
 	*obj = tw;
 }

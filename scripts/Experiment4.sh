@@ -3,7 +3,6 @@
 # In this experiment, we increase the Transactional Length
 
 txns=200
-objs=300
 threads=1;
 build=Debug
 
@@ -17,6 +16,7 @@ benchmarks="bank list skipList bst hashTable"
 
 for bench in $benchmarks
 do
+    objs=300
     setBenchMarks="list bst skipList"
     if [[ "$setBenchMarks" =~ "$bench"  ]]
     then
