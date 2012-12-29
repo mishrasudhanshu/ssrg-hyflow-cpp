@@ -53,7 +53,7 @@ void ContextManager::ContextManagerInit() {
 unsigned long long ContextManager::createTid(HyflowContext *c) {
 	timeval tv;
 	gettimeofday(&tv, NULL);
-	return (tv.tv_sec%100000000000 + tv.tv_usec+c->getSubTxnIndex())*10000 + 100*NetworkManager::getNodeId() + ThreadMeta::getThreadId();
+	return (tv.tv_sec%100000000000 + tv.tv_usec+c->getSubTxnIndex())*100000 + 1000*NetworkManager::getNodeId() + ThreadMeta::getThreadId()*10+c->getNestingModel();
 }
 
 HyflowContext* ContextManager::getInstance() {

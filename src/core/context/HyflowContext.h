@@ -113,6 +113,11 @@ public:
 	virtual void fetchObjects(std::string objIds[], int objCount, bool isRead =
 			true) = 0;
 
+	/*
+	 * Locate Object for this context without adding to readSet or writeSet
+	 */
+	virtual HyflowObject* locateObject(std::string objId, bool abortOnNull=true) = 0;
+
 	Hyflow_NestingModel getNestingModel() const {
 		return nestingModel;
 	}

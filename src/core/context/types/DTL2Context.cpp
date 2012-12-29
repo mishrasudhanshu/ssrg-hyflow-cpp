@@ -399,9 +399,15 @@ void DTL2Context::forward(int senderClock) {
 const HyflowObject* DTL2Context::onReadAccess(HyflowObject *obj){
 	// Verify in write set whether we have recent value
 	std::string id = obj->getId();
-	std::map<std::string, HyflowObject*, ObjectIdComparator>::iterator i = writeMap.find(id);
-	if ( i == writeMap.end()) {
+	std::map<std::string, HyflowObject*, ObjectIdComparator>::iterator wi = writeMap.find(id);
+	if ( wi == writeMap.end()) {
 		LOG_DEBUG("DTL :Getting object %s from readSet\n", id.c_str());
+		std::map<std::string, HyflowObject*, ObjectIdComparator>::iterator ri = readMap.find(id);
+		if ( ri == readMap.end() ) {
+			LOG_DEBUG("DTL :Object %s no available in read Set, should be through locate\n", id.c_str());
+			readMap[id] = obj;
+			return obj;
+		}
 		return readMap.at(id);
 	}
 	return writeMap.at(id);
@@ -429,10 +435,12 @@ HyflowObject* DTL2Context::onWriteAccess(HyflowObject *obj){
 		HyflowObject *writeSetCopy = NULL;
 		std::map<std::string, HyflowObject*, ObjectIdComparator>::iterator i = writeMap.find(id);
 		if ( i == writeMap.end()) {
-			// Check if object is available in parent context write object
-			obj->getClone(&writeSetCopy);
-			writeMap[id] = writeSetCopy;
-			return writeSetCopy;
+			std::map<std::string, HyflowObject*, ObjectIdComparator>::iterator ri = readMap.find(id);
+			if ( ri == readMap.end() ) {
+				LOG_DEBUG("DTL :Object %s no available in read Set, should be through locate\n", id.c_str());
+				writeMap[id] = obj;
+				return obj;
+			}
 		}
 		return writeMap.at(id);
 	}
@@ -1520,6 +1528,122 @@ void DTL2Context::fetchObjects(std::string ids[], int objCount, bool isRead=true
 		fetchObject(ids[i], isRead);
 	}
 }
+
+HyflowObject* DTL2Context::locateObject(std::string id, bool abortOnNull) {
+	/*
+	 * Perform object availability check in Transaction itself
+	 */
+	// First of all check is object is part of delete set, Txn might have deleted
+	LOG_DEBUG("DTL :FetchObject readSet size %u\n", readMap.size());
+	std::map<std::string, HyflowObject*, ObjectIdComparator>::iterator cdi = deleteMap.find(id);
+	if ( cdi != deleteMap.end()) {
+		if (abortOnNull) {
+			LOG_DEBUG("DTL :Object %s in Delete Map, abort this transaction\n", id.c_str());
+			status = TXN_ABORTED;
+			TransactionException objectDeleted("DTL :Object in delete map, abort this transaction\n");
+			throw objectDeleted;
+		}else {
+			return NULL;
+		}
+	}
+
+	// check if object is already part of read set, all objects are added to read set
+	// which are either fetched for read or write, therefore need not to check for write set
+	std::map<std::string, HyflowObject*, ObjectIdComparator>::iterator cri = readMap.find(id);
+	if ( cri != readMap.end()) {
+		return readMap[id];
+	}
+
+	// Search in publish set too, user may lose its own created objects
+	// We need not to test to parent transactions first as transaction create unique objects
+	std::map<std::string, HyflowObject*, ObjectIdComparator>::iterator cpi = publishMap.find(id);
+	if ( cpi != publishMap.end() ) {
+		LOG_DEBUG("DTL :Object %s found in transaction publish Set\n", id.c_str());
+		// Copy object
+		HyflowObject* prCopy = NULL;
+		cpi->second->getClone(&prCopy);
+		return prCopy;
+	}
+
+	/*
+	 * Perform object availability check in Transaction parents, Useful for close and open nesting
+	 */
+	for (DTL2Context* current= (DTL2Context*)parentContext; current != NULL; current = (DTL2Context*)current->parentContext) {
+		{
+			// Check if object got Deleted by any of previous inner transaction
+			std::map<std::string, HyflowObject*, ObjectIdComparator>::iterator pdi = current->deleteMap.find(id);
+			if ( pdi != current->deleteMap.end()) {
+				if (abortOnNull) {
+					LOG_DEBUG("DTL :Object %s in parent Delete Map, abort this transaction\n", id.c_str());
+					status = TXN_ABORTED;
+					TransactionException objectDeleted("DTL :Object in delete map, abort this transaction\n");
+					throw objectDeleted;
+				}else {
+					return NULL;
+				}
+			}
+		}
+
+		{
+			// Check if object got updated by any of previous inner transaction: InnerTxn should read updated object
+			std::map<std::string, HyflowObject*, ObjectIdComparator>::iterator pwi = current->writeMap.find(id);
+			if ( pwi != current->writeMap.end()) {
+				// We got object in parent transaction
+				LOG_DEBUG("Got %s in parent transaction writeMap\n", id.c_str());
+				HyflowObject* pwCopy = NULL;
+				pwi->second->getClone(&pwCopy);
+				return pwCopy;
+			}
+		}
+
+		{
+			// Check if object exist in Read Map
+			std::map<std::string, HyflowObject*, ObjectIdComparator>::iterator pri = current->readMap.find(id);
+			if (pri != current->readMap.end()) {
+				// We got object in parent transaction
+				LOG_DEBUG("Got %s in parent transaction readMap\n", id.c_str());
+				HyflowObject* prCopy = NULL;
+				pri->second->getClone(&prCopy);
+				return prCopy;
+			}
+		}
+
+		{
+			// Check if object exist in publish set
+			std::map<std::string, HyflowObject*, ObjectIdComparator>::iterator ppubItr = current->publishMap.find(id);
+			if (ppubItr != current->publishMap.end()) {
+				// We got object in parent transaction
+				LOG_DEBUG("Got %s in parent transaction publishMap\n", id.c_str());
+				HyflowObject* ppCopy = NULL;
+				ppubItr->second->getClone(&ppCopy);
+				return ppCopy;
+			}
+		}
+	}
+
+	// Go over network and fetch the object
+	HyflowObject* obj = DirectoryManager::locate(id, true, txnId);
+	// If object got deleted then throw abort exception
+	if (obj == NULL) {
+		if (abortOnNull) {
+			LOG_DEBUG("DTL :Object %s got Deleted, need to abort this transaction\n", id.c_str());
+			status = TXN_ABORTED;
+			TransactionException objectDeleted("DTL :Object got Deleted, need to delete this transaction\n");
+			throw objectDeleted;
+		}else {
+			return NULL;
+		}
+	}
+
+	// Perform early validation step, always use highestSendClock, it is update by objectAccessMessage
+	// First do forwarding on current readSet then add new object to it
+	forward(highestSenderClock);
+	int checkPointIndex = CheckPointProvider::getCheckPointIndex();
+	obj->setAccessCheckPoint(checkPointIndex);
+	LOG_DEBUG("DTL :Fetched object %s at checkPointIndex %d\n", obj->getId().c_str(), checkPointIndex);
+	return obj;
+}
+
 
 void DTL2Context::increaseAbortCount() {
 	if (!abortCount.get()) {

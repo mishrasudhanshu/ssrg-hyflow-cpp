@@ -98,6 +98,7 @@ public:
 	void updateClock(int c);
 	bool fetchObject(std::string id, bool isRead, bool abortOnNull);
 	void fetchObjects(std::string ids[], int objCount, bool isRead);
+	HyflowObject* locateObject(std::string objId, bool abortOnNull);
 	static void increaseAbortCount();
 	static int getAbortCount();
 	static void resetAbortCount();

@@ -78,6 +78,9 @@ for (int __hyflow_attempt__ = 0; __hyflow_attempt__ < 0x7fffffff; __hyflow_attem
 #define HYFLOW_DELETE_OBJECT(OBJ) \
 	__context__->addToDelete(OBJ)
 
+#define HYFLOW_LOCATE_OBJECT(ID) \
+	__context__->locateObject(ID)
+
 namespace vt_dstm {
 
 /*
@@ -95,6 +98,7 @@ class Atomic {
 
 	static void defaultOnCommit(HyflowObject* self, BenchMarkArgs* args, HyflowContext* context, BenchMarkReturn* rt) {}
 	static void defaultOnAbort(HyflowObject* self, BenchMarkArgs* args, HyflowContext* context, BenchMarkReturn* rt) {}
+	static HyflowObject* locateObject(std::string objectId);
 public:
 	void (*atomically)(HyflowObject* self, BenchMarkArgs* args, HyflowContext* context, BenchMarkReturn* rt);
 
