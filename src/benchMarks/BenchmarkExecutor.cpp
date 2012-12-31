@@ -69,9 +69,9 @@ void BenchmarkExecutor::addMetaData(double trp, int retry, int cpResume) {
 }
 
 void BenchmarkExecutor::writeResults() {
-	LOG_DEBUG("Throughput=%f, abortRate=%d\n", throughPut, retryCount);
+	LOG_DEBUG("Throughput=%f, retryCount=%d\n", throughPut, retryCount);
 	Logger::result("Throughput=%.2f\n", throughPut);
-	float abortRate = (retryCount*100)/(transactions*threadCount);
+	float abortRate = (retryCount*100)/(transactions*(innerTxns+1)*threadCount);
 	Logger::result("AbortRate=%.2f\n",abortRate);
 	Logger::result("CheckpointResume=%d\n",checkPointResume);
 }
@@ -202,7 +202,7 @@ void BenchmarkExecutor::execute(int id){
 	unsigned long long end = getTime();
 	unsigned long long executionTime = (end -start + 1);	// Get value in us
 	LOG_DEBUG("Execution time %llu ms\n",executionTime/1000);
-	double thrPut = (transactions*1000000)/executionTime;
+	double thrPut = (double(transactions*1000000))/executionTime;
 	int rtry = 0, checkRes=0;
 	if (tries.get()) {
 	// Tries are also get included in retried value as we count number of contexts created

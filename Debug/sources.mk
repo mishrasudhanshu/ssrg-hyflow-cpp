@@ -41,6 +41,7 @@ src/core/directory/types \
 src/core/directory \
 src/core/context/types \
 src/core/context \
+src/core/contention \
 src/core \
 src/benchMarks/tm/vacation \
 src/benchMarks/tm/tpcc \

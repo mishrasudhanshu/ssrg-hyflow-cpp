@@ -18,10 +18,11 @@
 #include "../LockTable.h"
 #include "../ContextManager.h"
 #include "../AbstractLockTable.h"
+#include "../../contention/ContentionManager.h"
 
 namespace vt_dstm {
 
-boost::thread_specific_ptr<HyInteger> DTL2Context::abortCount;
+boost::thread_specific_ptr<HyInteger> DTL2Context::innerAbortCount;
 
 DTL2Context::DTL2Context() {
 	status = TXN_ACTIVE;
@@ -35,6 +36,7 @@ DTL2Context::DTL2Context() {
 	subTxnIndex = 0;
 	isWrite = false;
 	currentAction = NULL;
+	abortCount = 0;
 }
 
 DTL2Context::DTL2Context(Hyflow_NestingModel nm) {
@@ -49,6 +51,7 @@ DTL2Context::DTL2Context(Hyflow_NestingModel nm) {
 	subTxnIndex = 0;
 	isWrite = false;
 	currentAction = NULL;
+	abortCount = 0;
 }
 
 DTL2Context::~DTL2Context() {
@@ -164,6 +167,8 @@ void DTL2Context::contextDeinit() {
 	if ((nestingModel == HYFLOW_NESTING_OPEN) && (status == TXN_ABORTED)) {
 		rollback();
 	}
+
+	ContentionManager::deInit(this);
 
 	if (nestingModel == HYFLOW_NESTING_FLAT) {
 		if (contextExecutionDepth <= 0) {
@@ -440,6 +445,9 @@ HyflowObject* DTL2Context::onWriteAccess(HyflowObject *obj){
 				LOG_DEBUG("DTL :Object %s no available in read Set, should be through locate\n", id.c_str());
 				writeMap[id] = obj;
 				return obj;
+			}else {
+				ri->second->getClone(&writeSetCopy);
+				writeMap[id] = writeSetCopy;
 			}
 		}
 		return writeMap.at(id);
@@ -789,6 +797,7 @@ void DTL2Context::tryCommitCP() {
 	try {
 		// Try to acquire the locks on object in lazy fashion
 		int availableCheckPoint = CheckPointProvider::getCheckPointIndex()+1;
+		assert(availableCheckPoint);
 		// LESSON: Make sure iterator don't get invalidated from erase
 		std::map<std::string, HyflowObject*, ObjectIdComparator>::reverse_iterator rev_wi = writeMap.rbegin();
 		while(rev_wi != writeMap.rend()) {
@@ -885,6 +894,8 @@ void DTL2Context::tryCommitCP() {
 
 		if (availableCheckPoint < 1) {
 			Logger::fatal("Error in CheckPointing: Transaction must have been aborted\n");
+			TransactionException checkPointFailure("CommitCP :CheckPoint Not available\n");
+			throw checkPointFailure;
 		}else {
 			if (availableCheckPoint == CheckPointProvider::getCheckPointIndex()+1) {
 				LOG_DEBUG("CommitCP :No partial Abort required \n");
@@ -1260,7 +1271,7 @@ void DTL2Context::commit(){
 		} else {
 			LOG_DEBUG("DTL :CLOSED Context Call, merging sets to parent\n");
 			mergeIntoParents();
-			resetAbortCount();
+			resetInnerAbortCount();
 		}
 	}else if (nestingModel == HYFLOW_NESTING_OPEN) {
 		tryCommitON();
@@ -1328,11 +1339,11 @@ bool DTL2Context::checkParent() {
 				return true;
 			} else {
 				// Inner transaction abort count
-				increaseAbortCount();
-				int aborts = getAbortCount();
+				increaseInnerAbortCount();
+				int aborts = getInnerAbortCount();
 				if (aborts > 3 ) {
 					LOG_DEBUG("DTL :Repeated Inner transaction Abort=%d, full abort\n", aborts);
-					resetAbortCount();
+					resetInnerAbortCount();
 					return true;
 				}
 				LOG_DEBUG("DTL :Check Parent not throwing exception as parent Active, abort Count %d\n", aborts);
@@ -1547,6 +1558,11 @@ HyflowObject* DTL2Context::locateObject(std::string id, bool abortOnNull) {
 		}
 	}
 
+	std::map<std::string, HyflowObject*, ObjectIdComparator>::iterator cwi = writeMap.find(id);
+	if ( cwi != writeMap.end()) {
+		return writeMap[id];
+	}
+
 	// check if object is already part of read set, all objects are added to read set
 	// which are either fetched for read or write, therefore need not to check for write set
 	std::map<std::string, HyflowObject*, ObjectIdComparator>::iterator cri = readMap.find(id);
@@ -1645,28 +1661,28 @@ HyflowObject* DTL2Context::locateObject(std::string id, bool abortOnNull) {
 }
 
 
-void DTL2Context::increaseAbortCount() {
-	if (!abortCount.get()) {
+void DTL2Context::increaseInnerAbortCount() {
+	if (!innerAbortCount.get()) {
 		HyInteger* aborts = new HyInteger(0);
-		abortCount.reset(aborts);
+		innerAbortCount.reset(aborts);
 	}
-	abortCount.get()->increaseValue();
+	innerAbortCount.get()->increaseValue();
 }
 
-int DTL2Context::getAbortCount() {
-	if (!abortCount.get()) {
+int DTL2Context::getInnerAbortCount() {
+	if (!innerAbortCount.get()) {
 		HyInteger* aborts = new HyInteger(0);
-		abortCount.reset(aborts);
+		innerAbortCount.reset(aborts);
 	}
-	return abortCount.get()->getValue();
+	return innerAbortCount.get()->getValue();
 }
 
-void DTL2Context::resetAbortCount() {
-	if (!abortCount.get()) {
+void DTL2Context::resetInnerAbortCount() {
+	if (!innerAbortCount.get()) {
 		HyInteger* aborts = new HyInteger(0);
-		abortCount.reset(aborts);
+		innerAbortCount.reset(aborts);
 	}
-	abortCount.get()->setValue(0);
+	innerAbortCount.get()->setValue(0);
 }
 
 

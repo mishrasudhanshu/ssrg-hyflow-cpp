@@ -36,9 +36,11 @@ protected:
 	HyflowContext* rootContext;
 	int contextExecutionDepth;
 	int subTxnIndex;
+	int abortCount;
 public:
 	HyflowContext() {
 		status = TXN_ACTIVE;
+		abortCount = 0;
 	}
 
 	virtual ~HyflowContext() {}
@@ -49,6 +51,9 @@ public:
 
 	void setStatus(TxnStatus status) {
 		this->status = status;
+		if (status == TXN_ABORTED) {
+			abortCount++;
+		}
 	}
 
 	unsigned long long getTxnId() const {
@@ -117,6 +122,10 @@ public:
 	 * Locate Object for this context without adding to readSet or writeSet
 	 */
 	virtual HyflowObject* locateObject(std::string objId, bool abortOnNull=true) = 0;
+
+	int getAbortCount() const {
+		return abortCount;
+	}
 
 	Hyflow_NestingModel getNestingModel() const {
 		return nestingModel;

@@ -26,7 +26,7 @@ do
     mkdir -p "$bench"_exp1
     echo "txns=$txns, objs=$objs, reads 0..100..20 threads 1, nodes=1..24" 
 
-    models="flat checkPointing close"
+    models="flat checkPointing closed"
 
     for model in $models
     do

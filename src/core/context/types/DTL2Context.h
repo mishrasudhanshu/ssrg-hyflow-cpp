@@ -58,7 +58,7 @@ class DTL2Context: public vt_dstm::HyflowContext {
 	int tnxClock;
 	int highestSenderClock;
 
-	static boost::thread_specific_ptr<HyInteger> abortCount;
+	static boost::thread_specific_ptr<HyInteger> innerAbortCount;
 	bool isWrite;
 	bool lockObject(HyflowObject *obj);
 	void unlockObjectOnFail(HyflowObject *obj);
@@ -99,13 +99,17 @@ public:
 	bool fetchObject(std::string id, bool isRead, bool abortOnNull);
 	void fetchObjects(std::string ids[], int objCount, bool isRead);
 	HyflowObject* locateObject(std::string objId, bool abortOnNull);
-	static void increaseAbortCount();
-	static int getAbortCount();
-	static void resetAbortCount();
+	static void increaseInnerAbortCount();
+	static int getInnerAbortCount();
+	static void resetInnerAbortCount();
 	void onLockAccess(std::string benchObject, std::string lockname, bool readlock);
 	void setCurrentAction(void* currentAction);
 	void addAbstractLock(std::string lockName, void* abstractLock, bool read);
 	virtual void addAction(void* action);
+
+	bool isIsWrite() const {
+		return isWrite;
+	}
 };
 
 } /* namespace vt_dstm */

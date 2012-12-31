@@ -62,7 +62,7 @@ void CheckPointProvider::checkPointProviderInit() {
 }
 
 void CheckPointProvider::checkPointInit() {
-	if (checkPointingEnabled) {
+	if (isCheckPointingEnabled()) {
 		int threadId = ThreadMeta::getThreadId();
 		isTransactionComplete[threadId] = false;
 		checkPointIndex[threadId] = 0;
@@ -78,7 +78,7 @@ void CheckPointProvider::checkPointInit() {
 }
 
 void CheckPointProvider::increaseCheckPointIndex() {
-	if (checkPointingEnabled) {
+	if (isCheckPointingEnabled()) {
 		checkPointIndex[ThreadMeta::getThreadId()]++;
 	}
 }
@@ -133,21 +133,21 @@ void CheckPointProvider::storeUserValue(void **Reference, void *value) {
 }
 
 int CheckPointProvider::getCheckPointIndex() {
-	if (checkPointingEnabled) {
+	if (isCheckPointingEnabled()) {
 		return checkPointIndex[ThreadMeta::getThreadId()];
 	}
 	return 0;
 }
 
 void CheckPointProvider::setCheckPointIndex(int cpi) {
-	if (checkPointingEnabled) {
+	if (isCheckPointingEnabled()) {
 		checkPointIndex[ThreadMeta::getThreadId()] = cpi;
 		LOG_DEBUG("CPP :PreJump CheckPoint Index %d\n", cpi);
 	}
 }
 
 void CheckPointProvider::startCheckPoint(int checkPointIndex) {
-	if (checkPointingEnabled) {
+	if (isCheckPointingEnabled()) {
 		int threadId = ThreadMeta::getThreadId();
 		if (checkPointIndex > (checkPoints[threadId]->size()-1)) {
 			Logger::fatal("CPP : Beyond checkpoint\n");
@@ -232,7 +232,7 @@ void CheckPointProvider::restoreUserValues() {
 }
 
 void CheckPointProvider::saveCheckPoint(ucontext_t* checkPoint) {
-	if (checkPointingEnabled) {
+	if (isCheckPointingEnabled()) {
 		int threadId = ThreadMeta::getThreadId();
 		LOG_DEBUG("CPP : Saved checkpoint number %d\n", checkPoints[threadId]->size());
 		checkPoints[threadId]->push_back(checkPoint);
