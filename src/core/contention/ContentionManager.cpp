@@ -8,11 +8,11 @@
 #include "ContentionManager.h"
 
 #include <cstdlib>
+#include <unistd.h>
 
 #include "../../util/logging/Logger.h"
 #include "../../util/networking/NetworkManager.h"
 #include "../context/types/DTL2Context.h"
-#include <unistd.h>
 
 #define HYFLOW_BACKOFF_BARRIER 3
 
