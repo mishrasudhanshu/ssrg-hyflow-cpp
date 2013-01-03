@@ -436,14 +436,6 @@ void ListNode::deleteAbort(HyflowObject* self, BenchMarkArgs* args, HyflowContex
 	next = currentNode->getNextId();
 	LOG_DEBUG("LIST :First Node in List is %s adding new value %d\n", next.c_str(), newNodeValue);
 
-	if (__context__->getNestingModel() == HYFLOW_NESTING_OPEN ) {
-		// Create unique abstract lock for this transaction
-		std::stringstream absLockStr;
-		absLockStr<<newNodeValue;
-		std::string lockName = absLockStr.str();
-		__context__->onLockAccess("BST0", lockName, false);
-	}
-
 	if (next.compare("NULL") == 0) {
 		ListNode* newNode = new ListNode(newNodeValue, ListBenchmark::getId());
 		newNode->setNextId(next);

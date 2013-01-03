@@ -366,7 +366,7 @@ void DTL2Context::forward(int senderClock) {
 				}
 
 				if (!validateObject(ri->second)) {
-					LOG_DEBUG("FowardCP :Unable to validate for %s, version %d accessIndex %d with txn %ull\n", ri->first.c_str(), objectsCheckPoint, ri->second->getVersion(), txnId);
+					LOG_DEBUG("FowardCP :Unable to validate for %s, version %d accessIndex %d with txn %llu\n", ri->first.c_str(), objectsCheckPoint, ri->second->getVersion(), txnId);
 
 					if (objectsCheckPoint > 0) {
 						availableCheckPoint = objectsCheckPoint;
@@ -1290,7 +1290,7 @@ void DTL2Context::rollback() {
 		for ( std::vector<Atomic*>::iterator sItr = actionList.begin() ; sItr != actionList.end() ; sItr++ ) {
 			Atomic* abortAction = *sItr;
 			if (abortAction->isCompleted()) {
-				LOG_DEBUG("DTL :Performing rollback action\n");
+				LOG_DEBUG("DTL :Performing ROLLBACK action\n");
 				Atomic atomicAction(HYFLOW_INTERNAL_OPEN);
 				atomicAction.atomically = abortAction->onAbort;
 				atomicAction.execute(NULL, abortAction->getArguements(), abortAction->getReturnValue());

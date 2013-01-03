@@ -21,6 +21,51 @@
 
 namespace vt_dstm {
 
+void HyflowMetaData::updateMetaData(HyflowMetaData & metadata, HyflowMetaDataType type) {
+	switch (type) {
+	case HYFLOW_METADATA_THROUGHPUT:
+		throughPut += metadata.throughPut;
+		break;
+	case HYFLOW_METADATA_TRIES:
+		txnTries.setValue(txnTries.getValue()+metadata.txnTries.getValue());
+		break;
+	case HYFLOW_METADATA_ABORTS:
+		txnAborts.setValue(txnAborts.getValue()+metadata.txnAborts.getValue());
+		break;
+	case HYFLOW_METADATA_CHECKPOINT_RESUME:
+		txnCheckpointResume.setValue(txnCheckpointResume.getValue()+metadata.txnCheckpointResume.getValue());
+		break;
+	case HYFLOW_METADATA_ALL:
+		throughPut += metadata.throughPut;
+		txnTries.setValue(txnTries.getValue()+metadata.txnTries.getValue());
+		txnAborts.setValue(txnAborts.getValue()+metadata.txnAborts.getValue());
+		txnCheckpointResume.setValue(txnCheckpointResume.getValue()+metadata.txnCheckpointResume.getValue());
+		break;
+	default:
+		Logger::fatal("HYMETA :Invalid HyflowMetaData type\n");
+		break;
+	}
+}
+
+void HyflowMetaData::increaseMetaData(HyflowMetaDataType type) {
+	switch (type) {
+	case HYFLOW_METADATA_TRIES:
+		txnTries.increaseValue();
+		break;
+	case HYFLOW_METADATA_ABORTS:
+		txnAborts.increaseValue();
+		LOG_DEBUG("HYMETA :---tries++-->%d\n", txnAborts.getValue());
+		break;
+	case HYFLOW_METADATA_CHECKPOINT_RESUME:
+		txnCheckpointResume.increaseValue();
+		LOG_DEBUG("HYMETA :---Checkpoint++-->%d\n", txnCheckpointResume.getValue());
+		break;
+	default:
+		Logger::fatal("HYMETA :Invalid HyflowMetaData type\n");
+		break;
+	}
+}
+
 int BenchmarkExecutor::calls = 1;
 int BenchmarkExecutor::delay = 0;
 long BenchmarkExecutor::timeout = 0;
@@ -31,23 +76,20 @@ int BenchmarkExecutor::transactions = 0 ;
 int BenchmarkExecutor::readPercent = 0;
 int BenchmarkExecutor::threads = 1;
 bool BenchmarkExecutor::isInitiated = false;
-double BenchmarkExecutor::throughPut = 0;
 int BenchmarkExecutor::threadCount = 0;
-int BenchmarkExecutor::retryCount = 0;
 int BenchmarkExecutor::transactionLength=0;
-int BenchmarkExecutor::checkPointResume = 0;
 int BenchmarkExecutor::innerTxns=1;
 int BenchmarkExecutor::itcpr=1;
 int BenchmarkExecutor::objectNesting=2;
 
+HyflowMetaData BenchmarkExecutor::benchNodeMetadata;
 std::string BenchmarkExecutor::benchMarkName;
 
 HyflowBenchmark* BenchmarkExecutor::benchmark = NULL;
 bool* BenchmarkExecutor::transactionType = NULL;
 std::string*** BenchmarkExecutor::threadArgsArray = NULL;
 std::string* BenchmarkExecutor::ids = NULL;
-boost::thread_specific_ptr<HyInteger> BenchmarkExecutor::tries;
-boost::thread_specific_ptr<HyInteger> BenchmarkExecutor::checkResume;
+boost::thread_specific_ptr<HyflowMetaData> BenchmarkExecutor::benchMarkThreadMetadata;
 boost::thread** BenchmarkExecutor::benchmarkThreads = NULL;
 boost::mutex BenchmarkExecutor::execMutex;
 
@@ -61,19 +103,17 @@ unsigned long long BenchmarkExecutor::getTime() {
 	return tv.tv_sec*1000000 + tv.tv_usec;
 }
 
-void BenchmarkExecutor::addMetaData(double trp, int retry, int cpResume) {
+void BenchmarkExecutor::submitThreadMetaData(HyflowMetaData& threadMetadata) {
 	boost::unique_lock<boost::mutex> metaDatalock(execMutex);
-	throughPut += trp;
-	retryCount += retry;
-	checkPointResume += cpResume;
+	benchNodeMetadata.updateMetaData(threadMetadata, HYFLOW_METADATA_ALL);
 }
 
 void BenchmarkExecutor::writeResults() {
-	LOG_DEBUG("Throughput=%f, retryCount=%d\n", throughPut, retryCount);
-	Logger::result("Throughput=%.2f\n", throughPut);
-	float abortRate = (retryCount*100)/(transactions*(innerTxns+1)*threadCount);
+	LOG_DEBUG("Throughput=%f, retryCount=%d\n", benchNodeMetadata.throughPut, benchNodeMetadata.txnAborts.getValue());
+	Logger::result("Throughput=%.2f\n", benchNodeMetadata.throughPut);
+	float abortRate = (benchNodeMetadata.txnAborts.getValue()*100)/(benchNodeMetadata.txnTries.getValue()*(innerTxns+1)*threadCount);
 	Logger::result("AbortRate=%.2f\n",abortRate);
-	Logger::result("CheckpointResume=%d\n",checkPointResume);
+	Logger::result("CheckpointResume=%d\n",benchNodeMetadata.txnCheckpointResume.getValue());
 }
 
 void BenchmarkExecutor::initExecutor(){
@@ -202,37 +242,25 @@ void BenchmarkExecutor::execute(int id){
 	unsigned long long end = getTime();
 	unsigned long long executionTime = (end -start + 1);	// Get value in us
 	LOG_DEBUG("Execution time %llu ms\n",executionTime/1000);
-	double thrPut = (double(transactions*1000000))/executionTime;
-	int rtry = 0, checkRes=0;
-	if (tries.get()) {
-	// Tries are also get included in retried value as we count number of contexts created
-		rtry = tries.get()->getValue();
+	benchMarkThreadMetadata->throughPut = (double(transactions*1000000))/executionTime;
+
+	if (benchMarkThreadMetadata.get()) {
+//	/*// Tries are also get included in retried value as we count number of contexts created
+//		rtry = tries.get()->getValue()
+//	}
+//	if (checkResume.get()) {
+//	*/	checkRes = checkResume.get()->getValue();
+		submitThreadMetaData(*(benchMarkThreadMetadata.get()));
+		LOG_DEBUG("BNC_EXE %d: ThroughPut = %0.3f trxns/sec <----------------------\n", id, benchMarkThreadMetadata->throughPut);
 	}
-	if (checkResume.get()) {
-		checkRes = checkResume.get()->getValue();
-	}
-	addMetaData(thrPut, rtry, checkRes);
-	LOG_DEBUG("BNC_EXE %d: ThroughPut = %0.2f trxns/sec <----------------------\n", id, thrPut);
-//	sleep(20);
-//	ThreadMeta::threadDeinit(TRANSACTIONAL_THREAD);
 }
 
-void BenchmarkExecutor::increaseRetries() {
-	if (!tries.get()) {
-		tries.reset(new HyInteger(0));
+void BenchmarkExecutor::increaseMetaData(HyflowMetaDataType type) {
+	if (!benchMarkThreadMetadata.get()) {
+		benchMarkThreadMetadata.reset(new HyflowMetaData());
 	}
-	tries.get()->increaseValue();
-	LOG_DEBUG("BE:---tries++-->%d\n", tries.get()->getValue());
+	benchMarkThreadMetadata->increaseMetaData(type);
 }
-
-void BenchmarkExecutor::countCheckpointResume() {
-	if (!checkResume.get()) {
-		checkResume.reset(new HyInteger(0));
-	}
-	checkResume.get()->increaseValue();
-	LOG_DEBUG("BE:---Checkpoint++-->%d\n", checkResume.get()->getValue());
-}
-//	benchmark->warmUp();
 
 void BenchmarkExecutor::executeThreads() {
 	// Read all the configuration settings

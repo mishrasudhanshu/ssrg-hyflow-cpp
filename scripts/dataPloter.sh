@@ -25,8 +25,8 @@ g=/tmp/plot.temp
 echo "set term postscript eps enhanced color 22" > ${g}
 echo "set output \"${eps}\"" >> ${g}
 #echo "set title \"$title\"" >> ${g}
-echo "set key bottom" >> ${g}
-echo "set key right" >> ${g}
+echo "set key top" >> ${g}
+echo "set key left" >> ${g}
 echo "set xtics 10" >> ${g}
 echo "set xlabel \"$xlabel\"" >> ${g}
 echo "set ylabel \"Throughput (transactions/s)\"" >> ${g}
@@ -44,7 +44,7 @@ do
     then
         echo -n "\"$file\" using 1:$count title \"$token\" with lines" >>${g} 
     else
-        echo -n ", "
+        echo -n ", " >>${g}
         echo -n "\"$file\" using 1:$count title \"$token\" with lines" >>${g} 
     fi
     let count++ 

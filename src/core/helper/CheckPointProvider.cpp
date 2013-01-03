@@ -173,7 +173,7 @@ void CheckPointProvider::startCheckPoint(int checkPointIndex) {
 			}
 		}
 
-		BenchmarkExecutor::countCheckpointResume();
+		BenchmarkExecutor::increaseMetaData(HYFLOW_METADATA_CHECKPOINT_RESUME);
 		LOG_DEBUG("CPP : Setting checkPoint Jump Point %d\n", checkPointIndex);
 		jumpCheck[threadId] = checkPointIndex;
 		setcontext(restartPoint);

@@ -23,12 +23,37 @@
 
 namespace vt_dstm {
 
+enum HyflowMetaDataType{
+	HYFLOW_METADATA_TRIES,
+	HYFLOW_METADATA_ABORTS,
+	HYFLOW_METADATA_CHECKPOINT_RESUME,
+	HYFLOW_METADATA_THROUGHPUT,
+	// Add New Types above
+	HYFLOW_METADATA_ALL,
+};
+
+class HyflowMetaData{
+public:
+	HyInteger txnTries;
+	HyInteger txnAborts;
+	HyInteger txnCheckpointResume;
+	double throughPut;
+	HyflowMetaData() {
+		txnTries = 0;
+		txnAborts = 0;
+		txnCheckpointResume = 0;
+		throughPut = 0;
+	}
+	void increaseMetaData(HyflowMetaDataType type);
+	void updateMetaData(HyflowMetaData& metadata, HyflowMetaDataType type);
+};
+
 class BenchmarkExecutor {
 	static HyflowBenchmark *benchmark;
 	static boost::thread **benchmarkThreads;
 
-	static boost::thread_specific_ptr<HyInteger> tries;
-	static boost::thread_specific_ptr<HyInteger> checkResume;
+	static boost::thread_specific_ptr<HyflowMetaData> benchMarkThreadMetadata;
+
 	static int calls;
 	static int delay;
 	static long timeout;
@@ -40,9 +65,7 @@ class BenchmarkExecutor {
 	static bool isInitiated;
 	static bool sanity;
 	static int threadCount;
-	static double throughPut;
-	static int retryCount;
-	static int checkPointResume;
+	static HyflowMetaData benchNodeMetadata;
 	static int transactionLength;
 	static int innerTxns;
 	static int itcpr;
@@ -62,7 +85,7 @@ class BenchmarkExecutor {
 	static std::string& randomId();
 	static void createObjects();
     static void execute(int id);
-	static void addMetaData(double trhPut, int retry, int cpResume);
+	static void submitThreadMetaData(HyflowMetaData& threadMetadata);
 	static void writeConfig();
 public:
 	BenchmarkExecutor();
@@ -88,8 +111,8 @@ public:
     }
 
     static void executeThreads();
-	static void increaseRetries();
-	static void countCheckpointResume();
+
+	static void increaseMetaData(HyflowMetaDataType type);
 
 	static void transactionLengthDelay();
 

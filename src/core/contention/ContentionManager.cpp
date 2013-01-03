@@ -13,8 +13,9 @@
 #include "../../util/logging/Logger.h"
 #include "../../util/networking/NetworkManager.h"
 #include "../context/types/DTL2Context.h"
+#include "../../benchMarks/BenchmarkExecutor.h"
 
-#define HYFLOW_BACKOFF_BARRIER 3
+#define HYFLOW_BACKOFF_BARRIER 9
 
 #ifdef RELEASE
 #define HYFLOW_BASE_BACKOFF 2000
@@ -33,14 +34,18 @@ void ContentionManager::init(void* metaData) {}
 // Performs Random back-off if too many aborts are happening
 void ContentionManager::deInit(void* metaData) {
 	DTL2Context* context = (DTL2Context*)metaData;
-	int aborts = context->getAbortCount();
-	int baseSleepTime = HYFLOW_BASE_BACKOFF*NetworkManager::getThreadCount()*NetworkManager::getNodeCount();
-	int sleepTime = ((aborts)/HYFLOW_BACKOFF_BARRIER)*baseSleepTime;
-	sleepTime = sleepTime + abs(Logger::getCurrentMicroSec())%(sleepTime+1);
-	// Do random back-Off
-	if (sleepTime && context->isIsWrite()) {
-		LOG_DEBUG("CONMAN :Performing back-off after %d aborts for %d ms\n", aborts, sleepTime/1000);
-		usleep(sleepTime);
+	// Don't perform random back-off in inner Transactions, in open nesting they might have
+	// abstract locks which will block all other transactions to proceed too. Never back-off internal open
+	if (!context->getParentContext() && (context->getNestingModel() != HYFLOW_INTERNAL_OPEN)) {
+		int aborts = context->getAbortCount();
+		int baseSleepTime = HYFLOW_BASE_BACKOFF*NetworkManager::getThreadCount()*NetworkManager::getNodeCount()*BenchmarkExecutor::getInnerTxns();
+		int sleepTime = ((aborts*aborts*aborts)/HYFLOW_BACKOFF_BARRIER)*baseSleepTime;
+		sleepTime = sleepTime + abs(Logger::getCurrentMicroSec())%(sleepTime+1);
+		// Do random back-Off
+		if (sleepTime && context->isIsWrite()) {
+			LOG_DEBUG("CONMAN :Performing back-off after %d aborts for %d ms\n", aborts, sleepTime/1000);
+			usleep(sleepTime);
+		}
 	}
 }
 
