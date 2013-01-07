@@ -38,6 +38,11 @@ do
                 echo "For experiment = $exp"
                 inTxns=$exp
                 objs=$((300*inTxns))
+                if [[ "$setBenchMarks" =~ "$bench"  ]]
+                then
+                    objs=$((5*inTxns))
+                    echo "Got Set BenchMark Objects=$objs"
+                fi
                 for nodes in 2 4 8 16 32 48
                 do
                     echo "    For nodes = $nodes For objs=$objs and inTxns=$inTxns"

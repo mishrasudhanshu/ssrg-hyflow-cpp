@@ -57,6 +57,7 @@ unsigned long long ContextManager::createTid(HyflowContext *c) {
 }
 
 HyflowContext* ContextManager::getInstance() {
+	BenchmarkExecutor::increaseMetaData(HYFLOW_METADATA_TRIES);
 	HyflowContextFactory *contextFactory = threadContextFactory.get();
 	if (!contextFactory) {
 		contextFactory = new HyflowContextFactory();

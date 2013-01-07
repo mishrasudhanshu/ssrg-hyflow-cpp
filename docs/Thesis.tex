@@ -97,7 +97,7 @@ Mark Jones
 
 \vfill
 
-December 7, 2012 \\
+January 28, 2013 \\
 Blacksburg, Virginia
 
 \vfill
@@ -204,10 +204,14 @@ Introduction
 
 In current digital age, as Moore's law~\cite{schaller1997moore} is approaching towards scaling limit, and processor clocks are hitting the power wall, chip manufacturers are progressively endowing the multi-core CPU architecture. Augment in computation performance by increasing processor clock rate and transistor scaling is no more a feasible options. Experts believe further performance improvements can be achieved through, writing the software to explicitly exploit the hardware parallelism. 
 
-Writing the concurrent software code is a daunting task.
+Writing the concurrent software code is a daunting task a ordinary programmer. Such code requires a proper synchronization and co-ordination different parallel parts. Lock based synchronization is often used synchronization abstraction. Coarse grain locking is simple to implement, protects the concurrent code by locking over large critical section, permits the little concurrency. On other hand the fine grain locking is efficient and reduce the large critical section is various small parts to provide to maximum concurrency. However, implementing such fine grained locks is highly complex and prone to programmer errors. Such lock based implementations have inherent problems such as deadlocks, livelocks, lock convoying, and priority inversion. Additionally, lock based synchronization does not support code composability. For instance, a thread safe data structure may support atomic insertion or removal of elements using some internal lock mechanism. However, a user might require to remove a element from one collection and insertion in another. Such operations can not be performed atomically using providing lock mechanism in data structure and will require to implement additional locking support to lock multiple data structure at same time. These issues with locks make concurrent code difficult to understand, program and maintain.
+
+Complications with lock based systems increase manifold in case of distributed systems where multi-core processors are connected to each other over network. All locked based issues like deadlocks and livelocks become more severe as resolving such issue becomes more costly and error prone over network. In addition, lack of composability makes it difficult to support any replication or backup mechanism for failure  prone links.    
+
+Transactional Memory is a alternative abstraction to lock based synchronization. It aims to simplify the development of concurrent programs by alleviating the inherent issues with locks. Transaction Memory liberates the programmer from arduous task of maintaining the locks. It allows the programmer to identify the  sequence of instruction required to executed in isolation and executes that atomically as a transaction. This approach have been very successful in databases and slowly getting accepted in concurrent programming. Transactions are executed in transparent manner and commit atomically based on consistency constrain defined by system. Transactions generally maintain a set of read and write objects to verify the consistency constrain at commit time. In case of conflict at commit time, transaction is abort and retried later.      
 %stopped
 
-To be added: Lock based concurrency vs TM and DTM
+To overcome the distributed concurrency synchronization challenges the a transactional memory interfaces are enhanced to support transactions over network. Distributed Transactional Memory(DTM) is a promising model to extract the high performance from multiple core connected over network. Objective of DTM is not only to resolve the concurrency issues related to distributed concurrency, but also to support scalability and decentralization of resources to improve overall reliability of systems. From programmers prospect DTM follows the traditional validation and commit approach used in Transactional Memory. In addition to that it provides the user various methods to access the distributed object over the network. 
 
 \section{Transactional Memory Properties}
 
@@ -244,7 +248,7 @@ Even though weaker consistency models provide high performance by relaxing the s
 
 \subsection{Strong Atomicity}
 
-\textit{Strong atomicity} is a transactional semantics, which allows the transactional and non-transactional code, to execute atomically with respect to each other. It hides any inconsistent state of system from non-transactional code. In essence, the strong atomicity treats the non-transactional code executing in its own singleton atomic transaction. This behavior stops the user code to access any unprotected shared variables outsides the transactional code. In comparison to strong atomicity \textit{ Weak atomicity} executes the transactional code atomically with reference to other transactional code only. The non-transactional code can still access the shared variables in inconsistent state. HyflowCpp framework provides strong atomicity for user code.     
+\textit{Strong atomicity} is a transactional semantics, which hides any inconsistent state of system from non-transactional code. In essence, the strong atomicity treats the non-transactional code executing in its own singleton atomic transaction. This behavior stops the user code to access any unprotected shared variables outsides the transactional code. In comparison to strong atomicity \textit{ Weak atomicity} executes the transactional code atomically with reference to other transactional code only. The non-transactional code can still access the shared variables in inconsistent state. Stronger atomicity help the programmer by removing any potentially buggy interleavings. HyflowCpp framework provides strong atomicity for user code.     
 
 \section{Transactional Models}
 
@@ -304,13 +308,12 @@ In this chapter we survey the past and related work focusing on the problem of d
 \begin{enumerate}
 \item Serializability
 \item Non-Serializability 
-\item Concurrency Control
 \item Replication 
 \item Strong Atomicity
 \item Transaction Models
 \end{enumerate}
 
-We will first introduce the various transactional property in each section and later describe works related to given transactional property. 
+In each section we describe the various research works and related transactional property definitions. In last section we also describe recent developed various unconventional systems.
 
 \section{Serializable DTM implementations}
 
@@ -354,34 +357,49 @@ Many researchers have contented the serializability as a very strong criteria an
 SI is defined by two properties: \textit{Snapshot-Read} requires that a transaction T reads data from a snapshot which contains all updates committed before T starts (plus its own updates). \textit{Snapshot-Write} requires that no two concurrent transactions may write the same object; that is, if two concurrent transactions both want to write the same data item only one of them will be allowed to commit.
 \end{definition}
 
-Snapshot-Read is typically implemented via a multiversion system where read operations access previously committed versions. Conflict detection for Snapshot-Write can be implemented via locking or via validation. In SI read and write skew anomalies can occur, which happens when two transactions concurrently read an overlapping data set, make disjoint updates, and finally concurrently commit. Neither of transaction see update performed by the other.
+Snapshot-Read is typically implemented via a multiversion system where read operations access previously committed versions. Multi-Versioning is often used in databases to provides the concurrent access. It can be defined as following:
+\begin{definition}[\textbf{Multi-Versioning}]
+In Multi-Version concurrency control(MVCC), each write on an object $x$ creates a new copy of it. All copies of same object are given proper version based on history value. MVCC provides time-consistence views for the system. It allows the delayed read operations to execute successfully by providing the object version relevant to transaction's time-stamp. 
+\end{definition}
+
+Conflict detection for Snapshot-Write can be implemented via locking or via validation. In SI read and write skew anomalies can occur, which happens when two transactions concurrently read an overlapping data set, make disjoint updates, and finally concurrently commit. Neither of transaction see update performed by the other.
 
 One of the first paper on weaker consistency Model SI was DecentSTM~\cite{DecentSTM:5470446} in 2010.  DecentSTM algorithm keeps limited list of committed versions of all shared data and obtains lazily a consistent memory snapshot during a transaction’s execution. By choosing a version upon read, a transaction determines on which versions it depends. In fact with unlimited version history, a read only transaction would never have to abort, because it could always read a previous version that does not conflict with the data read so far. For coincidental commits DTM uses a voting based randomized consensus protocol. Using snapshot isolation do provide the higher performance in Decent STM, but also adds up additional memory overhead of maintaining versioned objects.  
 
 In 2011 Nuno et. al. in DiasSTM~\cite{dias2011efficient} came up with approach of static analysis of transactional code to provide serializable correctness to the snapshot consistency model based database systems. They suggested the methods to avoid read-write anomalies by automatically modifying the transaction code.
 
-\begin{definition}[\textbf{Extended Update Serializability}]
-Extended Update Serializability (EUS)~\cite{EUS:HansdahPatnaik} unlike 1-Copy Serialization allows concurrent read-only transactions to observe snapshots generated from different linear extensions of the history of update transactions.
+Genuine Multiversion Update-Serializable Partial Data Replication(GMU)~\cite{GMU:peluso2012scalability} work published in 2012 provided high performance using the consistency criterion Extended Update Serializability(EUS). Update serializability is a weaker consistency criteria and can be defines as follows:
+
+\begin{definition}[\textbf{Update Serializability}]
+A schedule $s$ over a set $T$ of transactions is update serializable (USR) iff each schedule $s'$ obtained from $s$ after deleting all but one read-only transaction is serializable. If there are no read-only transactions , then no transactions need be deleted.
 \end{definition}
 
-\begin{definition}[\textbf{Eventual Consistency}]
-Eventual Consistency is a type of weak consistency model. In this model system guarantees that if no new updates are made to system for a period of time, all values in the system will updated to most recent values. Time period required to update all the values to most recent updated values is deterministic. In case of no system failure, it can be calculated based on factors like communication delays and data load time.   
-\end{definition}
+Extended Update Serializability (EUS)~\cite{EUS:HansdahPatnaik} allows concurrent read-only transactions to observe snapshots generated from different linear extensions of the history of update transactions.
 
+At its heart GMU uses a distributed multiversion concurrency control scheme, a vector clock based synchronization algorithm, to track down data and causal dependency relations. It uses the partial replication to reduce the amount of network communication. 
 
-\section{Concurrency Control}
-\begin{definition}[\textbf{Multi-Versioning}]
-Multi-Versioning is often used in databases to provides the concurrent access. In Multi-Version concurrency control(MVCC), each write on an object $x$ creates a new copy of it. All copies of same object are given proper version based on history value. MVCC provides time-consistence views for the system. It allows the delayed read operations to execute successfully by providing the object version relevant to transaction's time-stamp. 
-\end{definition}
-
-Genuine Multiversion Update-Serializable Partial Data Replication(GMU)~\cite{GMU:peluso2012scalability} work published in 2012 provided high performance using the consistency criterion Extended Update Serializability(EUS). At its heart GMU uses a distributed multiversion concurrency control scheme, a vector clock based synchronization algorithm, to track down data and causal dependency relations. It uses the partial replication to reduce the amount of network communication. 
 
 \section{Replication}
-To be Added
+Replication have been heavily used by DTM community extract the transaction localization and boost performance. For replication based transactional systems, consistency is generally defined using 1-Copy serialization, which can be defined as described below:
+
+\begin{definition}[\textbf{1-Copy Serializability}]
+A concurrent execution of transactions in a replicated database is one-copy-serializable if it is equivalent  to an ordering obtained when the transactions are performed sequentially in a single centralized database.~\cite{bornea2011one}
+\end{definition}
+
+First paper in DTM by Manassiev~\cite{Manassiev:2006:EDV:1122971.1123002} based on DMV algorithm, as described earlier, used data replication. For providing 1-Copy serialization DMV used the global serialization time-stamp token, which proved costly approach to support 1-Copy serialization in replication based systems. Later Dependable Distributed Software Transactional Memory(D2STM) system~\cite{D2STM:5368778} and AGGRO scheme~\cite{AGGRO:5598236} improved performance by replacing global time-stamp with Atomic broadcast messages.  
+
+Sinfonia~\cite{Aguilera:2009:SNP:1629087.1629088} service also supported replication. But it did not design the concurrency algorithm taking the replication in consideration, instead it used the primary-copy replication to recover in case of failure. 
+
+DecentSTM~\cite{DecentSTM:5470446} used the full replication with random consensus concurrency protocol and provided the  Snapshot consistency. It showed improvement using replication and Snapshot consistency but lacked any innovation in concurrency protocol. Later GMU~\cite{GMU:peluso2012scalability} presented a innovative concurrency protocol based on partial replication supporting Extended updated serializability and showed good performance improvement. 
 
 \section{Strong Atomicity}
-To be Added
+We have already introduced the strong atomicity informally in chapter~\ref{chap:intro}. Formally Strong Atomicity can be described as below:
 
+\begin{definition}[\textbf{1-Copy Serializability}] 
+Strong Atomicity is a transactional semantics that guarantees the atomicity between transactional and non-transactional code.
+\end{definition}
+
+Cluster-STM~\cite{Bocchino:2008:STM:1345206.1345242} supported the Strong Atomicity by implementing a programming restriction on user. DecentSTM~\cite{DecentSTM:5470446} programming model guaranteed Strong Atomicity and helped users to stop careless atomicity mistakes. HyflowScala~\cite{turcuhyflow2} and HyflowCpp also have en-build the strong atomicity using programming model.
 
 \section{Transaction Models}
 
@@ -803,7 +821,7 @@ In Figure~\ref{Fig:FlatCommit} we illustrate the transaction commit process. Tra
 
 In Close Nesting each transaction attempts to do individual commits, but for inner transactions the commit not visible outside of the enclosing transaction. Inner transactions are allowed to abort independently of their parents. In this way by permitting partial aborts for the inner transactions close nesting helps to improve performance. In this section we present the modified version of TFA for Close Nesting: ~\emph{Transaction Forwarding Alogrithm for Close Nesting(TFACN)}.
 
-\begin{figure}
+\begin{figure}[H]
 \begin{minipage}[b]{0.9\linewidth}\centering
 \begin{lstlisting}
 Context::TransactionForwarding(senderNodeClock) {
@@ -822,7 +840,7 @@ Context::TransactionForwarding(senderNodeClock) {
 }
 \end{lstlisting}
 \end{minipage}
-\caption{Transaction Forwarding in Checkpointing}
+\caption{Transaction Forwarding in Close Nesting}
 \label{Fig:CloseTFA}
 \end{figure} 
 
@@ -834,7 +852,7 @@ In commit phase TFACN directly merges the context objects to parent context obje
 
 Transaction Checkpointing saves the transaction execution state at various points. Later on commit failure it enables a transaction to resume from previously saved valid Checkpoint. Checkpointing allows a transaction to abort only required part of transaction for which actually the conflict happens and therefore boosts the performance. Checkpointing can be consider as a extension of Close nesting, where partial aborts can be applied at any point in transaction execution state. In this section we present  the modified the TFA algorithm for Checkpointing: ~\emph{Transaction Forwarding Algorithm with Checkpointing(TFACP)}.
 
-\begin{figure} [H]
+\begin{figure}[H]
 \begin{minipage}[b]{0.9\linewidth}\centering
 \begin{lstlisting}
 Context::TransactionForwarding(senderNodeClock) {
@@ -859,9 +877,9 @@ Context::TransactionForwarding(senderNodeClock) {
 \label{Fig:CheckPointTFA}
 \end{figure} 
 
-To support Checkpointing in TFACP we partition read-set, write-set, publish-set and delete-set data on basis of first access Checkpoint. This allows TFACP to identity the conflicting objects and to determine the valid Checkpoint to resume. To save the transaction execution stack state we use the ~\emph{setContext()} and ~\emph{getContext()} functions. Heap objects are maintained in context read-set, write-set and publish-set. Currently we do not provide support for non-transactional heap objects, but it can be easily enabled by separately maintaining a separate set for these objects. HyflowCpp provides a helper class ~\emph{CheckPointProvider} to create, iterator and maintain the transaction Checkpoints.     
+To support Checkpointing in TFACP we partition read-set, write-set, publish-set and delete-set data on basis of first access Checkpoint. This allows TFACP to identity the conflicting objects and to determine the valid Checkpoint to resume. To save the transaction execution stack state we use the ~\emph{setContext()} and ~\emph{getContext()} functions. Heap objects are maintained in context read-set, write-set and publish-set. 
 
-\begin{figure}[H]
+\begin{figure}
 \begin{minipage}[b]{0.9\linewidth}\centering
 \begin{lstlisting}
 commit::tryResume() {
@@ -874,6 +892,79 @@ commit::tryResume() {
 		return ;
 	}		
 }
+
+Context::Commit() {
+	forAll obj in writeSet {
+		lock = obj.acquireLock()
+		if !lock
+			rollback()
+	}
+	forAll obj in readSet {
+		valid = obj.readValidate()
+		if !valid
+			rollbock()
+	}
+	
+	for abstractLock in abstractLockSet {
+		lock = abstractLock.acquireLock()
+		if !lock
+			rollback();
+	}
+	nodeClock++
+	commitWriteSet()
+	forAll obj in transaction.writeSet
+		obj.commitValue()
+ 		obj.setVersion(transaction.timeStamp)
+ 		obj.releaseLock()
+ 		if obj.remote then
+ 			updateOwner(obj)
+	forAll obj in transaction.publishSet
+		publish(obj)
+	forAll obj in transaction.deleteSet
+		delete(obj)
+		
+	if topTransaction {
+		releaseAbstractLocks()
+	}else {
+		mergeAbstractLockToParent()
+	}	
+}
+\end{lstlisting}
+\end{minipage}
+\caption{Commit in Checkpointing}
+\label{Fig:CheckpointCommit}
+\end{figure}
+
+HyflowCpp provides a helper class ~\emph{CheckPointProvider} to create, iterator and maintain the transaction Checkpoints.~\emph{HYFLOW{\_}STORE(OBJECT{\_}REF, OBJECT{\_}VALUE)} macro is provided to store any stack or heap object values just before creating checkpoint. These values are automatically are restored on continuing from checkpoint after partial abort.     
+
+In Figure~\ref{Fig:CheckPointTFA} we illustrate the Transaction Forwarding Processing for TFACP. Similar to Flat nesting we perform transaction forwarding by object validation. But on validation failure, we do not rollback instead resume the transaction from valid Checkpoint if available. Before resuming we remove all the invalidated heap objects from the context.
+
+Commit process in TFACP is also modified similar to Transaction Forwarding. On commit failure in place of restarting transaction we resume from available valid checkpoint. Note that here we are required to release any acquired lock before resuming. Figure~\ref{Fig:CheckPointCommit} illustrate the commit procedure in TFACP. 
+
+
+\section{Open Nesting}
+
+Open nesting provides the performance improvement by reducing the false memory level conflict. In contrast to close nesting in open nesting the inner transactions commit on completion are visible globally and corresponding undo action is merged into parent transaction. In case of parent transaction abort the undo action are used to recover from the inner transaction commit. To maintain the memory consistency a inner transaction specify higher level locks are maintained.  
+
+To support open nesting in TFA a concept of abstract locks is introduces to higher level locks. Unfortunately abstract lock mechanism suffers from the livelocks issue and uses a random back-off mechanism to overcome this issue. TFAOP allows user to define the \textit{onAbort} and \textit{onCommit} functions to be performed in case of abort or commit on parent transaction. TFAOP acquires abstract locks in inner transactions and releases them in parent transaction on commit or abort. 
+
+\begin{figure}
+\begin{minipage}[b]{0.9\linewidth}\centering
+\begin{lstlisting}
+Benchmark::transaction() {
+	Atomic atomicTxn;
+	atomicTxn.atomic = Benchmark::transactionAtomic;
+	atomicTxn.onAbort = Benchmark::onAbortTxn;
+}
+
+Benchmark::transactionAtomic() {
+    string txnLock;
+	readOperations();
+	writeOperations();
+	__context__.onLockAccess(Benchmark, txnLock, false);
+	
+}	if (nesting == HYFLOW_OPEN_NESTING ) {
+		string txnlock;
 
 Context::Commit() {
 	forAll obj in writeSet {
@@ -901,14 +992,12 @@ Context::Commit() {
 }
 \end{lstlisting}
 \end{minipage}
-\caption{Commit in Checkpointing}
-\label{Fig:CheckpointCommit}
+\caption{Commit in Open Nesting}
+\label{Fig:OpenNestingCommit}
 \end{figure}
 
+As described in Figure~\ref{Fig:OpenNestingCommit} Abstract locks can be created by provide unique string name for transaction. Abstract lock are registered in transaction using the \textit{onLockAcess} Function. At commit time the registered abstract locks are acquired. Later, abstract locks are either merged to parent context or released if top transaction. In case of aborts rollback is performed by using onAbort function. Once compensating action for related inner transaction is completed abstract locks are released. Compensation action run with higher priority and don't perform random back-off.   
 
-In Figure~\ref{Fig:CheckPointTFA} we illustrate the Transaction Forwarding Processing for TFACP. Similar to Flat nesting we perform transaction forwarding by object validation. But on validation failure, we do not rollback instead resume the transaction from valid Checkpoint if available. Before resuming we remove all the invalidated heap objects from the context.
-
-Commit process in TFACP is also modified similar to Transaction Forwarding. On commit failure in place of restarting transaction we resume from available valid checkpoint. Note that here we are required to release any acquired lock before resuming. Figure~\ref{Fig:CheckPointCommit} illustrate the commit procedure in TFACP. 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %																									%
@@ -920,67 +1009,143 @@ Commit process in TFACP is also modified similar to Transaction Forwarding. On c
 Experimental Results \& Evaluation
 \hfill}
 
-In this chapter, the performance of HyflowCPP is compared against other Java STMs using micro-benchmarks and macro-benchmarks.
+In this chapter, the performance of HyflowCPP is compared against other Java STMs using micro-benchmarks and macro-benchmarks. Being first DTM framework in C++, we compare this work with other competitors like HyflowScala, HyflowJava and Decent RSTM. We evaluate the performance on multiple micro benchmarks(Bank, List, Binary Search Tree, Skip-list, Hash-table) and  macro benchmarks(Loan, Vacation and Tpcc).   
 
 \section{Test Environment}
 
-To Be Added
+Our all experiments are conducted on 48 core machine. Machine contains four AMD Opteron\texttrademark  Processors (6164 HE), each with 12 cores running at 1700 MHz, and 16 GB of memory. All experiment are conducted in Linux environment using Ubuntu Linux Server 10.04 LTS 64-bit.  Each core communicates with other core via network loop-back TCP connection, emulating the behavior of 48 distributed nodes. All the process instance of benchmarks are bound to specific core to stop unnecessary context-switch between different cores. Framework dependency libraries \textit{Boost} version 1.40, \textit{$\Phi$MQ} version 1.30 and \textit{Intel Thread Build Block} version 4.0 are used.  
 
 \section{Flat Nesting}
 
+Flat nesting does not provide any performance incentive over other transactional model like Close or Open Nesting. Still, it is very useful to understand benchmarks characteristics and compare the raw performance between different DTM frameworks. We have evaluated the performance with different read to write ratios (0.2 , 0.5 and 0.8) on nodes from 4 to 48. For concentrating focus on the distributed behavior in experiments we have limited threads on each node to one.  
+
+For performance comparsion, we compare the HyflowCpp with various competitors like HyflowJava~\cite{Saad:2011:HHP:1996130.1996167}, HyflowScala~\cite{turcuhyflow2}, DecentRSTM~\cite{DecentSTM:5470446} and GenRSTM~\cite{GenRSTM:6038614}. We have compared the all the benchmarks already available in competitor with our benchmarks. For some HyflowCPP benchmarks, we have not found any implementation in competitors. We have not spent time in developing benchmarks in competitor frameworks, instead we devoted our time in more important research work. 
+
+\subsection{Micro Benchmarks}
+
+Micro benchmarks which we considered for performance evaluation are data structures List, Binary Search Tree, Skip-list and Hash-table. In each data structure we convert all coarse grain locks access in lock based implementation with transaction Block provided by \emph{HYFLOW{\_}ATOMIC{\_}START} and \emph{HYFLOW{\_}ATOMIC{\_}END}. For each experiment we ran 2000 transactions 3 times and took average of their transactional throughput.  
+
+\subsubsection{Bank}
+
+The Bank benchmark simulates a distributed banking system. Each distributed node is initiated with certain number of bank accounts. Each account is initiated with some initial amount. Bank benchmark support two operations: Total Balance and Transfer. At the end of experiment a sanity check is performed. Bank benchmark is distributed in nature and allows multiple Transfer operations in parallel on different accounts.
+
+For this experiment we created 10000 accounts distributed over different nodes. In Figure~\ref{Fig:flatBank}, we can observer the performance of the HyflowCPP in comparison to various competitors for different read percents: 20\%, 50\% and 80\%. Bank being distributed in nature allows HyflowCPP performance to linearly scale with increase in numbers of nodes. As we create 10000 accounts over the nodes, increase in number of nodes does not increase contention.
+
+HyflowCPP performs 3x to 4x better in comparison to its nearest competitor HyflowScala. In sweet spot comparison by adding lots of threads per core HyflowScala is able to achieve almost equivalent performance to HyflowCPP as showed in figure~\ref{Fig:flatBankSS}. HyflowScala uses very efficient messaging technique based on the actor model, which allows it scale quickly with increase in number of threads.
+
+Poor performance of HyflowJava and  DecentSTM is rooted in their bad implementation. The HyflowJava and HyflowCPP use the same TFA algorithm for concurrency control. But networking support in HyflowJava is very rudimentary and one of the major reason of bad performance. Similarily the DecentSTM implementation is also not optimized for network messaging. From algorithm point of view DecentSTM should be able to perform better in case of reads due to local reads and writes.
+
+\begin{figure}
+\centering
+\subfigure[Bank 20\% reads]{
+\includegraphics[width=0.85\textwidth]{\string"eps/flat/bank/r20".pdf}
+\label{Fig:flatBankR20}
+}
+%\end{figure}
+%\begin{figure}[H]
+\subfigure[Bank 50\% reads]{
+\includegraphics[width=0.85\textwidth]{\string"eps/flat/bank/r50".pdf}
+\label{Fig:flatBankR50}
+}
+\end{figure}
+
+\begin{figure}[H]
+\subfigure[Bank 80\% reads]{
+\includegraphics[width=0.85\textwidth]{\string"eps/flat/bank/r80".pdf}
+\label{Fig:flatBankR80}
+}
+\subfigure[Bank Sweet Spot Comparison]{
+\includegraphics[width=0.85\textwidth]{\string"eps/flat/bank/sw".pdf}
+\label{Fig:flatBankSS}
+}
+\caption{Flat Nesting: Transactional throughput for Bank}
+\label{Fig:flatBank}
+\end{figure}
+
+\subsubsection{Linked List}
+
+In this benchmark, we have designed an ordered, singly-linked linear list data structure. It support two write operations: add and remove, and one read operation: contains. While traversal all the read objects are added to transaction readSet, which makes list prone to high contention. Any write operation on traversed node will lead to transaction abort.  
+
+\begin{figure}[H]
+\centering
+\subfigure[Linked list 20\% reads]{
+\includegraphics[width=0.7\textwidth]{\string"eps/flat/list/r20".pdf}
+\label{Fig:flatListR20}
+}
+\qquad
+\subfigure[Linked list 50\% reads]{
+\includegraphics[width=0.7\textwidth]{\string"eps/flat/list/r50".pdf}
+\label{Fig:flatListR50}
+}
+\end{figure}
+
+\begin{figure}[H]
+\subfigure[Linked list 80\% reads]{
+\includegraphics[width=0.7\textwidth]{\string"eps/flat/list/r80".pdf}
+\label{Fig:flatListR80}
+}
+\caption{Flat Nesting: Transactional throughput for Linked list}
+\label{Fig:flatList}
+\end{figure}
+
+\subsubsection{Skip List}
+
 To Be Added 
 
-\subsection{Linked List\label{sub:Linked-List}}
-
+\subsubsection{Binary Search Tree}
 To Be Added 
 
-\subsection{Skip List}
-
+\subsubsection{Hash Table}
 To Be Added 
 
-\subsection{Binary Search Tree}
+\subsection{Macro Benchmarks}
 
-To Be Added 
-
-\subsection{Hash Table}
-
-To Be Added 
-
-\subsection{Bank}
+\subsubsection{Vacation}
 
 To Be Added
 
-\subsection{Vacation}
+\subsubsection{Loan}
 
 To Be Added
 
-\subsection{Loan}
+\subsubsection{TPCC}
 
 To Be Added
 
-\subsection{TPCC}
+\section{Checkpointing and Close Nesting}
 
+\subsection{Micro Benchmarks}
+
+\subsubsection{Bank}
 To Be Added
 
-\section{Checkpointing}
-
-\subsection{Linked List\label{sub:Linked-List}}
-
+\subsubsection{Linked List}
 To Be Added 
 
-\subsection{Hash Table}
+\subsubsection{Skip List}
+To Be Added  
 
+\subsubsection{BST}
+To Be Added
+
+\subsubsection{Hash Table}
 To Be Added 
 
-\subsection{Bank}
+\subsection{Macro Benchmarks}
+
+\subsubsection{Loan}
 
 To Be Added
 
-\section{Closed Nesting}
+\subsubsection{Tpcc}
+
+To Be Added
+
+\section{Open Nesting}
 
 To be added
 
-\subsection{Linked List\label{sub:Linked-List}}
+\subsection{Linked List}
 
 To Be Added 
 
@@ -992,11 +1157,7 @@ To Be Added
 
 To Be Added 
 
-\subsection{Bank}
-
-To Be Added
-
-\subsection{Loan}
+\subsection{BST}
 
 To Be Added
 
