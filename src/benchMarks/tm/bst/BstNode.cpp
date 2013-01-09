@@ -96,10 +96,13 @@ void BstNode::addNodeAtomically(HyflowObject* self, BenchMarkArgs* args, HyflowC
 				next = currentNode->leftChild;
 				leftChild = true;
 				LOG_DEBUG("BST :Node %s with value %d move child %d to left, towards %s\n", currentNode->getId().c_str(), currentNode->value, val, next.c_str());
-			}else {
+			}else if (currentNode->value < val ) {
 				next = currentNode->rightChild;
 				leftChild = false;
 				LOG_DEBUG("BST :Node %s with value %d move child %d to right, towards %s\n", currentNode->getId().c_str(), currentNode->value, val, next.c_str());
+			} else {
+				LOG_DEBUG("BST :Node %s with value %d already exist, no add\n", currentNode->getId().c_str(), currentNode->value, val);
+				return;
 			}
 		}while (next.compare("NULL") != 0);
 
@@ -551,10 +554,13 @@ void BstNode::deleteAbort(HyflowObject* self, BenchMarkArgs* args, HyflowContext
 				next = currentNode->leftChild;
 				leftChild = true;
 				LOG_DEBUG("BST :Node %s with value %d move child %d to left, towards %s\n", currentNode->getId().c_str(), currentNode->value, val, next.c_str());
-			}else {
+			}else if (currentNode->value < val){
 				next = currentNode->rightChild;
 				leftChild = false;
 				LOG_DEBUG("BST :Node %s with value %d move child %d to right, towards %s\n", currentNode->getId().c_str(), currentNode->value, val, next.c_str());
+			} else {
+				Logger::fatal("BST :Error Node %s with value %d exist!!!!\n", currentNode->getId().c_str(), val);
+				return;
 			}
 		}while (next.compare("NULL") != 0);
 

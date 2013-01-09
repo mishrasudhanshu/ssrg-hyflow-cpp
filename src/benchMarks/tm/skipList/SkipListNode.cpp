@@ -96,31 +96,44 @@ void SkipListNode::addNodeAtomically(HyflowObject* self, BenchMarkArgs* args, Hy
 		std::stringstream absLockStr;
 		absLockStr<<givenValue;
 		std::string lockName = absLockStr.str();
-		__context__->onLockAccess("BST0", lockName, false);
+		__context__->onLockAccess("SKL0", lockName, false);
 	}
 
-	//find correct place of object to insert
-	for(int level=SkipListBenchmark::getSkipListLevels() ; level>0 ; level--) {
+	std::vector<std::string> updateNodes;
+	//find the correct nodes to update to insert
+	const int maxLevels = SkipListBenchmark::getSkipListLevels();
+	for(int level=maxLevels; level>0 ; level--) {
 		//For given level move until you find the node with just small value
 		std::string nextNodeId = prevNode->getNextId(level);
 		while( nextNodeId.compare("NULL")!=0 ) {
 			HYFLOW_FETCH(nextNodeId, true);
 			currentNode = (SkipListNode*)HYFLOW_ON_READ(nextNodeId);
-			if(currentNode->value >= givenValue) {
+			if(currentNode->value > givenValue) {
 				break;
+			}else if (currentNode->value == givenValue) {
+				// Object is already present return
+				return;
 			}else {
 				nextNodeId = currentNode->getNextId(level);
 				prevNode = currentNode;
 			}
 		}
+		updateNodes.push_back(prevNode->getId());
+	}
+
+	// We have collected all the objects to be updated at different level
+	for(int level=maxLevels ; level>0 ; level--) {
 		// For given level prevNode contains just small value
 		if(level <= newNode->highestLevel) {
-			SkipListNode* pNode = (SkipListNode*)HYFLOW_ON_WRITE(prevNode->getId());
+			std::string levelNode = updateNodes.at(maxLevels - level);
+			SkipListNode* pNode = (SkipListNode*)HYFLOW_ON_WRITE(levelNode);
 			newNode->setNextId(pNode->getNextId(level), level);
 			pNode->setNextId(newNode->getId(), level);
 			LOG_DEBUG("SKIPLIST :For level %d node %s inserted between %s and %s\n", level, newNode->getId().c_str(), pNode->getId().c_str(), newNode->getNextId(level).c_str());
 		}
 	}
+
+
 	HYFLOW_PUBLISH_OBJECT(newNode);
 }
 
@@ -149,7 +162,7 @@ void SkipListNode::deleteNodeAtomically(HyflowObject* self, BenchMarkArgs* args,
 		std::stringstream absLockStr;
 		absLockStr<<givenValue;
 		std::string lockName = absLockStr.str();
-		__context__->onLockAccess("BST0", lockName, false);
+		__context__->onLockAccess("SKL0", lockName, false);
 	}
 
 	for( int level=0 ; level<=SkipListBenchmark::getSkipListLevels() ; level++ ) {
@@ -213,7 +226,7 @@ void SkipListNode::findNodeAtomically(HyflowObject* self, BenchMarkArgs* args, H
 		std::stringstream absLockStr;
 		absLockStr<<givenValue;
 		std::string lockName = absLockStr.str();
-		__context__->onLockAccess("BST0", lockName, true);
+		__context__->onLockAccess("SKL0", lockName, true);
 	}
 
 	bool found=false;
@@ -404,8 +417,10 @@ void SkipListNode::deleteAbort(HyflowObject* self, BenchMarkArgs* args, HyflowCo
 		while( nextNodeId.compare("NULL")!=0 ) {
 			HYFLOW_FETCH(nextNodeId, true);
 			currentNode = (SkipListNode*)HYFLOW_ON_READ(nextNodeId);
-			if(currentNode->value >= givenValue) {
+			if(currentNode->value > givenValue) {
 				break;
+			}else if (currentNode->value == givenValue) {
+				return;
 			}else {
 				nextNodeId = currentNode->getNextId(level);
 				prevNode = currentNode;

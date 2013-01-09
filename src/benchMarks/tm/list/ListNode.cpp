@@ -77,7 +77,7 @@ void ListNode::addNodeAtomically(HyflowObject* self, BenchMarkArgs* args, Hyflow
 		std::stringstream absLockStr;
 		absLockStr<<newNodeValue;
 		std::string lockName = absLockStr.str();
-		__context__->onLockAccess("BST0", lockName, false);
+		__context__->onLockAccess("LST0", lockName, false);
 	}
 
 	if (next.compare("NULL") == 0) {
@@ -95,9 +95,12 @@ void ListNode::addNodeAtomically(HyflowObject* self, BenchMarkArgs* args, Hyflow
 			HYFLOW_FETCH(next, true);
 			currentNode = (ListNode*)HYFLOW_ON_READ(next);
 			int nextNodeValue = currentNode->getValue();
-			if (nextNodeValue >= newNodeValue) {
+			if (nextNodeValue > newNodeValue) {
 				LOG_DEBUG("LIST :Got the required value %d to add before in node %s\n", newNodeValue, next.c_str());
 				break;
+			}else if (nextNodeValue == newNodeValue) {
+				LOG_DEBUG("LIST :Value %d already exist in node %s\n", newNodeValue, next.c_str());
+				return;
 			}
 			prev = next;
 			next = currentNode->getNextId();
@@ -142,7 +145,7 @@ void ListNode::deleteNodeAtomically(HyflowObject* self, BenchMarkArgs* args, Hyf
 		std::stringstream absLockStr;
 		absLockStr<<givenValue;
 		std::string lockName = absLockStr.str();
-		__context__->onLockAccess("BST0", lockName, false);
+		__context__->onLockAccess("LST0", lockName, false);
 	}
 
 	while(next.compare("NULL") != 0) {
@@ -225,7 +228,7 @@ void ListNode::findNodeAtomically(HyflowObject* self, BenchMarkArgs* args, Hyflo
 		std::stringstream absLockStr;
 		absLockStr<<givenValue;
 		std::string lockName = absLockStr.str();
-		__context__->onLockAccess("BST0", lockName, true);
+		__context__->onLockAccess("LST0", lockName, true);
 	}
 
 	while(next.compare("NULL") != 0) {
@@ -451,9 +454,12 @@ void ListNode::deleteAbort(HyflowObject* self, BenchMarkArgs* args, HyflowContex
 			HYFLOW_FETCH(next, true);
 			currentNode = (ListNode*)HYFLOW_ON_READ(next);
 			int nextNodeValue = currentNode->getValue();
-			if (nextNodeValue >= newNodeValue) {
+			if (nextNodeValue > newNodeValue) {
 				LOG_DEBUG("LIST :Got the required value %d to add before in node %s\n", newNodeValue, next.c_str());
 				break;
+			}else if (nextNodeValue == newNodeValue) {
+				Logger::fatal("LIST :Error value %d already exist in node %s\n", newNodeValue, next.c_str());
+				return;
 			}
 			prev = next;
 			next = currentNode->getNextId();
