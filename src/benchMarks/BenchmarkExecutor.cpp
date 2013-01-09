@@ -35,11 +35,39 @@ void HyflowMetaData::updateMetaData(HyflowMetaData & metadata, HyflowMetaDataTyp
 	case HYFLOW_METADATA_CHECKPOINT_RESUME:
 		txnCheckpointResume.setValue(txnCheckpointResume.getValue()+metadata.txnCheckpointResume.getValue());
 		break;
+	case HYFLOW_METADATA_COMMITED_SUBTXNS:
+		committedSubTxns += metadata.committedSubTxns;
+		break;
+	case HYFLOW_METADATA_COMMITED_SUBTXN_TIME:
+		committedSubTxnTime += metadata.committedSubTxnTime;
+		break;
+	case HYFLOW_METADATA_ABORTED_SUBTXNS:
+		abortedSubTxns += metadata.abortedSubTxns;
+		break;
+	case HYFLOW_METADATA_ABORTED_SUBTXN_TIME:
+		abortedSubTxnTime += metadata.abortedSubTxnTime;
+		break;
+	case HYFLOW_METADATA_COMPENSATE_SUBTXNS:
+		compensateSubTxns += metadata.compensateSubTxns;
+		break;
+	case HYFLOW_METADATA_COMPENSATE_SUBTXN_TIME:
+		compensateSubTxnTime += metadata.compensateSubTxnTime;
+		break;
+	case HYFLOW_METADATA_BACKOFF_TIME:
+		backOffTime += metadata.backOffTime;
+		break;
 	case HYFLOW_METADATA_ALL:
 		throughPut += metadata.throughPut;
 		txnTries.setValue(txnTries.getValue()+metadata.txnTries.getValue());
 		txnAborts.setValue(txnAborts.getValue()+metadata.txnAborts.getValue());
 		txnCheckpointResume.setValue(txnCheckpointResume.getValue()+metadata.txnCheckpointResume.getValue());
+		committedSubTxns += metadata.committedSubTxns;
+		committedSubTxnTime += metadata.committedSubTxnTime;
+		abortedSubTxns += metadata.abortedSubTxns;
+		abortedSubTxnTime += metadata.abortedSubTxnTime;
+		compensateSubTxns += metadata.compensateSubTxns;
+		compensateSubTxnTime += metadata.compensateSubTxnTime;
+		backOffTime += metadata.backOffTime;
 		break;
 	default:
 		Logger::fatal("HYMETA :Invalid HyflowMetaData type\n");
@@ -59,6 +87,15 @@ void HyflowMetaData::increaseMetaData(HyflowMetaDataType type) {
 	case HYFLOW_METADATA_CHECKPOINT_RESUME:
 		txnCheckpointResume.increaseValue();
 		LOG_DEBUG("HYMETA :---Checkpoint++-->%d\n", txnCheckpointResume.getValue());
+		break;
+	case HYFLOW_METADATA_COMMITED_SUBTXNS:
+		committedSubTxns++;
+		break;
+	case HYFLOW_METADATA_ABORTED_SUBTXNS:
+		abortedSubTxns++;
+		break;
+	case HYFLOW_METADATA_COMPENSATE_SUBTXNS:
+		compensateSubTxns++;
 		break;
 	default:
 		Logger::fatal("HYMETA :Invalid HyflowMetaData type\n");
@@ -114,6 +151,13 @@ void BenchmarkExecutor::writeResults() {
 	float abortRate = (benchNodeMetadata.txnAborts.getValue()*100)/(benchNodeMetadata.txnTries.getValue()*(innerTxns+1)*threadCount);
 	Logger::result("AbortRate=%.2f\n",abortRate);
 	Logger::result("CheckpointResume=%d\n",benchNodeMetadata.txnCheckpointResume.getValue());
+	Logger::result("CommittedSubTxns=%u\n", benchNodeMetadata.committedSubTxns);
+	Logger::result("CommittedSubTxnTime=%llu\n", benchNodeMetadata.committedSubTxnTime/1000);	// MilliSecond
+	Logger::result("AbortedSubTxns=%u\n", benchNodeMetadata.abortedSubTxns);
+	Logger::result("AbortedSubTxnTime=%llu\n", benchNodeMetadata.abortedSubTxnTime/1000);
+	Logger::result("CompensateSubTxns=%u\n", benchNodeMetadata.compensateSubTxns);
+	Logger::result("CompensateSubTxnTime=%llu\n", benchNodeMetadata.compensateSubTxnTime/1000);
+	Logger::result("BackoffTime=%llu\n", benchNodeMetadata.backOffTime);
 }
 
 void BenchmarkExecutor::initExecutor(){
@@ -245,14 +289,16 @@ void BenchmarkExecutor::execute(int id){
 	benchMarkThreadMetadata->throughPut = (double(transactions*1000000))/executionTime;
 
 	if (benchMarkThreadMetadata.get()) {
-//	/*// Tries are also get included in retried value as we count number of contexts created
-//		rtry = tries.get()->getValue()
-//	}
-//	if (checkResume.get()) {
-//	*/	checkRes = checkResume.get()->getValue();
 		submitThreadMetaData(*(benchMarkThreadMetadata.get()));
 		LOG_DEBUG("BNC_EXE %d: ThroughPut = %0.3f trxns/sec <----------------------\n", id, benchMarkThreadMetadata->throughPut);
 	}
+}
+
+void BenchmarkExecutor::updateMetaData(HyflowMetaData data, HyflowMetaDataType type) {
+	if (!benchMarkThreadMetadata.get()) {
+		benchMarkThreadMetadata.reset(new HyflowMetaData());
+	}
+	benchMarkThreadMetadata->updateMetaData(data, type);
 }
 
 void BenchmarkExecutor::increaseMetaData(HyflowMetaDataType type) {

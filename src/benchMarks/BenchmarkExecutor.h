@@ -28,6 +28,13 @@ enum HyflowMetaDataType{
 	HYFLOW_METADATA_ABORTS,
 	HYFLOW_METADATA_CHECKPOINT_RESUME,
 	HYFLOW_METADATA_THROUGHPUT,
+	HYFLOW_METADATA_COMMITED_SUBTXNS,
+	HYFLOW_METADATA_COMMITED_SUBTXN_TIME,
+	HYFLOW_METADATA_ABORTED_SUBTXNS,
+	HYFLOW_METADATA_ABORTED_SUBTXN_TIME,
+	HYFLOW_METADATA_COMPENSATE_SUBTXNS,
+	HYFLOW_METADATA_COMPENSATE_SUBTXN_TIME,
+	HYFLOW_METADATA_BACKOFF_TIME,
 	// Add New Types above
 	HYFLOW_METADATA_ALL,
 };
@@ -38,11 +45,30 @@ public:
 	HyInteger txnAborts;
 	HyInteger txnCheckpointResume;
 	double throughPut;
+
+	unsigned int committedSubTxns;
+	unsigned long long committedSubTxnTime;
+
+	unsigned int abortedSubTxns;
+	unsigned long long abortedSubTxnTime;
+
+	unsigned int compensateSubTxns;
+	unsigned long long compensateSubTxnTime;
+	unsigned long long backOffTime;
+
 	HyflowMetaData() {
 		txnTries = 0;
 		txnAborts = 0;
 		txnCheckpointResume = 0;
 		throughPut = 0;
+
+		committedSubTxns = 0;
+		committedSubTxnTime = 0;
+		abortedSubTxns = 0;
+		abortedSubTxnTime = 0;
+		compensateSubTxns = 0;
+		compensateSubTxnTime = 0;
+		backOffTime = 0;
 	}
 	void increaseMetaData(HyflowMetaDataType type);
 	void updateMetaData(HyflowMetaData& metadata, HyflowMetaDataType type);
@@ -112,6 +138,7 @@ public:
 
     static void executeThreads();
 
+	static void updateMetaData(HyflowMetaData data, HyflowMetaDataType type);
 	static void increaseMetaData(HyflowMetaDataType type);
 
 	static void transactionLengthDelay();

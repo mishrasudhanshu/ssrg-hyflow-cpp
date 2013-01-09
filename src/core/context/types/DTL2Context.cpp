@@ -19,6 +19,7 @@
 #include "../ContextManager.h"
 #include "../AbstractLockTable.h"
 #include "../../contention/ContentionManager.h"
+#include "../../../benchMarks/BenchmarkExecutor.h"
 
 namespace vt_dstm {
 
@@ -37,6 +38,7 @@ DTL2Context::DTL2Context() {
 	isWrite = false;
 	currentAction = NULL;
 	abortCount = 0;
+	startTime = 0;
 }
 
 DTL2Context::DTL2Context(Hyflow_NestingModel nm) {
@@ -52,6 +54,7 @@ DTL2Context::DTL2Context(Hyflow_NestingModel nm) {
 	isWrite = false;
 	currentAction = NULL;
 	abortCount = 0;
+	startTime = 0;
 }
 
 DTL2Context::~DTL2Context() {
@@ -148,6 +151,7 @@ void DTL2Context::contextReset() {
 	txnId = ContextManager::createTid(this);
 	ContextManager::registerContext(this);
 
+	startTime = Logger::getCurrentMicroSec();
 	LOG_DEBUG("DTL :Context of model %d initialize with id %llu\n", nestingModel, txnId);
 }
 
@@ -164,6 +168,21 @@ void DTL2Context::contextInit(){
 }
 
 void DTL2Context::contextDeinit() {
+	HyflowMetaData txnMeta;
+	if (status == TXN_ABORTED) {
+		txnMeta.abortedSubTxnTime = Logger::getCurrentMicroSec() - startTime;
+		if (parentContext) {
+			BenchmarkExecutor::increaseMetaData(HYFLOW_METADATA_ABORTED_SUBTXNS);
+			BenchmarkExecutor::updateMetaData(txnMeta, HYFLOW_METADATA_ABORTED_SUBTXN_TIME);
+		}
+	}else{
+		txnMeta.committedSubTxnTime = Logger::getCurrentMicroSec() - startTime;
+		if (parentContext) {
+			BenchmarkExecutor::increaseMetaData(HYFLOW_METADATA_COMMITED_SUBTXNS);
+			BenchmarkExecutor::updateMetaData(txnMeta, HYFLOW_METADATA_COMMITED_SUBTXN_TIME);
+		}
+	}
+
 	if ((nestingModel == HYFLOW_NESTING_OPEN) && (status == TXN_ABORTED)) {
 		rollback();
 	}
@@ -1123,6 +1142,10 @@ void DTL2Context::tryCommitON() {
 					setStatus(TXN_ABORTED);
 					LOG_DEBUG("Commit :Unable to get AbstractWriteLock for %s\n", awItr->first.c_str());
 					TransactionException unableToAbsWriteLock("Commit :Unable to get abstract writeLock for "+awItr->first + "\n");
+					// We will can not retry abort context tree
+					for (HyflowContext* pc = parentContext ; pc!=NULL ; pc = pc->getParentContext() ) {
+						pc->setStatus(TXN_ABORTED);
+					}
 					throw unableToAbsWriteLock;
 				}
 				lockedWriteAbstractLock.push_back(awItr->first);
@@ -1355,9 +1378,22 @@ bool DTL2Context::checkParent() {
 			LOG_DEBUG("DTL :Top context Check Parent not throwing exception\n");
 			return false;
 		} else {
-			// If not the top, we always throw exception on child abort
-			LOG_DEBUG("DTL :Check Parent throwing exception\n");
-			return true;
+			// If not the top, we always throw exception only if parent is set aborted
+			if (parentContext->getStatus() != TXN_ABORTED ) {
+				// Inner transaction abort count
+				increaseInnerAbortCount();
+				int aborts = getInnerAbortCount();
+				if ( aborts > 2 ) {
+					LOG_DEBUG("DTL :Check Parent open repeated aborts throwing exception\n");
+					return true;
+				}else {
+					LOG_DEBUG("DTL :Check Parent open parent fine, not throwing exception\n");
+					return false;
+				}
+			} else {
+				LOG_DEBUG("DTL :Check Parent throwing exception\n");
+				return true;
+			}
 		}
 	}else if (nestingModel == HYFLOW_INTERNAL_OPEN) {
 		// We never throw exception in Internal open, we just keep retrying
@@ -1658,6 +1694,13 @@ HyflowObject* DTL2Context::locateObject(std::string id, bool abortOnNull) {
 	obj->setAccessCheckPoint(checkPointIndex);
 	LOG_DEBUG("DTL :Fetched object %s at checkPointIndex %d\n", obj->getId().c_str(), checkPointIndex);
 	return obj;
+}
+
+bool DTL2Context::haveAbstractLocks() {
+	if (abstractReadLocks.empty() && abstractWriteLocks.empty()) {
+		return false;
+	}
+	return true;
 }
 
 

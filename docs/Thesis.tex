@@ -1054,7 +1054,7 @@ Poor performance of HyflowJava and  DecentSTM is rooted in their bad implementat
 \includegraphics[width=0.85\textwidth]{\string"eps/flat/bank/r80".pdf}
 \label{Fig:flatBankR80}
 }
-\subfigure[Bank Sweet Spot Comparison]{
+\subfigure[Bank Sweetspot Comparison]{
 \includegraphics[width=0.85\textwidth]{\string"eps/flat/bank/sw".pdf}
 \label{Fig:flatBankSS}
 }
@@ -1098,6 +1098,28 @@ To Be Added
 \subsubsection{Hash Table}
 To Be Added 
 
+\begin{figure}[H]
+\centering
+\subfigure[Hash table 20\% reads]{
+\includegraphics[width=0.7\textwidth]{\string"eps/flat/hashTable/r20".pdf}
+\label{Fig:flatHashTableR20}
+}
+\qquad
+\subfigure[Hash table 50\% reads]{
+\includegraphics[width=0.7\textwidth]{\string"eps/flat/hashTable/r50".pdf}
+\label{Fig:flatHashTableR50}
+}
+\end{figure}
+
+\begin{figure}[H]
+\subfigure[Hash table 80\% reads]{
+\includegraphics[width=0.7\textwidth]{\string"eps/flat/hashTable/r80".pdf}
+\label{Fig:flatHashTableR80}
+}
+\caption{Flat Nesting: Transactional throughput for Hash table}
+\label{Fig:flatHashTable}
+\end{figure}
+
 \subsection{Macro Benchmarks}
 
 \subsubsection{Vacation}
@@ -1110,7 +1132,12 @@ To Be Added
 
 \subsubsection{TPCC}
 
-To Be Added
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.7\textwidth]{\string"eps/flat/tpcc/tpcc".pdf}
+\caption{Flat Nesting: Transactional throughput for TPCC with different Read Ratios}
+\label{Fig:flatTPCC}
+\end{figure}
 
 \section{Checkpointing and Close Nesting}
 

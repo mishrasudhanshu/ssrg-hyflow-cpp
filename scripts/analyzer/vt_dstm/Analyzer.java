@@ -17,8 +17,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 
-import vt_dstm.Experiment;
-
 /**
  * 
  * @author Sudhanshu
@@ -27,21 +25,26 @@ import vt_dstm.Experiment;
 public class Analyzer {
 
 	public static void main(String[] args) {
-		String directoryPath;
+		String directoryPath, targetData = "Throughput";
 		int reads=0, threads=0, nodes=0;
-		float throughput=0;
+		float dataValue=0;
 		String printMode = "nogc";
 		
 		if (args.length == 0) {
-			System.err.println("Using default directory");
+			System.err.println("#Using default directory");
 			directoryPath = "../ssrg-hyflow-cpp/log/";
 		} else {
-			directoryPath = args[0];
-			System.out.println("directoryPath =" + directoryPath);
+			directoryPath = args[0]+"/";
+			System.out.println("#directoryPath =" + directoryPath);
 			
-			if (args.length == 2) {
+			if (args.length >= 2) {
 				printMode = args[1];
+				
+				if (args.length >= 3) {
+					targetData = args[2];
+				}
 			}
+			
 		}
 
 		File dir = new File(directoryPath);
@@ -72,7 +75,7 @@ public class Analyzer {
 					if(strLine.startsWith("--")) {
 						reads = 0;
 						threads = 0;
-						throughput=0;
+						dataValue=0;
 						nodes = 0;
 					}else if (strLine.startsWith("Reads")) {
 						String[] values=strLine.split("=");
@@ -87,26 +90,26 @@ public class Analyzer {
 						String[] values=strLine.split("=");
 						threads = Integer.parseInt(values[1]);
 						threadSet.add(threads);
-					}else if (strLine.startsWith("Throughput")) {
+					}else if (strLine.startsWith(targetData)) {
 						String[] values=strLine.split("=");
-						throughput = Float.parseFloat(values[1]);
+						dataValue = Float.parseFloat(values[1]);
 						HashMap<Integer, HashMap<Integer,Experiment>> readMap;
-						HashMap<Integer, Experiment> throughPutMap;
+						HashMap<Integer, Experiment> metaDataMap;
 						Experiment exp;
 						if ( (readMap = nodeMap.get(new Integer(nodes))) == null) {
 							nodeMap.put(new Integer(nodes), new HashMap<Integer, HashMap<Integer,Experiment>>());
 							readMap = nodeMap.get(new Integer(nodes));
 						} 
-						if ( (throughPutMap = readMap.get(new Integer(reads))) == null) {
+						if ( (metaDataMap = readMap.get(new Integer(reads))) == null) {
 							readMap.put(new Integer(reads), new HashMap<Integer, Experiment>());
-							throughPutMap = readMap.get(new Integer(reads));
+							metaDataMap = readMap.get(new Integer(reads));
 						} 
-						if ( (exp = throughPutMap.get(new Integer(threads))) == null) {
-							throughPutMap.put(new Integer(threads), new Experiment());
-							exp = throughPutMap.get(new Integer(threads));
+						if ( (exp = metaDataMap.get(new Integer(threads))) == null) {
+							metaDataMap.put(new Integer(threads), new Experiment());
+							exp = metaDataMap.get(new Integer(threads));
 						}
 						exp.count++;
-						exp.throughPut += throughput;
+						exp.metaData += dataValue;
 					}
 				}
 				// Close the input stream
@@ -143,7 +146,7 @@ public class Analyzer {
 					if(exp == null) {
 						System.out.format("%-12s", " ");
 					}else {
-						System.out.format("%-12.2f",nds*exp.throughPut/exp.count);						
+						System.out.format("%-12.2f",nds*exp.metaData/exp.count);						
 					}
 				}
 				System.out.print("\n");
@@ -167,7 +170,7 @@ public class Analyzer {
 				Collections.sort(tl);
 				for(Integer trd: tl) {
 					Experiment exp = trpMap.get(trd);
-					System.out.print(nds*exp.throughPut/exp.count+"\t");
+					System.out.print(nds*exp.metaData/exp.count+"\t");
 				}
 				System.out.print("\n");
 			}

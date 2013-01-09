@@ -69,10 +69,15 @@ void Atomic::execute(HyflowObject* self, BenchMarkArgs* args, BenchMarkReturn* r
 		BenchmarkExecutor::transactionLengthDelay();
 		atomically(self, args, __context__, retValue);
 	}else if (nestingModel == HYFLOW_INTERNAL_OPEN) {
+		HyflowMetaData inTxn;
+		unsigned long long start = Logger::getCurrentMicroSec();
 		HYFLOW_ATOMIC_START_INTERNAL {
 			BenchmarkExecutor::transactionLengthDelay();
 			atomically(self, args, __context__, retValue);
 		}HYFLOW_ATOMIC_END;
+		inTxn.compensateSubTxnTime = Logger::getCurrentMicroSec() - start;
+		BenchmarkExecutor::updateMetaData(inTxn, HYFLOW_METADATA_COMPENSATE_SUBTXN_TIME);
+		BenchmarkExecutor::increaseMetaData(HYFLOW_METADATA_COMPENSATE_SUBTXNS);
 	}else {
 		HYFLOW_ATOMIC_START {
 			BenchmarkExecutor::transactionLengthDelay();

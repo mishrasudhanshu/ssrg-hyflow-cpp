@@ -57,6 +57,7 @@ class DTL2Context: public vt_dstm::HyflowContext {
 	void* currentAction;
 	int tnxClock;
 	int highestSenderClock;
+	unsigned long long startTime;
 
 	static boost::thread_specific_ptr<HyInteger> innerAbortCount;
 	bool isWrite;
@@ -106,6 +107,7 @@ public:
 	void setCurrentAction(void* currentAction);
 	void addAbstractLock(std::string lockName, void* abstractLock, bool read);
 	virtual void addAction(void* action);
+	bool haveAbstractLocks();
 
 	bool isIsWrite() const {
 		return isWrite;

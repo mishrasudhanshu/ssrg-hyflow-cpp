@@ -13,5 +13,10 @@ then
     mode=$2
 fi
 
+if ! [ -z $3 ]
+then
+    targetData=$3
+fi
+
 echo "Using $dir $mode"
-java -jar scripts/analyzer.jar $dir $mode
+java -jar scripts/analyzer.jar $dir $mode $targetData
