@@ -1033,7 +1033,7 @@ For this experiment we created 10000 accounts distributed over different nodes. 
 
 HyflowCPP performs 3x to 4x better in comparison to its nearest competitor HyflowScala. In sweet spot comparison by adding lots of threads per core HyflowScala is able to achieve almost equivalent performance to HyflowCPP as showed in figure~\ref{Fig:flatBankSS}. HyflowScala uses very efficient messaging technique based on the actor model, which allows it scale quickly with increase in number of threads.
 
-Poor performance of HyflowJava and  DecentSTM is rooted in their bad implementation. The HyflowJava and HyflowCPP use the same TFA algorithm for concurrency control. But networking support in HyflowJava is very rudimentary and one of the major reason of bad performance. Similarily the DecentSTM implementation is also not optimized for network messaging. From algorithm point of view DecentSTM should be able to perform better in case of reads due to local reads and writes.
+Poor performance of HyflowJava and  DecentSTM is rooted in their bad implementation. The HyflowJava and HyflowCPP use the same TFA algorithm for concurrency control. But networking support in HyflowJava is very rudimentary and one of the major reason of bad performance. Similarily the DecentSTM and GenRSTM implementation is also not optimized for network messaging. From algorithm point of view DecentSTM and GenRSTM should be able to perform better in case of reads due to local reads and writes.
 
 \begin{figure}
 \centering
@@ -1166,9 +1166,13 @@ To Be Added
 
 \subsection{Macro Benchmarks}
 
+Macro Benchmarks are useful to verify the framework capability in real life application. Macro benchmarks perform lot of operations leading to higher messaging and transaction execution time. In this section we evaluate the performance of Macro Benchmarks Vacation, Loan and TPCC.
+
 \subsubsection{Vacation}
 
-To Be Added
+The Vacation benchmark emulates a itinerary planning reservation system. It allows user to make reservations for cars, rooms and flights. If also allows administrators to manipulate the users and update the currently available offers. Each reservation request or offer update request contain 10 queries writing on the 10 distributed objects. 
+
+Vacation executes the reservation request, a low contention operation, as read operations and delete customer and update offers, high contention operations, as write operations. For experiment, in Vacation we create 1000 customers and 3000 cars, 3000 flights and 3000 rooms. In Figure~\ref{Fig:flatVacation} we can see  that higher numbers of resources allow the throughput to scale linearly with number of nodes. Due to higher numbers of objects the read operations prove more costly as they access more objects. We compare the HyflowCpp performance with HyflowJava for different reads. Hyflow perform also 4-5 times better than HyflowJava. 
 
 \begin{figure}[H]
 \centering
@@ -1194,7 +1198,12 @@ To Be Added
 
 \subsubsection{Loan}
 
-To Be Added
+Loan benchmark simulates the banking situation where loans are provided to user based on the different set of bank accounts. Each account is access in nested fashion and a certain amount of money is borrowed based on the current amount. It also allows user to get total balance available in the all accounts.
+
+In our experiments, we run the total balance operation as reads and loan operation as write operation. We create total 10000 account over network and access 6 accounts to provide loan or calculate the total balance.
+Loan operation calls itself in nested fashion either until all the account are used to borrow a random part of total loan money.
+
+We compare HyflowCPP performance with two other frameworks HyflowJava and DecentSTM. Its performance in 5 to 10 times better than other frameworks. Write dominated experiments shows higher throughput as they suffer from higher contention. Throughput for 80\% read is higher than 20\% reads. At very low contention level, around 2 to 4 nodes, loan performance is very similar for different read ratios as read operation and write operation access same number of objects. 
 
 \begin{figure}[H]
 \centering
@@ -1228,6 +1237,8 @@ To Be Added
 \end{figure}
 
 \section{Checkpointing and Close Nesting}
+
+We perform 3 types experiments to evaluate.
 
 \subsection{Micro Benchmarks}
 
