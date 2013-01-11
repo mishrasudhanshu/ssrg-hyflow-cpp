@@ -327,7 +327,7 @@ void BstNode::addNodeMulti(int values[], int size) {
 				LOG_DEBUG("Bst :Call Add Node with %d in txns %d\n", values[txns], txns);
 				addNode(values[txns]);
 
-				if (txns%(BenchmarkExecutor::getItcpr()) == 0) {
+				if ((txns+1)%(BenchmarkExecutor::getItcpr()) == 0) {
 					HYFLOW_STORE(&txns, txns);
 					HYFLOW_CHECKPOINT_HERE;
 				}
@@ -349,7 +349,7 @@ void BstNode::deleteNodeMulti(int values[], int size) {
 				LOG_DEBUG("Bst :Call Delete Node with %d in txns %d\n", values[txns], txns);
 				deleteNode(values[txns]);
 
-				if (txns%(BenchmarkExecutor::getItcpr()) == 0) {
+				if ((txns+1)%(BenchmarkExecutor::getItcpr()) == 0) {
 					HYFLOW_STORE(&txns, txns);
 					HYFLOW_CHECKPOINT_HERE;
 				}
@@ -371,7 +371,7 @@ void BstNode::findNodeMulti(int values[], int size) {
 				LOG_DEBUG("Bst :Call find Node with %d in txns %d\n", values[txns], txns);
 				findNode(values[txns]);
 
-				if (txns%(BenchmarkExecutor::getItcpr()) == 0) {
+				if ((txns+1)%(BenchmarkExecutor::getItcpr()) == 0) {
 					HYFLOW_STORE(&txns, txns);
 					HYFLOW_CHECKPOINT_HERE;
 				}

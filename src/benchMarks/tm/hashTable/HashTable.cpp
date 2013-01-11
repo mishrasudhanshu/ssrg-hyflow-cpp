@@ -210,7 +210,7 @@ void HashBucket::putMulti(std::pair<int, double> entry[], int size) {
 				LOG_DEBUG("HT :Call Put Node with %d in txns %d\n", entry[txns].first, txns);
 				put(entry[txns]);
 
-				if (txns%(BenchmarkExecutor::getItcpr()) == 0) {
+				if ((txns+1)%(BenchmarkExecutor::getItcpr()) == 0) {
 					HYFLOW_STORE(&txns, txns);
 					HYFLOW_CHECKPOINT_HERE;
 				}
@@ -235,7 +235,7 @@ void HashBucket::removeMulti(int values[], int size) {
 				LOG_DEBUG("HT :Call removes Node with %d in txns %d\n", values[txns], txns);
 				remove(values[txns]);
 
-				if (txns%(BenchmarkExecutor::getItcpr()) == 0) {
+				if ((txns+1)%(BenchmarkExecutor::getItcpr()) == 0) {
 					HYFLOW_STORE(&txns, txns);
 					HYFLOW_CHECKPOINT_HERE;
 				}
@@ -257,7 +257,7 @@ void HashBucket::getMulti(int values[], int size) {
 				LOG_DEBUG("HT :Call Get Node with %d in txns %d\n", values[txns], txns);
 				get(values[txns]);
 
-				if (txns%(BenchmarkExecutor::getItcpr()) == 0) {
+				if ((txns+1)%(BenchmarkExecutor::getItcpr()) == 0) {
 					HYFLOW_STORE(&txns, txns);
 					HYFLOW_CHECKPOINT_HERE;
 				}

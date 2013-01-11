@@ -74,7 +74,7 @@ double TpccOps::newOrder() {
 		}
 
 		// In DISTRICT table: retrieve D_TAX, get and inc D_NEXT_O_ID
-    	if (0%(BenchmarkExecutor::getItcpr()) == 0) {
+    	if (1%(BenchmarkExecutor::getItcpr()) == 0) {
 			HYFLOW_CHECKPOINT_HERE;
     	}
 
@@ -90,7 +90,7 @@ double TpccOps::newOrder() {
     	}
 
 		// In CUSTOMER table: retrieve discount, last name, credit status
-		if (1%(BenchmarkExecutor::getItcpr()) == 0) {
+		if (2%(BenchmarkExecutor::getItcpr()) == 0) {
 			HYFLOW_CHECKPOINT_HERE;
 		}
 
@@ -125,7 +125,7 @@ double TpccOps::newOrder() {
 		}
 
 		for (int i=1 ; i <= orderLines; i++) {
-			if (i+1%(BenchmarkExecutor::getItcpr()) == 0) {
+			if (i+2%(BenchmarkExecutor::getItcpr()) == 0) {
 				HYFLOW_STORE(&i, i);
 				HYFLOW_CHECKPOINT_HERE;
 			}
@@ -246,7 +246,7 @@ void TpccOps::payment() {
 			wareHouseName = warehouse->W_NAME;
 		}
 		// In DISTRICT table
-		if (0%(BenchmarkExecutor::getItcpr()) == 0) {
+		if (1%(BenchmarkExecutor::getItcpr()) == 0) {
 			HYFLOW_CHECKPOINT_HERE;
 		}
 
@@ -260,7 +260,7 @@ void TpccOps::payment() {
 		}
 
 		// In CUSTOMER table
-		if (1%(BenchmarkExecutor::getItcpr()) == 0) {
+		if (2%(BenchmarkExecutor::getItcpr()) == 0) {
 			HYFLOW_CHECKPOINT_HERE;
 		}
 
@@ -318,7 +318,7 @@ void TpccOps::orderStatus() {
 			if(o_id <= 1) {
 				LOG_DEBUG("TPCC :Not a single order created for this district to check Status\n");
 			}else {
-				if (0%(BenchmarkExecutor::getItcpr()) == 0) {
+				if (1%(BenchmarkExecutor::getItcpr()) == 0) {
 					HYFLOW_CHECKPOINT_HERE;
 				}
 
@@ -375,11 +375,6 @@ void TpccOps::delivery() {
 					LOG_DEBUG("TPCC :Not a single order created for %d district to check Status\n", d_id);
 					break;
 				} else {
-					if (0%(BenchmarkExecutor::getItcpr()) == 0) {
-						HYFLOW_STORE(&ord, ord);
-						HYFLOW_CHECKPOINT_HERE;
-					}
-
 					{
 						TpccDistrict* district = (TpccDistrict*) HYFLOW_ON_WRITE(districtId);
 						std::string orderId = TpccOrder::getOrderId(w_id, d_id, ord);

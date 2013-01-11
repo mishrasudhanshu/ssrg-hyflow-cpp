@@ -187,7 +187,7 @@ void BankAccount::totalBalanceMulti(std::string ids[], int size) {
 					checkBalanceAtomic(NULL, &baArgs, __context__, &balance);
 				}
 
-				if (txns%(BenchmarkExecutor::getItcpr()) == 0) {
+				if ((txns+1)%(BenchmarkExecutor::getItcpr()) == 0) {
 					HYFLOW_STORE(&txns, txns);
 					HYFLOW_CHECKPOINT_HERE;
 				}
@@ -198,7 +198,7 @@ void BankAccount::totalBalanceMulti(std::string ids[], int size) {
 					checkBalanceAtomic(NULL, &baArgs, __context__, &balance);
 				}
 
-				if ((txns+1)%(BenchmarkExecutor::getItcpr()) == 0) {
+				if ((txns+2)%(BenchmarkExecutor::getItcpr()) == 0) {
 					HYFLOW_STORE(&txns, txns);
 					HYFLOW_CHECKPOINT_HERE;
 				}
@@ -223,7 +223,7 @@ void BankAccount::transferMulti(std::string ids[], int size, int money) {
 					withdrawAtomic(NULL, &baArgs, __context__, NULL);
 				}
 
-				if (txns%(BenchmarkExecutor::getItcpr()) == 0) {
+				if ((txns+1)%(BenchmarkExecutor::getItcpr()) == 0) {
 					HYFLOW_STORE(&txns, txns);
 					HYFLOW_CHECKPOINT_HERE;
 				}
@@ -234,7 +234,7 @@ void BankAccount::transferMulti(std::string ids[], int size, int money) {
 					depositAtomic(NULL, &baArgs, __context__, NULL);
 				}
 
-				if ((txns+1)%(BenchmarkExecutor::getItcpr()) == 0) {
+				if ((txns+2)%(BenchmarkExecutor::getItcpr()) == 0) {
 					HYFLOW_STORE(&txns, txns);
 					HYFLOW_CHECKPOINT_HERE;
 				}

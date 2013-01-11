@@ -289,7 +289,7 @@ void ListNode::addNodeMulti(int values[], int size) {
 				LOG_DEBUG("List :Call Add Node with %d in txns %d\n", values[txns], txns);
 				addNode(values[txns]);
 
-				if (txns%(BenchmarkExecutor::getItcpr()) == 0) {
+				if ((txns+1)%(BenchmarkExecutor::getItcpr()) == 0) {
 					HYFLOW_STORE(&txns, txns);
 					HYFLOW_CHECKPOINT_HERE;
 				}
@@ -311,7 +311,7 @@ void ListNode::deleteNodeMulti(int values[], int size) {
 				LOG_DEBUG("List :Call Delete Node with %d in txns %d\n", values[txns], txns);
 				deleteNode(values[txns]);
 
-				if (txns%(BenchmarkExecutor::getItcpr()) == 0) {
+				if ((txns+1)%(BenchmarkExecutor::getItcpr()) == 0) {
 					HYFLOW_STORE(&txns, txns);
 					HYFLOW_CHECKPOINT_HERE;
 				}
@@ -333,7 +333,7 @@ void ListNode::sumNodesMulti(int count) {
 				LOG_DEBUG("List :Call sumNodes %d  time\n", txns);
 				sumNodes();
 
-				if (txns%(BenchmarkExecutor::getItcpr()) == 0) {
+				if ((txns+1)%(BenchmarkExecutor::getItcpr()) == 0) {
 					HYFLOW_STORE(&txns, txns);
 					HYFLOW_CHECKPOINT_HERE;
 				}
@@ -355,7 +355,7 @@ void ListNode::findNodeMulti(int values[], int size) {
 				LOG_DEBUG("List :Call find Node with %d in txns %d\n", values[txns], txns);
 				findNode(values[txns]);
 
-				if (txns%(BenchmarkExecutor::getItcpr()) == 0) {
+				if ((txns+1)%(BenchmarkExecutor::getItcpr()) == 0) {
 					HYFLOW_STORE(&txns, txns);
 					HYFLOW_CHECKPOINT_HERE;
 				}

@@ -146,9 +146,10 @@ void BenchmarkExecutor::submitThreadMetaData(HyflowMetaData& threadMetadata) {
 }
 
 void BenchmarkExecutor::writeResults() {
-	LOG_DEBUG("Throughput=%f, retryCount=%d\n", benchNodeMetadata.throughPut, benchNodeMetadata.txnAborts.getValue());
+	LOG_DEBUG("Throughput=%f, retryCount=%d, total tries=%d\n", benchNodeMetadata.throughPut, benchNodeMetadata.txnAborts.getValue(),
+			benchNodeMetadata.txnTries.getValue());
 	Logger::result("Throughput=%.2f\n", benchNodeMetadata.throughPut);
-	float abortRate = (benchNodeMetadata.txnAborts.getValue()*100)/(benchNodeMetadata.txnTries.getValue()*(innerTxns+1)*threadCount);
+	float abortRate = ((float)benchNodeMetadata.txnAborts.getValue()*100)/(benchNodeMetadata.txnTries.getValue()*threadCount);
 	Logger::result("AbortRate=%.2f\n",abortRate);
 	Logger::result("CheckpointResume=%d\n",benchNodeMetadata.txnCheckpointResume.getValue());
 	Logger::result("CommittedSubTxns=%u\n", benchNodeMetadata.committedSubTxns);

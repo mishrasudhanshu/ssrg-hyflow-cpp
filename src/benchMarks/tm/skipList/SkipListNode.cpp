@@ -290,7 +290,7 @@ void SkipListNode::addNodeMulti(int* values, int size) {
 				LOG_DEBUG("SkipList :Call Add Node with %d in txns %d\n", values[txns], txns);
 				addNode(values[txns]);
 
-				if (txns%(BenchmarkExecutor::getItcpr()) == 0) {
+				if ((txns+1)%(BenchmarkExecutor::getItcpr()) == 0) {
 					HYFLOW_STORE(&txns, txns);
 					HYFLOW_CHECKPOINT_HERE;
 				}
@@ -312,7 +312,7 @@ void SkipListNode::deleteNodeMulti(int* values, int size) {
 				LOG_DEBUG("SkipList :Call Delete Node with %d in txns %d\n", values[txns], txns);
 				deleteNode(values[txns]);
 
-				if (txns%(BenchmarkExecutor::getItcpr()) == 0) {
+				if ((txns+1)%(BenchmarkExecutor::getItcpr()) == 0) {
 					HYFLOW_STORE(&txns, txns);
 					HYFLOW_CHECKPOINT_HERE;
 				}
@@ -334,7 +334,7 @@ void SkipListNode::findNodeMulti(int* values, int size) {
 				LOG_DEBUG("SkipList :Call find Node with %d in txns %d\n", values[txns], txns);
 				findNode(values[txns]);
 
-				if (txns%(BenchmarkExecutor::getItcpr()) == 0) {
+				if ((txns+1)%(BenchmarkExecutor::getItcpr()) == 0) {
 					HYFLOW_STORE(&txns, txns);
 					HYFLOW_CHECKPOINT_HERE;
 				}
