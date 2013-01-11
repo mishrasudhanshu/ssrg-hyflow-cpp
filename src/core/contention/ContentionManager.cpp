@@ -15,7 +15,7 @@
 #include "../context/types/DTL2Context.h"
 #include "../../benchMarks/BenchmarkExecutor.h"
 
-#define HYFLOW_BACKOFF_BARRIER 9
+#define HYFLOW_BACKOFF_BARRIER 5
 
 #ifdef RELEASE
 #define HYFLOW_BASE_BACKOFF 2000
@@ -40,7 +40,7 @@ void ContentionManager::deInit(void* metaData) {
 			|| (context->getParentContext() && !((DTL2Context*)context->getParentContext())->haveAbstractLocks())) {
 		int aborts = context->getAbortCount();
 		int baseSleepTime = HYFLOW_BASE_BACKOFF*NetworkManager::getThreadCount()*NetworkManager::getNodeCount()*BenchmarkExecutor::getInnerTxns();
-		int sleepTime = ((aborts*aborts*aborts)/HYFLOW_BACKOFF_BARRIER)*baseSleepTime;
+		int sleepTime = ((aborts*aborts)/HYFLOW_BACKOFF_BARRIER)*baseSleepTime;
 		sleepTime = sleepTime + abs(Logger::getCurrentMicroSec())%(sleepTime+1);
 		// Do random back-Off
 		if (sleepTime && context->isIsWrite()) {
