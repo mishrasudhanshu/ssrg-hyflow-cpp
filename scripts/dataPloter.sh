@@ -53,7 +53,7 @@ done
 gnuplot ${g}
 epstopdf ${eps}
 
-#rm /tmp/plot.temp
-rm *.eps 
+rm /tmp/plot.temp
+rm $outputFile.eps 
 
 echo "Plot $outputFile.pdf generated Successfully"
