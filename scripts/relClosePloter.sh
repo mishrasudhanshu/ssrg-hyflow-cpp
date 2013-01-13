@@ -21,6 +21,8 @@ eps=$outputFile.eps
 
 g=/tmp/plot.temp
 
+nodes=$(wc $file|awk '{print $1}')
+
 #set environment values
 echo "set term postscript eps enhanced color 22" > ${g}
 echo "set output \"${eps}\"" >> ${g}
@@ -28,10 +30,18 @@ echo "set output \"${eps}\"" >> ${g}
 #echo "set logscale y" >> ${g}
 echo "set key top" >> ${g}
 echo "set key left" >> ${g}
-echo "set xtics 10" >> ${g}
+#echo "set key font \",10\"" >> ${g}
+if [ "$nodes" -eq 5 ]
+then
+    echo "set xtics 4" >> ${g}
+else
+    echo "set xtics 10" >> ${g}
+fi
+echo "set ytics 0.3" >> ${g}
 echo "set xlabel \"$xlabel\"" >> ${g}
 echo "set ylabel \"Throughput (transactions/s)\"" >> ${g}
 echo "set xrange[0:50]" >> ${g}
+echo "set yrange[0:4]" >> ${g}
 echo -n "plot " >> ${g}
 
 columns=$(head -1 $file)
@@ -43,7 +53,7 @@ do
         echo "Reading First column $token"
     elif [ "$count" -eq 2 ]
     then
-        echo -n "\"$file\" using 1:(\$2/\$2) title \"$token\" with linespoints" >>${g} 
+        echo -n "\"$file\" using 1:(\$2/\$2) title \"Flat-Nesting\" with linespoints" >>${g} 
     elif [ "$count" -eq 3 ]
     then
         echo -n ", " >>${g}
@@ -54,8 +64,9 @@ do
         echo -n "\"$file\" using 1:(\$4/\$2) title \"$token\" with linespoints" >>${g} 
     elif [ "$count" -eq 5 ]
     then
-        echo -n ", " >>${g}
-        echo -n "\"$file\" using 1:(\$5/\$5) title \"$token\" with linespoints" >>${g} 
+	echo "skip $token"
+        #echo -n ", " >>${g}
+        #echo -n "\"$file\" using 1:(\$5/\$5) title \"$token\" with linespoints" >>${g} 
     elif [ "$count" -eq 6 ]
     then
         echo -n ", " >>${g}
@@ -66,8 +77,9 @@ do
         echo -n "\"$file\" using 1:(\$7/\$5) title \"$token\" with linespoints" >>${g} 
     elif [ "$count" -eq 8 ]
     then
-        echo -n ", " >>${g}
-        echo -n "\"$file\" using 1:(\$8/\$8) title \"$token\" with linespoints" >>${g} 
+	echo "skip $token"
+        #echo -n ", " >>${g}
+        #echo -n "\"$file\" using 1:(\$8/\$8) title \"$token\" with linespoints" >>${g} 
     elif [ "$count" -eq 9 ]
     then
         echo -n ", " >>${g}
@@ -78,8 +90,9 @@ do
         echo -n "\"$file\" using 1:(\$10/\$8) title \"$token\" with linespoints" >>${g} 
     elif [ "$count" -eq 11 ]
     then
-        echo -n ", " >>${g}
-        echo -n "\"$file\" using 1:(\$11/\$11) title \"$token\" with linespoints" >>${g} 
+	echo "skip $token"
+        #echo -n ", " >>${g}
+        #echo -n "\"$file\" using 1:(\$11/\$11) title \"$token\" with linespoints" >>${g} 
     elif [ "$count" -eq 12 ]
     then
         echo -n ", " >>${g}
