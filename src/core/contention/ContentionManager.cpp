@@ -36,8 +36,8 @@ void ContentionManager::deInit(void* metaData) {
 	DTL2Context* context = (DTL2Context*)metaData;
 	// Don't perform random back-off in inner Transactions in open nesting which might have
 	// abstract locks which will block all other transactions to proceed too. Never back-off internal open
-	if ( (!context->getParentContext() && (context->getNestingModel() != HYFLOW_INTERNAL_OPEN))
-			|| (context->getParentContext() && !((DTL2Context*)context->getParentContext())->haveAbstractLocks())) {
+	if (((context->getNestingModel() == HYFLOW_NESTING_OPEN)) && ((!context->getParentContext())
+				|| (context->getParentContext() && !((DTL2Context*)context->getParentContext())->haveAbstractLocks()))) {
 		int aborts = context->getAbortCount();
 		int baseSleepTime = HYFLOW_BASE_BACKOFF*NetworkManager::getThreadCount()*NetworkManager::getNodeCount()*BenchmarkExecutor::getInnerTxns();
 		int sleepTime = ((aborts*aborts)/HYFLOW_BACKOFF_BARRIER)*baseSleepTime;

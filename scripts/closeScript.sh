@@ -5,7 +5,7 @@
 source_dir=$1
 target_dir=$2
 
-for inTxns in 1 2 5 10
+for inTxns in 2 5 10
 do
     for model in flat checkPointing closed
     do

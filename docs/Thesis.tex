@@ -288,6 +288,10 @@ To be added: Provide Problem statement in it.
 \section{Thesis Contribution}
 
 To be added
+1. C++ Frame work
+2. Checkpointing and Close Nesting Support 
+3. Checkpointing better than Close Nesting
+4. Open nesting Support
 
 \section{Thesis Organization}
 
@@ -1042,21 +1046,25 @@ Poor performance of HyflowJava and  DecentSTM is rooted in their bad implementat
 \includegraphics[width=0.85\textwidth]{\string"eps/flat/bank/r20".pdf}
 \label{Fig:flatBankR20}
 }
-%\end{figure}
-%\begin{figure}[H]
+\end{figure}
+\begin{figure}[H]
+\centering
 \subfigure[Bank 50\% reads]{
 \includegraphics[width=0.85\textwidth]{\string"eps/flat/bank/r50".pdf}
 \label{Fig:flatBankR50}
 }
 \end{figure}
-
 \begin{figure}[H]
+\centering
 \subfigure[Bank 80\% reads]{
-\includegraphics[width=0.85\textwidth]{\string"eps/flat/bank/r80".pdf}
+\includegraphics[width=0.8\textwidth]{\string"eps/flat/bank/r80".pdf}
 \label{Fig:flatBankR80}
 }
+\end{figure}
+\begin{figure}[H]
+\centering
 \subfigure[Bank Sweetspot Comparison]{
-\includegraphics[width=0.85\textwidth]{\string"eps/flat/bank/sw".pdf}
+\includegraphics[width=0.8\textwidth]{\string"eps/flat/bank/sw".pdf}
 \label{Fig:flatBankSS}
 }
 \caption{Flat Nesting: Transactional throughput for Bank}
@@ -1067,25 +1075,27 @@ Poor performance of HyflowJava and  DecentSTM is rooted in their bad implementat
 
 In this benchmark, we have designed an ordered, singly-linked linear list data structure. We implement the list as set and don't allow the duplicate objects in the list. It helps to control the maximum number of objects in list. It support two write operations: add and remove, and one read operation: contains. While traversal all the read objects are added to transaction readSet, which makes list prone to high contention. Any write operation on traversed node will lead to transaction abort.
 
-In Figure~\ref{Fig:flatList}, we can observe that HyflowCPP performance is better 6 to 8 times better in comparison to nearest competitor HyflowScala. HyflowJava performs even worse than HyflowScala. We can also see increase in transactional throughput with increase in read percent. We are unable to find any consistent pattern in throughput with increase in number of nodes as contention is very high in list and aborts happen in random order. On average the list throughput decreases as number of nodes are increased, due to higher contention.
+For our experiments we initialize the linked list with 50 objects. In Figure~\ref{Fig:flatList}, we can observe that HyflowCPP performance is better 3 to 6 times better in comparison to nearest competitor HyflowScala. HyflowJava performs even worse than HyflowScala. We can also see increase in transactional throughput with increase in read percent. We are unable to find any consistent pattern in throughput with increase in number of nodes as contention is very high in list and aborts happen in random order. On average the list throughput decreases as number of nodes are increased, due to higher contention.
+
 
 \begin{figure}[H]
 \centering
 \subfigure[Linked list 20\% reads]{
-\includegraphics[width=0.7\textwidth]{\string"eps/flat/list/r20".pdf}
+\includegraphics[width=0.85\textwidth]{\string"eps/flat/list/r20".pdf}
 \label{Fig:flatListR20}
 }
 \end{figure}
 \begin{figure}[H]
+\centering
 \subfigure[Linked list 50\% reads]{
-\includegraphics[width=0.7\textwidth]{\string"eps/flat/list/r50".pdf}
+\includegraphics[width=0.8\textwidth]{\string"eps/flat/list/r50".pdf}
 \label{Fig:flatListR50}
 }
 \end{figure}
-
 \begin{figure}[H]
+\centering
 \subfigure[Linked list 80\% reads]{
-\includegraphics[width=0.7\textwidth]{\string"eps/flat/list/r80".pdf}
+\includegraphics[width=0.8\textwidth]{\string"eps/flat/list/r80".pdf}
 \label{Fig:flatListR80}
 }
 \caption{Flat Nesting: Transactional throughput for Linked list}
@@ -1096,25 +1106,26 @@ In Figure~\ref{Fig:flatList}, we can observe that HyflowCPP performance is bette
 
 In this benchmark, we design standard Skip-list data structure. Similar to list, in skip list also we don't allow the duplicate values. It support two write operations: add and remove, and one read operation: contains. In Skip-list contention is generally lower than the list as it requires fewer nodes to traverse. 
 
-In Figure~\ref{Fig:flatSkipList}, we can observer.
+In our experiments we create the Skip-list with upto 50 objects. In Figure~\ref{Fig:flatSkipList}, we can observer that HyflowCPP performance is 3 to 5 times better in comparison to HyflowScala. HyflowJava performs even worse in comparison to HyflowScala. With increase in number of nodes the HyflowCpp performance for 20\% reads decreases in general and for 50\% and 80\%  it increases. Overall due to smaller read set size the Skip-list throughput is better than Linked List benchmark. 
 
 \begin{figure}[H]
 \centering
 \subfigure[Skiplist 20\% reads]{
-\includegraphics[width=0.7\textwidth]{\string"eps/flat/skipList/r20".pdf}
+\includegraphics[width=0.85\textwidth]{\string"eps/flat/skipList/r20".pdf}
 \label{Fig:flatSkipListR20}
 }
 \end{figure}
 \begin{figure}[H]
+\centering
 \subfigure[Skiplist 50\% reads]{
-\includegraphics[width=0.7\textwidth]{\string"eps/flat/skipList/r50".pdf}
+\includegraphics[width=0.8\textwidth]{\string"eps/flat/skipList/r50".pdf}
 \label{Fig:flatSkipListR50}
 }
 \end{figure}
-
 \begin{figure}[H]
+\centering
 \subfigure[Skiplist 80\% reads]{
-\includegraphics[width=0.7\textwidth]{\string"eps/flat/skipList/r80".pdf}
+\includegraphics[width=0.8\textwidth]{\string"eps/flat/skipList/r80".pdf}
 \label{Fig:flatSkipListR80}
 }
 \caption{Flat Nesting: Transactional throughput for Skip-list}
@@ -1124,24 +1135,26 @@ In Figure~\ref{Fig:flatSkipList}, we can observer.
 \subsubsection{Binary Search Tree}
 In this benchmark, standard the Binary Search Tree is implemented as a set. It support two write operations: add and remove, and one read operation: contains. BST provides the higher concurrency in comparison to list, as it allows the concurrent read and write operations to go in parallel for different sub-trees. 
 
-In Figure~\ref{Fig:flatBst}, we can observer.
+In Figure~\ref{Fig:flatBst}, we can observer HyflowCpp performs 3 to 5 times better in comparison to HyflowScala. HyflowJava performance is even worse. Due to higher level of concurrency, we can find the increase in throughput for increase in number of nodes for all read ratios. In our experiments we allowed upto 50 objects in BST. Higher concurrency available in BST can be easily understood via its throughput which  is upto 2 times better in comparison to Linked List.
 
 \begin{figure}[H]
 \centering
 \subfigure[BST 20\% reads]{
-\includegraphics[width=0.7\textwidth]{\string"eps/flat/bst/r20".pdf}
+\includegraphics[width=0.85\textwidth]{\string"eps/flat/bst/r20".pdf}
 \label{Fig:flatBstR20}
 }
-\qquad
+\end{figure}
+\begin{figure}[H]
+\centering
 \subfigure[BST 50\% reads]{
-\includegraphics[width=0.7\textwidth]{\string"eps/flat/bst/r50".pdf}
+\includegraphics[width=0.8\textwidth]{\string"eps/flat/bst/r50".pdf}
 \label{Fig:flatBstR50}
 }
 \end{figure}
-
 \begin{figure}[H]
+\centering
 \subfigure[BST 80\% reads]{
-\includegraphics[width=0.7\textwidth]{\string"eps/flat/bst/r80".pdf}
+\includegraphics[width=0.8\textwidth]{\string"eps/flat/bst/r80".pdf}
 \label{Fig:flatBstR80}
 }
 \caption{Flat Nesting: Transactional throughput for Binary Search Tree}
@@ -1158,19 +1171,21 @@ HyflowCPP performs 5 to 7 times better in comparison to its nearest competitor H
 \begin{figure}[H]
 \centering
 \subfigure[Hash table 20\% reads]{
-\includegraphics[width=0.7\textwidth]{\string"eps/flat/hashTable/r20".pdf}
+\includegraphics[width=0.8\textwidth]{\string"eps/flat/hashTable/r20".pdf}
 \label{Fig:flatHashTableR20}
 }
-\qquad
+\end{figure}
+\begin{figure}[H]
+\centering
 \subfigure[Hash table 50\% reads]{
-\includegraphics[width=0.7\textwidth]{\string"eps/flat/hashTable/r50".pdf}
+\includegraphics[width=0.8\textwidth]{\string"eps/flat/hashTable/r50".pdf}
 \label{Fig:flatHashTableR50}
 }
 \end{figure}
-
 \begin{figure}[H]
+\centering
 \subfigure[Hash table 80\% reads]{
-\includegraphics[width=0.7\textwidth]{\string"eps/flat/hashTable/r80".pdf}
+\includegraphics[width=0.8\textwidth]{\string"eps/flat/hashTable/r80".pdf}
 \label{Fig:flatHashTableR80}
 }
 \caption{Flat Nesting: Transactional throughput for Hash table}
@@ -1190,19 +1205,22 @@ Vacation executes the reservation request, a low contention operation, as read o
 \begin{figure}[H]
 \centering
 \subfigure[Vacation 20\% reads]{
-\includegraphics[width=0.7\textwidth]{\string"eps/flat/vacation/r20".pdf}
+\includegraphics[width=0.8\textwidth]{\string"eps/flat/vacation/r20".pdf}
 \label{Fig:flatVacationR20}
 }
-\qquad
+\end{figure}
+\begin{figure}[H]
+\centering
 \subfigure[Vacation 50\% reads]{
-\includegraphics[width=0.7\textwidth]{\string"eps/flat/vacation/r50".pdf}
+\includegraphics[width=0.8\textwidth]{\string"eps/flat/vacation/r50".pdf}
 \label{Fig:flatVacationR50}
 }
 \end{figure}
 
 \begin{figure}[H]
+\centering
 \subfigure[Vacation 80\% reads]{
-\includegraphics[width=0.7\textwidth]{\string"eps/flat/vacation/r80".pdf}
+\includegraphics[width=0.8\textwidth]{\string"eps/flat/vacation/r80".pdf}
 \label{Fig:flatVacationR80}
 }
 \caption{Flat Nesting: Transactional throughput for Vacation}
@@ -1221,19 +1239,22 @@ We compare HyflowCPP performance with two other frameworks HyflowJava and Decent
 \begin{figure}[H]
 \centering
 \subfigure[Loan 20\% reads]{
-\includegraphics[width=0.7\textwidth]{\string"eps/flat/loan/r20".pdf}
+\includegraphics[width=0.85\textwidth]{\string"eps/flat/loan/r20".pdf}
 \label{Fig:flatLoanR20}
 }
-\qquad
+\end{figure}
+\begin{figure}[H]
+\centering
 \subfigure[Loan 50\% reads]{
-\includegraphics[width=0.7\textwidth]{\string"eps/flat/loan/r50".pdf}
+\includegraphics[width=0.8\textwidth]{\string"eps/flat/loan/r50".pdf}
 \label{Fig:flatLoanR50}
 }
 \end{figure}
 
 \begin{figure}[H]
+\centering
 \subfigure[Loan 80\% reads]{
-\includegraphics[width=0.7\textwidth]{\string"eps/flat/loan/r80".pdf}
+\includegraphics[width=0.8\textwidth]{\string"eps/flat/loan/r80".pdf}
 \label{Fig:flatLoanR80}
 }
 \caption{Flat Nesting: Transactional throughput for Loan}
@@ -1255,48 +1276,131 @@ In our experiment we don't vary the read ratios as in previous benchmarks as TPC
 
 \section{Checkpointing and Close Nesting}
 
-Checkpoing and Close Nesting both provide a method to partial rollback in case of abort. We perform various experiments to understand the benefit of Checkpointing and Close Nesting over Flat Nesting. We perform our experiments on all the micro benchmarks (Bank, List, Skip-list, BST and Hash-table) and Macro Benchmark Loan for Close Nesting and TPCC for the Checkpointing. We targeted to vary various parameters to understand the condition in which these models can be useful.
+Checkpoing and Close Nesting both provide a method to partial rollback in case of abort. We perform various experiments to understand the benefit of Checkpointing and Close Nesting over Flat Nesting. We perform our experiments on Bank, List, Skip-list, BST and Hash-table benchmarks. We targeted to vary various parameters to understand the condition in which these models can be useful.
 
 We performed our experiments for different read-ratios: 20\%, 50\%, and 80\% and different node counts: 2, 4, 8 and 16. These two parameters allowed us to vary the contention and abort count. We used less number of objects in our experiment, so that enough aborts occur. Without significant number of aborts measuring the impact of partial abort mechanism is not possible. We also varied number of objects based on number of inner transactions to maintain the level across the experiments. We used different number of inner transaction to understand the impact of transactional length and points of partial aborts in transaction.
 
 We can divide our experiments mainly in groups. In First group we maintain the same number of objects for all the experiments and vary other parameters like Read ratio, number of nodes and number of Inner Transaction for different nesting models. In second group, we perform experiments same as in experiment 1, but now we increase the number of objects in each experiment with increase in number of inner transaction, so we can maintain the same contention level for given parameters. We also perform a third experiment for checkpointing, where we try to understand the impact of Checkpoint granularity by varying it over the constant number of inner transactions. We represent our result for Checkpointing and Close Nesting throughput in comparison to Flat Nesting.
 
-\subsection{Micro Benchmarks}
+\subsection{Bank}
+In Figure~\ref{Fig:cpBankEx1R20} we present the results for 20\% reads in experiment 1 in which we keep object count constant and increase node count and number of inner transactions. We present throughput for different inner transactions ${1, 2, 5, 10}$ for close nesting and checkpointing relative to flat nesting. We can observer Checkpointing performs better in comparison to flat nesting upto 90\%, whereas Close nesting perform upto 60\% better. We can observer that as we increase the inner transaction count towards both nesting models performance deteriorates with increase in contention. At 10 inner transaction actually we perform worse than flat nesting.
 
-We perform our experiments on Bank, Linked List, Skip-list, Hash-table and BST. We present our results for all three experiments for each benchmark.
+In Figure~\ref{Fig:cpBankEx2R20} we present the results for 20\% reads in experiment 2 in which we keep increasing object count with increase in number of inner transactions. In these experiments we keep objects to inner transactions ratio constant, which allows us to stop increase in contention level with increase in number of inner transactions. We can observer with increase in inner transactions relative performance of Close nesting and Checkpointing does not decrease and it is able to maintain similar pattern improvements as for lower number of inner transactions.
 
-\subsubsection{Bank}
-To Be Added
+In Figure~\ref{Fig:cpBankEx3} we present the result of varying checkpointing granularity on a transaction.
 
-\subsubsection{Linked List}
-To Be Added 
+\begin{figure}[H]
+\centering
+\subfigure[Bank with constant Objects]{
+\includegraphics[width=0.7\textwidth]{\string"eps/checkpointing/bank/Ex1/r20".pdf}
+\label{Fig:cpBankEx1R20}
+}
+\end{figure}
+\begin{figure}[H]
+\centering
+\subfigure[Bank with increasing Objects]{
+\includegraphics[width=0.7\textwidth]{\string"eps/checkpointing/bank/Ex2/r20".pdf}
+\label{Fig:cpBankEx2R20}
+}
+\end{figure}
+\begin{figure}[H]
+\centering
+\subfigure[Bank with decreasing granularity]{
+\includegraphics[width=0.7\textwidth]{\string"eps/checkpointing/bank/Ex2/r20".pdf}
+\label{Fig:cpBankEx3}
+}
+\caption{Close Nesting and Checkpointing: Relative Transactional throughput for Bank}
+\label{Fig:cpBank}
+\end{figure}
 
-\subsubsection{Skip List}
+\subsection{Linked List}
+In Figure~\ref{Fig:cpList}
+
+\begin{figure}[H]
+\centering
+\subfigure[Linked List with constant Objects]{
+\includegraphics[width=0.7\textwidth]{\string"eps/checkpointing/list/Ex1/r20".pdf}
+\label{Fig:cpListEx1R20}
+}
+\end{figure}
+\begin{figure}[H]
+\centering
+\subfigure[Linked List with increasing Objects]{
+\includegraphics[width=0.7\textwidth]{\string"eps/checkpointing/list/Ex2/r20".pdf}
+\label{Fig:cpListEx2R20}
+}
+\end{figure}
+\begin{figure}[H]
+\centering
+\subfigure[Linked List with decreasing granularity]{
+\includegraphics[width=0.7\textwidth]{\string"eps/checkpointing/list/Ex2/r20".pdf}
+\label{Fig:cpListEx3}
+}
+\caption{Close Nesting and Checkpointing: Relative Transactional throughput for Linked List}
+\label{Fig:cpList}
+\end{figure}
+
+\subsection{Skip List}
 To Be Added  
 
-\subsubsection{BST}
+\begin{figure}[H]
+\centering
+\subfigure[Skip-list with constant Objects]{
+\includegraphics[width=0.7\textwidth]{\string"eps/checkpointing/skiplist/Ex1/r20".pdf}
+\label{Fig:cpSkiplistEx1R20}
+}
+\end{figure}
+\begin{figure}[H]
+\centering
+\subfigure[Skip-list with increasing Objects]{
+\includegraphics[width=0.7\textwidth]{\string"eps/checkpointing/skiplist/Ex2/r20".pdf}
+\label{Fig:cpSkiplistEx2R20}
+}
+\end{figure}
+\begin{figure}[H]
+\centering
+\subfigure[Skip-list with decreasing granularity]{
+\includegraphics[width=0.7\textwidth]{\string"eps/checkpointing/skiplist/Ex1/r20".pdf}
+\label{Fig:cpSkiplistEx3}
+}
+\caption{Close Nesting and Checkpointing: Relative Transactional throughput for Skip-list}
+\label{Fig:cpSkiplist}
+\end{figure}
+
+\subsection{BST}
 To Be Added
 
-\subsubsection{Hash Table}
-To Be Added 
+\subsection{Hash Table}
 
-\subsection{Macro Benchmarks}
+In Figure
 
-\subsubsection{Loan}
-
-To Be Added
-
-\subsubsection{Tpcc}
-
-To Be Added
+\begin{figure}[H]
+\centering
+\subfigure[Hash-table with constant Objects]{
+\includegraphics[width=0.7\textwidth]{\string"eps/checkpointing/hashTable/Ex1/r20".pdf}
+\label{Fig:cpHashTableEx1R20}
+}
+\end{figure}
+\begin{figure}[H]
+\centering
+\subfigure[Bank with increasing Objects]{
+\includegraphics[width=0.7\textwidth]{\string"eps/checkpointing/hashTable/Ex2/r20".pdf}
+\label{Fig:cpHashTableEx2R20}
+}
+\end{figure}
+\begin{figure}[H]
+\centering
+\subfigure[Bank with decreasing granularity]{
+\includegraphics[width=0.7\textwidth]{\string"eps/checkpointing/bank/Ex2/r20".pdf}
+\label{Fig:cpHashTableEx3}
+}
+\caption{Close Nesting and Checkpointing: Relative Transactional throughput for Hash-table}
+\label{Fig:cpHashTable}
+\end{figure}
 
 \section{Open Nesting}
 
 To be added
-
-\subsection{Linked List}
-
-To Be Added 
 
 \subsection{Skip List}
 
@@ -1311,6 +1415,8 @@ To Be Added
 To Be Added
 
 \section{Summary}
+
+In summary we can see HyflowCPP provides a very high throughput in comparison to its competitors.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
