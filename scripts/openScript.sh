@@ -5,9 +5,9 @@
 source_dir=$1
 target_dir=$2
 
-for inTxns in 2 5 10
+for inTxns in 2 3 4 8
 do
-    for model in flat checkPointing closed
+    for model in flat closed open
     do
         name=$model
         if [ "$name" == "closed" ]
@@ -18,9 +18,9 @@ do
         then
             name="Flat-Nesting"
         fi
-        if [ "$name" == "checkPointing" ]
+        if [ "$name" == "open" ]
         then
-            name="Checkpointing"
+            name="Open"
         fi
         echo "#Node" > t_Nodes.tmp
         bash scripts/analyzer.sh $source_dir/log_"$model"_InTxns_"$inTxns" gc | grep " 20 " | awk -F " " '{print $1}' >> t_Nodes.tmp
@@ -36,7 +36,7 @@ done
 for rp in 20 50 80
 do
     paste t_Nodes.tmp > $target_dir/reads"$rp".dat
-    for inTxns in 1 2 5 10
+    for inTxns in 2 3 4 8
     do
         paste $target_dir/reads"$rp".dat t_flat_"$inTxns"_"$rp".tmp t_checkPointing_"$inTxns"_"$rp".tmp t_closed_"$inTxns"_"$rp".tmp > t_"$rp"_"$inTxns".tmp
         mv t_"$rp"_"$inTxns".tmp $target_dir/reads"$rp".dat

@@ -102,7 +102,7 @@ Blacksburg, Virginia
 
 \vfill
 
-Keywords: Distributed Software Transactional Memory, Transactional Framework, C++, Concurrency
+Keywords: Distributed Transactional Memory, Transactional Framework, C++, Distributed Concurrency
 \\
 Copyright 2013, Sudhanshu Mishra
 
@@ -202,36 +202,35 @@ not have been possible.
 Introduction
 \hfill}
 
-In current digital age, as Moore's law~\cite{schaller1997moore} is approaching towards scaling limit, and processor clocks are hitting the power wall, chip manufacturers are progressively endowing the multi-core CPU architecture. Augment in computing power by increasing processor clock rate and transistor scaling is no more a feasible options. Experts believe further performance improvements can be achieved only through, writing the software to explicitly exploit the hardware parallelism. 
+In current digital age, as Moore's law~\cite{schaller1997moore} is approaching towards scaling limit, and processor clocks are hitting the power wall, chip manufacturers are progressively endowing the multi-core CPU architecture. Augment in computing power by increasing processor clock rate and transistor scaling are no more feasible options. Experts believe further performance improvements can be achieved only through writing the software code to explicitly exploit the hardware parallelism. 
 
-Writing the concurrent software code is a daunting task for an ordinary programmer. Such code requires a proper synchronization and co-ordination between different parallel tasks. Lock based synchronization is often used as synchronization abstraction. Coarse grain locking is simple to implement, protects the concurrent code by locking over large critical section, but permits the little concurrency. On other hand the fine grain locking is efficient and reduces the large critical section in various small parts to provide maximum concurrency. However, implementing such fine grained locks is highly complex and prone to programmer errors. Such lock based implementations have inherent problems such as deadlocks, livelocks, lock convoying, and priority inversion. Additionally, lock based synchronization does not support code composability. For instance, a thread safe collection may support atomic insertion or removal of elements using some internal lock mechanism. However, a user might require to remove a element from one collection and insert in another. Such operations can not be performed safely using lock mechanism provided in collection. It will require additional locking support to lock multiple collections at same time. These issues with locks make concurrent code difficult to understand, program, modify and maintain.
+Writing the concurrent software code is a daunting task for an ordinary programmer. Such code requires a proper synchronization and co-ordination between different parallel tasks. Lock based concurrency control is often used as synchronization abstraction. Coarse grain locking is simple to implement, protects the concurrent code by locking over large critical section, but permits the little concurrency. On other hand, the fine grain locking is efficient and reduces the large critical section into various small parts to provide maximum concurrency. However, implementing such fine grained locks is highly complex and prone to programmer errors. Such lock based synchronization have inherent problems such as deadlocks, livelocks, lock convoying, and priority inversion. Additionally, lock based synchronization does not support code composability. For instance, a thread safe collection may support atomic insertion or removal of elements using some internal lock mechanism. However, a user might require to remove a element from one collection and insert into another in a thread safe manner. Such operations can not be performed safely using lock mechanism provided in collection. It will require additional synchronization support to lock multiple collections at same time. These issues with locks make concurrent code difficult to understand, program, modify and maintain.
 
-Complications with lock based systems increase manifold in case of distributed systems where multi-core processors are connected to each other over network. All locked based issues like deadlocks and livelocks become more severe as resolving such issue becomes more costly and error prone over the network. Furthermore, lack of composability makes it difficult to support any replication or backup mechanism for failure  prone links.    
+Complications with lock based concurrent code increases manifold in case of distributed systems, where multi-core processors are connected to each other over network. All locked based issues like deadlocks, and livelocks become more severe, as resolving such issue becomes more costly and error prone over the network. Furthermore, lack of composability makes it difficult to support any replication or backup mechanism for failure  prone links.    
 
-Transactional Memory is an alternative abstraction to lock based synchronization. It aims to simplify the development of concurrent programs by alleviating the inherent issues with locks. Transaction Memory liberates the programmer from arduous task of maintaining the locks. It allows the programmer to identify the  sequence of instruction required to executed in isolation and executes that atomically as a transaction. This approach have been very successful in databases and slowly getting accepted in concurrent programming. Transactions are executed in transparent manner and commit atomically based on consistency constrain defined by system. Transactions generally maintain a set of read and write objects to verify the consistency constrain at commit time. In case of conflict at commit time, transaction is aborted and retried later.      
-%stopped
+Transactional Memory is an alternative abstraction to lock based synchronization. It aims to simplify the development of concurrent programs by alleviating the inherent issues with locks. Transaction Memory liberates the programmer from arduous task of maintaining the locks. It allows the programmer to identify the  sequence of instructions required to be executed in isolation and place them in an atomic section. Code in atomic section is automatically executed atomically as a transaction. This approach have been very successful in databases and slowly getting accepted in concurrent programming. Transactions execute in transparent manner and commit atomically based on consistency constrain defined by system. Transactions generally maintain a set of read and write objects to verify the consistency constrain at commit time. In case of conflict at commit time, transaction is aborted and retried later.      
 
-To overcome the distributed concurrency synchronization challenges the a transactional memory interfaces are enhanced to support transactions over network. Distributed Transactional Memory(DTM) is a promising model to extract the high performance from multiple core connected over network. Objective of DTM is not only to resolve the concurrency issues related to distributed concurrency, but also to support scalability and decentralization of resources to improve overall reliability of systems. From programmers prospect DTM follows the traditional validation and commit approach used in Transactional Memory. In addition to that it provides the user various methods to access the distributed object over the network. 
+To overcome the distributed concurrency synchronization challenges transactional memory interfaces are enhanced to support transactions over network. Distributed Transactional Memory(DTM) is a promising model to extract the high performance from multiple cores connected over network. Objective of DTM is not only to resolve the distributed concurrency issues, but also to support scalability and decentralization of resources to improve overall reliability of systems. From programmers prospective DTM follows the traditional validation and commit approach used in Transactional Memory. In addition to that it provides the programmer various methods to access the distributed object over the network. 
 
 \section{Transactional Memory Properties}
 
-Before describing the Distributed Transaction Memory(DTM) in more details, we introduce various transactional memory properties. Knowledge of these transactional memory properties are essential to understand various research works in DTM area.
+Before describing the Distributed Transaction Memory(DTM) in more detail, we introduce various transactional memory properties. Knowledge of these transactional memory properties are essential to understand various research works in DTM area.
 
 \subsection{Memory Consistency Models}
 
-A \textit{memory consistency} model is an agreement between the framework and programmer that specifies the memory access rules. It ensures that memory remain consistent and predictable after different memory operations. If programmer follows these rules, memory consistency is guaranteed by framework. These operation are generally provided in low level semantics like read and write data or compare and swap. Now we describe few memory consistency model which are often used in DTM frameworks.
+A \textit{memory consistency} model is an agreement between the framework and programmer that specifies the memory access rules. It ensures that memory remain consistent and predictable after different memory operations. If programmer follows these rules, memory consistency is guaranteed by framework. These operation are generally provided in low level semantics like read, write or compare and swap. Now we describe few memory consistency model which are often used in DTM frameworks.
 
 \textit{Serializability} is a strong consistency requirement and requires all transactions to execute in a complete isolation i.e., all transactions in the system should execute in a way, which is equivalent to a serial order. Two or more transactions can execute at the same time only if the equivalence to a serial execution can be maintained. For achieving high performances, many times supporting the serializability proves a very strong guarantee to provide. In recent years many researchers have focused on weaker consistency models, like Snapshot Isolation and Eventual Consistency etc.
 
 In \textit{Snapshot Isolation} a transaction takes a personal snapshot of the database at the start of the transaction. When the transaction finish, it commits only if the values of the items in its personal snapshot have not been updated by other committed transactions. \textit{Eventual Consistency} guarantees that if no new updates are made to system for a period of time, all values in the system will be updated to most recent values.
 
-Even though weaker consistency models provide high performance by relaxing the serializability, it forces programmers to embrace such relaxed consistency models. Such models typically come as a big challenge for ordinary programmers, as they are required to understand all the subtleties of complicated consistency properties, to avoid any sanity failure.
+Even though weaker consistency models provide high performance by relaxing the consistency requirement, it forces programmers to embrace such relaxed consistency models. Such models typically come as a big challenge for ordinary programmers, as they are required to understand all the subtleties of complicated consistency properties, to avoid any sanity failure.
 
 \subsection{Concurrency Control} 
 
-\textit{Concurrency Control} ensures that concurrent changes made by transaction do not violate the consistency model supported by system. It protects the correctness of results generated through concurrent operations with respect to consistency model. These concurrency control mechanisms often require to take to locks for a period of time. Mainly there are two types of concurrency control mechanism: Pessimistic concurrency control and optimistic concurrency control.
+\textit{Concurrency Control} ensures that concurrent changes made by transactions do not violate the consistency model supported by system. It protects the correctness of results generated through concurrent operations with respect to consistency model. These concurrency control mechanisms often require to take to locks for a period of time. Mainly there are two types of concurrency control mechanism: Pessimistic concurrency control and optimistic concurrency control.
 
-\textit{Pessimistic Concurrency Control}(PCC) assumes that all the data access will result in conflicts, therefore as soon as any object access is made in a transaction, locks are acquired on the object. Depending on the lock types(shared/exclusive) object may be shared with other transactions. Two phase Locking protocol~\cite{2PL:lin1983basic} is a good example of such concurrency control mechanism.  
+\textit{Pessimistic Concurrency Control}(PCC) assumes that all data accesses will result in conflicts, therefore as soon as any object access is made in a transaction, locks are acquired on the object. Depending on the lock types(shared/exclusive) object may be shared with other transactions. Two phase Locking protocol~\cite{2PL:lin1983basic} is a good example of such concurrency control mechanism.  
 
 \textit{Optimistic Concurrency Control}(OCC) assumes that although conflict are possible, but their occurrence is very rare, therefore no locks are required at time of access of data. Data manipulation is performed without acquiring any lock. Before commit a validation step is performed to check for any conflicting transaction. If any conflict is found, the current transaction is aborted and retried. OCC generally contains the four steps:
 
@@ -256,7 +255,7 @@ In DTM, various transactional models are available, which provide different mech
 
 \textit{Flat} nesting is the simplest form of nesting, which simply ignores the existence of transactions in inner code. All operations are executed in context of the outermost transaction. Aborting any of inner transaction cause the parent transaction to abort. Therefore no partial rollback can be performed. Flat nesting does not provide any performance incentive over non-nested transactions.
 
-\textit{Closed} nesting allows the inner transactions to abort individually. Abort of inner transaction does not lead to abort of parent transactions. But, commit by inner transaction are not allowed to write on share memory. Inner transaction commit to internal memory of parent transaction and there commit is not visible out side of parent transaction.
+\textit{Closed} nesting allows the inner transactions to abort individually. Abort of inner transaction does not lead to abort of parent transactions. But, commit by inner transaction are not allowed to write on share memory. Inner transaction commit to internal memory of parent transaction and their commit is not visible out side of parent transaction.
 
 \textit{Open} nesting uses the higher level of abstraction for memory access to avoid any false conflicts occurring at memory levels. It allows the inner transactions to commit or abort individually and their commits are visible globally, to all other transactions. In case of abort of outermost transaction, due to any fundamental conflict at higher abstractions, all the inner transactions are roll-backed via a predefined compensating actions for each inner transactions.
 
@@ -277,25 +276,34 @@ In DTM, various transactional models are available, which provide different mech
 \label{Fig:Nesting_example}
 \end{figure}
 
-\textit{Checkpointing} does not view a transaction as composition of multiple inner transaction, but as a process containing various states. It saves the transaction execution states at various points and uses them to partially rollback, to a valid Checkpointed state, in case of a conflict. This allows the transaction to redo the work, only for the part of transaction in which the conflict occurs. The transactions execution state is generally saved using continuation~\cite{flanagan1993essence}. In HyflowCpp we use \textit{setcontext} and \textit{getcontext} functions to save the execution states.     
+\textit{Checkpointing} does not view a transaction as composition of multiple inner transaction, but as a process containing various states. It saves the transaction execution states at various points and uses them to partially rollback, to a valid checkpointed state, in case of a conflict. This allows the transaction to redo the work, only for the part of transaction in which the conflict occurs. The transactions execution state is generally saved using continuation~\cite{flanagan1993essence}. In HyflowCpp we use \textit{setcontext} and \textit{getcontext} functions to save the execution states.     
 
-Figure~\ref{Fig:Nesting_example}~\cite{Alex:ONTFA2367601} depicts the difference between various transaction models using two transactions $T1$ and $T2$. In flat nesting, on conflict at a shared data between transactions $T1$ and $T2$, $T2$ have to fully abort. $T2$ can restart later and commit, when shared data is freed at the end of $T1$'s execution. In case of closed nesting, $T2$'s inner transaction incurs an abort. But, it saves all other previously committed inner transactions from getting aborted. Inner transaction can continue as soon as the shared object is freed by $T1$. With open nesting, the aborted inner transaction of $T2$ does not require to wait till the end of $T1$ executions, as in close nesting. Instead, it can continue as soon as $T1$'s inner transaction using the shared data commits and frees the shared data. With Checkpointing, in case of conflict the transaction $T2$ can resumed from last valid Checkpoint and keep retrying until the $T1$ frees the conflicting data at end of its execution. In this way by aborting on minimum amount of conflicting work, the transaction models allow to extract high performance. 
+Figure~\ref{Fig:Nesting_example}~\cite{Alex:ONTFA2367601} depicts the difference between various transaction models using two transactions $T1$ and $T2$. In flat nesting, on conflict at a shared data between transactions $T1$ and $T2$, $T2$ have to fully abort. $T2$ can restart later and commit, when shared data is freed at the end of $T1$'s execution. In case of closed nesting, $T2$'s inner transaction incurs an abort. But, it saves all other previously committed inner transactions from getting aborted. Inner transaction can continue as soon as the shared object is freed by $T1$. With open nesting, the aborted inner transaction of $T2$ does not require to wait till the end of $T1$ executions, as in closed nesting. Instead, it can continue as soon as $T1$'s inner transaction using the shared data commits and frees the shared data. With checkpointing, in case of conflict the transaction $T2$ can resumed from last valid checkpoint and keep retrying until the $T1$ frees the conflicting data at end of its execution. In this way by aborting on minimum amount of conflicting work, the transaction models allow to extract high performance. 
 
 \section{Distributed Transactional Memory}
 
-To be added: Provide Problem statement in it.
+The current DTM space solutions can be broadly classified based on mobility of objects and mobility of transactions, namely: Data flow model and Control flow model. In data flow model, transaction are anchored on requesting node and objects move in the network. The consistency of distributed objects is assured using cache coherency protocols. On other hand, in control flow transactions move over network and objects are immobile. Transactions access remote object using remote procedure calls (RPCs), and often use lock based consensus protocol to support consistency.
+
+There are various DTM solutions are available like Cluster-STM~\cite{Bocchino:2008:STM:1345206.1345242}, D2STM~\cite{D2STM:5368778}, DiSTM~\cite{Kotselidis08distm:a}, GenRSTM~\cite{GenRSTM:6038614}, HyflowJava~\cite{Saad:2011:HHP:1996130.1996167}, and HyflowScala~\cite{turcuhyflow2}, which support programming model specific and generic implementations. Unfortunately, all such solution are created in JVM based languages. Only few of them like DMV~\cite{Manassiev:2006:EDV:1122971.1123002}, Cluster-STM~\cite{Bocchino:2008:STM:1345206.1345242} and Sinfonia~\cite{Aguilera:2009:SNP:1629087.1629088}  was developed in C/C++. But DMV~\cite{Manassiev:2006:EDV:1122971.1123002} and Cluster-STM~\cite{Bocchino:2008:STM:1345206.1345242}  were implemented as proof of concept of an algorithm, instead of as a framework. Even Sinfonia~\cite{Aguilera:2009:SNP:1629087.1629088} is designed as service to support backup and restore.
+
+Many of industry products are written in C/C++, instead of Virtual Machine based languages like Java and C\# to overcome the performance issues with VM based languages. Therefore a C/C++ framework is required to understand the DTM in machine based languages and to develop high performance products using DTM concurrency support. Also, a C/C++ framework can be really useful to understand the trade-offs between different transactional models, specially for checkpointing, where execution states can be saved without much overhead. 
 
 \section{Thesis Contribution}
 
-To be added
-1. C++ Frame work
-2. Checkpointing and Close Nesting Support 
-3. Checkpointing better than Close Nesting
-4. Open nesting Support
+Inspired by above observation, we design and implement a first ever C/C++ based DTM framework: HyflowCPP. HyflowCPP has a modular architecture and provides a pluggable support for any DTM protocol. HyflowCPP provide a very simple atomic section based programming abstraction for concurrent code without any locks. In current implementation it supports a data flow based TFA algorithm. It supports strong atomicity and different transactional models like closed nesting, open nesting and checkpointing.  
+
+This thesis makes following Contributions:
+
+\begin{enumerate}
+\item We provide first ever C/C++ based DTM framework with highly simplified atomic section based programming interface. It exports a generic programming model with pluggable support for different DTM algorithms, cache coherence protocols, contention policies, and network protocols. We evaluate performance of our framework on 8 different benchmarks: five micro benchmarks and 3 macro benchmarks.
+\item We support transaction model like checkpointing and closed nesting in HyflowCPP using tailored TFA algorithms and evaluate their performance relative to flat nesting.  
+\item For first time using HyflowCPP we show that checkpointing based partial rollback mechanism outperforms  the closed nesting. 
+\item We support open nesting in HyflowCPP using TFAON and illustrate the performance improvement achieved by open nesting on different benchmarks.
+\end{enumerate}
 
 \section{Thesis Organization}
 
-The rest of the thesis is organized as follows: Chapter~\ref{chap:relWork} overviews past and related work in the DTM space, and contrasts them with the thesis's problem space. Chapter~\ref{chap:progInterface} illustrates the programming model required to develop benchmarks in our framework. Chapter~\ref{chap:sysArch} describes our framework architecture and interaction between different components. Chapter~\ref{chap:algorithm} explains the TFA algorithm and its adoption in different transactional models.We report our experimental results in Chapter~\ref{chap:expResults}. Finally, we conclude the thesis in Chapter~\ref{chap:conclusion}.
+The rest of the thesis is organized as follows: Chapter~\ref{chap:relWork} overviews past and related work in the DTM space, and contrasts them with the thesis's problem space. Chapter~\ref{chap:progInterface} illustrates the programming model required to develop benchmarks in our framework. Chapter~\ref{chap:sysArch} describes our framework architecture and interaction between different components. Chapter~\ref{chap:algorithm} explains the TFA algorithm and its adoption in different transactional models. We report our experimental results in Chapter~\ref{chap:expResults}. Finally, we conclude the thesis in Chapter~\ref{chap:conclusion}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %																									%
@@ -375,7 +383,7 @@ In 2011 Nuno et. al. in DiasSTM~\cite{dias2011efficient} came up with approach o
 Genuine Multiversion Update-Serializable Partial Data Replication(GMU)~\cite{GMU:peluso2012scalability} work published in 2012 provided high performance using the consistency criterion Extended Update Serializability(EUS). Update serializability is a weaker consistency criteria and can be defines as follows:
 
 \begin{definition}[\textbf{Update Serializability}]
-A schedule $s$ over a set $T$ of transactions is update serializable (USR) iff each schedule $s'$ obtained from $s$ after deleting all but one read-only transaction is serializable. If there are no read-only transactions , then no transactions need be deleted.
+A schedule $s$ over a set $T$ of transactions is update serializable (USR) iff each schedule $s'$ obtained from $s$ after deleting all but one read-only transaction is serializable. If there are no read-only transactions , then no transactions need be deleted~\cite{UpdateSerializability1986}.
 \end{definition}
 
 Extended Update Serializability (EUS)~\cite{EUS:HansdahPatnaik} allows concurrent read-only transactions to observe snapshots generated from different linear extensions of the history of update transactions.
@@ -384,13 +392,13 @@ At its heart GMU uses a distributed multiversion concurrency control scheme, a v
 
 
 \section{Replication}
-Replication have been heavily used by DTM community extract the transaction localization and boost performance. For replication based transactional systems, consistency is generally defined using 1-Copy serialization, which can be defined as described below:
+Replication have been heavily used by DTM community to extract the transaction localization and to boost performance. For replication based transactional systems, consistency is generally defined using 1-Copy serialization, which can be defined as described below:
 
 \begin{definition}[\textbf{1-Copy Serializability}]
 A concurrent execution of transactions in a replicated database is one-copy-serializable if it is equivalent  to an ordering obtained when the transactions are performed sequentially in a single centralized database.~\cite{bornea2011one}
 \end{definition}
 
-First paper in DTM by Manassiev~\cite{Manassiev:2006:EDV:1122971.1123002} based on DMV algorithm, as described earlier, used data replication. For providing 1-Copy serialization DMV used the global serialization time-stamp token, which proved costly approach to support 1-Copy serialization in replication based systems. Later Dependable Distributed Software Transactional Memory(D2STM) system~\cite{D2STM:5368778} and AGGRO scheme~\cite{AGGRO:5598236} improved performance by replacing global time-stamp with Atomic broadcast messages.  
+As described earlier, first paper in DTM by Manassiev~\cite{Manassiev:2006:EDV:1122971.1123002} based on DMV algorithm, used data replication. For providing 1-Copy serialization DMV used the global serialization time-stamp token, which proved costly approach to support 1-Copy serialization in replication based systems. Later Dependable Distributed Software Transactional Memory(D2STM) system~\cite{D2STM:5368778} and AGGRO scheme~\cite{AGGRO:5598236} improved performance by replacing global time-stamp with Atomic broadcast messages for all object replicas.  
 
 Sinfonia~\cite{Aguilera:2009:SNP:1629087.1629088} service also supported replication. But it did not design the concurrency algorithm taking the replication in consideration, instead it used the primary-copy replication to recover in case of failure. 
 
@@ -407,11 +415,11 @@ Cluster-STM~\cite{Bocchino:2008:STM:1345206.1345242} supported the Strong Atomic
 
 \section{Transaction Models}
 
-For performance improvement Nesting techniques are widely used in database systems. In 1981 Moss~\cite{moss1981nested} first time described the nesting concept in a distributed transaction. He extended two phase commit protocal~\cite{TwoPC:weikum1991principles} to support the nesting and proposed algorithms for distributed transaction management, object state restoration, and distributed deadlock detection. Later in 1983 Gracia~\cite{garcia1983using} et. al. extensive analyzed it in open nesting context using undo-logs transactions. 
+For performance improvement nesting techniques are widely used in database systems. In 1981 Moss~\cite{moss1981nested} first time described the nesting concept in a distributed database transactions. He extended two phase commit protocal~\cite{TwoPC:weikum1991principles} to support the nesting and proposed algorithms for distributed transaction management, object state restoration, and distributed deadlock detection. Later in 1983 Gracia~\cite{garcia1983using} et. al. extensively analyzed it in open nesting context using undo-logs transactions. 
 
 Transaction nesting was first time introduced to STM in 2006 by  Moss and Hosking in ~\cite{moss2006nested}.They provided the semantics of transactional operations in terms of system states as a tuple of a transaction ID, a memory location, a read/write flag, and the value read or written. Later Moss ~\cite{moss2006open} further described the open-nesting as method to overcome false conflicts and improve concurrency. 
 
-In same year Moravan et al. implemented nesting in logTM~\cite{moravan2006supporting} and demonstrated the speed-up 100\% for few benchmarks. In 2009 Agrawal et. al. ~\cite{agrawal2009safe} introduced the concept of transaction ownership by combining the close and open nesting. Herlihy and Koskinen propose transactional boosting~\cite{herlihy2008transactional} for implementing highly concurrent transactional data structures, which internally implemented the open-nesting. Later Koskinen and Herlihy~\cite{koskinen2008checkpoints} suggested the Checkpointing as an alternative to nesting.
+In same year Moravan et al. implemented nesting in logTM~\cite{moravan2006supporting} and demonstrated the speed-up 100\% for few benchmarks. In 2009 Agrawal et. al. ~\cite{agrawal2009safe} introduced the concept of transaction ownership by combining the closed and open nesting. Herlihy and Koskinen propose transactional boosting~\cite{herlihy2008transactional} for implementing highly concurrent transactional data structures, which internally implemented the open-nesting. Later Koskinen and Herlihy~\cite{koskinen2008checkpoints} suggested the checkpointing as an alternative to nesting. Recently, HyflowJava based work on closed nesting~\cite{turcu2012closed} and open nesting~\cite{turcu2012open} described the tradeoff of using nesting in DTM. 
 
 \section{Unconventional Database Systems}
 In recent times there have been lot of work on designing unconventional database system. With explosion in amount of data processed and stored in data warehouse, system administers are understanding the limitation of current database systems. Many works ~\cite{Stonebraker:2007:EAE:1325851.1325981}~\cite{harizopoulos2008oltp} have argued that current DBMS perform a poor job of CPU utilization and might require whole redesign. Works like HStore~\cite{HSTORE:kallman2008h} and Google Spanner~\cite{corbett2012spanner} have achieve high performance using new architectures based on replication and multi-versioning for database systems. 
@@ -423,7 +431,7 @@ In recent times there have been lot of work on designing unconventional database
 \begin{threeparttable}[b]
 \begin{tabular}{|c|c|c|c|c|c|c|c|c|}
 \hline 
-\begin{sideways} Implementation \end{sideways} & \begin{sideways} Serializability \end{sideways} & \begin{sideways} Replication \end{sideways} & \begin{sideways} MultiVersioning \end{sideways} & \begin{sideways} Strong Atomicity \end{sideways}  & \begin{sideways} checkpointing \end{sideways} & \begin{sideways} Close-Nesting \end{sideways} & \begin{sideways} Open-Nesting \end{sideways} &  Target Language \tabularnewline
+\begin{sideways} Implementation \end{sideways} & \begin{sideways} Serializability \end{sideways} & \begin{sideways} Replication \end{sideways} & \begin{sideways} MultiVersioning \end{sideways} & \begin{sideways} Strong Atomicity \end{sideways}  & \begin{sideways} checkpointing \end{sideways} & \begin{sideways} Closed-Nesting \end{sideways} & \begin{sideways} Open-Nesting \end{sideways} &  Target Language \tabularnewline
 \hline
 DMV ~\cite{Manassiev:2006:EDV:1122971.1123002} & \CheckmarkBold{} & \CheckmarkBold{} & \XSolidBold{} & \XSolidBold{} & \XSolidBold{} & \XSolidBold{} & \XSolidBold{} & C/C++ \tabularnewline
 \hline 
@@ -583,7 +591,7 @@ void ListNode::deleteNode(int value) {
 \label{Fig:listMacro}
 \end{figure}
 
-HyflowCpp also support the transaction \emph{Checkpointing} using macros. For minimum Checkpointing overhead we support it in outermost transaction call. We allow user to checkpoint at any place using ~\emph{HYFLOW{\_}CHECKPOINT{\_}HERE}. User is also required to initiate the Checkpointing at start of transaction using ~\emph{HYFLOW{\_}CHECKPOINT{\_}INIT}. Figure~\ref{Fig:bankCP} illustrates how Checkpointing can be implemented in a simple bank transfer function. Note that how user is required to pass the current context instance to withdraw function. This requirement exist for all the functions which are called within atomic block and are require to be executed atomically. This additional argument passing will be removed once the compiler support is added to atomic block. 
+HyflowCpp also support the transaction \emph{Checkpointing} using macros. For minimum checkpointing overhead we support it in outermost transaction call. We allow user to checkpoint at any place using ~\emph{HYFLOW{\_}CHECKPOINT{\_}HERE}. User is also required to initiate the checkpointing at start of transaction using ~\emph{HYFLOW{\_}CHECKPOINT{\_}INIT}. Figure~\ref{Fig:bankCP} illustrates how checkpointing can be implemented in a simple bank transfer function. Note that how user is required to pass the current context instance to withdraw function. This requirement exist for all the functions which are called within atomic block and are require to be executed atomically. This additional argument passing will be removed once the compiler support is added to atomic block. 
 
 \begin{figure}
 \begin{minipage}[b]{0.9\linewidth}\centering
@@ -609,7 +617,7 @@ void BankAccount::transfer(string Account1, string Account2, Money) {
 
 Atomic class interface is more involved and allows users to directly program against the HyflowCpp framework. Using the Atomic class interface user can directly interact with transaction context. Atomic class is template type class which must be Type defined based on atomic function class return type. Atomic class function pointer ~\emph{atomically} is initialized by user with desired function, which is to be executed atomically. After initializing the function pointer value user can call the ~\emph{execute} method from atomic class to run the desired function atomically.
 
-Atomic class also provides the function pointers to support advance nesting features like open-nesting. User can specify the ~\emph{onCommit} and ~\emph{onAbort} function for  ~\emph{HyflowObject} requiring the open nesting support. All these function pointers requires to follow a define argument set similar to libraries like pthread. Only hind side of using atomic class is that, Checkpointing can not be performed on transaction using atomic class. Checkpoints are required to be created in outermost transactions and Atomic class executes the function pointer as an inner transaction. 
+Atomic class also provides the function pointers to support advance nesting features like open-nesting. User can specify the ~\emph{onCommit} and ~\emph{onAbort} function for  ~\emph{HyflowObject} requiring the open nesting support. All these function pointers requires to follow a define argument set similar to libraries like pthread. Only hind side of using atomic class is that, checkpointing can not be performed on transaction using atomic class. Checkpoints are required to be created in outermost transactions and Atomic class executes the function pointer as an inner transaction. 
 
 User can also write the benchmark directly without using any of Atomic class or Macros. This will require the user to directory manipulate the DirectoryManager for remote object access and ContextManager for transaction atomicity. It can be some time useful for debugging some internal framework issues, otherwise it is not a recommended method.
 
@@ -695,7 +703,7 @@ Figure~\ref{Fig:HyflowCppArch} shows the architecture of a node in HyflowCpp. It
 
 \section{Transaction Validation Module}
 
-The purpose of Transaction Validation Module is to provide the transactional consistency and achieve system wide progress. All the DTM logic is performed in this module by extending base class ~\emph{HyflowContext}. Currently by default ~\emph{HyflowContext} is extended as ~\emph{DTLContext} which implements the TFA algorithm. This module validates memory locations and retries the transactional code as needed on commit failure. This module can be configured based on the transaction model used like Checkpointing and Closed nesting etc. 
+The purpose of Transaction Validation Module is to provide the transactional consistency and achieve system wide progress. All the DTM logic is performed in this module by extending base class ~\emph{HyflowContext}. Currently by default ~\emph{HyflowContext} is extended as ~\emph{DTLContext} which implements the TFA algorithm. This module validates memory locations and retries the transactional code as needed on commit failure. This module can be configured based on the transaction model used like checkpointing and Closed nesting etc. 
 
 To support the DTM protocols this module also provides the ~\emph{LockTable} for object level or word level locking. This table is implemented using high perform concurrent hashMaps of Thread Building Block(TBB)~\cite{willhalm2008putting} library. This module also provides the ~\emph{ContextMap} to access the context instance using transaction Id. It enable the contention Managers to collect meta data and make updates to different transactional contexts.
 
@@ -823,7 +831,7 @@ In Figure~\ref{Fig:FlatCommit} we illustrate the transaction commit process. Tra
    
 \section{Closed Nesting} 
 
-In Close Nesting each transaction attempts to do individual commits, but for inner transactions the commit not visible outside of the enclosing transaction. Inner transactions are allowed to abort independently of their parents. In this way by permitting partial aborts for the inner transactions close nesting helps to improve performance. In this section we present the modified version of TFA for Close Nesting: ~\emph{Transaction Forwarding Alogrithm for Close Nesting(TFACN)}.
+In closed nesting each transaction attempts to do individual commits, but for inner transactions the commit not visible outside of the enclosing transaction. Inner transactions are allowed to abort independently of their parents. In this way by permitting partial aborts for the inner transactions closed nesting helps to improve performance. In this section we present the modified version of TFA for closed nesting: ~\emph{Transaction Forwarding Alogrithm for closed nesting(TFACN)}.
 
 \begin{figure}[H]
 \begin{minipage}[b]{0.9\linewidth}\centering
@@ -844,17 +852,17 @@ Context::TransactionForwarding(senderNodeClock) {
 }
 \end{lstlisting}
 \end{minipage}
-\caption{Transaction Forwarding in Close Nesting}
+\caption{Transaction Forwarding in closed nesting}
 \label{Fig:CloseTFA}
 \end{figure} 
 
-To support close nesting each context maintains a reference to the parent context, for outermost context parent context reference is set to null. In transaction forwarding step we performed transaction forwarding on whole context tree branch instead on just current inner transaction. In Figure~\ref{Fig:CloseTFA} we illustrate the Transaction Forwarding step for TFACN.
+To support closed nesting each context maintains a reference to the parent context, for outermost context parent context reference is set to null. In transaction forwarding step we performed transaction forwarding on whole context tree branch instead on just current inner transaction. In Figure~\ref{Fig:CloseTFA} we illustrate the Transaction Forwarding step for TFACN.
 
-In commit phase TFACN directly merges the context objects to parent context objects for inner transactions. For outermost transaction commit procedure is same as in Flat Nesting. 
+In commit phase TFACN directly merges the context objects to parent context objects for inner transactions. For outermost transaction commit procedure is same as in flat nesting. 
 
 \section{Checkpointing}
 
-Transaction Checkpointing saves the transaction execution state at various points. Later on commit failure it enables a transaction to resume from previously saved valid Checkpoint. Checkpointing allows a transaction to abort only required part of transaction for which actually the conflict happens and therefore boosts the performance. Checkpointing can be consider as a extension of Close nesting, where partial aborts can be applied at any point in transaction execution state. In this section we present  the modified the TFA algorithm for Checkpointing: ~\emph{Transaction Forwarding Algorithm with Checkpointing(TFACP)}.
+Transaction checkpointing saves the transaction execution state at various points. Later on commit failure it enables a transaction to resume from previously saved valid Checkpoint. Checkpointing allows a transaction to abort only required part of transaction for which actually the conflict happens and therefore boosts the performance. Checkpointing can be consider as a extension of closed nesting, where partial aborts can be applied at any point in transaction execution state. In this section we present  the modified the TFA algorithm for checkpointing: ~\emph{Transaction Forwarding Algorithm with checkpointing(TFACP)}.
 
 \begin{figure}[H]
 \begin{minipage}[b]{0.9\linewidth}\centering
@@ -877,11 +885,11 @@ Context::TransactionForwarding(senderNodeClock) {
 }
 \end{lstlisting}
 \end{minipage}
-\caption{Transaction Forwarding in Checkpointing}
+\caption{Transaction Forwarding in checkpointing}
 \label{Fig:CheckPointTFA}
 \end{figure} 
 
-To support Checkpointing in TFACP we partition read-set, write-set, publish-set and delete-set data on basis of first access Checkpoint. This allows TFACP to identity the conflicting objects and to determine the valid Checkpoint to resume. To save the transaction execution stack state we use the ~\emph{setContext()} and ~\emph{getContext()} functions. Heap objects are maintained in context read-set, write-set and publish-set. 
+To support checkpointing in TFACP we partition read-set, write-set, publish-set and delete-set data on basis of first access Checkpoint. This allows TFACP to identity the conflicting objects and to determine the valid Checkpoint to resume. To save the transaction execution stack state we use the ~\emph{setContext()} and ~\emph{getContext()} functions. Heap objects are maintained in context read-set, write-set and publish-set. 
 
 \begin{figure}
 \begin{minipage}[b]{0.9\linewidth}\centering
@@ -923,20 +931,20 @@ Context::Commit() {
 }
 \end{lstlisting}
 \end{minipage}
-\caption{Commit in Checkpointing}
+\caption{Commit in checkpointing}
 \label{Fig:CheckpointCommit}
 \end{figure}
 
 HyflowCpp provides a helper class ~\emph{CheckPointProvider} to create, iterator and maintain the transaction Checkpoints.~\emph{HYFLOW{\_}STORE(OBJECT{\_}REF, OBJECT{\_}VALUE)} macro is provided to store any stack or heap object values just before creating checkpoint. These values are automatically are restored on continuing from checkpoint after partial abort.     
 
-In Figure~\ref{Fig:CheckPointTFA} we illustrate the Transaction Forwarding Processing for TFACP. Similar to Flat nesting we perform transaction forwarding by object validation. But on validation failure, we do not rollback instead resume the transaction from valid Checkpoint if available. Before resuming we remove all the invalidated heap objects from the context.
+In Figure~\ref{Fig:CheckPointTFA} we illustrate the Transaction Forwarding Processing for TFACP. Similar to flat nesting we perform transaction forwarding by object validation. But on validation failure, we do not rollback instead resume the transaction from valid Checkpoint if available. Before resuming we remove all the invalidated heap objects from the context.
 
 Commit process in TFACP is also modified similar to Transaction Forwarding. On commit failure in place of restarting transaction we resume from available valid checkpoint. Note that here we are required to release any acquired lock before resuming. Figure~\ref{Fig:CheckPointCommit} illustrate the commit procedure in TFACP. 
 
 
 \section{Open Nesting}
 
-Open nesting provides the performance improvement by reducing the false memory level conflict. In contrast to close nesting in open nesting the inner transactions commit on completion are visible globally and corresponding undo action is merged into parent transaction. In case of parent transaction abort the undo action are used to recover from the inner transaction commit. To maintain the memory consistency the inner transaction specific higher level locks are maintained.  
+Open nesting provides the performance improvement by reducing the false memory level conflict. In contrast to closed nesting in open nesting the inner transactions commit on completion are visible globally and corresponding undo action is merged into parent transaction. In case of parent transaction abort the undo action are used to recover from the inner transaction commit. To maintain the memory consistency the inner transaction specific higher level locks are maintained.  
 
 To support open nesting in TFA a concept of abstract locks is introduced, which provided the higher level locks for inner transactions. Unfortunately abstract lock mechanism suffers from the livelocks issue and uses a random back-off mechanism to overcome this issue. TFAON allows user to define the \textit{onAbort} and \textit{onCommit} functions to be performed in case of abort or commit on parent transaction. TFAON acquires abstract locks in inner transactions and releases them in parent transaction on commit or abort. 
 
@@ -1014,7 +1022,7 @@ As described in Figure~\ref{Fig:OpenNestingCommit} Abstract locks can be created
 Experimental Results \& Evaluation
 \hfill}
 
-In this chapter, the performance of HyflowCPP is compared against other Java based DTM frameworks using micro-benchmarks and macro-benchmarks. Being first DTM framework in C++, we compare this work with other competitors like HyflowScala, HyflowJava and Decent RSTM. We evaluate the performance on multiple micro benchmarks(Bank, List, Binary Search Tree, Skip-list, Hash-table) and  macro benchmarks(Loan, Vacation and Tpcc).   
+In this chapter, the performance of HyflowCPP is compared against the other DTM frameworks using micro-benchmarks and macro-benchmarks. Being first DTM framework in C++, we compare this work with other JVM based competitors like HyflowScala, HyflowJava, GenRSTM and DecentRSTM. We evaluate the performance on multiple micro benchmarks(Bank, List, Binary Search Tree, Skip-list, Hash-table) and  macro benchmarks(Loan, Vacation and Tpcc).   
 
 \section{Test Environment}
 
@@ -1022,13 +1030,13 @@ Our all experiments are conducted on 48 core machine. Machine contains four AMD 
 
 \section{Flat Nesting}
 
-Flat nesting does not provide any performance incentive over other transactional model like Close or Open Nesting. Still, it is very useful to understand benchmarks characteristics and compare the raw performance between different DTM frameworks. We have evaluated the performance with different read ratios (0.2 , 0.5 and 0.8) on nodes from 4 to 48. For concentrating focus on the distributed behavior in experiments we have limited threads on each node to one.  
+Flat nesting does not provide any performance incentive over other transactional model like closed or open nesting. Still, it is very useful to understand benchmarks characteristics and compare the raw performance between different DTM frameworks. We have evaluated the performance with different read ratios (0.2 , 0.5 and 0.8) on nodes from 4 to 48. For concentrating focus on the distributed behavior in experiments we have limited threads on each node to one.  
 
 For performance comparsion, we compare the HyflowCpp with various competitors like HyflowJava~\cite{Saad:2011:HHP:1996130.1996167}, HyflowScala~\cite{turcuhyflow2}, DecentRSTM~\cite{DecentSTM:5470446} and GenRSTM~\cite{GenRSTM:6038614}. We have compared the all the benchmarks already available in competitor with our benchmarks. For some HyflowCPP benchmarks, we have not found any implementation in competitors. We have not spent time in developing benchmarks in competitor frameworks, instead we devoted our time in more important research work. 
 
 \subsection{Micro Benchmarks}
 
-Micro benchmarks which we considered for performance evaluation are Bank, List, Binary Search Tree, Skip-list and Hash-table. In each data structure we convert all coarse grain locks access in lock based implementation with transaction Block provided by \emph{HYFLOW{\_}ATOMIC{\_}START} and \emph{HYFLOW{\_}ATOMIC{\_}END}. For each experiment we ran 2000 transactions 3 times and took average of their transactional throughput.  
+Micro benchmarks which we considered for performance evaluation are Bank, List, Binary Search Tree, Skip-list and Hash-table. In each data structure we convert all coarse grain locks access in lock based implementation with \emph{HYFLOW{\_}ATOMIC{\_}START} and \emph{HYFLOW{\_}ATOMIC{\_}END} transactional block. For each experiment we ran 2000 transactions 3 times and took average of their transactional throughput.  
 
 \subsubsection{Bank}
 
@@ -1043,14 +1051,15 @@ Poor performance of HyflowJava and  DecentSTM is rooted in their bad implementat
 \begin{figure}
 \centering
 \subfigure[Bank 20\% reads]{
-\includegraphics[width=0.85\textwidth]{\string"eps/flat/bank/r20".pdf}
+\includegraphics[width=0.75\textwidth]{\string"eps/flat/bank/r20".pdf}
 \label{Fig:flatBankR20}
 }
+%\qquad
 \end{figure}
 \begin{figure}[H]
 \centering
 \subfigure[Bank 50\% reads]{
-\includegraphics[width=0.85\textwidth]{\string"eps/flat/bank/r50".pdf}
+\includegraphics[width=0.75\textwidth]{\string"eps/flat/bank/r50".pdf}
 \label{Fig:flatBankR50}
 }
 \end{figure}
@@ -1194,11 +1203,11 @@ HyflowCPP performs 5 to 7 times better in comparison to its nearest competitor H
 
 \subsection{Macro Benchmarks}
 
-Macro Benchmarks are useful to verify the framework capability in real life application. Macro benchmarks perform lot of operations leading to higher messaging and transaction execution time. In this section we evaluate the performance of Macro Benchmarks Vacation, Loan and TPCC.
+Macro Benchmarks are useful to verify the framework capability in real life applications. Macro benchmarks perform lot of operations leading to higher messaging and transaction execution time. In this section we evaluate the performance of Macro Benchmarks Vacation, Loan and TPCC.
 
 \subsubsection{Vacation}
 
-The Vacation benchmark emulates a itinerary planning reservation system. It allows user to make reservations for cars, rooms and flights. If also allows administrators to manipulate the users and update the currently available offers. Each reservation request or offer update request contain 10 queries writing on the 10 distributed objects. 
+The Vacation benchmark emulates a itinerary planning reservation system. It allows user to make reservations for cars, rooms and flights. It also enables administrators to manipulate the users and update the currently available offers. Each reservation request or offer update request contain 10 queries writing on the 10 distributed objects. 
 
 Vacation executes the reservation request, a low contention operation, as read operations and delete customer and update offers, high contention operations, as write operations. For experiment, in Vacation we create 1000 customers and 3000 cars, 3000 flights and 3000 rooms. In Figure~\ref{Fig:flatVacation} we can see  that higher numbers of resources allow the throughput to scale linearly with number of nodes. Due to higher numbers of objects the read operations prove more costly as they access more objects. We compare the HyflowCpp performance with HyflowJava for different reads. Hyflow perform also 4-5 times better than HyflowJava. 
 
@@ -1232,7 +1241,7 @@ Vacation executes the reservation request, a low contention operation, as read o
 Loan benchmark simulates the banking situation where loans are provided to user based on the different set of bank accounts. Each account is access in nested fashion and a certain amount of money is borrowed based on the current amount. It also allows user to get total balance available in the all accounts.
 
 In our experiments, we run the total balance operation as reads and loan operation as write operation. We create total 10000 account over network and access 6 accounts to provide loan or calculate the total balance.
-Loan operation calls itself in nested fashion either until all the account are used to borrow a random part of total loan money.
+Loan operation calls itself in nested fashion either until all the account are used to borrow a random part of total loan money or total money is gathered.
 
 We compare HyflowCPP performance with two other frameworks HyflowJava and DecentSTM. Its performance in 5 to 10 times better than other frameworks. Write dominated experiments shows higher throughput as they suffer from higher contention. Throughput for 80\% read is higher than 20\% reads. At very low contention level, around 2 to 4 nodes, loan performance is very similar for different read ratios as read operation and write operation access same number of objects. 
 
@@ -1274,58 +1283,60 @@ In our experiment we don't vary the read ratios as in previous benchmarks as TPC
 \label{Fig:flatTPCC}
 \end{figure}
 
-\section{Checkpointing and Close Nesting}
+\section{Checkpointing and Closed Nesting}
 
-Checkpoing and Close Nesting both provide a method to partial rollback in case of abort. We perform various experiments to understand the benefit of Checkpointing and Close Nesting over Flat Nesting. We perform our experiments on Bank, List, Skip-list, BST and Hash-table benchmarks. We targeted to vary various parameters to understand the condition in which these models can be useful.
+Checkpoing and closed nesting both provide a method to partial rollback in case of abort. We perform various experiments to understand the benefit of checkpointing and closed nesting over flat nesting. We perform our experiments on Bank, List, Skip-list, and Hash-table benchmarks. We targeted to vary various parameters to understand the condition in which these models can be useful.
 
-We performed our experiments for different read-ratios: 20\%, 50\%, and 80\% and different node counts: 2, 4, 8 and 16. These two parameters allowed us to vary the contention and abort count. We used less number of objects in our experiment, so that enough aborts occur. Without significant number of aborts measuring the impact of partial abort mechanism is not possible. We also varied number of objects based on number of inner transactions to maintain the level across the experiments. We used different number of inner transaction to understand the impact of transactional length and points of partial aborts in transaction.
+We performed our experiments for different read-ratios: 20\%, 50\%, and 80\% and different node counts: 2, 4, 8 and 16. These two parameters allowed us to vary the contention and abort count. We used less number of objects in our experiment, so that enough aborts occur. Without significant number of aborts measuring the impact of partial abort mechanism is not possible. We also varied number of objects based on number of inner transactions to maintain the contention level across the experiments. We used different number of inner transaction to understand the impact of transactional length and points of partial aborts in transaction.
 
-We can divide our experiments mainly in groups. In First group we maintain the same number of objects for all the experiments and vary other parameters like Read ratio, number of nodes and number of Inner Transaction for different nesting models. In second group, we perform experiments same as in experiment 1, but now we increase the number of objects in each experiment with increase in number of inner transaction, so we can maintain the same contention level for given parameters. We also perform a third experiment for checkpointing, where we try to understand the impact of Checkpoint granularity by varying it over the constant number of inner transactions. We represent our result for Checkpointing and Close Nesting throughput in comparison to Flat Nesting.
+We can divide our experiments mainly in two groups. In First group we maintained the same number of objects for all the experiments and vary other parameters like Read ratio, number of nodes and number of Inner Transaction for different nesting models. In second group, we perform experiments same as in experiment 1, but now we increase the number of objects in each experiment with increase in number of inner transaction, so we can maintain the same contention level for given parameters. We also perform a third experiment for checkpointing, where we tried to understand the impact of checkpoint granularity on transactional throughput. We represent our result for checkpointing and closed nesting throughput in comparison to flat nesting throughput.
 
 \subsection{Bank}
-In Figure~\ref{Fig:cpBankEx1R20} we present the results for 20\% reads in experiment 1 in which we keep object count constant and increase node count and number of inner transactions. We present throughput for different inner transactions ${1, 2, 5, 10}$ for close nesting and checkpointing relative to flat nesting. We can observer Checkpointing performs better in comparison to flat nesting upto 90\%, whereas Close nesting perform upto 60\% better. We can observer that as we increase the inner transaction count towards both nesting models performance deteriorates with increase in contention. At 10 inner transaction actually we perform worse than flat nesting.
+In Figure~\ref{Fig:cpBankEx1R20}, we present the results for 20\% reads in first group of experiments. In these experiments, we maintain object count constant and increase node count and number of inner transactions. We present throughput for different inner transactions ${1, 2, 5, 10}$ for closed nesting and checkpointing relative to flat nesting. We can observer checkpointing performs better in comparison to flat nesting upto 90\%, whereas closed nesting perform upto 60\% better. We can observer that as we increase the inner transaction count, both nesting models performance deteriorates with increase in contention. At 10 inner transaction actually we perform worse than flat nesting.
 
-In Figure~\ref{Fig:cpBankEx2R20} we present the results for 20\% reads in experiment 2 in which we keep increasing object count with increase in number of inner transactions. In these experiments we keep objects to inner transactions ratio constant, which allows us to stop increase in contention level with increase in number of inner transactions. We can observer with increase in inner transactions relative performance of Close nesting and Checkpointing does not decrease and it is able to maintain similar pattern improvements as for lower number of inner transactions.
+In Figure~\ref{Fig:cpBankEx2R20}, we present the results for 20\% reads in second group of experiments. In these experiments, we increase object count with increase in number of inner transactions. We keep objects to inner transactions ratio constant, which allows us to stop increase in contention level with increase in number of inner transactions. We can observer with increase in inner transactions relative performance of closed nesting and checkpointing does not decrease and it is able to maintain similar pattern of improvements as for lower number of inner transactions.
 
 In Figure~\ref{Fig:cpBankEx3} we present the result of varying checkpointing granularity on a transaction.
 
 \begin{figure}[H]
 \centering
-\subfigure[Bank with constant Objects]{
+\subfigure[Bank: Relative throughputs with constant object count for different number of inner transactions]{
 \includegraphics[width=0.7\textwidth]{\string"eps/checkpointing/bank/Ex1/r20".pdf}
 \label{Fig:cpBankEx1R20}
 }
 \end{figure}
 \begin{figure}[H]
 \centering
-\subfigure[Bank with increasing Objects]{
+\subfigure[Bank: Relative throughputs with increasing object count for different number of inner transactions]{
 \includegraphics[width=0.7\textwidth]{\string"eps/checkpointing/bank/Ex2/r20".pdf}
 \label{Fig:cpBankEx2R20}
 }
 \end{figure}
 \begin{figure}[H]
 \centering
-\subfigure[Bank with decreasing granularity]{
+\subfigure[Incomplete: Bank with decreasing granularity]{
 \includegraphics[width=0.7\textwidth]{\string"eps/checkpointing/bank/Ex2/r20".pdf}
 \label{Fig:cpBankEx3}
 }
-\caption{Close Nesting and Checkpointing: Relative Transactional throughput for Bank}
+\caption{Closed Nesting and Checkpointing: Relative Transactional throughput for Bank}
 \label{Fig:cpBank}
 \end{figure}
 
 \subsection{Linked List}
-In Figure~\ref{Fig:cpList}
+In Figure~\ref{Fig:cpListEx1R20}, we present the results for 20\% reads in first group of experiments. In these experiments, we maintain object count constant and increase node count and number of inner transactions. We present throughput for different inner transactions ${2, 5, 10}$ for closed nesting and checkpointing relative to flat nesting. We can observer that with lower number of inner transactions checkpointing and closed performs worse in comparison to flat nesting. But at higher inner transaction count both nesting models performance improves. So, we establish that checkpointing and closed nesting are helpful only in case of higher inner transactions for list benchmark.
+
+In Figure~\ref{Fig:cpListEx2R20}, we present the results for 20\% reads in second group of experiments. In these experiments, we increase object count with increase in number of inner transactions. For such experiments, we obtain similar pattern as in Figure~\ref{Fig:cpListEx1R20}. Similar pattern can be easily as increasing the list size don't impact on contention level. In list, only one transaction proceeds which locks the nearest node to head. Read set size don't impact on contention level in list.
 
 \begin{figure}[H]
 \centering
-\subfigure[Linked List with constant Objects]{
+\subfigure[Linked List: Relative throughputs with constant object count for different number of inner transactions]{
 \includegraphics[width=0.7\textwidth]{\string"eps/checkpointing/list/Ex1/r20".pdf}
 \label{Fig:cpListEx1R20}
 }
 \end{figure}
 \begin{figure}[H]
 \centering
-\subfigure[Linked List with increasing Objects]{
+\subfigure[Linked List: Relative throughputs with increasing object count for different number of inner transactions]{
 \includegraphics[width=0.7\textwidth]{\string"eps/checkpointing/list/Ex2/r20".pdf}
 \label{Fig:cpListEx2R20}
 }
@@ -1336,12 +1347,14 @@ In Figure~\ref{Fig:cpList}
 \includegraphics[width=0.7\textwidth]{\string"eps/checkpointing/list/Ex2/r20".pdf}
 \label{Fig:cpListEx3}
 }
-\caption{Close Nesting and Checkpointing: Relative Transactional throughput for Linked List}
+\caption{Closed Nesting and Checkpointing: Relative Transactional throughput for Linked List}
 \label{Fig:cpList}
 \end{figure}
 
 \subsection{Skip List}
-To Be Added  
+In Figure~\ref{Fig:cpSkiplistEx1R20}, we present the results for 20\% reads in first group of experiments. In these experiments, we maintain object count constant and increase node count and number of inner transactions. We present throughput for different inner transactions ${2, 5, 10}$ for closed nesting and checkpointing relative to flat nesting. We can observer that checkpointing and closed performs worse in comparison to flat nesting for lower numbers of inner transactions. With increase in inner transactions more inner partial rollback points are created and overall performance improves.
+
+In Figure~\ref{Fig:cpSkiplistEx2R20}, we present the results for 20\% reads in second group of experiments. In these experiments, we increase object count with increase in number of inner transactions. we can observer that overall improvement for Skip-list by closed nesting and checkpointing actually deteriorates in comparison to first group of experiments. This loss in performance can be explained by increase in contention due to bigger read set size, because with increase in Skip-list size the number of nodes required to access the target node increases in Skip-list.
 
 \begin{figure}[H]
 \centering
@@ -1352,38 +1365,37 @@ To Be Added
 \end{figure}
 \begin{figure}[H]
 \centering
-\subfigure[Skip-list with increasing Objects]{
+\subfigure[Skip-list: Relative throughputs with constant object count for different number of inner transactions]{
 \includegraphics[width=0.7\textwidth]{\string"eps/checkpointing/skiplist/Ex2/r20".pdf}
 \label{Fig:cpSkiplistEx2R20}
 }
 \end{figure}
 \begin{figure}[H]
 \centering
-\subfigure[Skip-list with decreasing granularity]{
+\subfigure[Skip-list: Relative throughputs with increasing object count for different number of inner transactions]{
 \includegraphics[width=0.7\textwidth]{\string"eps/checkpointing/skiplist/Ex1/r20".pdf}
 \label{Fig:cpSkiplistEx3}
 }
-\caption{Close Nesting and Checkpointing: Relative Transactional throughput for Skip-list}
+\caption{Closed Nesting and Checkpointing: Relative Transactional throughput for Skip-list}
 \label{Fig:cpSkiplist}
 \end{figure}
 
-\subsection{BST}
-To Be Added
-
 \subsection{Hash Table}
 
-In Figure
+In Figure~\ref{Fig:cpHashTableEx1R20}, we present the results for 20\% reads in first group of experiments. In these experiments, we maintain object count constant and increase node count and number of inner transactions. We present throughput for different inner transactions ${2, 5, 10}$ for closed nesting and checkpointing relative to flat nesting. We can observer checkpointing performs better in comparison to flat nesting upto 100\%, whereas closed nesting perform upto 90\% better. We can observer that as we increase the inner transaction count towards both nesting models performance improves with increase in partial rollback points. This behavior is contrary to bank where increase in inner transaction deteriorates the performance. In Hash-table only one object is accessed in each transaction, therefore increase inner transactions actually helps to improve performance due increase in partial rollback points, instead of decrease due to increased object contention.
+
+In Figure~\ref{Fig:cpBankEx2R20} we present the results for 20\% reads in second group of experiments. In these experiments, we increase object count with increase in number of inner transactions. In these experiments we keep objects to inner transactions ratio constant, which allows us to stop increase in contention level with increase in number of inner transactions. We can observer with increase in inner transactions relative performance of closed nesting and checkpointing does not decrease and it is able to maintain similar pattern improvements as for lower number of inner transactions.
 
 \begin{figure}[H]
 \centering
-\subfigure[Hash-table with constant Objects]{
+\subfigure[Hash-table: Relative throughputs with constant object count for different number of inner transactions]{
 \includegraphics[width=0.7\textwidth]{\string"eps/checkpointing/hashTable/Ex1/r20".pdf}
 \label{Fig:cpHashTableEx1R20}
 }
 \end{figure}
 \begin{figure}[H]
 \centering
-\subfigure[Bank with increasing Objects]{
+\subfigure[Hash-table: Relative throughputs with increasing object count for different number of inner transactions]{
 \includegraphics[width=0.7\textwidth]{\string"eps/checkpointing/hashTable/Ex2/r20".pdf}
 \label{Fig:cpHashTableEx2R20}
 }
@@ -1394,7 +1406,7 @@ In Figure
 \includegraphics[width=0.7\textwidth]{\string"eps/checkpointing/bank/Ex2/r20".pdf}
 \label{Fig:cpHashTableEx3}
 }
-\caption{Close Nesting and Checkpointing: Relative Transactional throughput for Hash-table}
+\caption{Closed Nesting and Checkpointing: Relative Transactional throughput for Hash-table}
 \label{Fig:cpHashTable}
 \end{figure}
 
@@ -1411,13 +1423,13 @@ To Be Added
 To Be Added 
 
 \subsection{BST}
-
+that
 To Be Added
 
 \section{Summary}
 
 In summary we can see HyflowCPP provides a very high throughput in comparison to its competitors.
-
+To be Added.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %																									%
@@ -1429,11 +1441,24 @@ In summary we can see HyflowCPP provides a very high throughput in comparison to
 Conclusion and Future Work
 \hfill}
 
-To be Added
+In this thesis we presented a C/C++ DTM framework HyflowCPP. It exports a generic programming interface with pluggable support for different DTM algorithms. Being implemented in C++, it provides high performance in comparison to JVM based DTM solutions. 
+
+HyflowCPP supports data flow based TFA algorithm and Tracker directory based cache coherency protocol. Utilizing the ZeroMQ based configurable network architecture, it is able to achieve high performance. Our experiments demonstrates that HyflowCPP performance scales smoothly with increasing in number of objects and nodes. In our benchmark experiments for flat nesting, we show that HyflowCPP provides high performance in comparison to JVM based competitors.
+
+To be Added: Closed and checkpointing, Open nesting.
+
 
 \section{Future Work}
 
-To be added
+Several directions exist for future work. These include the following:
+
+\begin{enumerate}
+\item HyflowCPP does not support some advanced DTM features such as Conditional Synchronization and 
+irrevocable transactions, which can be immediate directions for further work.
+\item HyflowCPP does not support any replication based protocol such as tree-quorum, which will enable the DTM support failure prone links.
+\item HyflowCPP based DTM support can be utilized in a production application like in Hadoop to understand the feasibility of DTM in production class software code.
+\item To make HyflowCPP programming interface more transparent to programmer, specially for the advance nesting feature, a compiler support can be added. 
+\end{enumerate}
 
 \newpage
 \markright{Bibliography \hfill}
