@@ -41,7 +41,7 @@ fi
 echo "set ytics 0.3" >> ${g}
 echo "set xlabel \"$xlabel\"" >> ${g}
 echo "set ylabel \"Throughput (transactions/s)\"" >> ${g}
-echo "set xrange[0:50]" >> ${g}
+echo "set xrange[0:18]" >> ${g}
 echo "set yrange[0:4]" >> ${g}
 echo -n "plot " >> ${g}
 
@@ -54,44 +54,39 @@ do
         echo "Reading First column $token"
     elif [ "$count" -eq 2 ]
     then
-        echo -n "\"$file\" using 1:(\$2/\$2) title \"Flat-Nesting\" with linespoints" >>${g} 
+        echo -n "\"$file\" using 1:(\$2/\$2) title \"$token\" with linespoints" >>${g} 
     elif [ "$count" -eq 3 ]
     then
         echo -n ", " >>${g}
         echo -n "\"$file\" using 1:(\$3/\$2) title \"$token\" with linespoints" >>${g} 
     elif [ "$count" -eq 4 ]
     then
-        echo -n ", " >>${g}
-        echo -n "\"$file\" using 1:(\$4/\$2) title \"$token\" with linespoints" >>${g} 
+	    echo "skip $token"
     elif [ "$count" -eq 5 ]
     then
-	echo "skip $token"
-        #echo -n ", " >>${g}
-        #echo -n "\"$file\" using 1:(\$5/\$5) title \"$token\" with linespoints" >>${g} 
+        echo -n ", " >>${g}
+        echo -n "\"$file\" using 1:(\$5/\$4) title \"$token\" with linespoints" >>${g} 
     elif [ "$count" -eq 6 ]
     then
-        echo -n ", " >>${g}
-        echo -n "\"$file\" using 1:(\$6/\$5) title \"$token\" with linespoints" >>${g} 
+	    echo "skip $token"
     elif [ "$count" -eq 7 ]
     then
         echo -n ", " >>${g}
-        echo -n "\"$file\" using 1:(\$7/\$5) title \"$token\" with linespoints" >>${g} 
+        echo -n "\"$file\" using 1:(\$7/\$6) title \"$token\" with linespoints" >>${g} 
     elif [ "$count" -eq 8 ]
     then
-	echo "skip $token"
-        #echo -n ", " >>${g}
-        #echo -n "\"$file\" using 1:(\$8/\$8) title \"$token\" with linespoints" >>${g} 
+	    echo "skip $token"
     elif [ "$count" -eq 9 ]
     then
-        echo -n ", " >>${g} #Done use yellow, bad visibility
-        echo -n "\"$file\" using 1:(\$9/\$8) title \"$token\" ls 1 with linespoints" >>${g} 
-    elif [ "$count" -eq 10 ]
+        echo -n ", " >>${g} 
+        echo -n "\"$file\" using 1:(\$9/\$8) title \"$token\" with linespoints" >>${g} 
+    elif [ "$count" -eq 10 ] #Below Stuff not used
     then
-        echo -n ", " >>${g}
-        echo -n "\"$file\" using 1:(\$10/\$8) title \"$token\" with linespoints" >>${g} 
+        echo -n ", " >>${g} #Done use yellow, bad visibility
+        echo -n "\"$file\" using 1:(\$10/\$8) title \"$token\" lst 1 with linespoints" >>${g} 
     elif [ "$count" -eq 11 ]
     then
-	echo "skip $token"
+	    echo "skip $token"
         #echo -n ", " >>${g}
         #echo -n "\"$file\" using 1:(\$11/\$11) title \"$token\" with linespoints" >>${g} 
     elif [ "$count" -eq 12 ]

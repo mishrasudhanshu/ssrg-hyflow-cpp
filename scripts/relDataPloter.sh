@@ -26,6 +26,7 @@ echo "set term postscript eps enhanced color 22" > ${g}
 echo "set output \"${eps}\"" >> ${g}
 #echo "set title \"$title\"" >> ${g}
 #echo "set logscale y" >> ${g}
+echo "set linestyle 6 lt 1 lc 2" >> ${g}
 echo "set key top" >> ${g}
 echo "set key left" >> ${g}
 echo "set xtics 10" >> ${g}

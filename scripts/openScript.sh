@@ -38,7 +38,7 @@ do
     paste t_Nodes.tmp > $target_dir/reads"$rp".dat
     for inTxns in 2 3 4 8
     do
-        paste $target_dir/reads"$rp".dat t_flat_"$inTxns"_"$rp".tmp t_checkPointing_"$inTxns"_"$rp".tmp t_closed_"$inTxns"_"$rp".tmp > t_"$rp"_"$inTxns".tmp
+        paste $target_dir/reads"$rp".dat t_flat_"$inTxns"_"$rp".tmp t_open_"$inTxns"_"$rp".tmp t_closed_"$inTxns"_"$rp".tmp > t_"$rp"_"$inTxns".tmp
         mv t_"$rp"_"$inTxns".tmp $target_dir/reads"$rp".dat
     done
     bash scripts/relClosePloter.sh $target_dir/reads"$rp".dat $target_dir/r"$rp"
