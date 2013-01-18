@@ -24,6 +24,7 @@ class NetworkManager {
 	static int basePort;
 	static int threadCount;
 	static std::string nodeIp;
+	static long clusterTimeout;
 
 	static bool islocal;
 	/*

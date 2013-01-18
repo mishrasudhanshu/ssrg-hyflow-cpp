@@ -35,13 +35,14 @@ echo "set key left" >> ${g}
 if [ "$nodes" -eq 5 ]
 then
     echo "set xtics 4" >> ${g}
+    echo "set xrange[0:20]" >> ${g}
 else
     echo "set xtics 10" >> ${g}
+    echo "set xrange[0:50]" >> ${g}
 fi
 echo "set ytics 0.3" >> ${g}
 echo "set xlabel \"$xlabel\"" >> ${g}
 echo "set ylabel \"Throughput (transactions/s)\"" >> ${g}
-echo "set xrange[0:50]" >> ${g}
 echo "set yrange[0:4]" >> ${g}
 echo -n "plot " >> ${g}
 
@@ -83,7 +84,7 @@ do
         #echo -n "\"$file\" using 1:(\$8/\$8) title \"$token\" with linespoints" >>${g} 
     elif [ "$count" -eq 9 ]
     then
-        echo -n ", " >>${g} #Done use yellow, bad visibility
+        echo -n ", " >>${g}  #Done use yellow, bad visibility
         echo -n "\"$file\" using 1:(\$9/\$8) title \"$token\" ls 1 with linespoints" >>${g} 
     elif [ "$count" -eq 10 ]
     then

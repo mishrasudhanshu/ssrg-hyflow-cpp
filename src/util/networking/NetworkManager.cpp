@@ -32,6 +32,7 @@ int NetworkManager::nodeCount = 0;
 int NetworkManager::machine = -1;
 int NetworkManager::basePort = -1;
 int  NetworkManager::threadCount = -1;
+long NetworkManager::clusterTimeout=100;
 
 std::string NetworkManager::nodeIp;
 int NetworkManager::syncVersion=0;
@@ -89,6 +90,7 @@ void NetworkManager::initNode() {
 		if(atoi(ConfigFile::Value(MACHINES).c_str()) == 1)
 			islocal = true;
 		threadCount = atoi(ConfigFile::Value(THREADS).c_str());
+		clusterTimeout = atoi(ConfigFile::Value(CLUSTER_TIMEOUT).c_str());
 	}
 }
 
@@ -161,10 +163,14 @@ void NetworkManager::notifyCluster(int rqNo){
 }
 
 void NetworkManager::waitTillSynchronized(int rqNo){
+	boost::posix_time::time_duration timeoutBoost = boost::posix_time::seconds(clusterTimeout);
 	LOG_DEBUG("NETM : Starting wait for syncVer %d and ReqNo %d\n", syncVersion, rqNo);
 	boost::unique_lock<boost::mutex> lock(clsMutex);
 	while ( syncVersion < rqNo) {
-		onCluster.wait(lock);
+		if(!onCluster.timed_wait(lock, timeoutBoost)) {
+			Logger::fatal("NETM : clusterWait timed out %ld seconds, try increasing clusterTime\n", clusterTimeout);
+			exit(1);
+		}
 	}
 }
 

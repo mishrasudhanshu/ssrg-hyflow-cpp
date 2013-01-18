@@ -54,7 +54,7 @@ do
         echo "Reading First column $token"
     elif [ "$count" -eq 2 ]
     then
-        echo -n "\"$file\" using 1:(\$2/\$2) title \"$token\" with linespoints" >>${g} 
+        echo -n "\"$file\" using 1:(\$2/\$2) title \"Minimum Granularity\" with linespoints" >>${g} 
     elif [ "$count" -eq 3 ]
     then
         echo -n ", " >>${g}

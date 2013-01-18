@@ -237,6 +237,10 @@ void ConfigFile::UpdateMap() {
 	value = getenv(ITCPR);
 	if (value)
 		Update(ITCPR, value);
+
+	value = getenv(CLUSTER_TIMEOUT);
+	if (value)
+		Update(CLUSTER_TIMEOUT, value);
 }
 
 void ConfigFile::test() {

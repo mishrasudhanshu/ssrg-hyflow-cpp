@@ -1294,7 +1294,7 @@ In figure~\ref{Fig:cpBankEx1R20}, we present the results for 20\% reads in first
 
 In figure~\ref{Fig:cpBankEx2R20}, we present the results for 20\% reads in second group of experiments. In these experiments, we increase object count with increase in number of inner transactions. We keep objects to inner transactions ratio constant, which allows us to stop increase in contention level with increase in number of inner transactions. We can observer with increase in inner transactions relative performance of closed nesting and checkpointing does not decrease and it is able to maintain similar pattern of improvements as for lower number of inner transactions.
 
-In figure~\ref{Fig:cpBankEx3} we present the result of varying checkpointing granularity on a transaction.
+In figure~\ref{Fig:cpBankEx3} we present the relative change in throughput and abort rate for minimum to maximum granularity with inner transactions 1 and 10. We can observer that increase in checkpoint granularity certainly decreases the abort rate, but increase in throughput is only 10\% to 15\% only. Relative low improvement occurs as actually all partial rollback don't incur in transaction commit.
 
 \begin{figure}[H]
 \centering
@@ -1312,8 +1312,8 @@ In figure~\ref{Fig:cpBankEx3} we present the result of varying checkpointing gra
 \end{figure}
 \begin{figure}[H]
 \centering
-\subfigure[Incomplete: Bank with decreasing granularity]{
-\includegraphics[width=0.7\textwidth]{\string"eps/checkpointing/bank/Ex2/r20".pdf}
+\subfigure[Bank: Throughput and Abort rate w.r.t minimum granularity]{
+\includegraphics[width=0.7\textwidth]{\string"eps/checkpointing/bank/Ex3/r50".pdf}
 \label{Fig:cpBankEx3}
 }
 \caption{Closed Nesting and Checkpointing: Relative Transactional throughput for Bank}
@@ -1382,7 +1382,9 @@ In figure~\ref{Fig:cpSkiplistEx2R20}, we present the results for 20\% reads in s
 
 In figure~\ref{Fig:cpHashTableEx1R20}, we present the results for 20\% reads in first group of experiments. In these experiments, we maintain object count constant and increase node count and number of inner transactions. We present throughput for different inner transactions ${2, 5, 10}$ for closed nesting and checkpointing relative to flat nesting. We can observer checkpointing performs better in comparison to flat nesting upto 100\%, whereas closed nesting perform upto 90\% better. We can observer that as we increase the inner transaction count towards both nesting models performance improves with increase in partial rollback points. This behavior is contrary to bank where increase in inner transaction deteriorates the performance. In Hash-table only one object is accessed in each transaction, therefore increase inner transactions actually helps to improve performance due increase in partial rollback points, instead of decrease due to increased object contention.
 
-In figure~\ref{Fig:cpBankEx2R20} we present the results for 20\% reads in second group of experiments. In these experiments, we increase object count with increase in number of inner transactions. In these experiments we keep objects to inner transactions ratio constant, which allows us to stop increase in contention level with increase in number of inner transactions. We can observer with increase in inner transactions relative performance of closed nesting and checkpointing does not decrease and it is able to maintain similar pattern improvements as for lower number of inner transactions.
+In figure~\ref{Fig:cpHashTableEx2R20} we present the results for 20\% reads in second group of experiments. In these experiments, we increase object count with increase in number of inner transactions. In these experiments we keep objects to inner transactions ratio constant, which allows us to stop increase in contention level with increase in number of inner transactions. We can observer with increase in inner transactions relative performance of closed nesting and checkpointing does not decrease and it is able to maintain similar pattern improvements as for lower number of inner transactions.
+
+In figure~\ref{Fig:cpHashTableEx3} we present the relative change in throughput and abort rate for minimum to maximum granularity with inner transactions 1 and 10. We can observer that increase in checkpoint granularity decreases the abort rate 30\% to 70\%, and increase in throughput is only 20\% to 50\%. Relative low improvement occurs as actually all partial rollback don't incur in transaction commit.
 
 \begin{figure}[H]
 \centering
@@ -1400,8 +1402,8 @@ In figure~\ref{Fig:cpBankEx2R20} we present the results for 20\% reads in second
 \end{figure}
 \begin{figure}[H]
 \centering
-\subfigure[Bank with decreasing granularity]{
-\includegraphics[width=0.7\textwidth]{\string"eps/checkpointing/bank/Ex2/r20".pdf}
+\subfigure[Hash-table: Throughput and Abort rate w.r.t minimum granularity]{
+\includegraphics[width=0.7\textwidth]{\string"eps/checkpointing/hashTable/Ex3/r20".pdf}
 \label{Fig:cpHashTableEx3}
 }
 \caption{Closed Nesting and Checkpointing: Relative Transactional throughput for Hash-table}

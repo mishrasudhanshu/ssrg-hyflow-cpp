@@ -136,7 +136,10 @@ public:
     	TpccBenchmark::registerObjectTypes(ar);
     }
 
-    static void executeThreads();
+    /*
+     * Returns true if all threads completed within timeout
+     */
+    static bool executeThreads();
 
 	static void updateMetaData(HyflowMetaData data, HyflowMetaDataType type);
 	static void increaseMetaData(HyflowMetaDataType type);

@@ -86,7 +86,7 @@ void ContextManager::releaseInstance(HyflowContext **c) {
 			*c = NULL;
 		}else {
 			LOG_DEBUG("CM : Transaction aborted, not resetting context pointer to NULL\n");
-			if((*c)->getContextExecutionDepth() == 0 )	//For Top context abort increase retries
+//			if((*c)->getContextExecutionDepth() == 0 )	//For Top context abort increase retries
 				BenchmarkExecutor::increaseMetaData(HYFLOW_METADATA_ABORTS);
 		}
 	}

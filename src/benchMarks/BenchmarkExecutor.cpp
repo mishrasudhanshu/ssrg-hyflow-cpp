@@ -203,6 +203,7 @@ void BenchmarkExecutor::initExecutor(){
 		benchmarkThreads = new boost::thread*[threadCount];
 		sanity = (strcmp(ConfigFile::Value(SANITY).c_str(), TRUE) == 0)? true:false;
 		transactionLength = atoi(ConfigFile::Value(TRANSACTIONS_LENGTH).c_str());
+		timeout = atoi(ConfigFile::Value(TIMEOUT).c_str()); // Expect timeout in minutes
 		int it = atoi(ConfigFile::Value(INNER_TXNS).c_str());
 		if (it>0) {
 			innerTxns = it;
@@ -309,7 +310,8 @@ void BenchmarkExecutor::increaseMetaData(HyflowMetaDataType type) {
 	benchMarkThreadMetadata->increaseMetaData(type);
 }
 
-void BenchmarkExecutor::executeThreads() {
+bool BenchmarkExecutor::executeThreads() {
+	bool forcedExit=false;
 	// Read all the configuration settings
 	initExecutor();
 	// Create objects and then make all nodes done populating objects
@@ -325,20 +327,31 @@ void BenchmarkExecutor::executeThreads() {
 		benchmarkThreads[i] = new boost::thread(execute, i);
 	}
 
+	boost::posix_time::time_duration timeoutBoost = boost::posix_time::seconds(timeout*60);
 	for (int i=0; i < threadCount ; i++) {
-		benchmarkThreads[i]->join();
+		if (benchmarkThreads[i]->timed_join(timeoutBoost)){
+			LOG_DEBUG("BE: Benchmark Thread %d completed\n", i);
+		}else {
+			forcedExit = true;
+			benchmarkThreads[i]->interrupt();
+			Logger::fatal("BE: Thread %d Execution Timed out %ld minutes, try increasing timeout\n", i, timeout);
+		}
 	}
 
 	writeResults();
 	sleep(2);
-	// Make sure all node finished transactions and then do sanity check
-	NetworkManager::synchronizeCluster();
-	if ( (NetworkManager::getNodeId() == 0) && (sanity) ) {
-		benchmark->checkSanity();
+
+	if (!forcedExit) {
+		// Make sure all node finished transactions and then do sanity check
+		NetworkManager::synchronizeCluster();
+		if ( (NetworkManager::getNodeId() == 0) && (sanity) ) {
+			benchmark->checkSanity();
+		}
+		sleep(2);	// Require to stop out of order synchronize request
+		// Make sure sanity check is completed on all the nodes
+		NetworkManager::synchronizeCluster();
+		// DONE
 	}
-	sleep(2);	// Require to stop out of order synchronize request
-	// Make sure sanity check is completed on all the nodes
-	NetworkManager::synchronizeCluster();
-	// DONE
+	return !forcedExit;
 }
 } /* namespace vt_dstm */
