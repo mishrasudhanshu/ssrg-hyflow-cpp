@@ -305,7 +305,7 @@ void BenchmarkExecutor::executeTransaction(int txnId, int id) {
 }
 
 void* BenchmarkExecutor::execute(void* threadId){
-	int id = (int)threadId;
+	int id = *((int*)threadId);
 	ThreadMeta::threadInit(id, TRANSACTIONAL_THREAD);
 
 	LOG_DEBUG("BNCH_EXE %d:------------------------------>\n", id);
@@ -342,7 +342,9 @@ bool BenchmarkExecutor::executeThreads() {
 
 	int threadCount = NetworkManager::getThreadCount();
 	for (int i=0; i < threadCount ; i++) {
-		pthread_create(&benchmarkThreads[i], NULL, execute, (void*)i);
+		int* id = new int;
+		*id = i;
+		pthread_create(&benchmarkThreads[i], NULL, execute, id);
 	}
 
 	//Get lock on MetaData and print it
