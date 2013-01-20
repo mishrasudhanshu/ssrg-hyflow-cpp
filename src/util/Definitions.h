@@ -98,6 +98,7 @@ namespace vt_dstm
 #define INNER_TXNS "innerTxns"
 #define ITCPR "ITCPR"
 #define CLUSTER_TIMEOUT "clusterTimeout"
+#define EXECUTION_TIME "executionTime"
 
 #define TRUE "true"
 #define FALSE "false"

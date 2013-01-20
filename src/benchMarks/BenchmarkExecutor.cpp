@@ -7,10 +7,11 @@
 
 #include <cstddef>
 #include <cstdlib>
-#include <boost/thread/thread.hpp>
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include <signal.h>
+#include <pthread.h>
 #include "BenchmarkExecutor.h"
 #include "../util/Definitions.h"
 #include "../util/parser/ConfigFile.h"
@@ -23,8 +24,11 @@ namespace vt_dstm {
 
 void HyflowMetaData::updateMetaData(HyflowMetaData & metadata, HyflowMetaDataType type) {
 	switch (type) {
-	case HYFLOW_METADATA_THROUGHPUT:
-		throughPut += metadata.throughPut;
+	case HYFLOW_METADATA_RUNTIME:
+		txnRunTime += metadata.txnRunTime;
+		break;
+	case HYFLOW_METADATA_COMMITED_TXNS:
+		committedTxns += metadata.committedTxns;
 		break;
 	case HYFLOW_METADATA_TRIES:
 		txnTries.setValue(txnTries.getValue()+metadata.txnTries.getValue());
@@ -57,7 +61,8 @@ void HyflowMetaData::updateMetaData(HyflowMetaData & metadata, HyflowMetaDataTyp
 		backOffTime += metadata.backOffTime;
 		break;
 	case HYFLOW_METADATA_ALL:
-		throughPut += metadata.throughPut;
+		txnRunTime += metadata.txnRunTime;
+		committedTxns += metadata.committedTxns;
 		txnTries.setValue(txnTries.getValue()+metadata.txnTries.getValue());
 		txnAborts.setValue(txnAborts.getValue()+metadata.txnAborts.getValue());
 		txnCheckpointResume.setValue(txnCheckpointResume.getValue()+metadata.txnCheckpointResume.getValue());
@@ -77,6 +82,9 @@ void HyflowMetaData::updateMetaData(HyflowMetaData & metadata, HyflowMetaDataTyp
 
 void HyflowMetaData::increaseMetaData(HyflowMetaDataType type) {
 	switch (type) {
+	case HYFLOW_METADATA_COMMITED_TXNS:
+		committedTxns++;
+		break;
 	case HYFLOW_METADATA_TRIES:
 		txnTries.increaseValue();
 		break;
@@ -118,6 +126,8 @@ int BenchmarkExecutor::transactionLength=0;
 int BenchmarkExecutor::innerTxns=1;
 int BenchmarkExecutor::itcpr=1;
 int BenchmarkExecutor::objectNesting=2;
+unsigned long BenchmarkExecutor::executionTime=0;
+boost::mutex* BenchmarkExecutor::metaWriteMutex=NULL;
 
 HyflowMetaData BenchmarkExecutor::benchNodeMetadata;
 std::string BenchmarkExecutor::benchMarkName;
@@ -126,9 +136,8 @@ HyflowBenchmark* BenchmarkExecutor::benchmark = NULL;
 bool* BenchmarkExecutor::transactionType = NULL;
 std::string*** BenchmarkExecutor::threadArgsArray = NULL;
 std::string* BenchmarkExecutor::ids = NULL;
-boost::thread_specific_ptr<HyflowMetaData> BenchmarkExecutor::benchMarkThreadMetadata;
-boost::thread** BenchmarkExecutor::benchmarkThreads = NULL;
-boost::mutex BenchmarkExecutor::execMutex;
+HyflowMetaData* BenchmarkExecutor::benchMarkThreadMetadata = NULL;
+pthread_t* BenchmarkExecutor::benchmarkThreads = NULL;
 
 BenchmarkExecutor::BenchmarkExecutor() {}
 
@@ -141,14 +150,15 @@ unsigned long long BenchmarkExecutor::getTime() {
 }
 
 void BenchmarkExecutor::submitThreadMetaData(HyflowMetaData& threadMetadata) {
-	boost::unique_lock<boost::mutex> metaDatalock(execMutex);
 	benchNodeMetadata.updateMetaData(threadMetadata, HYFLOW_METADATA_ALL);
 }
 
 void BenchmarkExecutor::writeResults() {
-	LOG_DEBUG("Throughput=%f, retryCount=%d, total tries=%d\n", benchNodeMetadata.throughPut, benchNodeMetadata.txnAborts.getValue(),
+	double throughPut = (double(benchNodeMetadata.committedTxns*1000000))/(benchNodeMetadata.txnRunTime+1);
+	LOG_DEBUG("BE :Throughput=%f, retryCount=%d, total tries=%d\n", throughPut, benchNodeMetadata.txnAborts.getValue(),
 			benchNodeMetadata.txnTries.getValue());
-	Logger::result("Throughput=%.2f\n", benchNodeMetadata.throughPut);
+	Logger::result("Throughput=%.2f\n", throughPut);
+	Logger::result("Trnxs=%d\n", benchNodeMetadata.committedTxns);
 	float abortRate = ((float)benchNodeMetadata.txnAborts.getValue()*100)/(benchNodeMetadata.txnTries.getValue());
 	Logger::result("AbortRate=%.2f\n",abortRate);
 	Logger::result("CheckpointResume=%d\n",benchNodeMetadata.txnCheckpointResume.getValue());
@@ -200,16 +210,18 @@ void BenchmarkExecutor::initExecutor(){
 		calls = atoi(ConfigFile::Value(CALLS).c_str());
 		isInitiated = true;
 		threadCount = NetworkManager::getThreadCount();
-		benchmarkThreads = new boost::thread*[threadCount];
+		benchmarkThreads = new pthread_t[threadCount];
 		sanity = (strcmp(ConfigFile::Value(SANITY).c_str(), TRUE) == 0)? true:false;
 		transactionLength = atoi(ConfigFile::Value(TRANSACTIONS_LENGTH).c_str());
-		timeout = atoi(ConfigFile::Value(TIMEOUT).c_str()); // Expect timeout in minutes
+		executionTime = strtoul(ConfigFile::Value(EXECUTION_TIME).c_str(), NULL, 10);
 		int it = atoi(ConfigFile::Value(INNER_TXNS).c_str());
 		if (it>0) {
 			innerTxns = it;
 		}
 		itcpr = atoi(ConfigFile::Value(ITCPR).c_str());
 		objectNesting = atoi(ConfigFile::Value(OBJECT_NESTING).c_str());
+		benchMarkThreadMetadata = new HyflowMetaData[threadCount];
+		metaWriteMutex = new boost::mutex[threadCount];
 		writeConfig();
 	}
 }
@@ -219,8 +231,13 @@ void BenchmarkExecutor::writeConfig() {
 	Logger::result("Benchmark=%s\n", benchMarkName.c_str());
 	Logger::result("Reads=%d%%\n", readPercent);
 	Logger::result("Objects=%d\n", objectsCount);
-	Logger::result("Trnxs=%d\n", transactions);
 	Logger::result("Threads=%d\n",threadCount);
+#ifdef RELEASE
+	Logger::result("RunMode=Release\n");
+#else
+	Logger::result("RunMode=Debug\n");
+#endif
+	Logger::result("ExecutionTime=%d\n",executionTime);
 	Logger::result("Nodes=%d\n",NetworkManager::getNodeCount());
 	Logger::result("Nesting=%s\n",ConfigFile::Value(NESTING_MODEL).c_str());
 	Logger::result("InnerTxns=%d\n", innerTxns);
@@ -269,45 +286,46 @@ void BenchmarkExecutor::prepareArgs() {
 	}
 }
 
-void BenchmarkExecutor::execute(int id){
+void BenchmarkExecutor::executeTransaction(int txnId, int id) {
+	int argsCount = benchmark->getOperandsCount();
+	std::string** argsArray = threadArgsArray[id];
+
+	int pos = (txnId + id) % transactions;
+	unsigned long long start = getTime();
+	if (transactionType[pos]) {
+		benchmark->readOperation(argsArray[pos], argsCount);
+	} else {
+		benchmark->writeOperation(argsArray[pos], argsCount);
+	}
+	unsigned long long txnTime = getTime() - start;	// Get value in us
+	HyflowMetaData runTime;
+	runTime.txnRunTime = txnTime;
+	updateMetaData(runTime, HYFLOW_METADATA_RUNTIME);
+	increaseMetaData(HYFLOW_METADATA_COMMITED_TXNS);
+}
+
+void* BenchmarkExecutor::execute(void* threadId){
+	int id = (int)threadId;
 	ThreadMeta::threadInit(id, TRANSACTIONAL_THREAD);
 
-	int argsCount = benchmark->getOperandsCount();
-
 	LOG_DEBUG("BNCH_EXE %d:------------------------------>\n", id);
-	unsigned long long start = getTime();
-	std::string** argsArray = threadArgsArray[id];
 	for(int i=0; i < transactions; i++) {
-		int pos = (i + id) % transactions;
-		if (transactionType[pos]) {
-			benchmark->readOperation(argsArray[pos], argsCount);
-		} else {
-			benchmark->writeOperation(argsArray[pos], argsCount);
-		}
+		executeTransaction(i, id);
 	}
-	unsigned long long end = getTime();
-	unsigned long long executionTime = (end -start + 1);	// Get value in us
-	LOG_DEBUG("Execution time %llu ms\n",executionTime/1000);
-	benchMarkThreadMetadata->throughPut = (double(transactions*1000000))/executionTime;
-
-	if (benchMarkThreadMetadata.get()) {
-		submitThreadMetaData(*(benchMarkThreadMetadata.get()));
-		LOG_DEBUG("BNC_EXE %d: ThroughPut = %0.3f trxns/sec <----------------------\n", id, benchMarkThreadMetadata->throughPut);
-	}
+	LOG_DEBUG("BNCH_EXE %d:<------------------------------\n", id);
+	return NULL;
 }
 
 void BenchmarkExecutor::updateMetaData(HyflowMetaData data, HyflowMetaDataType type) {
-	if (!benchMarkThreadMetadata.get()) {
-		benchMarkThreadMetadata.reset(new HyflowMetaData());
-	}
-	benchMarkThreadMetadata->updateMetaData(data, type);
+	int id = ThreadMeta::getThreadId();
+	boost::lock_guard<boost::mutex> metalock(metaWriteMutex[id]);
+	benchMarkThreadMetadata[id].updateMetaData(data, type);
 }
 
 void BenchmarkExecutor::increaseMetaData(HyflowMetaDataType type) {
-	if (!benchMarkThreadMetadata.get()) {
-		benchMarkThreadMetadata.reset(new HyflowMetaData());
-	}
-	benchMarkThreadMetadata->increaseMetaData(type);
+	int id = ThreadMeta::getThreadId();
+	boost::lock_guard<boost::mutex> metalock(metaWriteMutex[id]);
+	benchMarkThreadMetadata[id].increaseMetaData(type);
 }
 
 bool BenchmarkExecutor::executeThreads() {
@@ -324,34 +342,43 @@ bool BenchmarkExecutor::executeThreads() {
 
 	int threadCount = NetworkManager::getThreadCount();
 	for (int i=0; i < threadCount ; i++) {
-		benchmarkThreads[i] = new boost::thread(execute, i);
+		pthread_create(&benchmarkThreads[i], NULL, execute, (void*)i);
 	}
 
-	boost::posix_time::time_duration timeoutBoost = boost::posix_time::seconds(timeout*60);
+	//Get lock on MetaData and print it
+	if (executionTime > 0) {
+		sleep(executionTime);
+		for (int i=0; i < threadCount ; i++) {
+			boost::lock_guard<boost::mutex> metalock(metaWriteMutex[i]);
+			submitThreadMetaData(benchMarkThreadMetadata[i]);
+		}
+		writeResults();
+	}
+
 	for (int i=0; i < threadCount ; i++) {
-		if (benchmarkThreads[i]->timed_join(timeoutBoost)){
-			LOG_DEBUG("BE: Benchmark Thread %d completed\n", i);
+		if (executionTime > 0) {
+//			pthread_kill(benchmarkThreads[i], SIGINT);
 		}else {
-			forcedExit = true;
-			benchmarkThreads[i]->interrupt();
-			Logger::fatal("BE: Thread %d Execution Timed out %ld minutes, try increasing timeout\n", i, timeout);
+			pthread_join(benchmarkThreads[i], NULL);
+			submitThreadMetaData(benchMarkThreadMetadata[i]);
 		}
 	}
 
-	writeResults();
-	sleep(2);
+	if (!executionTime) {
+		writeResults();
+		sleep(2);
 
-	if (!forcedExit) {
 		// Make sure all node finished transactions and then do sanity check
 		NetworkManager::synchronizeCluster();
-		if ( (NetworkManager::getNodeId() == 0) && (sanity) ) {
+		if ( (NetworkManager::getNodeId() == 0) && (sanity) && !forcedExit ) {
 			benchmark->checkSanity();
 		}
 		sleep(2);	// Require to stop out of order synchronize request
 		// Make sure sanity check is completed on all the nodes
 		NetworkManager::synchronizeCluster();
-		// DONE
 	}
-	return !forcedExit;
+
+	// DONE
+	return !executionTime;
 }
 } /* namespace vt_dstm */

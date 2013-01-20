@@ -241,6 +241,10 @@ void ConfigFile::UpdateMap() {
 	value = getenv(CLUSTER_TIMEOUT);
 	if (value)
 		Update(CLUSTER_TIMEOUT, value);
+
+	value = getenv(EXECUTION_TIME);
+	if (value)
+			Update(EXECUTION_TIME, value);
 }
 
 void ConfigFile::test() {

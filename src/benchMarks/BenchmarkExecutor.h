@@ -8,7 +8,6 @@
 #ifndef BENCHMARKEXECUTOR_H_
 #define BENCHMARKEXECUTOR_H_
 
-#include <boost/thread/tss.hpp>
 #include "HyflowBenchmark.h"
 #include "tm/bank/BankBenchmark.h"
 #include "tm/list/ListBenchmark.h"
@@ -27,7 +26,8 @@ enum HyflowMetaDataType{
 	HYFLOW_METADATA_TRIES,
 	HYFLOW_METADATA_ABORTS,
 	HYFLOW_METADATA_CHECKPOINT_RESUME,
-	HYFLOW_METADATA_THROUGHPUT,
+	HYFLOW_METADATA_RUNTIME,
+	HYFLOW_METADATA_COMMITED_TXNS,
 	HYFLOW_METADATA_COMMITED_SUBTXNS,
 	HYFLOW_METADATA_COMMITED_SUBTXN_TIME,
 	HYFLOW_METADATA_ABORTED_SUBTXNS,
@@ -44,7 +44,8 @@ public:
 	HyInteger txnTries;
 	HyInteger txnAborts;
 	HyInteger txnCheckpointResume;
-	double throughPut;
+	unsigned long long txnRunTime;
+	unsigned int committedTxns;
 
 	unsigned int committedSubTxns;
 	unsigned long long committedSubTxnTime;
@@ -60,7 +61,8 @@ public:
 		txnTries = 0;
 		txnAborts = 0;
 		txnCheckpointResume = 0;
-		throughPut = 0;
+		txnRunTime = 0;
+		committedTxns = 0;
 
 		committedSubTxns = 0;
 		committedSubTxnTime = 0;
@@ -76,9 +78,8 @@ public:
 
 class BenchmarkExecutor {
 	static HyflowBenchmark *benchmark;
-	static boost::thread **benchmarkThreads;
-
-	static boost::thread_specific_ptr<HyflowMetaData> benchMarkThreadMetadata;
+	static pthread_t *benchmarkThreads;
+	static HyflowMetaData* benchMarkThreadMetadata;
 
 	static int calls;
 	static int delay;
@@ -96,8 +97,9 @@ class BenchmarkExecutor {
 	static int innerTxns;
 	static int itcpr;
 	static int objectNesting;
-	static boost::mutex execMutex;
+	static unsigned long executionTime;
 
+	static boost::mutex* metaWriteMutex;
 	static bool* transactionType;
 	static std::string*** threadArgsArray;
 	static std::string* ids;
@@ -110,7 +112,8 @@ class BenchmarkExecutor {
 	static void writeResults();
 	static std::string& randomId();
 	static void createObjects();
-    static void execute(int id);
+    static void* execute(void* id);
+    static void executeTransaction(int txnId, int threadId);
 	static void submitThreadMetaData(HyflowMetaData& threadMetadata);
 	static void writeConfig();
 public:
