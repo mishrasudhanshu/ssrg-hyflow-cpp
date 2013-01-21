@@ -8,6 +8,8 @@
 #include <string>
 #include <fstream>
 #include <iostream>
+#include <cmath>
+#include <algorithm>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 
@@ -21,6 +23,7 @@
 #include "../../BenchmarkExecutor.h"
 #include "SkipListBenchmark.h"
 
+#define PROBABILITY 0.5
 
 namespace vt_dstm {
 
@@ -33,7 +36,7 @@ SkipListNode::SkipListNode(int val, int counter) {
 	idStr<<ownerNode<<"-"<<counter;
 	hyId = idStr.str();
 	hyVersion = 0;
-	highestLevel = (Logger::getCurrentMicroSec()%SkipListBenchmark::getSkipListLevels())+1;
+	highestLevel = getRandomLevel()+1;
 	// Level 0 will contain the nodeId itself
 	nextIds.push_back(hyId);
 	for(int level=1; level<=highestLevel; level++) {
@@ -45,7 +48,7 @@ SkipListNode::SkipListNode(int val, std::string id, int levels) {
 	value = val;
 	hyId = id;
 	hyVersion = 0;
-	highestLevel = SkipListBenchmark::getSkipListLevels();
+	highestLevel = levels;
 	nextIds.push_back(hyId);
 	for(int level=1; level<=highestLevel; level++) {
 		nextIds.push_back("NULL");
@@ -56,11 +59,17 @@ SkipListNode::SkipListNode(int val, std::string id) {
 	value = val;
 	hyId = id;
 	hyVersion = 0;
-	highestLevel = (Logger::getCurrentMicroSec()%SkipListBenchmark::getSkipListLevels())+1;
+	highestLevel = getRandomLevel()+1;
 	nextIds.push_back(hyId);
 	for(int level=1; level<=highestLevel; level++) {
 		nextIds.push_back("NULL");
 	}
+}
+
+int SkipListNode::getRandomLevel(){
+	double randomDouble = (Logger::getCurrentMicroSec()%10000)/10000;
+    int level = (int)(log(1.0 - randomDouble) / log(1.0-PROBABILITY));
+    return std::min(level, SkipListBenchmark::getSkipListLevels());
 }
 
 std::string SkipListNode::getNextId(int index) const {

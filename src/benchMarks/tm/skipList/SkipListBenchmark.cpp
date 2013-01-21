@@ -32,6 +32,21 @@ int SkipListBenchmark::getOperandsCount()	{
 	return 1*BenchmarkExecutor::getInnerTxns();
 }
 
+void SkipListBenchmark::warmUp() {
+	LOG_DEBUG("***SKIPLIST :Warming Up the SKIPList Benchmark***\n");
+	int nodeCount = NetworkManager::getNodeCount();
+	int nodeId = NetworkManager::getNodeId();
+	for(int i=0 ; i<(objectCount/2) ; i++){
+		if(( i%nodeCount )== nodeId ){
+			int value = i;
+			LOG_DEBUG("SKIPLIST :ADD[%d] Node\n", value);
+			sleep(nodeId);
+			SkipListNode::addNode(value);
+			sleep(nodeCount-nodeId);
+		}
+	}
+}
+
 void SkipListBenchmark::readOperation(std::string ids[], int size){
 	int multiCount = getOperandsCount();
 

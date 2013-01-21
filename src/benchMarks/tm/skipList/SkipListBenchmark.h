@@ -30,6 +30,7 @@ public:
 	}
 
 	int getOperandsCount();
+	void warmUp();
 	void readOperation(std::string ids[], int size);
 	void writeOperation(std::string ids[], int size);
 	void checkSanity();

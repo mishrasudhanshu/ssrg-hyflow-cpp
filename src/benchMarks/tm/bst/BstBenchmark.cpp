@@ -41,7 +41,6 @@ void BstBenchmark::readOperation(std::string ids[], int size){
 
 	BstNode::findNodeMulti(values, multiCount);
 	delete[] values;
-
 }
 
 void BstBenchmark::writeOperation(std::string ids[], int size){

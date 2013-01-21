@@ -318,14 +318,18 @@ void* BenchmarkExecutor::execute(void* threadId){
 
 void BenchmarkExecutor::updateMetaData(HyflowMetaData data, HyflowMetaDataType type) {
 	int id = ThreadMeta::getThreadId();
-	boost::lock_guard<boost::mutex> metalock(metaWriteMutex[id]);
-	benchMarkThreadMetadata[id].updateMetaData(data, type);
+	if (id != threadCount ) {
+		boost::lock_guard<boost::mutex> metalock(metaWriteMutex[id]);
+		benchMarkThreadMetadata[id].updateMetaData(data, type);
+	}
 }
 
 void BenchmarkExecutor::increaseMetaData(HyflowMetaDataType type) {
 	int id = ThreadMeta::getThreadId();
-	boost::lock_guard<boost::mutex> metalock(metaWriteMutex[id]);
-	benchMarkThreadMetadata[id].increaseMetaData(type);
+	if (id != threadCount ) {
+		boost::lock_guard<boost::mutex> metalock(metaWriteMutex[id]);
+		benchMarkThreadMetadata[id].increaseMetaData(type);
+	}
 }
 
 bool BenchmarkExecutor::executeThreads() {

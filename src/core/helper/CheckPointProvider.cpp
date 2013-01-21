@@ -149,10 +149,10 @@ void CheckPointProvider::setCheckPointIndex(int cpi) {
 void CheckPointProvider::startCheckPoint(int checkPointIndex) {
 	if (isCheckPointingEnabled()) {
 		int threadId = ThreadMeta::getThreadId();
-		if (checkPointIndex > (checkPoints[threadId]->size()-1)) {
-			Logger::fatal("CPP : Beyond checkpoint\n");
-			return;
-		}
+//		if (checkPointIndex > (checkPoints[threadId]->size()-1)) {
+//			Logger::fatal("CPP : Beyond checkpoint\n");
+//			return;
+//		}
 
 		ucontext_t * restartPoint = NULL;
 		for (int i=checkPoints[threadId]->size()-1 ; i >= 0; i--) {

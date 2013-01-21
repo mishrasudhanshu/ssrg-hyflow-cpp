@@ -89,9 +89,9 @@ class SkipListNode: public vt_dstm::HyflowObject {
 	static void deleteNodeMultiAtomically(HyflowObject* self, BenchMarkArgs* args, HyflowContext* c, BenchMarkReturn* ignore);
 	static void findNodeMultiAtomically(HyflowObject* self, BenchMarkArgs* args, HyflowContext* c, BenchMarkReturn* ignore);
 
-	static void addNode(int value);
 	static void deleteNode(int value);
 	static void findNode(int value);
+	static int getRandomLevel();
 public:
 	SkipListNode();
 	SkipListNode(int value, int counter);
@@ -105,6 +105,7 @@ public:
 	void setValue(int value);
 	void print();
 	void getClone(HyflowObject **obj);
+	static void addNode(int value);
 	/*
 	 * Adds the given value in the list
 	 */

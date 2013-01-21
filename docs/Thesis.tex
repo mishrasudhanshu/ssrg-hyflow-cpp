@@ -116,30 +116,23 @@ Copyright 2013, Sudhanshu Mishra
 {\large
 HyflowCPP : A Distributed Transactional Memory framework for C++
 }
-
 \vfill
-
 Sudhanshu Mishra
-
 \vfill
-
 (ABSTRACT)
-
 \vfill
-
 \end{center}
-
 The distributed transactional memory (DTM) abstraction aims to simplify the development of distributed concurrent programs. It frees programmers from the complicated and error-prone task of explicit concurrency control based on locks (e.g., deadlocks, livelocks, non-scalability, non-composability), which are aggravated in a distributed environment due to the complexity of multi-node concurrency. At its core, DTM's atomic section-based synchronization abstraction enables the execution of a sequence of multi-node object operations with the classical serializability property, which significantly increases the programmability of distributed systems. 
 
 In this thesis, we present the first ever DTM framework for distributed concurrency control in C++, called \textit{HyflowCPP}. HyFlowCPP provides distributed atomic sections, and pluggable support for concurrency control algorithms, directory lookup protocols, contention management policies, and network communication protocols.
 The framework uses the Transaction Forwarding Algorithm (or TFA) for concurrency control. While there exists implementations of TFA and other DTM concurrency control algorithms in Scala and Java, and concomitant DTM frameworks (e.g., HyflowJava, HyflowScala, D2STM, GenRSTM), HyflowCPP provides a uniquely distinguishing TFA/DTM implementation for C++. Also, HyflowCPP supports strong atomicity, transactional nesting models including closed and open nesting (supported using modifications to TFA), and checkpointing. 
 
-We evaluated HyflowCPP through an experimental study that measured transactional throughput for a set of micro- and macro-benchmarks, and comparing with competitor DTM frameworks. Our results revealed that HyflowCPP achieves upto 500\% performance improvement over competitor Java DTM frameworks including D2STM, GenRSTM, and HyflowJava, which can be attributed to the competitors' JVM overhead and rudimentary networking support. Additionally, our experimental studies revealed that checkpointing achieves upto 100\% performance improvement over  flat nesting, and closed nesting and open nesting achieve upto 90\% and 70\% performance improvement over flat nesting, respectively. 
+We evaluated HyflowCPP through an experimental study that measured transactional throughput for a set of micro- and macro-benchmarks, and comparing with competitor DTM frameworks. Our results revealed that HyflowCPP achieves upto 600\% performance improvement over competitor Java DTM frameworks including D2STM, GenRSTM, HyflowScala and HyflowJava, which can be attributed to the competitors' JVM overhead and rudimentary networking support. Additionally, our experimental studies revealed that checkpointing achieves upto 100\% performance improvement over  flat nesting and 50\% over closed nesting. Open nesting based partial abort model achieves upto 140\% performance improvement over flat nesting and 90\% over closed nesting. 
 %%BR: It is better to quote ON's improvement over CN, and also about CN versus ON. So I suggest re-phrasing the last sentence accordingly. 
-
 %%BR: Done. 10:10PM, 1/19/2013. 
-
 \vfill
+This work is supported in part by US National Science Foundation under grants CNS 0915895, CNS 1116190, CNS 1130180, and CNS 1217385.. Any opinions, findings, and conclusions or recommendations expressed in this work are those of the author and do not necessarily reflect the views of the National Science Foundation.
+
 
 \pagebreak
 
@@ -156,25 +149,12 @@ I dedicate this thesis to my family and friends.
 
 \chapter*{Acknowledgments}
 
-I would like to thank my advisor, Dr. Binoy Ravindran, for his 
-help and guidance on both technical and personal 
-topics. It has been an honor to work under him and I am highly thankful
-to him for his trust in me.
+I would like to thank my advisor, Dr. Binoy Ravindran, for his help and guidance on both technical and personal topics. It has been an honor to work under him and I am highly thankful to him for his trust in me.
 
-I would also like to thank Dr. Robert Broadwater and Dr. Mark Jones,
-for serving on my committee and providing their valuable feedback
-and direction. In addition, I would like to thank all of my colleagues
-at the Systems Software Research lab. I would particularly like to thank
-Alex Turcu, Mohd. Saad and Aditya Dhoke for their support and encouragement.
-It was a pleasure to work with them and perform interesting research in area 
-of Distributed Transactional Memory.
+I would also like to thank Dr. Robert Broadwater and Dr. Mark Jones, for serving on my committee and providing their valuable feedback and direction. In addition, I would like to thank all of my colleagues
+at the Systems Software Research lab. I would particularly like to thank Alex Turcu, Mohd. Saad and Aditya Dhoke for their support and encouragement. It was a pleasure to work with them and perform interesting research in area of Distributed Transactional Memory.
 
-Finally, I would like to thank my family and friends for all the
-love and support they have given me, without which this thesis would 
-not have been possible.
-
-This work is supported in part by US National Science Foundation under grants CNS 0915895, CNS 1116190, CNS 1130180, and CNS 1217385.. Any opinions, findings, and conclusions or recommendations expressed in this site are those of the author(s) and do not necessarily reflect the views of the National Science Foundation.
-
+Finally, I would like to thank my family and friends for all the love and support they have given me, without which this thesis would not have been possible.
 
 \tableofcontents
 \pagebreak
@@ -237,7 +217,7 @@ The memory consistency models that are typically used in TM and DTM frameworks i
 %%BR: opacity?
 %%BR: Provide citations. 
 
-\textit{Serializability} is a strong consistency requirement and requires that all transactions execute in  complete isolation i.e., concurrent transactional execution must be equivalent to sequential execution. Two or more transactions can execute at the same time only if the equivalence to a serial execution can be maintained. DTM works like D2STM~\cite{D2STM:5368778}, Cluster-STM~\cite{}, and GenRSTM~\cite{GenRSTM:6038614} support serializability.
+\textit{Serializability} is a strong consistency requirement and requires that all transactions execute in  complete isolation i.e., concurrent transactional execution must be equivalent to sequential execution. Two or more transactions can execute at the same time only if the equivalence to a serial execution can be maintained. DTM works like D2STM~\cite{D2STM:5368778}, Cluster-STM~\cite{Bocchino:2008:STM:1345206.1345242}, and GenRSTM~\cite{GenRSTM:6038614} support serializability.
 %%BR: Provide citations. 
 
 \textit{Opacity} is a stronger consistency requirement in comparison to serializability. It not only requires are transactions to execute in isolation, but also prevents even non-committed transactions from accessing inconsistent states of system. DTM works like HyflowJava~\cite{Saad:2011:HHP:1996130.1996167} and HyflowScala~\cite{turcuhyflow2} provided opacity guarantee.
@@ -246,7 +226,7 @@ Strong consistency requirements like serializability and opacity can potentially
 
 With \textit{snapshot isolation}, a transaction takes an individual snapshot of the memory at the start of the transaction. When the transaction finishes, it commits only if the values of objects in its snapshot have not been updated by other committed transactions. DecentSTM~\cite{DecentSTM:5470446} work is a good example of snapshot isolation DTM work. \textit{Eventual consistency} guarantees that if no new updates are made for a period of time, all objects will be updated to their most recent values. Amazon Dyanmo~\cite{DeCandia:2007:DAH:1294261.1294281} is a nice example of EC based distributed concurrency product.
 
-Even though weaker consistency models provide higher performance by relaxing the consistency requirement, it forces programmers to embrace the relaxed consistency models. Such models typically pose a greater challenge for ordinary programmers, as they must now understand all the subtleties of complex consistency properties to ensure program correctness. This is likely why, the serializability property, despite its negative impact on performance, has gained significant traction, especially in database settings. 
+Even though weaker consistency models provide higher performance by relaxing the consistency requirement, it forces programmers to embrace the relaxed consistency models. Such models typically pose a greater challenge for ordinary programmers, as now they must understand all the subtleties of complex consistency properties to ensure program correctness. This is likely why, the serializability property, despite its negative impact on performance, has gained significant traction, especially in database settings. 
 
 %%BR: Provide citations for each model, and example TM works that use them. 
 
@@ -270,12 +250,12 @@ Concurrency control ensures that concurrent changes made by transactions do not 
 
 Replication is a commonly used technique in databases for fault-tolerance and improved concurrency~\cite{faultReplic:1022297}. 
 %%BR: Provide citation
-In the DTM setting, the classical replication solution can be viewed as a primary/backup model~\cite{budhiraja1993primary}, where the primary object copy is used to update all backup copies. 
+In the DTM setting, the classical replication solution can be viewed as a primary-backup model~\cite{budhiraja1993primary, goldring1994discussion}, where the primary object copy is used to update all backup copies. 
 %%BR: Provide citation
-In case of primary failure, the backup copies are used to service transactions. The switch from primary to backup copies creates many problems for the transactions in progress, at the time failure. Many systems send log updates to backup copies, to allow in-progress transactions to continue from a certain logged state~\cite{ImpData840959}. 
+In case of primary failure, the backup copies are used to service transactions. The switch from primary to backup copies creates many problems for the transactions in progress, at the time of failure. Many systems send log updates to backup copies, to allow in-progress transactions to continue from a certain logged state~\cite{ImpData840959}. In case of high update workload too much overhead for full replication renders primary-backup approach inefficient. In such conditions a partial replication~\cite{alonso1997partial} technique is used, which  replicates only some specific entries and attributes. The entries and attributes to be replicated are specified based on partial replication protocol. Another popular replication technique is state machine approach~\cite{Schneider93chapter7}. In the replicated state machine approach, one machine is the master and the others are slaves. Master receives all the requests from clients and executes them on all replicas in the same order ensuring identical state for each replica.
 %%BR: Provide citations. 
 
-Replication is also viewed as a way to increase performance through localization.
+Replication is also viewed as a way to increase performance through localization. Replication reduces the network communication cost for the distributed read transactions significantly as all the requested objects are available locally. Same cost advantage in not available for write transactions, as each write updates all the replicas of objects, which incurs additional messaging cost. In such cases partial replication can provide a intermediate approach for replication. In some cases partial replication with weaker consistency have already shown magnitudes of performance improvement for distributed transactions.~\cite{GMU:peluso2012scalability}    
 %%BR: Discuss this further with a similar-length paragraph. 
 
 \subsection{Atomicity Semantics}
@@ -318,7 +298,7 @@ A transaction is said to be nested when it encloses some other transaction. Nest
 \label{Fig:Nesting_example}
 \end{figure}
 
-\textit{Checkpointing} does not view a transaction as a composition of multiple inner transactions, but as a process containing various states. 
+\textit{Checkpointing} does not view a transaction as a composition of multiple inner transactions, but as a process containing various states.~\cite{Checkpointing:1702129} 
 %%BR: Provide citation. 
 The idea is to save the transaction execution state at various points, called `checkpoints', and use them to partially rollback to a checkpointed state in case of a conflict. This allows the transaction to redo the work only for that part of the transaction in which the conflict occurs. The transaction execution state is generally saved using continuations~\cite{flanagan1993essence}. 
 %In HyflowCpp we use \textit{setcontext} and \textit{getcontext} functions to save the execution states.     
@@ -333,7 +313,7 @@ With checkpointing, upon a conflict, $T2$ can resume from the last valid checkpo
 
 \section{Thesis Contribution: a DTM Framework for C++}
 
-Most of the existing DTM implementations are created in VM-based languages (e.g., Java, Scala). Examples include Cluster-STM~\cite{Bocchino:2008:STM:1345206.1345242}, D2STM~\cite{D2STM:5368778}, DiSTM~\cite{Kotselidis08distm:a}, GenRSTM~\cite{GenRSTM:6038614}, HyflowJava~\cite{Saad:2011:HHP:1996130.1996167}, and HyflowScala~\cite{turcuhyflow2}. A few DTM implementations such as DMV~\cite{Manassiev:2006:EDV:1122971.1123002} in C++, Cluster-STM~\cite{Bocchino:2008:STM:1345206.1345242} in C, and Sinfonia~\cite{Aguilera:2009:SNP:1629087.1629088}  were developed in C++. However, DMV~\cite{Manassiev:2006:EDV:1122971.1123002} and Cluster-STM~\cite{Bocchino:2008:STM:1345206.1345242}  are implemented as proofs-of-concept for  DTM algorithms, and Sinfonia~\cite{Aguilera:2009:SNP:1629087.1629088} in C++ is designed as a backup and restore service, rather than as general purpose DTM frameworks. 
+Most of the existing DTM implementations are created in VM-based languages (e.g., Java, Scala). Examples include Cluster-STM~\cite{Bocchino:2008:STM:1345206.1345242}, D2STM~\cite{D2STM:5368778}, DiSTM~\cite{Kotselidis08distm:a}, GenRSTM~\cite{GenRSTM:6038614}, HyflowJava~\cite{Saad:2011:HHP:1996130.1996167}, and HyflowScala~\cite{turcuhyflow2}. A few DTM implementations such as DMV~\cite{Manassiev:2006:EDV:1122971.1123002} (C++), Cluster-STM~\cite{Bocchino:2008:STM:1345206.1345242} (C), and Sinfonia~\cite{Aguilera:2009:SNP:1629087.1629088} (C++)  were developed in C \& C++. However, DMV~\cite{Manassiev:2006:EDV:1122971.1123002} and Cluster-STM~\cite{Bocchino:2008:STM:1345206.1345242}  are implemented as proofs-of-concept for  DTM algorithms, and Sinfonia~\cite{Aguilera:2009:SNP:1629087.1629088} is designed as a backup and restore service, rather than as general purpose DTM frameworks. 
 
 
 Many high-performance production systems are developed in C++, instead of VM-based languages, usually, to overcome the performance issues with VM-based languages~\cite{hundt2011loop}. Therefore, a C++ framework for DTM is highly desirable as that enables high performance C++ applications to use DTM concurrency control. Additionally, a C++ DTM framework can be useful to understand the trade-offs between different transactional nesting and checkpointing models, where execution states can be saved without significant overhead in C++~\cite{continuation:wiki}. 
@@ -341,7 +321,7 @@ Many high-performance production systems are developed in C++, instead of VM-bas
 
 Motivated by this observation, we design and implement the first ever DTM framework for C/C++: HyflowCPP. HyflowCPP has a modular architecture and provides pluggable support for DTM protocols, cache coherence protocols, contention management policies, and networking protocols. HyflowCPP provides a simple atomic section-based DTM interface that excludes locks. The current implementation uses the TFA algorithm~\cite{saad2011transactional}, which is a dataflow-based cc DTM protocol. 
 %%BR: Cite it. 
-Additionally, HyflowCPP supports strong atomicity, transactional nesting models including closed and open nesting, and checkpointing. None of the past DTM systems support all these, and in particular for C/C++. 
+Additionally, HyflowCPP supports strong atomicity, partial abort models including closed and open nesting, and checkpointing. None of the past DTM systems support all these, and in particular for C/C++. 
 
 \begin{table}[htbp]
 \centering%
@@ -350,9 +330,9 @@ Additionally, HyflowCPP supports strong atomicity, transactional nesting models 
 \hline 
 \begin{sideways} Implementation \end{sideways} & \begin{sideways} Serializability \end{sideways} & \begin{sideways} Replication \end{sideways} & \begin{sideways} MultiVersioning \end{sideways} & \begin{sideways} Strong Atomicity \end{sideways}  & \begin{sideways} checkpointing \end{sideways} & \begin{sideways} Closed-Nesting \end{sideways} & \begin{sideways} Open-Nesting \end{sideways} &  Target Language \tabularnewline
 \hline
-DMV ~\cite{Manassiev:2006:EDV:1122971.1123002} & \CheckmarkBold{} & \CheckmarkBold{} & \XSolidBold{} & \XSolidBold{} & \XSolidBold{} & \XSolidBold{} & \XSolidBold{} & C/C++ \tabularnewline
+DMV ~\cite{Manassiev:2006:EDV:1122971.1123002} & \CheckmarkBold{} & \CheckmarkBold{} & \XSolidBold{} & \XSolidBold{} & \XSolidBold{} & \XSolidBold{} & \XSolidBold{} & C++ \tabularnewline
 \hline 
-Cluster-STM ~\cite{Bocchino:2008:STM:1345206.1345242} & \CheckmarkBold{} & \XSolidBold{} & \XSolidBold{} & \CheckmarkBold{} \tnote{1}& \XSolidBold{} & \XSolidBold{} & \XSolidBold{} & C/C++ \& SQL \tabularnewline
+Cluster-STM ~\cite{Bocchino:2008:STM:1345206.1345242} & \CheckmarkBold{} & \XSolidBold{} & \XSolidBold{} & \CheckmarkBold{} \tnote{1}& \XSolidBold{} & \XSolidBold{} & \XSolidBold{} & C \& SQL \tabularnewline
 \hline 
 DiSTM ~\cite{Kotselidis08distm:a} & \CheckmarkBold{} & \XSolidBold{} & \XSolidBold{} & \XSolidBold{} & \XSolidBold{} & \XSolidBold{} & \XSolidBold{} & Java \tabularnewline
 \hline 
@@ -360,7 +340,7 @@ D2STM ~\cite{D2STM:5368778} & \CheckmarkBold{} & \CheckmarkBold{} & \XSolidBold{
 \hline 
 AGGRO ~\cite{AGGRO:5598236} & \CheckmarkBold{} & \CheckmarkBold{} & \XSolidBold{} & \XSolidBold{} & \XSolidBold{} & \XSolidBold{} & \XSolidBold{} & Java \tabularnewline
 \hline 
-Sinfonia\tnote{2} ~\cite{Aguilera:2009:SNP:1629087.1629088} & \CheckmarkBold{} & \CheckmarkBold{} & \XSolidBold{} & \XSolidBold{} & \XSolidBold{} & \XSolidBold{} & \XSolidBold{} & C/C++ \tabularnewline
+Sinfonia\tnote{2} ~\cite{Aguilera:2009:SNP:1629087.1629088} & \CheckmarkBold{} & \CheckmarkBold{} & \XSolidBold{} & \XSolidBold{} & \XSolidBold{} & \XSolidBold{} & \XSolidBold{} & C++ \tabularnewline
 \hline  
 GenRSTM ~\cite{GenRSTM:6038614} & \CheckmarkBold{} & \CheckmarkBold{} & \XSolidBold{} & \XSolidBold{} & \XSolidBold{} & \XSolidBold{} & \XSolidBold{} & Java \tabularnewline
 \hline 
@@ -372,7 +352,7 @@ HyflowScala ~\cite{turcuhyflow2} & \CheckmarkBold{} & \XSolidBold{} & \XSolidBol
 \hline
 Granola ~\cite{cowling2012granola} & \CheckmarkBold{} & \XSolidBold{} & \XSolidBold{} & \XSolidBold{} & \XSolidBold{} & \XSolidBold{}  & \XSolidBold{} & Java \tabularnewline
 \hline
-HyflowCpp & \CheckmarkBold{} & \XSolidBold{} & \XSolidBold{} & \CheckmarkBold{} & \CheckmarkBold{} & \CheckmarkBold{} & \CheckmarkBold{} & C/C++ \tabularnewline
+HyflowCPP & \CheckmarkBold{} & \XSolidBold{} & \XSolidBold{} & \CheckmarkBold{} & \CheckmarkBold{} & \CheckmarkBold{} & \CheckmarkBold{} & C++ \tabularnewline
 \hline
 Decent RSTM ~\cite{DecentSTM:5470446} & \XSolidBold{} & \CheckmarkBold{} & \CheckmarkBold{} & \CheckmarkBold{} & \XSolidBold{} & \XSolidBold{} & \XSolidBold{} & Java \tabularnewline
 \hline
@@ -391,19 +371,18 @@ GMU ~\cite{GMU:peluso2012scalability} & \XSolidBold{} & \CheckmarkBold{} & \Chec
 Table~\ref{tbl:stmComp} summarizes HyflowCpp's contribution. Each row of the table describes a DTM implementation, and each column describes a DTM property. Thus, the table entries describe the features supported by the different DTMs, illustrating HyflowCPP's uniquely distinguishing features. 
 
 
-We evaluated HyflowCPP through a set of experimental studies that measured transactional throughput on an array of micro and macro-benchmarks, and compared with past VM-based DTM systems such as ....
+We evaluated HyflowCPP through a set of experimental studies that measured transactional throughput on an array of micro and macro-benchmarks, and compared with past VM-based DTM systems such as GenRSTM, DecentSTM, HyflowJava and HyflowScala.
 %%BR: List all your competitors. 
-Key result from our experimental studies is that, HyflowCPP outperforms .....
+Key result from our experimental studies is that, HyflowCPP outperforms its nearest competitor HyflowScala
 %%BR: List all your competitors. 
-by as much as...
+by as much as 6 times. Other competitor like GenRSTM, DecentSTM, and HyflowJava perform even worse in comparison to HyflowCPP.
 %%BR: Complete it. (This is your baseline result for the flat nesting case.)
-Additionally, we show that HyflowCPP's checkpointing-based partial rollback mechanism outperforms  closed nesting by as much as ..., and open nesting outperforms closed nesting by as much as...
+Additionally, we show that HyflowCPP's checkpointing-based partial rollback mechanism outperforms flat nesting by as much as 100\% and closed nesting by as much as 50\%. Open nesting based partial rollback approach outperforms flat nesting by as much as 140\% and closed nesting by as much as 90\%.
 %%BR: Complete it.
 These trends are similar to past DTM studies on nesting, 
 %%BR: Cite Alex's papers. 
-but our improvements (of checkpointing over closed nesting and open nesting over closed nesting) are  higher, which can be attributed to C/C++ low overhead mechanisms. 
-%%BR: Is that true?
-
+but our improvements (of checkpointing over closed nesting and open nesting over closed nesting) are  higher, which can be attributed to efficient design and C/C++ low overhead mechanisms. 
+%%BR: Is that true? By design we are saving least possible data
 
 \section{Thesis Organization}
 
@@ -529,7 +508,7 @@ Strong atomicity is a transactional semantics that guarantees the atomicity betw
 
 Cluster-STM~\cite{Bocchino:2008:STM:1345206.1345242} supported the strong atomicity by implementing a programming restriction on user. It asked user to access each memory location always within transactions or always outside transactions, but did not provide any automatic support. DecentSTM~\cite{DecentSTM:5470446} programming model guaranteed strong atomicity and helped users to stop careless atomicity mistakes. HyflowScala~\cite{turcuhyflow2} and HyflowCpp also have en-build the strong atomicity using programming model.
 
-\section{Transaction Nesting Models}
+\section{Partial Abort Models}
 
 For performance improvement nesting techniques are widely used in database systems. In 1981 Moss~\cite{moss1981nested} first time described the nesting concept in a distributed database transactions. He extended two phase commit protocal~\cite{TwoPC:weikum1991principles} to support the nesting and proposed algorithms for distributed transaction management, object state restoration, and distributed deadlock detection. Later in 1983 Gracia~\cite{garcia1983using} et. al. extensively analyzed it in open nesting context using undo-logs transactions. 
 
@@ -597,7 +576,7 @@ atomic{
 \end{lstlisting}			  
 \end{minipage}
 \end{footnotesize}
-\label{Fig:atomicConstr}\caption{Atomic Construct for Hyflow vs. Standard STM implementations}
+\label{Fig:atomicConstr}\caption{Atomic Construct for HyflowCPP vs. Standard STM implementations}
 \end{figure}
 
 Any object in the network can be opened either in \emph{Read} or \emph{Write} mode. Once user requests the object, HyflowCpp fetches the object from its current location and copies to transactions read or write set depending of access type. For accessing any object user should macro \emph{HYFLOW{\_}FETCH(ID, IS{\_}READ)}. First argument to this macro is \emph{objectId} and second argument is access type \emph{true/false}, true for read, otherwise false.
@@ -657,7 +636,7 @@ void ListNode::deleteNode(int value) {
 
 }
 \end{lstlisting}
-\caption{list Benchmark using HyflowCpp Macros}
+\caption{List benchmark using HyflowCPP Macros}
 \label{Fig:listMacro}
 \end{figure}
 
@@ -679,7 +658,7 @@ void BankAccount::transfer(string Account1, string Account2, Money) {
 }
 \end{lstlisting}
 \end{minipage}
-\caption{Checkpointing in bank transfer function}
+\caption{Checkpointing in Bank transfer function}
 \label{Fig:bankCP}
 \end{figure}
 
@@ -744,7 +723,7 @@ void ListNode::deleteNode(int value) {
 
 }
 \end{lstlisting}
-\caption{list Benchmark using HyflowCpp Atomic Class}
+\caption{List benchmark using HyflowCPP Atomic Class}
 \label{Fig:listClassDelete}
 \end{figure}
 
@@ -766,7 +745,7 @@ Figure~\ref{Fig:HyflowCppArch} shows the architecture of a node in HyflowCpp. It
 \begin{figure}
 \begin{minipage}[b]{0.9\linewidth}\centering
 \centering \includegraphics[scale=0.46]{\string"eps/HyflowCppArch".pdf}
-\caption{HyflowCpp Architecture}
+\caption{HyflowCPP Architecture}
 \label{Fig:HyflowCppArch}
 \end{minipage}
 \end{figure}
@@ -922,7 +901,7 @@ Context::TransactionForwarding(senderNodeClock) {
 }
 \end{lstlisting}
 \end{minipage}
-\caption{Transaction Forwarding in closed nesting}
+\caption{Transaction Forwarding in Closed Nesting}
 \label{Fig:CloseTFA}
 \end{figure} 
 
@@ -955,7 +934,7 @@ Context::TransactionForwarding(senderNodeClock) {
 }
 \end{lstlisting}
 \end{minipage}
-\caption{Transaction Forwarding in checkpointing}
+\caption{Transaction Forwarding in Checkpointing}
 \label{Fig:CheckPointTFA}
 \end{figure} 
 
@@ -1001,7 +980,7 @@ Context::Commit() {
 }
 \end{lstlisting}
 \end{minipage}
-\caption{Commit in checkpointing}
+\caption{Commit in Checkpointing}
 \label{Fig:CheckpointCommit}
 \end{figure}
 
@@ -1099,23 +1078,23 @@ Our all experiments are conducted on 48 core machine. Machine contains four AMD 
 
 \section{Flat Nesting}
 
-Flat nesting does not provide any performance incentive over other transactional model like closed or open nesting. Still, it is very useful to understand benchmarks characteristics and compare the raw performance between different DTM frameworks. We have evaluated the performance with different read ratios (0.2 , 0.5 and 0.8) on nodes from 4 to 48. For concentrating focus on the distributed behavior in experiments we have limited threads on each node to one.  
+Flat nesting does not provide any performance incentive over other partial abort models like closed or open nesting. Still, it is very useful to understand benchmarks characteristics and compare the raw performance between different DTM frameworks. We have evaluated the performance with different read ratios (0.2 , 0.5 and 0.8) on nodes from 4 to 48. For concentrating focus on the distributed behavior in experiments we have limited threads on each node to one.  
 
-For performance comparsion, we compare the HyflowCpp with various competitors like HyflowJava~\cite{Saad:2011:HHP:1996130.1996167}, HyflowScala~\cite{turcuhyflow2}, DecentRSTM~\cite{DecentSTM:5470446} and GenRSTM~\cite{GenRSTM:6038614}. We have compared the all the benchmarks already available in competitor with our benchmarks. For some HyflowCPP benchmarks, we have not found any implementation in competitors. We have not spent time in developing benchmarks in competitor frameworks, instead we devoted our time in more important research work. 
+For performance comparsion, we compare the HyflowCpp with various competitors like HyflowJava~\cite{Saad:2011:HHP:1996130.1996167}, HyflowScala~\cite{turcuhyflow2}, DecentRSTM~\cite{DecentSTM:5470446} and GenRSTM~\cite{GenRSTM:6038614}. We have compared the all the benchmarks already available in competitors with our benchmarks. For some HyflowCPP benchmarks, we have not found any implementation in competitors. We have not spent time in developing benchmarks in competitor frameworks, instead we devoted our time in more important research work. 
 
 \subsection{Micro Benchmarks}
 
-Micro benchmarks which we considered for performance evaluation are Bank, List, Binary Search Tree, Skip-list and Hash-table. In each data structure we convert all coarse grain locks access in lock based implementation with \emph{HYFLOW{\_}ATOMIC{\_}START} and \emph{HYFLOW{\_}ATOMIC{\_}END} transactional block. For each experiment we ran 2000 transactions 3 times and took average of their transactional throughput.  
+Micro benchmarks which we considered for performance evaluation are Bank, List, Binary Search Tree, Skip-list and Hash-table. In each data structure we convert all coarse grain lock accesses in lock based implementation with \emph{HYFLOW{\_}ATOMIC{\_}START} and \emph{HYFLOW{\_}ATOMIC{\_}END} transactional block. For each experiment we ran 2000 transactions 3 times and took average of their transactional throughput.  
 
 \subsubsection{Bank}
 
-The Bank benchmark simulates a distributed banking system. Each distributed node is initiated with certain number of bank accounts. Each account is initiated with some initial amount. Bank benchmark support two operations: total balance and transfer. At the end of experiment a sanity check is performed. Bank benchmark is distributed in nature and allows multiple Transfer operations in parallel on different accounts.
+The Bank benchmark simulates a distributed banking system. Each distributed node is initiated with certain number of bank accounts. Each account is created with some initial amount. Bank benchmark supports two operations: total balance and transfer. At the end of experiment a sanity check is performed. Bank benchmark is distributed in nature and allows multiple Transfer operations in parallel on different accounts.
 
-For this experiment we created 10000 accounts distributed over different nodes. In figure~\ref{Fig:flatBank}, we can observer the performance of the HyflowCPP in comparison to various competitors for different read percents: 20\%, 50\% and 80\%. Bank being distributed in nature allows HyflowCPP performance to linearly scale with increase in numbers of nodes. As we create 10000 accounts over the nodes, increase in number of nodes does not increase contention.
+In this experiment, we create 10000 accounts distributed over different nodes. In figure~\ref{Fig:flatBank}, we can observer the performance of the HyflowCPP in comparison to various competitors for different read percents: 20\%, 50\% and 80\%. Bank being distributed in nature allows HyflowCPP performance to linearly scale with increase in numbers of nodes. As we create 10000 accounts over the network, increase in number of nodes does not increase contention.
 
-HyflowCPP performs 3x to 4x better in comparison to its nearest competitor HyflowScala. In sweet spot comparison by adding lots of threads per core HyflowScala is able to achieve almost equivalent performance to HyflowCPP as showed in figure~\ref{Fig:flatBankSS}. HyflowScala uses very efficient messaging technique based on the actor model, which allows it scale quickly with increase in number of threads.
+HyflowCPP performs 3 to 5 times better in comparison to its nearest competitor HyflowScala. In sweet spot comparison by adding lots of threads per core HyflowScala is able to achieve almost equivalent performance to HyflowCPP as showed in figure~\ref{Fig:flatBankSS}. HyflowScala uses very efficient messaging technique based on the actor model, which allows it scale quickly with increase in number of threads.
 
-Poor performance of HyflowJava and  DecentSTM is rooted in their bad implementation. The HyflowJava and HyflowCPP use the same TFA algorithm for concurrency control. But networking support in HyflowJava is very rudimentary and one of the major reason of bad performance. Similarily the DecentSTM and GenRSTM implementation is also not optimized for network messaging. From algorithm point of view DecentSTM and GenRSTM should be able to perform better in case of high reads as reads don't require any network communication.
+Poor performance of HyflowJava and  DecentSTM is rooted in their bad implementation. The HyflowJava and HyflowCPP use the same TFA algorithm for concurrency control. But networking support in HyflowJava is very rudimentary and one of the major reason for bad performance. Similarly the DecentSTM and GenRSTM implementation is also not optimized for network messaging. From algorithmic point of view DecentSTM and GenRSTM should be able to perform better in case of high reads as replication allows to access objects locally.
 
 \begin{figure}
 \centering
@@ -1151,9 +1130,9 @@ Poor performance of HyflowJava and  DecentSTM is rooted in their bad implementat
 
 \subsubsection{Linked List}
 
-In this benchmark, we have designed an ordered, singly-linked linear list data structure. We implement the list as set and don't allow the duplicate objects in the list. It helps to control the maximum number of objects in list. It support two write operations: add and remove, and one read operation: contains. While traversal all the read objects are added to transaction readSet, which makes list prone to high contention. Any write operation on traversed node will lead to transaction abort.
+In this benchmark, we have designed an ordered, singly-linked linear list data structure. We implement the list as set and don't allow the duplicate objects in the list. It helps to control the maximum number of objects in list. It supports two write operations: add and remove, and one read operation: contains. While traversing the list all the read objects are added to transaction readSet, which makes list prone to high contention. Any write operation on traversed node will lead to transaction abort.
 
-For our experiments we initialize the linked list with 50 objects. In figure~\ref{Fig:flatList}, we can observe that HyflowCPP performance is better 3 to 6 times better in comparison to nearest competitor HyflowScala. HyflowJava performs even worse than HyflowScala. We can also see increase in transactional throughput with increase in read percent. We are unable to find any consistent pattern in throughput with increase in number of nodes as contention is very high in list and aborts happen in random order. On average the list throughput decreases as number of nodes are increased, due to higher contention.
+For our experiments we initialize the linked list with 50 objects. In figure~\ref{Fig:flatList}, we observe that HyflowCPP performance is 3 to 5 times better in comparison to nearest competitor HyflowScala. HyflowJava performs even worse than HyflowScala. We also find increase in transactional throughput with increase in read percent. We are unable to find any consistent pattern in throughput with increase in number of nodes as contention is very high in list and aborts happen in random order. On average the list throughput decreases as number of nodes are increased, due to higher contention.
 
 \begin{figure}[H]
 \centering
@@ -1181,7 +1160,7 @@ For our experiments we initialize the linked list with 50 objects. In figure~\re
 
 \subsubsection{Skip List}
 
-In this benchmark, we design standard Skip-list data structure. Similar to list, in skip list also we don't allow the duplicate values. It support two write operations: add and remove, and one read operation: contains. In Skip-list contention is generally lower than the list as it requires fewer nodes to traverse. 
+In this benchmark, we design standard Skip-list data structure. Similar to list, in skip list also we don't allow the duplicate values. Skip-list benchmark supports two write operations: add and remove, and one read operation: contains. In Skip-list contention is generally lower than the list as it requires fewer nodes to traverse. 
 
 In our experiments we create the Skip-list with upto 50 objects. In figure~\ref{Fig:flatSkipList}, we can observer that HyflowCPP performance is 3 to 5 times better in comparison to HyflowScala. HyflowJava performs even worse in comparison to HyflowScala. With increase in number of nodes the HyflowCpp performance for 20\% reads decreases in general and for 50\% and 80\%  it increases. Overall due to smaller read set size the Skip-list throughput is better than Linked List benchmark. 
 
@@ -1212,7 +1191,7 @@ In our experiments we create the Skip-list with upto 50 objects. In figure~\ref{
 \subsubsection{Binary Search Tree}
 In this benchmark, standard the Binary Search Tree is implemented as a set. It support two write operations: add and remove, and one read operation: contains. BST provides the higher concurrency in comparison to list, as it allows the concurrent read and write operations to go in parallel for different sub-trees. 
 
-In figure~\ref{Fig:flatBst}, we can observer HyflowCpp performs 3 to 5 times better in comparison to HyflowScala. HyflowJava performance is even worse. Due to higher level of concurrency, we can find the increase in throughput for increase in number of nodes for all read ratios. In our experiments we allowed upto 50 objects in BST. Higher concurrency available in BST can be easily understood via its throughput which  is upto 2 times better in comparison to Linked List.
+In figure~\ref{Fig:flatBst}, we can observer HyflowCpp performs 3 to 5 times better in comparison to HyflowScala. HyflowJava performance remains poor as in previous cases. Due to higher level of concurrency, we can find the increase in throughput for increase in number of nodes for all read ratios. In our experiments we allowed upto 50 objects in BST. Higher concurrency available in BST can be easily understood via its throughput which is upto 2 times better in comparison to Linked List.
 
 \begin{figure}[H]
 \centering
@@ -1243,7 +1222,7 @@ In this benchmark, we implement a bucket based standard Hash-table. We don't all
 
 For our experiment we created 2000 Hash-buckets distributed over different nodes. In figure~\ref{Fig:flatHashTable}, we can observer the performance of the HyflowCPP in comparison to various competitors for different read percents: 20\%, 50\% and 80\%. Hash-table being distributed in nature allows HyflowCPP performance to linearly scale with increase in numbers of nodes. As we create 2000 Hash-buckets over the nodes, increase in number of nodes does not increase contention. Due to smaller read-write set size the Hash-table throughput is highest among all the benchmarks.
 
-HyflowCPP performs 5 to 7 times better in comparison to its nearest competitor HyflowScala. HyflowJava performs even worse due to bad messaging support. In Hash-table contention happens only when different keys try to access same bucket, other wise they can execute in parallel. Due to this reason, we don't see much difference in throughput for different read ratios.
+HyflowCPP performs 4 to 6 times better in comparison to its nearest competitor HyflowScala. HyflowJava performs even worse in comparison to HyflowCPP. In Hash-table contention happens only when different keys try to access same bucket, other wise they can execute in parallel. Due to this reason, we don't see much difference in throughput for different read ratios.
 
 \begin{figure}[H]
 \centering
@@ -1277,7 +1256,7 @@ Macro Benchmarks are useful to verify the framework capability in real life appl
 
 The Vacation benchmark emulates a itinerary planning reservation system. It allows user to make reservations for cars, rooms and flights. It also enables administrators to manipulate the users and update the currently available offers. Each reservation request or offer update request contain 10 queries writing on the 10 distributed objects. 
 
-Vacation executes the reservation request, a low contention operation, as read operations and delete customer and update offers, high contention operations, as write operations. For experiment, in Vacation we create 1000 customers and 3000 cars, 3000 flights and 3000 rooms. In figure~\ref{Fig:flatVacation} we can see  that higher numbers of resources allow the throughput to scale linearly with number of nodes. Due to higher numbers of objects the read operations prove more costly as they access more objects. We compare the HyflowCpp performance with HyflowJava for different reads. Hyflow perform also 4-5 times better than HyflowJava. 
+Vacation executes the reservation request, a low contention operation, as read operations and delete customer and update offers, high contention operations, as write operations. For experiment, in Vacation we create 1000 customers and 3000 cars, 3000 flights and 3000 rooms. In figure~\ref{Fig:flatVacation} we can see  that higher numbers of resources allow the throughput to scale linearly with number of nodes. Due to higher numbers of objects the read operations are more costly. We compare the HyflowCPP performance with HyflowJava for different reads. HyflowCPP perform also 4-5 times better than HyflowJava. 
 
 \begin{figure}[H]
 \centering
@@ -1306,12 +1285,12 @@ Vacation executes the reservation request, a low contention operation, as read o
 
 \subsubsection{Loan}
 
-Loan benchmark simulates the banking situation where loans are provided to user based on the different set of bank accounts. Each account is access in nested fashion and a certain amount of money is borrowed based on the current amount. It also allows user to get total balance available in the all accounts.
+Loan benchmark simulates the banking situation where loans are provided to user based on the different set of bank accounts. Each account is access in nested fashion and a certain amount of money is borrowed based on the current amount. Loan benchmark also allows the user to get total balance available in the all accounts.
 
 In our experiments, we run the total balance operation as reads and loan operation as write operation. We create total 10000 account over network and access 6 accounts to provide loan or calculate the total balance.
 Loan operation calls itself in nested fashion either until all the account are used to borrow a random part of total loan money or total money is gathered.
 
-In figure~\ref{Fig:flatLoan} We compare HyflowCPP performance with two other frameworks HyflowJava and DecentSTM. Its performance in 5 to 10 times better than other frameworks. Write dominated experiments shows higher throughput as they suffer from higher contention. Throughput for 80\% read is higher than 20\% reads. At very low contention level, around 2 to 4 nodes, loan performance is very similar for different read ratios as read operation and write operation access same number of objects. 
+In figure~\ref{Fig:flatLoan} We compare HyflowCPP performance with two other frameworks HyflowJava and DecentSTM. Its performance in 5 to 10 times better than other frameworks. Throughput for 80\% read is higher than 20\% reads as write dominated experiments suffer from higher contention.. At very low contention level, around 2 to 4 nodes, loan performance is very similar for different read ratios as read operation and write operation access same number of objects. 
 
 \begin{figure}[H]
 \centering
@@ -1342,29 +1321,29 @@ In figure~\ref{Fig:flatLoan} We compare HyflowCPP performance with two other fra
 
 TPC-C benchmark is a very popular yardstick for comparing OLTP performance on various hardware and software configurations. TPC-C simulates a computing environment where a group of users executes transactions against a database. TPC-C benchmark runs five operations in predefined ratio: New order(45\%), Payment(43\%), Delivery(4\%), Order Status(4\%), Stock-level(4\%). Stock-level operation is most heavy operation which require to access 300 to 400 objects in single transaction. 
 
-In our experiment we don't vary the read ratios as in previous benchmarks as TPCC have predefined operation ratio. TPCC access various objects in same repositories, for which a control-flow based algorithm can be more efficient, because in control flow request can be send to remote node, instead of bringing all the objects to requester nodes. In figure~\ref{Fig:flatTPCC}, we can observer that the performance of TPCC at start drops with increase in remote nodes as localization of repository objects reduces. Once almost all the objects are access remotely throughput start to increase with in number of nodes. Due to very large read and write set size TPCC benchmark have lowest throughput among all the tested benchmarks.
+In our experiment we don't vary the read ratios as in previous benchmarks. Because, TPCC have predefined operation ratio. TPCC access various objects in same repositories, for which a remote procedure call (RPC) based algorithm can be more efficient, because RPC request can be send to remote node, instead of bringing all the objects to requester nodes. In figure~\ref{Fig:flatTPCC}, we can observer that the performance of TPCC at start drops with increase in remote nodes as localization of repository objects reduces. Once almost all the objects are access remotely, throughput start to increase with increase in number of nodes. Due to very large read and write set size TPCC benchmark have lowest throughput among all the tested benchmarks.
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.7\textwidth]{\string"eps/flat/tpcc/tpcc".pdf}
-\caption{Flat Nesting: Transactional throughput for TPCC with different Read Ratios}
+\caption{Flat Nesting: Transactional throughput for TPCC}
 \label{Fig:flatTPCC}
 \end{figure}
 
 \section{Checkpointing and Closed Nesting}
 
-Checkpoing and closed nesting both provide a method to partial rollback in case of abort. We perform various experiments to understand the benefit of checkpointing and closed nesting over flat nesting. We perform our experiments on Bank, List, Skip-list, and Hash-table benchmarks. We targeted to vary various parameters to understand the condition in which these models can be useful.
+Checkpoing and closed nesting both provide a method to partial rollback in case of abort. We perform various experiments to understand the benefit of checkpointing and closed nesting over flat nesting. We perform our experiments on Bank, List, Skip-list, and Hash-table benchmarks. We alternated various parameters to understand the conditions in which these models can be useful.
 
-We performed our experiments for different read-ratios: 20\%, 50\%, and 80\% and different node counts: 2, 4, 8 and 16. These two parameters allowed us to vary the contention and abort count. We used less number of objects in our experiment, so that enough aborts occur. Without significant number of aborts measuring the impact of partial abort mechanism is not possible. We also varied number of objects based on number of inner transactions to maintain the contention level across the experiments. We used different number of inner transaction to understand the impact of transactional length and points of partial aborts in transaction.
+We performed our experiments for different read-ratios: 20\%, 50\%, and 80\% and different node counts: 2, 4, 8 and 16. These two parameters allowed us to vary the contention and abort count. We used less number of objects in our experiment, so that enough aborts occur. Without significant number of aborts measuring the impact of partial abort mechanism is not possible. We also varied number of objects based on number of inner transactions to maintain the same contention level across the experiments. We used different number of inner transaction to understand the impact of transactional length and points of partial aborts in transaction.
 
-We can divide our experiments mainly in two groups. In first group we maintained the same number of objects for all the experiments and vary other parameters like read ratio, number of nodes and number of inner transaction for different nesting models. In second group, we perform experiments same as in first group, except now we increase the number of objects in each experiment with increase in number of inner transaction, so we can maintain the same contention level for given parameters. We also perform a third experiment for checkpointing, where we tried to understand the impact of checkpoint granularity on transactional throughput. We represent our result for checkpointing and closed nesting throughput in comparison to flat nesting throughput.
+We can divide our experiments mainly in two groups. In first group we maintained the same number of objects for all the experiments and changed the other parameters like read ratio, number of nodes and number of inner transaction for different nesting models. In second group, we performed experiments same as in first group, except now we increased the number of objects in each experiment with increase in number of inner transaction. It enabled us to maintain the same contention level for given parameters. We also performed a third experiment on checkpointing to examine the impact of checkpoint granularity on transactional throughput. In our results we represent checkpointing and closed nesting throughput relative to flat nesting.
 
 \subsection{Bank}
 In figure~\ref{Fig:cpBankEx1R20}, we present the results for 20\% reads in first group of experiments. In these experiments, we maintain object count constant and increase node count and number of inner transactions. We present throughput for different inner transactions ${1, 2, 5, 10}$ for closed nesting and checkpointing relative to flat nesting. We can observer checkpointing performs better in comparison to flat nesting upto 90\%, whereas closed nesting perform upto 60\% better. We can observer that as we increase the inner transaction count, both nesting models performance deteriorates with increase in contention. At 10 inner transaction actually we perform worse than flat nesting.
 
-In figure~\ref{Fig:cpBankEx2R20}, we present the results for 20\% reads in second group of experiments. In these experiments, we increase object count with increase in number of inner transactions. We keep objects to inner transactions ratio constant, which allows us to stop increase in contention level with increase in number of inner transactions. We can observer with increase in inner transactions relative performance of closed nesting and checkpointing does not decrease and it is able to maintain similar pattern of improvements as for lower number of inner transactions.
+In figure~\ref{Fig:cpBankEx2R20}, we present the results for 20\% reads in second group of experiments. In these experiments, we increase object count with increase in number of inner transactions. We keep objects to inner transactions ratio constant, which allows us to maintain contention level with increase in number of inner transactions. We can observer with increase in inner transactions relative performance of closed nesting and checkpointing does not decrease and it is able to maintain similar pattern of improvements as for lower number of inner transactions.
 
-In figure~\ref{Fig:cpBankEx3} we present the relative change in throughput and abort rate for minimum to maximum granularity with inner transactions 1 and 10. We can observer that increase in checkpoint granularity certainly decreases the abort rate, but increase in throughput is only 10\% to 15\% only. Relative low improvement occurs as actually all partial rollback don't incur in transaction commit.
+In figure~\ref{Fig:cpBankEx3} we present the relative change in throughput and abort rate for minimum to maximum granularity with inner transactions 1 and 10. We can observer that increase in checkpoint granularity certainly decreases the abort rate, but increase in throughput is only 10\% to 15\% only. Relative low throughput improvement occurs as actually all partial rollback don't incur in transaction commit.
 
 \begin{figure}[H]
 \centering
@@ -1494,11 +1473,18 @@ We represent our results for each benchmark three different plots. In first plot
 
 \subsection{Hash Table}
 
-In figure~\ref{Fig:onHashTableTrpR20}, we present the open and closed nesting throughput relative to flat nesting for different number of inner transactions. We can observer that as we increase the number of inner transactions open nesting performance improves as amount of contention increases. But at very higher contention for 8 inner transaction performance actually falls to increased abstract lock contention.  
+In figure~\ref{Fig:onHashTableTrpR20}, we present the open and closed nesting throughput relative to flat nesting for different number of inner transactions for 300 bucket objects. We can observer that as we increase the number of inner transactions open nesting performance improves as amount of contention increases. But at very higher contention for 8 inner transaction performance actually falls with increased abstract lock contention. 
+
+In figure~\ref{Fig:onHashTableReads}, we present the open and closed nesting throughput relative to flat nesting for different read ratios for 3 inner transactions. We find increase in throughput with increase in read ratio due to decreased abstract lock contention. It is worth noting we have observered very contention in this experiment between 200\% to 4000\%. 
+
+In figure~\ref{Fig:onHashTableTime}, we examine the time split of open nested transactions. We can observer 
+that with increase number of nodes the commit time increase slowly, but increase in total sub-transaction time and abort compensation time is high. Backoff time also increases, but it constitute very small part of total time spent.  
+
+In figure~\ref{Fig:onHashTableObjs}, we present the open and closed nesting throughput relative to flat nesting for different number of inner transaction for 1500 bucket objects.
 
 \begin{figure}[H]
 \centering
-\subfigure[Hash-table: Open and closed nesting throughput relative to flat nesting for different number of inner transactions]{
+\subfigure[Hash-table: Open and closed nesting throughput relative to flat nesting with 300 buckets for different number of inner transactions]{
 \includegraphics[width=0.7\textwidth]{\string"eps/open/hashTable/trp/r20".pdf}
 \label{Fig:onHashTableTrpR20}
 }
@@ -1512,11 +1498,18 @@ In figure~\ref{Fig:onHashTableTrpR20}, we present the open and closed nesting th
 \end{figure}
 \begin{figure}[H]
 \centering
+\subfigure[Hash-table: Open and closed nesting throughput relative to flat nesting with 1500 buckets for different number of inner transactions]{
+\includegraphics[width=0.7\textwidth]{\string"eps/open/hashTable/objs/r50".pdf}
+\label{Fig:onHashTableObjs}
+}
+\end{figure}
+\begin{figure}[H]
+\centering
 \subfigure[Hash-table: Execution time split for open nested transaction]{
 \includegraphics[width=0.7\textwidth]{\string"eps/open/hashTable/time/r20".pdf}
 \label{Fig:onHashTableTime}
 }
-\caption{Hash-table: Relative Transactional throughput and execution time split for Hash-table}
+\caption{Open Nesting: Relative Transactional throughput and execution time split for Hash-table}
 \label{Fig:cpHashTable}
 \end{figure}
 
@@ -1524,7 +1517,7 @@ In figure~\ref{Fig:onHashTableTrpR20}, we present the open and closed nesting th
 
 To Be Added 
 
-\subsection{BST}
+\subsection{Binary Search Tree}
 that
 To Be Added
 
@@ -1543,11 +1536,13 @@ To be Added.
 Conclusion and Future Work
 \hfill}
 
-In this thesis we presented a C/C++ DTM framework HyflowCPP. It exports a generic programming interface with pluggable support for different DTM algorithms. Being implemented in C++, it provides high performance in comparison to JVM based DTM solutions. 
+In this thesis we presented a C++ DTM framework: HyflowCPP. In HyflowCPP, we provided a first ever generic programming interface based DTM abstraction in C++ with pluggable support for different concurrency control algorithms, directory lookup protocols, contention management policies, and network communication protocols.
+We supported various transaction feature like strong atomicity, flat nesting, closed nesting, open nesting, and checkpointing to export high programmability and good performance.
 
-HyflowCPP supports data flow based TFA algorithm and Tracker directory based cache coherency protocol. Utilizing the ZeroMQ based configurable network architecture, it is able to achieve high performance. Our experiments demonstrates that HyflowCPP performance scales smoothly with increasing in number of objects and nodes. In our benchmark experiments for flat nesting, we show that HyflowCPP provides high performance in comparison to JVM based competitors.
+Using cache coherence Transaction Forwarding Algorithm for concurrency control, HyflowCPP provides excellent performance gains over other JVM based contemporary frameworks like GenRSTM, DecentRSTM, HyflowJava, and HyflowScala. HyflowCPP scales smoothly with increase in number of objects, read-write ratio, and nodes. We performed experiments on 8 different micro- and macro-benchmarks. Our results for flat nesting show that HyflowCPP outperforms its nearest competitor HyflowScala by as much as 6 times. Other competitors like GenRSTM, DecentRSTM and HyflowJava perform much worse in comparison to HyflowCPP. We attribute HyflowCPP high performance to its efficient ZeroMQ based networking support and optimized C++ based implementation. 
 
-To be Added: Closed and checkpointing, Open nesting.
+We performed various interesting experiments related to partial abort model using HyflowCPP and achieved high  gains over flat nesting. Our closed nesting implementation outperformed flat nesting by as much as 90\%. Similarly using efficient checkpointing approach, we achieved upto 100\% performance improvement over high flat nesting and upto 50\% over closed nesting. Using configurable checkpointing support in HyflowCPP, we demonstrated that maximum granularity checkpointing is not much useful in case of very high abort rate. For first time illustrated that efficient checkpointing can provide higher performance gain in comparison to closed nesting. Our open nesting based experiments qualified the performance results of previous studies and achieved higher improvements. We achieved upto 140\% improvement using open nesting over flat nesting and over 90\% improvement over closed nesting. 
+
 
 
 \section{Future Work}

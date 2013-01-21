@@ -35,7 +35,7 @@ void ListBenchmark::warmUp() {
 	LOG_DEBUG("***LIST :Warming Up the List Benchmark***\n");
 	int nodeCount = NetworkManager::getNodeCount();
 	int nodeId = NetworkManager::getNodeId();
-	for(int i=0 ; i<objectCount ; i++){
+	for(int i=0 ; i<(objectCount/2) ; i++){
 		if(( i%nodeCount )== nodeId ){
 			int value = i;
 			LOG_DEBUG("LIST :ADD[%d] Node\n", value);

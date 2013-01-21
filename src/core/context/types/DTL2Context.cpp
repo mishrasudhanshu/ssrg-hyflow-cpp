@@ -1383,7 +1383,7 @@ bool DTL2Context::checkParent() {
 				// Inner transaction abort count
 				increaseInnerAbortCount();
 				int aborts = getInnerAbortCount();
-				if ( aborts > 2 ) {
+				if ( aborts > 3 ) {
 					LOG_DEBUG("DTL :Check Parent open repeated aborts throwing exception\n");
 					return true;
 				}else {
