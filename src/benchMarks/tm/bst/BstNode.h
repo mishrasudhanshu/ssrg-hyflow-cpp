@@ -81,10 +81,6 @@ class BstNode: public vt_dstm::HyflowObject {
 	static void findNodeAtomically(HyflowObject* self, BenchMarkArgs* args, HyflowContext* c, BenchMarkReturn* ignore);
 
 	/*
-	 * Adds the given value in the bst
-	 */
-	static void addNode(int val);
-	/*
 	 * Deletes the first occurrence of value in bst
 	 */
 	static void deleteNode(int val);
@@ -107,6 +103,10 @@ public:
 	BstNode(int value, std::string id);
 	virtual ~BstNode();
 
+	/*
+	 * Adds the given value in the bst
+	 */
+	static void addNode(int val);
 	int getValue() const;
 	void setValue(int value);
 	std::string getLeftChild() const;

@@ -30,6 +30,50 @@ int BstBenchmark::getOperandsCount()	{
 	return 1*BenchmarkExecutor::getInnerTxns();
 }
 
+void BstBenchmark::warmUp() {
+	if (BenchmarkExecutor::isDoWarmUp()) {
+		LOG_DEBUG("***BST :Warming Up the Bst Benchmark***\n");
+		int nodeCount = NetworkManager::getNodeCount();
+		int nodeId = NetworkManager::getNodeId();
+		std::vector<int> sequence = bstSequence(0, objectCount, 2);
+		for(unsigned int i=0 ; i<sequence.size() ; i++){
+			if(( i%nodeCount )== nodeId ){
+				int value = sequence.at(i);
+				LOG_DEBUG("BST :ADD[%d] Node\n", value);
+				sleep(nodeId);
+				BstNode::addNode(value);
+				sleep(nodeCount-nodeId);
+			}
+		}
+	}
+}
+
+std::vector<int> BstBenchmark::bstSequence(int start, int end, int diff) {
+	std::vector<int> linearSeq;
+	for (int itr=start ; itr < end ; itr+=diff) {
+		linearSeq.push_back(itr);
+	}
+
+	int* locationArray = new int[linearSeq.size()];
+	sequenceUtil(locationArray, 0, linearSeq.size()-1, 0, linearSeq.size());
+
+	std::vector<int> treeSequence;
+	for (unsigned int tItr=0 ; tItr < linearSeq.size(); tItr++ ) {
+		treeSequence.push_back(linearSeq.at(locationArray[tItr]));
+	}
+	delete [] locationArray;
+	return treeSequence;
+}
+
+void BstBenchmark::sequenceUtil(int seq[], int start, int end, int pos, int size) {
+	if ( pos < size ) {
+		int mid = (start + end + 1)/2;
+		seq[pos] = mid;
+		sequenceUtil(seq, start, (2*mid-1)/2, 2*pos+1, size);
+		sequenceUtil(seq, (2*mid+1)/2, end, 2*pos+2, size);
+	}
+}
+
 void BstBenchmark::readOperation(std::string ids[], int size){
 	int multiCount = getOperandsCount();
 	int* values = new int[multiCount];

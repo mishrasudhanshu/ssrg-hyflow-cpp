@@ -115,6 +115,7 @@ int BenchmarkExecutor::calls = 1;
 int BenchmarkExecutor::delay = 0;
 long BenchmarkExecutor::timeout = 0;
 bool BenchmarkExecutor::checkPoint = false;
+bool BenchmarkExecutor::doWarmUp = false;
 bool BenchmarkExecutor::sanity = false;
 int BenchmarkExecutor::objectsCount = -1;
 int BenchmarkExecutor::transactions = 0 ;
@@ -212,6 +213,7 @@ void BenchmarkExecutor::initExecutor(){
 		threadCount = NetworkManager::getThreadCount();
 		benchmarkThreads = new pthread_t[threadCount];
 		sanity = (strcmp(ConfigFile::Value(SANITY).c_str(), TRUE) == 0)? true:false;
+		doWarmUp = (strcmp(ConfigFile::Value(DO_WARMUP).c_str(), TRUE) == 0)? true:false;
 		transactionLength = atoi(ConfigFile::Value(TRANSACTIONS_LENGTH).c_str());
 		executionTime = strtoul(ConfigFile::Value(EXECUTION_TIME).c_str(), NULL, 10);
 		int it = atoi(ConfigFile::Value(INNER_TXNS).c_str());
@@ -242,6 +244,7 @@ void BenchmarkExecutor::writeConfig() {
 	Logger::result("Nesting=%s\n",ConfigFile::Value(NESTING_MODEL).c_str());
 	Logger::result("InnerTxns=%d\n", innerTxns);
 	Logger::result("ITCPR=%d\n", itcpr);
+	Logger::result("WarmUp=%s\n", doWarmUp?"true":"false");
 }
 
 void BenchmarkExecutor::createObjects(){

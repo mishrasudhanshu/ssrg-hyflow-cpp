@@ -54,6 +54,7 @@ namespace vt_dstm
 #define VERBOSE "verbose"
 #define HY_DEBUG "debug"
 #define SANITY "sanity"
+#define DO_WARMUP "warmUp"
 #define INSTRUMENT "instrument"
 #define CHECKPOINT "checkPoint"
 

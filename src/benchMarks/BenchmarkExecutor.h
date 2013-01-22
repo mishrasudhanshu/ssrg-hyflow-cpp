@@ -85,6 +85,7 @@ class BenchmarkExecutor {
 	static int delay;
 	static long timeout;
 	static bool checkPoint;
+	static bool doWarmUp;
 	static int objectsCount;
 	static int transactions;
 	static int readPercent;
@@ -148,6 +149,10 @@ public:
 	static void increaseMetaData(HyflowMetaDataType type);
 
 	static void transactionLengthDelay();
+
+	static bool isDoWarmUp() {
+		return doWarmUp;
+	}
 
 	static int getItcpr(){
 		return itcpr;

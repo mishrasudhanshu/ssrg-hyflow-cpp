@@ -142,6 +142,10 @@ void ConfigFile::UpdateMap() {
 	if (value)
 		Update(SANITY, value);
 
+	value = getenv(DO_WARMUP);
+	if (value)
+		Update(DO_WARMUP, value);
+
 	value = getenv(INSTRUMENT);
 	if (value)
 		Update(INSTRUMENT, value);
