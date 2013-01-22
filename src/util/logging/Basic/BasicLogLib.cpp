@@ -242,6 +242,7 @@ void BasicLogLib::result(char const* str, ...) {
 //			fprintf(resultStr, "thread %lld :%.5f :",
 //					(long long) pthread_self());
 			fprintf(resultStr, (char const*) buf); /* print the message to stream */
+			fflush(resultStr);
 		}
 		/* Signify end of processing of variable arguments */
 		va_end(argptr);

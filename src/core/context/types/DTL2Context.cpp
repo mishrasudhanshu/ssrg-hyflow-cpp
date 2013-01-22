@@ -175,6 +175,12 @@ void DTL2Context::contextDeinit() {
 			BenchmarkExecutor::increaseMetaData(HYFLOW_METADATA_ABORTED_SUBTXNS);
 			BenchmarkExecutor::updateMetaData(txnMeta, HYFLOW_METADATA_ABORTED_SUBTXN_TIME);
 		}
+
+		if ((nestingModel == HYFLOW_NESTING_OPEN)) {
+			rollback();
+		}
+
+		ContentionManager::deInit(this);
 	}else{
 		txnMeta.committedSubTxnTime = Logger::getCurrentMicroSec() - startTime;
 		if (parentContext) {
@@ -183,11 +189,6 @@ void DTL2Context::contextDeinit() {
 		}
 	}
 
-	if ((nestingModel == HYFLOW_NESTING_OPEN) && (status == TXN_ABORTED)) {
-		rollback();
-	}
-
-	ContentionManager::deInit(this);
 
 	if (nestingModel == HYFLOW_NESTING_FLAT) {
 		if (contextExecutionDepth <= 0) {
@@ -1130,6 +1131,9 @@ void DTL2Context::tryCommitON() {
 					setStatus(TXN_ABORTED);
 					LOG_DEBUG("Commit :Unable to get Atomic AbstractReadLock for %s\n", arItr->first.c_str());
 					TransactionException unableToAbsReadLock("Commit :Unable to get abstract readLock for "+arItr->first + "\n");
+					for (HyflowContext* pc = parentContext ; pc!=NULL ; pc = pc->getParentContext() ) {
+						pc->setStatus(TXN_ABORTED);
+					}
 					throw unableToAbsReadLock;
 				}
 				lockedReadAbstractLock.push_back(arItr->first);
@@ -1298,8 +1302,11 @@ void DTL2Context::commit(){
 		}
 	}else if (nestingModel == HYFLOW_NESTING_OPEN) {
 		tryCommitON();
-		reallyCommitON();
 		// merge inner transaction actions in parent
+		reallyCommitON();
+		if (parentContext) {
+			resetInnerAbortCount();
+		}
 	}else if (nestingModel == HYFLOW_CHECKPOINTING) {
 		tryCommitCP();
 		reallyCommit();
@@ -1378,13 +1385,14 @@ bool DTL2Context::checkParent() {
 			LOG_DEBUG("DTL :Top context Check Parent not throwing exception\n");
 			return false;
 		} else {
-			// If not the top, we always throw exception only if parent is set aborted
+			// If not the top, throw exception only if parent is set aborted
 			if (parentContext->getStatus() != TXN_ABORTED ) {
 				// Inner transaction abort count
 				increaseInnerAbortCount();
 				int aborts = getInnerAbortCount();
-				if ( aborts > 3 ) {
+				if ( aborts > 5 ) {
 					LOG_DEBUG("DTL :Check Parent open repeated aborts throwing exception\n");
+					resetInnerAbortCount();
 					return true;
 				}else {
 					LOG_DEBUG("DTL :Check Parent open parent fine, not throwing exception\n");
@@ -1460,7 +1468,7 @@ bool DTL2Context::fetchObject(std::string id, bool isRead=true, bool abortOnNull
 	}
 
 	/*
-	 * Perform object availability check in Transaction parents, Useful for close and open nesting
+	 * Perform object availability check in Transaction parents, Useful for close nesting
 	 */
 	for (DTL2Context* current= (DTL2Context*)parentContext; current != NULL; current = (DTL2Context*)current->parentContext) {
 		{

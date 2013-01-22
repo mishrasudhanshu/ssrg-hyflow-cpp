@@ -67,9 +67,10 @@ SkipListNode::SkipListNode(int val, std::string id) {
 }
 
 int SkipListNode::getRandomLevel(){
-	double randomDouble = (Logger::getCurrentMicroSec()%10000)/10000;
+	double randomDouble = ((double)(Logger::getCurrentMicroSec()%10000))/10000;
     int level = (int)(log(1.0 - randomDouble) / log(1.0-PROBABILITY));
-    return std::min(level, SkipListBenchmark::getSkipListLevels());
+    LOG_DEBUG("SKIPLIST :NewNode randomDouble=%f and level=%d\n", randomDouble, level);
+    return std::min(level, SkipListBenchmark::getSkipListLevels()-1);
 }
 
 std::string SkipListNode::getNextId(int index) const {
@@ -130,6 +131,8 @@ void SkipListNode::addNodeAtomically(HyflowObject* self, BenchMarkArgs* args, Hy
 		updateNodes.push_back(prevNode->getId());
 	}
 
+	LOG_DEBUG("SKIPLIST:Node %s contains %d levels\n", newNode->getId().c_str(), newNode->highestLevel);
+
 	// We have collected all the objects to be updated at different level
 	for(int level=maxLevels ; level>0 ; level--) {
 		// For given level prevNode contains just small value
@@ -141,7 +144,6 @@ void SkipListNode::addNodeAtomically(HyflowObject* self, BenchMarkArgs* args, Hy
 			LOG_DEBUG("SKIPLIST :For level %d node %s inserted between %s and %s\n", level, newNode->getId().c_str(), pNode->getId().c_str(), newNode->getNextId(level).c_str());
 		}
 	}
-
 
 	HYFLOW_PUBLISH_OBJECT(newNode);
 }
