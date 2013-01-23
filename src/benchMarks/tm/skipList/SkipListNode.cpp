@@ -29,11 +29,12 @@ namespace vt_dstm {
 
 SkipListNode::SkipListNode() {}
 
-SkipListNode::SkipListNode(int val, int counter) {
+SkipListNode::SkipListNode(int val, int counter, int listN) {
 	value = val;
 	std::stringstream idStr;
 	int ownerNode = NetworkManager::getNodeId();
-	idStr<<ownerNode<<"-"<<counter;
+	listNumber = listN;
+	idStr<<ownerNode<<"-"<<listN<<"-"<<counter;
 	hyId = idStr.str();
 	hyVersion = 0;
 	highestLevel = getRandomLevel()+1;
@@ -44,23 +45,13 @@ SkipListNode::SkipListNode(int val, int counter) {
 	}
 }
 
-SkipListNode::SkipListNode(int val, std::string id, int levels) {
+SkipListNode::SkipListNode(int val, std::string id, int levels, int listN) {
 	value = val;
 	hyId = id;
 	hyVersion = 0;
 	highestLevel = levels;
 	nextIds.push_back(hyId);
-	for(int level=1; level<=highestLevel; level++) {
-		nextIds.push_back("NULL");
-	}
-}
-
-SkipListNode::SkipListNode(int val, std::string id) {
-	value = val;
-	hyId = id;
-	hyVersion = 0;
-	highestLevel = getRandomLevel()+1;
-	nextIds.push_back(hyId);
+	listNumber = listN;
 	for(int level=1; level<=highestLevel; level++) {
 		nextIds.push_back("NULL");
 	}
@@ -91,23 +82,36 @@ void SkipListNode::setValue(int value) {
 
 SkipListNode::~SkipListNode() {}
 
-void SkipListNode::addNodeAtomically(HyflowObject* self, BenchMarkArgs* args, HyflowContext* __context__, BenchMarkReturn* ignore) {
+void SkipListNode::addNodeAtomically(HyflowObject* self, BenchMarkArgs* args, HyflowContext* __context__, BenchMarkReturn* addReturn) {
 	int givenValue = *(((SkipListArgs*)args)->values);
 
-	std::string head="HEAD";
-	HYFLOW_FETCH(head, false);
+	// Select list to add on
+	int listN = (Logger::getCurrentMicroSec()%HYFLOW_SKIPLIST_COUNT) + 1;
 
-	SkipListNode* prevNode =  (SkipListNode*)HYFLOW_ON_READ(head);
-	SkipListNode* currentNode = NULL;
-	SkipListNode* newNode = new SkipListNode(givenValue, SkipListBenchmark::getId());
+	// Redirect Head to correct value
+	std::stringstream headStr;
+	headStr << "HEAD-"<<listN;
+	std::string head = headStr.str();
+	HYFLOW_FETCH(head, true);
 
 	if (__context__->getNestingModel() == HYFLOW_NESTING_OPEN ) {
+		// Create bench name
+		std::stringstream benchStr;
+		benchStr<<"SK-"<<listN;
+		std::string benchName = benchStr.str();
+
 		// Create unique abstract lock for this transaction
 		std::stringstream absLockStr;
 		absLockStr<<givenValue;
 		std::string lockName = absLockStr.str();
-		__context__->onLockAccess("SKL0", lockName, false);
+
+		__context__->onLockAccess(benchName, lockName, false);
 	}
+
+	SkipListNode* prevNode =  (SkipListNode*)HYFLOW_ON_READ(head);
+	SkipListNode* currentNode = NULL;
+	SkipListNode* newNode = new SkipListNode(givenValue, SkipListBenchmark::getId(), listN);
+
 
 	std::vector<std::string> updateNodes;
 	//find the correct nodes to update to insert
@@ -122,6 +126,7 @@ void SkipListNode::addNodeAtomically(HyflowObject* self, BenchMarkArgs* args, Hy
 				break;
 			}else if (currentNode->value == givenValue) {
 				// Object is already present return
+				LOG_DEBUG("SKIPLIST :Node %s already contain value%d\n", currentNode->hyId.c_str(), givenValue);
 				return;
 			}else {
 				nextNodeId = currentNode->getNextId(level);
@@ -145,36 +150,50 @@ void SkipListNode::addNodeAtomically(HyflowObject* self, BenchMarkArgs* args, Hy
 		}
 	}
 
+	((SkipListReturn*)addReturn)->success = listN;
 	HYFLOW_PUBLISH_OBJECT(newNode);
 }
 
 void SkipListNode::addNode(int nodeValue) {
 	SkipListArgs sArgs(&nodeValue, 1);
+	SkipListReturn sReturn;
 	Atomic atomicAdd;
 
 	atomicAdd.atomically = SkipListNode::addNodeAtomically;
 	atomicAdd.onAbort = SkipListNode::addAbort;
-	atomicAdd.execute(NULL, &sArgs, NULL);
+	atomicAdd.execute(NULL, &sArgs, &sReturn);
 }
 
 void SkipListNode::deleteNodeAtomically(HyflowObject* self, BenchMarkArgs* args, HyflowContext* __context__, BenchMarkReturn* rt) {
 	int givenValue = *(((SkipListArgs*)args)->values);
 	SkipListReturn* slRt = (SkipListReturn*) rt;
 
-	std::string head="HEAD";
+	// Select list to delete from
+	int listN = (Logger::getCurrentMicroSec()%HYFLOW_SKIPLIST_COUNT) + 1;
+
+	// Redirect Head to correct value
+	std::stringstream headStr;
+	headStr << "HEAD-"<<listN;
+	std::string head = headStr.str();
 	HYFLOW_FETCH(head, true);
 
-	SkipListNode* prevNode =  (SkipListNode*)HYFLOW_ON_READ(head);
-	SkipListNode* currentNode = NULL;
-	std::vector<std::string> prevNodes;
-
 	if (__context__->getNestingModel() == HYFLOW_NESTING_OPEN ) {
+		// Create bench name
+		std::stringstream benchStr;
+		benchStr<<"SK-"<<listN;
+		std::string benchName = benchStr.str();
+
 		// Create unique abstract lock for this transaction
 		std::stringstream absLockStr;
 		absLockStr<<givenValue;
 		std::string lockName = absLockStr.str();
-		__context__->onLockAccess("SKL0", lockName, false);
+
+		__context__->onLockAccess(benchName, lockName, false);
 	}
+
+	SkipListNode* prevNode =  (SkipListNode*)HYFLOW_ON_READ(head);
+	SkipListNode* currentNode = NULL;
+	std::vector<std::string> prevNodes;
 
 	for( int level=0 ; level<=SkipListBenchmark::getSkipListLevels() ; level++ ) {
 		prevNodes.push_back("NULL");
@@ -192,7 +211,7 @@ void SkipListNode::deleteNodeAtomically(HyflowObject* self, BenchMarkArgs* args,
 				break;
 			}else if(currentNode->value == givenValue) {
 				targetNode = currentNode;
-				slRt->success = true;
+				slRt->success = listN;
 				LOG_DEBUG("SKIPLIST :At level %d node %s has value %d\n", level, currentNode->getId().c_str(), givenValue);
 				break;
 			}else {
@@ -226,19 +245,33 @@ void SkipListNode::deleteNode(int nodeValue) {
 void SkipListNode::findNodeAtomically(HyflowObject* self, BenchMarkArgs* args, HyflowContext* __context__, BenchMarkReturn* ignore) {
 	int givenValue = *(((SkipListArgs*)args)->values);
 
-	std::string head="HEAD";
+	int listN = 1;
+	// Select list to delete from
+	listN = (Logger::getCurrentMicroSec()%HYFLOW_SKIPLIST_COUNT) + 1;
+
+	// Redirect Head to correct value
+	std::stringstream headStr;
+	headStr << "HEAD-"<<listN;
+	std::string head = headStr.str();
 	HYFLOW_FETCH(head, true);
 
-	SkipListNode* prevNode =  (SkipListNode*)HYFLOW_ON_READ(head);
-	SkipListNode* currentNode = NULL;
-
 	if (__context__->getNestingModel() == HYFLOW_NESTING_OPEN ) {
+		// Create bench name
+		std::stringstream benchStr;
+		benchStr<<"SK-"<<listN;
+		std::string benchName = benchStr.str();
+
 		// Create unique abstract lock for this transaction
 		std::stringstream absLockStr;
 		absLockStr<<givenValue;
 		std::string lockName = absLockStr.str();
-		__context__->onLockAccess("SKL0", lockName, true);
+
+		__context__->onLockAccess(benchName, lockName, true);
 	}
+
+	SkipListNode* prevNode =  (SkipListNode*)HYFLOW_ON_READ(head);
+	SkipListNode* currentNode = NULL;
+
 
 	bool found=false;
 	//find correct place of object
@@ -362,7 +395,16 @@ void SkipListNode::findNodeMulti(int* values, int size) {
 void SkipListNode::addAbort(HyflowObject* self, BenchMarkArgs* args, HyflowContext* __context__, BenchMarkReturn* rt) {
 	int givenValue = *(((SkipListArgs*)args)->values);
 
-	std::string head="HEAD";
+	int listN = ((SkipListReturn*)rt)->success;
+	if (!listN) {
+		return;
+	}
+
+	// Redirect Head to correct value
+	std::stringstream headStr;
+	headStr << "HEAD-"<<listN;
+	std::string head = headStr.str();
+
 	HYFLOW_FETCH(head, true);
 
 	SkipListNode* prevNode =  (SkipListNode*)HYFLOW_ON_READ(head);
@@ -408,18 +450,22 @@ void SkipListNode::addAbort(HyflowObject* self, BenchMarkArgs* args, HyflowConte
 
 void SkipListNode::deleteAbort(HyflowObject* self, BenchMarkArgs* args, HyflowContext* __context__, BenchMarkReturn* rt) {
 	int givenValue = *(((SkipListArgs*)args)->values);
-	SkipListReturn *slRt = (SkipListReturn*) rt;
 
-	if (!slRt->success) {
+	int listN = ((SkipListReturn*)rt)->success;
+	if (!listN) {
 		return;
 	}
 
-	std::string head="HEAD";
+	// Redirect Head to correct value
+	std::stringstream headStr;
+	headStr << "HEAD-"<<listN;
+	std::string head = headStr.str();
+
 	HYFLOW_FETCH(head, false);
 
 	SkipListNode* prevNode =  (SkipListNode*)HYFLOW_ON_READ(head);
 	SkipListNode* currentNode = NULL;
-	SkipListNode* newNode = new SkipListNode(givenValue, SkipListBenchmark::getId());
+	SkipListNode* newNode = new SkipListNode(givenValue, SkipListBenchmark::getId(), listN);
 
 	//find correct place of object to insert
 	for(int level=SkipListBenchmark::getSkipListLevels() ; level>0 ; level--) {

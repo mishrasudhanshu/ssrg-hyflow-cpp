@@ -18,6 +18,8 @@
 #include "../../../core/helper/BenchMarkArgs.h"
 #include "../../../core/helper/BenchMarkReturn.h"
 
+#define HYFLOW_BST_COUNT 3
+
 namespace vt_dstm {
 
 class BstArgs: public BenchMarkArgs {
@@ -50,10 +52,10 @@ public:
 
 class BstReturn: public BenchMarkReturn {
 public:
-	bool success;
+	int success;
 
 	BstReturn() {
-		success = false;
+		success = 0;
 		onHeap = false;
 	}
 
@@ -74,6 +76,7 @@ class BstNode: public vt_dstm::HyflowObject {
     	ar & leftChild;
     	ar & rightChild;
     	ar & value;
+    	ar & bstNumber;
     }
 
     static void addNodeAtomically(HyflowObject* self, BenchMarkArgs* args, HyflowContext* c, BenchMarkReturn* ignore);
@@ -97,10 +100,12 @@ public:
 	std::string leftChild;
 	std::string rightChild;
 	int value;
+	int bstNumber;
 
 	BstNode();
-	BstNode(int value, int counter);
-	BstNode(int value, std::string id);
+	BstNode(int value, int counter, int bstN);
+	BstNode(int value, std::string id, int bstN);
+
 	virtual ~BstNode();
 
 	/*

@@ -39,11 +39,13 @@ void SkipListBenchmark::warmUp() {
 		int nodeId = NetworkManager::getNodeId();
 		for(int i=0 ; i<(objectCount/2) ; i++){
 			if(( i%nodeCount )== nodeId ){
-				int value = i;
-				LOG_DEBUG("SKIPLIST :ADD[%d] Node\n", value);
-				sleep(nodeId);
-				SkipListNode::addNode(value);
-				sleep(nodeCount-nodeId);
+				for (int listN = 1; listN <= HYFLOW_SKIPLIST_COUNT ; listN++) {
+					int value = i;
+					LOG_DEBUG("SKIPLIST :ADD[%d] Node\n", value);
+					sleep(nodeId);
+					SkipListNode::addNode(value);
+					sleep(nodeCount-nodeId);
+				}
 			}
 		}
 	}
@@ -99,8 +101,13 @@ std::string* SkipListBenchmark::createLocalObjects(int objCount) {
 	skipListLevels = BenchmarkExecutor::getObjectNesting();
 	ids = new std::string [objCount];
 	if (NetworkManager::getNodeId() == 0 ) {
-		SkipListNode headNode(0, "HEAD", skipListLevels);
-		DirectoryManager::registerObject(&headNode, 0);
+		for (int listN = 1; listN <= HYFLOW_SKIPLIST_COUNT ; listN++) {
+			std::stringstream headStr;
+			headStr<<"HEAD-"<<listN;
+			std::string head = headStr.str();
+			SkipListNode headNode(0, head, skipListLevels, listN);
+			DirectoryManager::registerObject(&headNode, 0);
+		}
 	}
 	// TODO : Don't Provide Random Ids, we don't need
 	for (int i = 0; i < objCount; i++) {

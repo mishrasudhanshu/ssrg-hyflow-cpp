@@ -10,6 +10,7 @@
 #include "../../util/logging/Logger.h"
 #include "HyflowContextFactory.h"
 #include "ContextManager.h"
+#include "../../benchMarks/BenchmarkExecutor.h"
 
 namespace vt_dstm {
 
@@ -131,8 +132,10 @@ void HyflowContextFactory::releaseContextInstance(Hyflow_NestingModel nestingMod
 				if (throwException) {
 				// In close nesting each transaction try is given new context
 					// Set parent to abort, so that it is retried as required
-					if (context->getParentContext())
+					if (context->getParentContext()) {
 						context->getParentContext()->setStatus(TXN_ABORTED);
+						BenchmarkExecutor::increaseMetaData(HYFLOW_METADATA_CHILDFORCED_ABORT);
+					}
 					contextStack.pop_back();
 					contextStackIndex--;
 					ContextManager::deleteContext(&context);
@@ -148,15 +151,17 @@ void HyflowContextFactory::releaseContextInstance(Hyflow_NestingModel nestingMod
 	}else if ( nestingModel == HYFLOW_NESTING_OPEN) {
 		HyflowContext* context = contextStack[contextStackIndex];
 		// If releasing a instance of aborted transaction, check if we require
-		// to throw transaction exception, after context clean-up
+		// to throw transaction exception, after context clean-up, child should parent failure
+		// in context class itself not here as in closed nesting
 		if (context->getStatus() == TXN_ABORTED) {
 				LOG_DEBUG("HCF :Performing the checkParent\n");
 				throwException = context->checkParent();
 				if (throwException) {
-				// In close nesting each transaction try is given new context
+					// In open nesting each transaction try is given new context
 					// Set parent to abort, so that it is retried as required
-					if (context->getParentContext())
+					if (context->getParentContext()) {
 						context->getParentContext()->setStatus(TXN_ABORTED);
+					}
 					contextStack.pop_back();
 					contextStackIndex--;
 					ContextManager::deleteContext(&context);

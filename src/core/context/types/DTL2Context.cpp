@@ -171,19 +171,18 @@ void DTL2Context::contextDeinit() {
 	HyflowMetaData txnMeta;
 	if (status == TXN_ABORTED) {
 		txnMeta.abortedSubTxnTime = Logger::getCurrentMicroSec() - startTime;
-		if (parentContext) {
+		if (contextExecutionDepth) {
 			BenchmarkExecutor::increaseMetaData(HYFLOW_METADATA_ABORTED_SUBTXNS);
 			BenchmarkExecutor::updateMetaData(txnMeta, HYFLOW_METADATA_ABORTED_SUBTXN_TIME);
 		}
 
 		if ((nestingModel == HYFLOW_NESTING_OPEN)) {
 			rollback();
+			ContentionManager::deInit(this);
 		}
-
-		ContentionManager::deInit(this);
 	}else{
 		txnMeta.committedSubTxnTime = Logger::getCurrentMicroSec() - startTime;
-		if (parentContext) {
+		if (contextExecutionDepth) {
 			BenchmarkExecutor::increaseMetaData(HYFLOW_METADATA_COMMITED_SUBTXNS);
 			BenchmarkExecutor::updateMetaData(txnMeta, HYFLOW_METADATA_COMMITED_SUBTXN_TIME);
 		}
@@ -278,6 +277,7 @@ void DTL2Context::forward(int senderClock) {
 					setStatus(TXN_ABORTED);
 					TransactionException forwardingFailed(
 							"Forward :Aborting on version\n");
+					BenchmarkExecutor::increaseMetaData(HYFLOW_METADATA_RFCONFLICT_ABORT);
 					throw forwardingFailed;
 				}
 			}
@@ -311,6 +311,7 @@ void DTL2Context::forward(int senderClock) {
 								isAborting = true;
 								LOG_DEBUG(
 										"Forward :Aborting version %d < senderClock %d\n", obj->getVersion(), senderClock);
+								BenchmarkExecutor::increaseMetaData(HYFLOW_METADATA_RFCONFLICT_ABORT);
 								context->setStatus(TXN_ABORTED);
 								break;
 							}
@@ -341,6 +342,7 @@ void DTL2Context::forward(int senderClock) {
 									isAborting = true;
 									LOG_DEBUG(
 											"Forward :Aborting version %d < senderClock %d\n", obj->getVersion(), senderClock);
+									BenchmarkExecutor::increaseMetaData(HYFLOW_METADATA_RFCONFLICT_ABORT);
 									context->setStatus(TXN_ABORTED);
 									break;
 								}
@@ -387,11 +389,11 @@ void DTL2Context::forward(int senderClock) {
 
 				if (!validateObject(ri->second)) {
 					LOG_DEBUG("FowardCP :Unable to validate for %s, version %d accessIndex %d with txn %llu\n", ri->first.c_str(), objectsCheckPoint, ri->second->getVersion(), txnId);
-
 					if (objectsCheckPoint > 0) {
 						availableCheckPoint = objectsCheckPoint;
 						LOG_DEBUG("FowardCP :Got a valid checkPoint %d\n", objectsCheckPoint);
 					} else { // No check point available throw exception
+						BenchmarkExecutor::increaseMetaData(HYFLOW_METADATA_RFCONFLICT_ABORT);
 						setStatus(TXN_ABORTED);
 						TransactionException readValidationFail("ForwardCP :Unable to validate for "+ri->first+"\n");
 						throw readValidationFail;
@@ -690,13 +692,13 @@ void DTL2Context::tryCommit() {
 			}
 
 			if (!lockObject(wi->second)) {
+				BenchmarkExecutor::increaseMetaData(HYFLOW_METADATA_WCONFLICT_ABORT);
 				setStatus(TXN_ABORTED);
 				LOG_DEBUG("Commit :Unable to get WriteLock for %s\n", wi->first.c_str());
 				TransactionException unableToWriteLock("Commit :Unable to get WriteLock for "+wi->first + "\n");
 				throw unableToWriteLock;
 			}
 			lockedObjects.push_back(wi->second);
-
 		}
 		LOG_DEBUG("Commit :Lock Acquisition complete, verifying read Set\n");
 		// FIXME: Don't Perform context forwarding here
@@ -713,6 +715,7 @@ void DTL2Context::tryCommit() {
 
 			if (!validateObject(ri->second)) {
 				setStatus(TXN_ABORTED);
+				BenchmarkExecutor::increaseMetaData(HYFLOW_METADATA_RCCONFLICT_ABORT);
 				LOG_DEBUG("Commit :Unable to validate for %s, version %d with txn %ull\n", ri->first.c_str(), ri->second->getVersion(), txnId);
 				TransactionException readValidationFail("Commit :Unable to validate for "+ri->first+"\n");
 				throw readValidationFail;
@@ -861,6 +864,7 @@ void DTL2Context::tryCommitCP() {
 					availableCheckPoint = objectsCheckPoint;
 					break;
 				} else { // No check point available throw exception
+					BenchmarkExecutor::increaseMetaData(HYFLOW_METADATA_WCONFLICT_ABORT);
 					setStatus(TXN_ABORTED);
 					TransactionException unableToWriteLock("CommitCP :Unable to get WriteLock for "+rev_wi->first + "\n");
 					throw unableToWriteLock;
@@ -900,6 +904,7 @@ void DTL2Context::tryCommitCP() {
 					availableCheckPoint = objectsCheckPoint;
 					LOG_DEBUG("CommitCP :Got a valid checkPoint %d\n", objectsCheckPoint);
 				} else { // No check point available throw exception
+					BenchmarkExecutor::increaseMetaData(HYFLOW_METADATA_RCCONFLICT_ABORT);
 					setStatus(TXN_ABORTED);
 					TransactionException readValidationFail("Commit :Unable to validate for "+ri->first+"\n");
 					throw readValidationFail;
@@ -1096,6 +1101,7 @@ void DTL2Context::tryCommitON() {
 
 			if (!lockObject(wi->second)) {
 				setStatus(TXN_ABORTED);
+				BenchmarkExecutor::increaseMetaData(HYFLOW_METADATA_WCONFLICT_ABORT);
 				LOG_DEBUG("Commit :Unable to get WriteLock for %s\n", wi->first.c_str());
 				TransactionException unableToWriteLock("Commit :Unable to get WriteLock for "+wi->first + "\n");
 				throw unableToWriteLock;
@@ -1117,6 +1123,7 @@ void DTL2Context::tryCommitON() {
 			}
 
 			if (!validateObject(ri->second)) {
+				BenchmarkExecutor::increaseMetaData(HYFLOW_METADATA_RCCONFLICT_ABORT);
 				setStatus(TXN_ABORTED);
 				LOG_DEBUG("Commit :Unable to validate for %s, version %d with txn %ull\n", ri->first.c_str(), ri->second->getVersion(), txnId);
 				TransactionException readValidationFail("Commit :Unable to validate for "+ri->first+"\n");
@@ -1128,6 +1135,7 @@ void DTL2Context::tryCommitON() {
 		for ( arItr = abstractReadLocks.begin() ; arItr != abstractReadLocks.end() ; arItr++) {
 			if (!arItr->second->isLocked()) {
 				if (!doAbstractLock(arItr->second, true)) {
+					BenchmarkExecutor::increaseMetaData(HYFLOW_METADATA_ABSTRACT_ABORT);
 					setStatus(TXN_ABORTED);
 					LOG_DEBUG("Commit :Unable to get Atomic AbstractReadLock for %s\n", arItr->first.c_str());
 					TransactionException unableToAbsReadLock("Commit :Unable to get abstract readLock for "+arItr->first + "\n");
@@ -1149,7 +1157,9 @@ void DTL2Context::tryCommitON() {
 					// We will can not retry abort context tree
 					for (HyflowContext* pc = parentContext ; pc!=NULL ; pc = pc->getParentContext() ) {
 						pc->setStatus(TXN_ABORTED);
+						BenchmarkExecutor::increaseMetaData(HYFLOW_METADATA_CHILDFORCED_ABORT);
 					}
+					BenchmarkExecutor::increaseMetaData(HYFLOW_METADATA_ABSTRACT_ABORT);
 					throw unableToAbsWriteLock;
 				}
 				lockedWriteAbstractLock.push_back(awItr->first);
@@ -1373,7 +1383,12 @@ bool DTL2Context::checkParent() {
 				int aborts = getInnerAbortCount();
 				if (aborts > 3 ) {
 					LOG_DEBUG("DTL :Repeated Inner transaction Abort=%d, full abort\n", aborts);
+					BenchmarkExecutor::increaseMetaData(HYFLOW_METADATA_REPEATED_ABORT);
 					resetInnerAbortCount();
+					for (HyflowContext* pc = parentContext ; pc!=NULL ; pc = pc->getParentContext() ) {
+						pc->setStatus(TXN_ABORTED);
+						BenchmarkExecutor::increaseMetaData(HYFLOW_METADATA_CHILDFORCED_ABORT);
+					}
 					return true;
 				}
 				LOG_DEBUG("DTL :Check Parent not throwing exception as parent Active, abort Count %d\n", aborts);
@@ -1392,6 +1407,7 @@ bool DTL2Context::checkParent() {
 				int aborts = getInnerAbortCount();
 				if ( aborts > 5 ) {
 					LOG_DEBUG("DTL :Check Parent open repeated aborts throwing exception\n");
+					BenchmarkExecutor::increaseMetaData(HYFLOW_METADATA_REPEATED_ABORT);
 					resetInnerAbortCount();
 					return true;
 				}else {

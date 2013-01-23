@@ -28,19 +28,21 @@ namespace vt_dstm {
 
 BstNode::BstNode() {}
 
-BstNode::BstNode(int val, int counter) {
+BstNode::BstNode(int val, int counter, int bstN) {
 	value = val;
 	std::stringstream idStr;
 	int ownerNode = NetworkManager::getNodeId();
-	idStr<<ownerNode<<"-"<<counter;
+	idStr<<ownerNode<<"-"<<bstN<<"-"<<counter;
 	hyId = idStr.str();
+	bstNumber = bstN;
 	hyVersion = 0;
 	rightChild = "NULL";
 	leftChild = "NULL";
 }
 
-BstNode::BstNode(int val, std::string id) {
+BstNode::BstNode(int val, std::string id, int bstN) {
 	value = val;
+	bstNumber = bstN;
 	hyId = id;
 	hyVersion = 0;
 	rightChild = "NULL";
@@ -58,11 +60,29 @@ void BstNode::setValue(int value) {
 BstNode::~BstNode() {
 }
 
-void BstNode::addNodeAtomically(HyflowObject* self, BenchMarkArgs* args, HyflowContext* __context__, BenchMarkReturn* ignore) {
+void BstNode::addNodeAtomically(HyflowObject* self, BenchMarkArgs* args, HyflowContext* __context__, BenchMarkReturn* addReturn) {
 	BstArgs* bargs = (BstArgs*)args;
 	int val = *(bargs->values);
 
-	std::string head="HEAD";
+	int bstN = (Logger::getCurrentMicroSec()%HYFLOW_BST_COUNT) + 1;
+	// Redirect Head to correct value
+	std::stringstream headStr;
+	headStr << "HEAD-"<<bstN;
+	std::string head = headStr.str();
+
+	if (__context__->getNestingModel() == HYFLOW_NESTING_OPEN ) {
+		// Create bench name
+		std::stringstream benchStr;
+		benchStr<<"BST-"<<bstN;
+		std::string benchName = benchStr.str();
+
+		// Create unique abstract lock for this transaction
+		std::stringstream absLockStr;
+		absLockStr<<val;
+		std::string lockName = absLockStr.str();
+		__context__->onLockAccess(benchName, lockName, false);
+	}
+
 	HYFLOW_FETCH(head, true);
 
 	// Dummy Node whose right Child points to Root Node
@@ -70,15 +90,7 @@ void BstNode::addNodeAtomically(HyflowObject* self, BenchMarkArgs* args, HyflowC
 	std::string root = headNode->rightChild;
 	LOG_DEBUG("BST :Root node is %s \n", root.c_str());
 
-	if (__context__->getNestingModel() == HYFLOW_NESTING_OPEN ) {
-		// Create unique abstract lock for this transaction
-		std::stringstream absLockStr;
-		absLockStr<<val;
-		std::string lockName = absLockStr.str();
-		__context__->onLockAccess("BST0", lockName, false);
-	}
-
-	BstNode* newNode = new BstNode(val, BstBenchmark::getId());
+	BstNode* newNode = new BstNode(val, BstBenchmark::getId(), bstN);
 	// Check if Root Node exists or not
 	if (root.compare("NULL")== 0) {
 		// Create given value as root Node
@@ -114,6 +126,7 @@ void BstNode::addNodeAtomically(HyflowObject* self, BenchMarkArgs* args, HyflowC
 			currentNode->rightChild = newNode->getId();
 		}
 	}
+	((BstReturn*)addReturn)->success = bstN;
 	HYFLOW_PUBLISH_OBJECT(newNode);
 }
 
@@ -122,21 +135,31 @@ void BstNode::deleteNodeAtomically(HyflowObject* self, BenchMarkArgs* args, Hyfl
 	BstReturn *bRt = (BstReturn*) rt;
 	int val = *(bargs->values);
 
-	std::string head="HEAD";
+	int bstN = (Logger::getCurrentMicroSec()%HYFLOW_BST_COUNT) + 1;
+	// Redirect Head to correct value
+	std::stringstream headStr;
+	headStr << "HEAD-"<<bstN;
+	std::string head = headStr.str();
+
+	if (__context__->getNestingModel() == HYFLOW_NESTING_OPEN ) {
+		// Create bench name
+		std::stringstream benchStr;
+		benchStr<<"BST-"<<bstN;
+		std::string benchName = benchStr.str();
+
+		// Create unique abstract lock for this transaction
+		std::stringstream absLockStr;
+		absLockStr<<val;
+		std::string lockName = absLockStr.str();
+		__context__->onLockAccess(benchName, lockName, false);
+	}
+
 	HYFLOW_FETCH(head, true);
 
 	// Sentinel Node whose right Child points to Root Node
 	BstNode* headNode = (BstNode*) HYFLOW_ON_READ(head);
 	std::string root = headNode->rightChild;
 	LOG_DEBUG("BST :Root node is %s\n", root.c_str());
-
-	if (__context__->getNestingModel() == HYFLOW_NESTING_OPEN ) {
-		// Create unique abstract lock for this transaction
-		std::stringstream absLockStr;
-		absLockStr<<val;
-		std::string lockName = absLockStr.str();
-		__context__->onLockAccess("BST0", lockName, false);
-	}
 
 	// Check if Root Node exists or not
 	if (root.compare("NULL")!= 0) {	//otherwise nothing to delete
@@ -235,21 +258,31 @@ void BstNode::findNodeAtomically(HyflowObject* self, BenchMarkArgs* args, Hyflow
 	BstArgs* bargs = (BstArgs*)args;
 	int val = *(bargs->values);
 
-	std::string head="HEAD";
+	int bstN = (Logger::getCurrentMicroSec()%HYFLOW_BST_COUNT) + 1;
+	// Redirect Head to correct value
+	std::stringstream headStr;
+	headStr << "HEAD-"<<bstN;
+	std::string head = headStr.str();
+
+	if (__context__->getNestingModel() == HYFLOW_NESTING_OPEN ) {
+		// Create bench name
+		std::stringstream benchStr;
+		benchStr<<"BST-"<<bstN;
+		std::string benchName = benchStr.str();
+
+		// Create unique abstract lock for this transaction
+		std::stringstream absLockStr;
+		absLockStr<<val;
+		std::string lockName = absLockStr.str();
+		__context__->onLockAccess(benchName, lockName, true);
+	}
+
 	HYFLOW_FETCH(head, true);
 
 	// Dummy Node whose right Child points to Root Node
 	BstNode* headNode = (BstNode*) HYFLOW_ON_READ(head);
 	std::string root = headNode->rightChild;
 	LOG_DEBUG("BST :Root node is %s\n", root.c_str());
-
-	if (__context__->getNestingModel() == HYFLOW_NESTING_OPEN ) {
-		// Create unique abstract lock for this transaction
-		std::stringstream absLockStr;
-		absLockStr<<val;
-		std::string lockName = absLockStr.str();
-		__context__->onLockAccess("BST0", lockName, true);
-	}
 
 	// Check if Root Node exists or not
 	if (root.compare("NULL") != 0) {
@@ -277,9 +310,10 @@ void BstNode::findNodeAtomically(HyflowObject* self, BenchMarkArgs* args, Hyflow
 void BstNode::addNode(int value) {
 	Atomic atomicAdd;
 	BstArgs bargs(&value, 1);
+	BstReturn brt;
 	atomicAdd.atomically = BstNode::addNodeAtomically;
 	atomicAdd.onAbort = BstNode::addAbort;
-	atomicAdd.execute(NULL, &bargs, NULL);
+	atomicAdd.execute(NULL, &bargs, &brt);
 }
 
 void BstNode::deleteNode(int value) {
@@ -418,7 +452,16 @@ void BstNode::addAbort(HyflowObject* self, BenchMarkArgs* args, HyflowContext* _
 	BstArgs* bargs = (BstArgs*)args;
 	int val = *(bargs->values);
 
-	std::string head="HEAD";
+	int bstN = ((BstReturn*)rt)->success;
+	if (!bstN) {
+		return;
+	}
+
+	// Redirect Head to correct value
+	std::stringstream headStr;
+	headStr << "HEAD-"<<bstN;
+	std::string head = headStr.str();
+
 	HYFLOW_FETCH(head, true);
 
 	// Sentinel Node whose right Child points to Root Node
@@ -522,13 +565,18 @@ void BstNode::deleteAbort(HyflowObject* self, BenchMarkArgs* args, HyflowContext
 	BstArgs* bargs = (BstArgs*)args;
 	BstReturn *bRt = (BstReturn*) rt;
 
-	if (!bRt->success) {
+	int bstN = bRt->success;
+	if (!bstN) {
 		return;
 	}
 
 	int val = *(bargs->values);
 
-	std::string head="HEAD";
+	// Redirect Head to correct value
+	std::stringstream headStr;
+	headStr << "HEAD-"<<bstN;
+	std::string head = headStr.str();
+
 	HYFLOW_FETCH(head, true);
 
 	// Dummy Node whose right Child points to Root Node
@@ -536,7 +584,7 @@ void BstNode::deleteAbort(HyflowObject* self, BenchMarkArgs* args, HyflowContext
 	std::string root = headNode->rightChild;
 	LOG_DEBUG("BST :Root node is %s \n", root.c_str());
 
-	BstNode* newNode = new BstNode(val, BstBenchmark::getId());
+	BstNode* newNode = new BstNode(val, BstBenchmark::getId(), bstN);
 	// Check if Root Node exists or not
 	if (root.compare("NULL")== 0) {
 		// Create given value as root Node

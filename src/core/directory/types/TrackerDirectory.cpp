@@ -44,6 +44,10 @@ int TrackerDirectory::getTracker(std::string & objectId) {
 			return -1;
 		}
 	}
+
+	if (objectId.substr(0,end).compare("HEAD") == 0 ) {
+		return 0;
+	}
 	return atoi((objectId.substr(0,end)).c_str());
 }
 

@@ -60,6 +60,24 @@ void HyflowMetaData::updateMetaData(HyflowMetaData & metadata, HyflowMetaDataTyp
 	case HYFLOW_METADATA_BACKOFF_TIME:
 		backOffTime += metadata.backOffTime;
 		break;
+	case HYFLOW_METADATA_REPEATED_ABORT:
+		repeatedAbort += metadata.repeatedAbort;
+		break;
+	case HYFLOW_METADATA_ABSTRACT_ABORT:
+		abstractAbort += metadata.abstractAbort;
+		break;
+	case HYFLOW_METADATA_RFCONFLICT_ABORT:
+		rfconflictAbort += metadata.rfconflictAbort;
+		break;
+	case HYFLOW_METADATA_RCCONFLICT_ABORT:
+		rcconflictAbort += metadata.rcconflictAbort;
+		break;
+	case HYFLOW_METADATA_WCONFLICT_ABORT:
+		wconflictAbort += metadata.wconflictAbort;
+		break;
+	case HYFLOW_METADATA_CHILDFORCED_ABORT:
+		childForcedAbort += metadata.childForcedAbort;
+		break;
 	case HYFLOW_METADATA_ALL:
 		txnRunTime += metadata.txnRunTime;
 		committedTxns += metadata.committedTxns;
@@ -73,6 +91,12 @@ void HyflowMetaData::updateMetaData(HyflowMetaData & metadata, HyflowMetaDataTyp
 		compensateSubTxns += metadata.compensateSubTxns;
 		compensateSubTxnTime += metadata.compensateSubTxnTime;
 		backOffTime += metadata.backOffTime;
+		repeatedAbort += metadata.repeatedAbort;
+		abstractAbort += metadata.abstractAbort;
+		rfconflictAbort += metadata.rfconflictAbort;
+		rcconflictAbort += metadata.rcconflictAbort;
+		wconflictAbort += metadata.wconflictAbort;
+		childForcedAbort += metadata.childForcedAbort;
 		break;
 	default:
 		Logger::fatal("HYMETA :Invalid HyflowMetaData type\n");
@@ -104,6 +128,24 @@ void HyflowMetaData::increaseMetaData(HyflowMetaDataType type) {
 		break;
 	case HYFLOW_METADATA_COMPENSATE_SUBTXNS:
 		compensateSubTxns++;
+		break;
+	case HYFLOW_METADATA_REPEATED_ABORT:
+		repeatedAbort ++;
+		break;
+	case HYFLOW_METADATA_ABSTRACT_ABORT:
+		abstractAbort ++;
+		break;
+	case HYFLOW_METADATA_RFCONFLICT_ABORT:
+		rfconflictAbort ++;
+		break;
+	case HYFLOW_METADATA_RCCONFLICT_ABORT:
+		rcconflictAbort ++;
+		break;
+	case HYFLOW_METADATA_WCONFLICT_ABORT:
+		wconflictAbort ++;
+		break;
+	case HYFLOW_METADATA_CHILDFORCED_ABORT:
+		childForcedAbort ++;
 		break;
 	default:
 		Logger::fatal("HYMETA :Invalid HyflowMetaData type\n");
@@ -174,6 +216,12 @@ void BenchmarkExecutor::writeResults() {
 	Logger::result("CompensateSubTxns=%u\n", benchNodeMetadata.compensateSubTxns);
 	Logger::result("CompensateSubTxnTime=%llu\n", benchNodeMetadata.compensateSubTxnTime/1000);
 	Logger::result("BackoffTime=%llu\n", benchNodeMetadata.backOffTime);
+	Logger::result("RepeatedAbort=%u\n", benchNodeMetadata.repeatedAbort);
+	Logger::result("AbstractAbort=%u\n", benchNodeMetadata.abstractAbort);
+	Logger::result("RFConflictAbort=%u\n", benchNodeMetadata.rfconflictAbort);
+	Logger::result("RCConflictAbort=%u\n", benchNodeMetadata.rcconflictAbort);
+	Logger::result("WConflictAbort=%u\n", benchNodeMetadata.wconflictAbort);
+	Logger::result("ChildForcedAbort=%u\n", benchNodeMetadata.childForcedAbort);
 }
 
 void BenchmarkExecutor::initExecutor(){

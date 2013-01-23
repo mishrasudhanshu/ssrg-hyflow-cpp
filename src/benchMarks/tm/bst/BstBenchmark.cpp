@@ -38,11 +38,13 @@ void BstBenchmark::warmUp() {
 		std::vector<int> sequence = bstSequence(0, objectCount, 2);
 		for(unsigned int i=0 ; i<sequence.size() ; i++){
 			if(( i%nodeCount )== nodeId ){
-				int value = sequence.at(i);
-				LOG_DEBUG("BST :ADD[%d] Node\n", value);
-				sleep(nodeId);
-				BstNode::addNode(value);
-				sleep(nodeCount-nodeId);
+				for (int bstN = 1; bstN <= HYFLOW_SKIPLIST_COUNT ; bstN++) {
+					int value = sequence.at(i);
+					LOG_DEBUG("BST :ADD[%d] Node\n", value);
+					sleep(nodeId);
+					BstNode::addNode(value);
+					sleep(nodeCount-nodeId);
+				}
 			}
 		}
 	}
@@ -124,9 +126,14 @@ std::string* BstBenchmark::createLocalObjects(int objCount) {
 	objectCount = objCount;
 	ids = new std::string [objCount];
 	if (NetworkManager::getNodeId() == 0 ) {
-		std::string next("NULL");
-		BstNode headNode(0, "HEAD");
-		DirectoryManager::registerObject(&headNode, 0);
+		for (int bstN = 1; bstN <= HYFLOW_SKIPLIST_COUNT ; bstN++) {
+			std::stringstream headStr;
+			headStr<<"HEAD-"<<bstN;
+			std::string head = headStr.str();
+			std::string next("NULL");
+			BstNode headNode(0, head, bstN);
+			DirectoryManager::registerObject(&headNode, 0);
+		}
 	}
 	// TODO : Don't Provide Random Ids, we don't need
 	for (int i = 0; i < objCount; i++) {

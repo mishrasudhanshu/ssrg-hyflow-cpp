@@ -20,6 +20,8 @@
 #include "../../../core/helper/BenchMarkArgs.h"
 #include "../../../core/helper/BenchMarkReturn.h"
 
+#define HYFLOW_SKIPLIST_COUNT 3
+
 namespace vt_dstm {
 
 class SkipListArgs: public BenchMarkArgs {
@@ -51,10 +53,10 @@ public:
 
 class SkipListReturn: public BenchMarkReturn {
 public:
-	bool success;
+	int success;
 
 	SkipListReturn() {
-		success = false;
+		success = 0;
 		onHeap = false;
 	}
 
@@ -75,9 +77,11 @@ class SkipListNode: public vt_dstm::HyflowObject {
     	ar & nextIds;
     	ar & value;
     	ar & highestLevel;
+    	ar & listNumber;
     }
 
 	std::vector<std::string> nextIds;
+	int listNumber;
 	int value;
 	int highestLevel;
 
@@ -94,9 +98,8 @@ class SkipListNode: public vt_dstm::HyflowObject {
 	static int getRandomLevel();
 public:
 	SkipListNode();
-	SkipListNode(int value, int counter);
-	SkipListNode(int value, std::string id, int levels);
-	SkipListNode(int value, std::string id);
+	SkipListNode(int value, int counter, int listN);
+	SkipListNode(int value, std::string id, int levels, int listN);
 	virtual ~SkipListNode();
 
 	std::string getNextId(int index) const;

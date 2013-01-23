@@ -35,6 +35,12 @@ enum HyflowMetaDataType{
 	HYFLOW_METADATA_COMPENSATE_SUBTXNS,
 	HYFLOW_METADATA_COMPENSATE_SUBTXN_TIME,
 	HYFLOW_METADATA_BACKOFF_TIME,
+	HYFLOW_METADATA_REPEATED_ABORT,
+	HYFLOW_METADATA_ABSTRACT_ABORT,
+	HYFLOW_METADATA_RFCONFLICT_ABORT,
+	HYFLOW_METADATA_RCCONFLICT_ABORT,
+	HYFLOW_METADATA_WCONFLICT_ABORT,
+	HYFLOW_METADATA_CHILDFORCED_ABORT,
 	// Add New Types above
 	HYFLOW_METADATA_ALL,
 };
@@ -57,6 +63,13 @@ public:
 	unsigned long long compensateSubTxnTime;
 	unsigned long long backOffTime;
 
+	unsigned int repeatedAbort;
+	unsigned int abstractAbort;
+	unsigned int rfconflictAbort;
+	unsigned int rcconflictAbort;
+	unsigned int wconflictAbort;
+	unsigned int childForcedAbort;
+
 	HyflowMetaData() {
 		txnTries = 0;
 		txnAborts = 0;
@@ -71,6 +84,13 @@ public:
 		compensateSubTxns = 0;
 		compensateSubTxnTime = 0;
 		backOffTime = 0;
+
+		repeatedAbort = 0;
+		abstractAbort = 0;
+		rfconflictAbort = 0;
+		rcconflictAbort = 0;
+		wconflictAbort = 0;
+		childForcedAbort = 0;
 	}
 	void increaseMetaData(HyflowMetaDataType type);
 	void updateMetaData(HyflowMetaData& metadata, HyflowMetaDataType type);

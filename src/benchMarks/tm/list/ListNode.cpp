@@ -60,7 +60,7 @@ void ListNode::setValue(int value) {
 ListNode::~ListNode() {
 }
 
-void ListNode::addNodeAtomically(HyflowObject* self, BenchMarkArgs* args, HyflowContext* __context__, BenchMarkReturn* ignore) {
+void ListNode::addNodeAtomically(HyflowObject* self, BenchMarkArgs* args, HyflowContext* __context__, BenchMarkReturn* addReturn) {
 	int newNodeValue = *(((ListArgs*)args)->values);
 	ListNode* currentNode = NULL;
 	std::string head("HEAD");
@@ -108,6 +108,7 @@ void ListNode::addNodeAtomically(HyflowObject* self, BenchMarkArgs* args, Hyflow
 
 		ListNode* newNode = new ListNode(newNodeValue, ListBenchmark::getId());
 		newNode->setNextId(next);
+		((ListReturn*)addReturn)->success = true;
 		HYFLOW_PUBLISH_OBJECT(newNode);
 
 		if (next.compare("NULL") == 0) {
@@ -122,9 +123,10 @@ void ListNode::addNodeAtomically(HyflowObject* self, BenchMarkArgs* args, Hyflow
 void ListNode::addNode(int value) {
 	Atomic atomicAdd;
 	ListArgs largs(&value, 1);
+	ListReturn lrt;
 	atomicAdd.atomically = ListNode::addNodeAtomically;
 	atomicAdd.onAbort = ListNode::addAbort;
-	atomicAdd.execute(NULL, &largs, NULL);
+	atomicAdd.execute(NULL, &largs, &lrt);
 }
 
 void ListNode::deleteNodeAtomically(HyflowObject* self, BenchMarkArgs* args, HyflowContext* __context__, BenchMarkReturn* rt) {
@@ -384,6 +386,10 @@ void ListNode::getClone(HyflowObject **obj) {
 void ListNode::addAbort(HyflowObject* self, BenchMarkArgs* args, HyflowContext* __context__, BenchMarkReturn* rt) {
 	int givenValue = *(((ListArgs*)args)->values);
 	bool found = false;
+
+	if (!((ListReturn*)rt)->success) {
+		return;
+	}
 
 	ListNode* targetNode = NULL;
 	std::string head("HEAD");

@@ -19,7 +19,7 @@ do
     setBenchMarks="list bst skipList"
     if [[ "$setBenchMarks" =~ "$bench"  ]]
     then
-        objs=5
+        objs=100
         echo "Got Set BenchMark Objects=$objs"
     fi
 
