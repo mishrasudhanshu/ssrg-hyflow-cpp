@@ -506,7 +506,7 @@ We have already introduced the strong atomicity informally in chapter~\ref{chap:
 Strong atomicity is a transactional semantics that guarantees the atomicity between transactional and non-transactional code.
 \end{definition}
 
-Cluster-STM~\cite{Bocchino:2008:STM:1345206.1345242} supported the strong atomicity by implementing a programming restriction on user. It asked user to access each memory location always within a transaction or outside transaction, but it did not provide any automatic support. DecentSTM~\cite{DecentSTM:5470446} programming model guaranteed strong atomicity and helped users to stop careless atomicity mistakes. HyflowScala~\cite{turcuhyflow2} and HyflowCPP also have en-build the strong atomicity using programming model.
+Cluster-STM~\cite{Bocchino:2008:STM:1345206.1345242} supported the strong atomicity by implementing a programming restriction on programmer. It asked programmer to access each memory location always within a transaction or outside transaction, but it did not provide any automatic support. DecentSTM~\cite{DecentSTM:5470446} programming model guaranteed strong atomicity and helped programmers to stop careless atomicity mistakes. HyflowScala~\cite{turcuhyflow2} and HyflowCPP also have en-build the strong atomicity using programming model.
 
 \section{Partial Abort Models}
 
@@ -546,7 +546,7 @@ For development of DTM applications HyflowCPP provides two transactional interfa
 
 \section{Transaction Support using Macros}
 
-HyflowCPP supports standard atomic semantics using macros \emph{HYFLOW{\_}ATOMIC{\_}START} and \emph{HYFLOW{\_}ATOMIC{\_}END}. Figure~\ref{Fig:atomicConstr} shows how to utilize the these macro to execute any given part of code atomically, and compares it with standard STM atomic semantics. 
+HyflowCPP supports standard atomic semantics using macros \emph{HYFLOW{\_}ATOMIC{\_}START} and \emph{HYFLOW{\_}ATOMIC{\_}END}. Figure~\ref{Fig:atomicConstr} shows how to utilize the these macros to execute any given part of code atomically, and compares it with standard STM atomic semantics. 
 
 \begin{figure}
 \centering 
@@ -579,13 +579,13 @@ atomic{
 \label{Fig:atomicConstr}\caption{Atomic Construct for HyflowCPP vs. Standard STM implementations}
 \end{figure}
 
-Any object in the network can be opened either in \emph{Read} or \emph{Write} mode. Once user requests the object, HyflowCpp fetches the object from its current location and copies to transactions read or write set depending of access type. For accessing any object user should macro \emph{HYFLOW{\_}FETCH(ID, IS{\_}READ)}. First argument to this macro is \emph{objectId} and second argument is access type \emph{true/false}, true for read, otherwise false.
+Any object in the network can be opened either in \emph{Read} or \emph{Write} mode. Once programmer requests the object, HyflowCPP fetches the object from its current location and copies to transactions read or write set depending of access type. For accessing any object programmer should use macro \emph{HYFLOW{\_}FETCH(ID, IS{\_}READ)}. First argument to this macro is \emph{objectId} and second argument is access type \emph{true/false}, true for read, otherwise false.
 
-For reading or writing the fetched object we provide two more macros \emph{HYFLOW{\_}ON{\_}READ(ID)} and \emph{HYFLOW{\_}ON{\_}WRITE(ID)}. \emph{HYFLOW{\_}ON{\_}READ} returns the user the constant reference pointer to HyflowObject, which can be used for read-only operations. For manipulating the object user again require to call \emph{HYFLOW{\_}ON{\_}WRITE}, which returns a normal reference pointer to object. User can also pass the object reference pointer itself in place of unique object key to retrieve the object.   
+For reading or writing the fetched objects we provide two more macros \emph{HYFLOW{\_}ON{\_}READ(ID)} and \emph{HYFLOW{\_}ON{\_}WRITE(ID)}. \emph{HYFLOW{\_}ON{\_}READ} returns the programmer the constant reference pointer to HyflowObject, which can be used for read-only operations. For manipulating the object programmer is require to call \emph{HYFLOW{\_}ON{\_}WRITE}, which returns a normal reference pointer to object. Programmer can also use the constant object reference pointer itself in place of unique object key to retrieve the object.   
 
-\emph{HYFLOW{\_}PUBLISH{\_}OBJECT(OBJ)} allows user to publish any locally created object on the network. But, such objects must inherit the HyflowObject class as a base type as discussed earlier. Similarly, \emph{HYFLOW{\_}PUBLISH{\_}DELETE(OBJ)} allows user to delete any object from the network.
+\emph{HYFLOW{\_}PUBLISH{\_}OBJECT(OBJ)} allows programmer to publish any locally created object on the network. But, such objects must inherit the HyflowObject class as a base type as discussed earlier. Similarly, \emph{HYFLOW{\_}PUBLISH{\_}DELETE(OBJ)} allows programmer to delete any object from the network.
 
-Now using these macro's we can write the list benchmark as described in figure~\ref{Fig:listMacro}. In this figure we illustrate the list node addition and deletion atomically using HyflowCpp Macros. 
+Now using these macros we write the list benchmark as described in figure~\ref{Fig:listMacro}. In this figure, we illustrate the list node addition and deletion atomically using HyflowCPP Macros. 
 \begin{figure}
 \centering
 \begin{lstlisting}
@@ -640,7 +640,9 @@ void ListNode::deleteNode(int value) {
 \label{Fig:listMacro}
 \end{figure}
 
-HyflowCpp also support the transaction \emph{Checkpointing} using macros. For minimum checkpointing overhead we support it in outermost transaction call. We allow user to checkpoint at any place using ~\emph{HYFLOW{\_}CHECKPOINT{\_}HERE}. User is also required to initiate the checkpointing at start of transaction using ~\emph{HYFLOW{\_}CHECKPOINT{\_}INIT}. Figure~\ref{Fig:bankCP} illustrates how checkpointing can be implemented in a simple bank transfer function. Note that how user is required to pass the current context instance to withdraw function. This requirement exist for all the functions which are called within atomic block and are require to be executed atomically. This additional argument passing will be removed once the compiler support is added to atomic block. 
+HyflowCPP also support the transaction checkpointing using macros. For minimum checkpointing overhead we support it in outermost transaction call. We allow programmer to checkpoint at any place using ~\emph{HYFLOW{\_}CHECKPOINT{\_}HERE}. Programmer is also required to initiate the checkpointing at start of transaction using ~\emph{HYFLOW{\_}CHECKPOINT{\_}INIT}. To save any primary data structure object on stack or heap we provide ~\emph{HYFLOW{\_}STORE}. For heap objects programmer is responsible for creating object copy and memory management, HYFLOW{\_}STORE macro only save the address value for programmer. This macro requires two arguments, variable reference and variable value HYFLOW{\_}STORE(VAR{\_}REF, VAR{\_}VALUE). This macro automatically restores the saved variable value on transaction resume from selected checkpoint. 
+
+Figure~\ref{Fig:bankCP} illustrates how checkpointing can be implemented in a simple bank transfer function. Note that how programmer is required to pass the current context instance to withdraw function. This requirement exist for all the functions which are called within atomic block and are require to be executed atomically. This additional argument passing will be removed once the compiler support is added to atomic block. 
 
 \begin{figure}
 \begin{minipage}[b]{0.9\linewidth}\centering
@@ -664,23 +666,19 @@ void BankAccount::transfer(string Account1, string Account2, Money) {
 
 \section{Transaction Support using Atomic class}
 
-Atomic class interface is more involved and allows users to directly program against the HyflowCpp framework. Using the Atomic class interface user can directly interact with transaction context. Atomic class is template type class which must be type defined based on atomic function class return type. Atomic class function pointer ~\emph{atomically} is initialized by user with desired function, which is to be executed atomically. After initializing the function pointer value user can call the ~\emph{execute} method from atomic class to run the desired function atomically.
+Atomic class interface is more evolved and allows programmers to directly code against the HyflowCPP framework. Using the Atomic class interface programmer can directly manipulate transaction context and execute any function atomically. Programmer is required assign the function pointer value of desired function to `atomically' function pointer of Atomic class instance. Later, `execute' method in Atomic class instance can called to execute assigned function atomically. `atomically' function pointer requires a strict argument set to support the atomic execution of functions. Programmer is required to use inherited classes of BenchMarkArgs and BenchMarkReturn to pass arguments to atomic function and receive the return values. Two additional arguments HyflowObject and HyflowContext are passed to function for internal DTM book keeping.
 
-Atomic class also provides the function pointers to support advance nesting features like open-nesting. User can specify the ~\emph{onCommit} and ~\emph{onAbort} function for  ~\emph{HyflowObject} requiring the open nesting support. All these function pointers requires to follow a define argument set similar to libraries like pthread. Only hind side of using atomic class is that, checkpointing can not be performed on transaction using atomic class. Checkpoints are required to be created in outermost transactions and Atomic class executes the function pointer as an inner transaction. 
-
-User can also write the benchmark directly without using any of Atomic class or Macros. This will require the user to directory manipulate the DirectoryManager for remote object access and ContextManager for transaction atomicity. It can be some time useful for debugging some internal framework issues, otherwise it is not a recommended method.
-
-In Figure~\ref{Fig:listClassDelete} we re-write the same List benchmark functions using the atomic class. 
+Atomic class also provides the function pointers to support advance nesting features like open-nesting. Programmer can specify the ~\emph{onCommit} and ~\emph{onAbort} functions for  ~\emph{HyflowObject} requiring the open nesting support. All these function pointers requires to follow a defined argument set similar to `atomically' function pointer. 
 
 \begin{figure}
 \centering
 \begin{lstlisting}
 class ListNode::HyflowObject {
 
-void* deleteNodeAtomically(HyflowObject* self, void* args,
-	HyflowContext* c, uint64_t* balance)
+void deleteNodeAtomically (HyflowObject* self, BenchMarkArgs* args,
+ HyflowContext* __context__, BenchMarkReturn* success) 
 {
-	int value = *((int*)args);
+	int value = ((ListArgs*)args)->value;
 	ListNode* targetNode = NULL;
 	std::string head("HEAD");
 	std::string prev = head, next;
@@ -714,11 +712,11 @@ void* deleteNodeAtomically(HyflowObject* self, void* args,
 }
 
 void ListNode::deleteNode(int value) {
-	Atomic<uint64_t> atomiDelete;	
+	Atomic atomicDelete;	
+	ListArgs args(value);
 	
 	atomicDelete.atomically = ListNode::deleteNodeAtomically;
-	
-	atomicDelete.execute(NULL, &value, NULL);
+	atomicDelete.execute(NULL, &args, NULL);
 }
 
 }
@@ -726,6 +724,12 @@ void ListNode::deleteNode(int value) {
 \caption{List benchmark using HyflowCPP Atomic Class}
 \label{Fig:listClassDelete}
 \end{figure}
+
+In figure~\ref{Fig:listClassDelete}, we rewrite the same List benchmark functions using the Atomic class. `deleteNode' function illustrates how to create Atomic class instance and execute a function atomically. In `deleteNodeAtomically' function, we demonstrate how using different macros distributed objects can be manipulated.
+
+Only limitation of Atomic class is that, they do not supported transaction checkpointing. Checkpoints are required to be created in outermost transactions and Atomic class executes the function pointer as an inner transaction, which limits the checkpointing support in Atomic class. 
+
+Programmer can also write the benchmark directly without using any of Atomic class or Macros. This will require the programmer to directory manipulate the DirectoryManager for remote object access and ContextManager for transaction atomicity. It can be some time useful for debugging some internal framework issues, otherwise it is not a recommended method. 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %																									%
@@ -738,9 +742,9 @@ void ListNode::deleteNode(int value) {
 System Architecture
 \hfill}
 
-HyflowCpp is a distributed software transaction memory system at API level. It is implemented in C++ using object oriented programming paradigm. It is carefully design to provide pluggable support for different DTM protocols, cache-coherency protocols, and network libraries. All components are developed independent of each other and connected through well defined interfaces. Any individual component can be easily replaced or modified by writing a implementation compliant to the given component interface. 
+HyflowCPP is a distributed software transaction memory system at API level. It is implemented in C++ using object oriented programming paradigm. It is carefully design to provide pluggable support for different concurrency control algorithms, directory lookup protocols, contention management policies, and network communication protocols. All components are developed independent of each other and connected through well defined interfaces. Any individual component can be easily replaced or modified by writing a implementation compliant to the given component interface. 
 
-Figure~\ref{Fig:HyflowCppArch} shows the architecture of a node in HyflowCpp. It it made of six modules: Transaction Interface Module, Transaction Validation Module, Object Access Module, Object serialization Module, Network Module, and Message Processing Module. We have already discussed about Transaction Interface Module in detail in chapter~\ref{chap:progInterface}. Now we will describe rest of modules in details in following sections.
+Figure~\ref{Fig:HyflowCppArch} shows the architecture of a transactional node in HyflowCPP. It it made of six modules: Transaction Interface Module, Transaction Validation Module, Object Access Module, Object serialization Module, Network Module, and Message Processing Module. We have already discussed about Transaction Interface Module in detail in chapter~\ref{chap:progInterface}. Now we will describe rest of modules in details in following sections.
 
 \begin{figure}
 \begin{minipage}[b]{0.9\linewidth}\centering
@@ -752,31 +756,31 @@ Figure~\ref{Fig:HyflowCppArch} shows the architecture of a node in HyflowCpp. It
 
 \section{Transaction Validation Module}
 
-The purpose of transaction validation module is to provide the transactional consistency and achieve system wide progress. All the DTM logic is performed in this module by extending base class ~\emph{HyflowContext}. Currently by default ~\emph{HyflowContext} is extended as ~\emph{DTLContext} which implements the TFA algorithm. This module validates memory locations and retries the transactional code as needed on commit failure. This module can be configured based on the transaction model used like checkpointing and closed nesting etc. 
+Goal of transaction validation module is to provide the transactional consistency and achieve system wide progress. All the concurrency control logic is performed in this module by extending base class ~\emph{HyflowContext}. Currently by default ~\emph{HyflowContext} is extended as ~\emph{DTLContext} which implements the TFA algorithm, which we discuss in detail in chapter~\ref{chap:algorithm}. This module validates memory locations and retries the transactional code as needed on commit failure. This module can be configured based on the transaction model used like checkpointing, closed nesting, and open nesting. 
 
-To support the DTM protocols this module also provides the ~\emph{lock-table} for object level or word level locking. This table is implemented using high perform concurrent hash-maps of Thread Building Block(TBB)~\cite{willhalm2008putting} library. This module also provides the ~\emph{context-map} to access the context instance using transaction Id. It enable the contention Managers to collect meta data and make updates to different transactional contexts.
+To support the DTM protocols this module also provides the ~\emph{lock-table} for object level or word level locking. This table is implemented using high perform concurrent hash-maps of Thread Building Block(TBB)~\cite{willhalm2008putting} library. This module also provides the ~\emph{context-map} to access the context instance using transaction Id. It enables the contention Managers to collect meta data and make updates to different transactional contexts.
 
-This module interfaces with transaction interface module to create the transactional contexts for user applications and provides the object access to user through object access module. It also usages the message interface to perform context specific messaging for commit and validation requests to the remote nodes.
+This module interfaces with transaction interface module to create the transactional contexts for user applications and to provide access to distributed objects through object access module. It also usages the message interface to perform context specific messaging for commit and validation requests with remote nodes.
 
 \section{Object Access Module}
 
-Object access module serves multiple purpose in HyflowCpp framework. It provides the copy of distributed objects, object owner information, and performs object version validation and object directory updates. Objects are located using the unique object Id. This module encapsulates a directory lookup protocol to access distributed objects. Currently by default it implements the efficient tracker directory cache coherence protocol. Tracker directory moves the object across nodes and maintains the current owner information on specific tracker node. To access any object this module first finds out the current owner information using object directory, then, it sends the object request to owner node. Owner node replies current copy of object or a null value, in case it got deleted by some other transaction. Tracker directory updates the owner information in tracker node object directory as object moves from one node to another node. Also on object creation or deletion it updates the object directory with owner information. 
+Object access module serves multiple purposes in HyflowCPP framework. It provides the copy of distributed objects, object owner information, and performs object version validation and object directory updates. Objects are located using the unique object Id. This module encapsulates a directory lookup protocol to access distributed objects. Currently by default it implements the efficient tracker directory cache coherence protocol. Tracker directory moves the object across nodes and maintains the current owner information on specific tracker node. To access any object this module first finds out the current owner information using object directory, then, it sends the object request to owner node. Owner node replies current copy of object or a null value, in case it got deleted by some other transaction. Tracker directory updates the owner information in tracker node object directory as object moves from one node to another node. Also on object creation or deletion it updates the object directory with owner information. 
 
-Similar to transaction validation module, object access module contains two efficient object maps to support any object access protocol. It provides the ~\emph{local cache} and ~\emph{object directory}. The purpose of Local Cache is to maintain the authoritative copy of objects owned by current node. Meanwhile, directory is utilized by tracker nodes to keep the meta data information, like in case of Tracker Directory, the object owner information. 
+Similar to transaction validation module, object access module contains two efficient object maps to support any object access protocol. It provides the ~\emph{local cache} and ~\emph{object directory}. The purpose of local cache is to maintain the authoritative copy of objects owned by current node. Meanwhile, object directory is utilized by nodes to keep the meta data information, like in case of Tracker Directory, the object owner information. 
 
-Object access module interfaces with two other Modules ~\emph{object validation module} and ~\emph{message interface module}. To provide ~\emph{strong atomicity} HyflowCpp directs all the access to objects through transaction context. Therefore all object requests to object access module come through transaction validation module. Object deletion or publication requests are also made by transaction validation module. In addition to that object access module handles also the object validation request. For all remote object and request serialization and de-serialization Object Access Module interacts with the message interface modules.
+Object access module interfaces with two other Modules ~\emph{object validation module} and ~\emph{message interface module}. To provide ~\emph{strong atomicity} HyflowCPP directs all the access to objects through transaction context. Therefore all object requests to object access module come through transaction validation module. Object deletion or publication requests are also made by transaction validation module. In addition to that object access module also handles the object validation request. For  serialization and de-serialization of all remote objects, Object Access Module interacts with the message interface modules.
 
 \section{Object Serialization Module}
 
-Message serialization and de-serialization is a big challenge in distributed computing using C++. To free user from this cumbersome process HyflowCpp provides a messaging interface and allows developer to add pluggable validation and distribution protocols without worrying about serialization and de-serialization of messages. HyflowCpp provides ~\emph{HyflowMessage} and ~\emph{BaseMessage} classes for this purpose. BaseMessage acts a parents class for any message in HyflowCpp. User can create any new type of message to perform any protocol specific task, just by extending BaseMessage. HyflowMessage class acts as wrapper class for all BaseMessages and its extensions. HyflowMessage contains the information about the BaseMessage wrapped around by it and provides the required information to de-serialize any message.
+Message serialization and de-serialization is a big challenge in distributed computing using C++. To free user from this cumbersome process, HyflowCPP provides a messaging interface and allows developer to add pluggable validation and distribution protocols without worrying about serialization and de-serialization of messages. HyflowCPP provides ~\emph{HyflowMessage} and ~\emph{BaseMessage} classes for this purpose. BaseMessage acts a parents class for any message in HyflowCPP. Framework developer can create any new type of message to perform any protocol specific task just by extending BaseMessage. HyflowMessage class acts as wrapper class for BaseMessage and all its extensions. HyflowMessage contains the information about the BaseMessage encapsulated in it to provide required information for proper serialization and de-serialize.
 
-HyflowMessage provides a standard interface towards network library. All the HyflowMessages are converted in a binary blob and provided to network library communicate over network. In this way network implementation is totally independent of ~\emph{transaction validation module} and ~\emph{object access module}. For serialization and de-serialization of HyflowMessage we use the ~\emph{Boost serialization}~\cite{karlsson2005beyond}. It provides the support for serialize of any type of complex message or object.  
+HyflowMessage provides a standard interface towards network library. All the HyflowMessage instances are converted in a binary blob, before forwarding to network library, to communicate over network. In this way network implementation is totally independent of ~\emph{transaction validation module} and ~\emph{object access module}. For serialization and de-serialization of HyflowMessage, we use the ~\emph{Boost serialization}~\cite{karlsson2005beyond}. It provides the support for serialize of any type of complex message or object.  
 
-Object serialization module is central part of HyflowCpp framework. It is accessed by all other modules except Transactional Interface Module. Object validation module and object access module use this interface to send transactional messages and object requests, while network manager and message handling interface utilize it to process incoming message and provide responses to upper layer modules.
+Object serialization module is central part of HyflowCPP framework. It is accessed by all other modules except Transactional Interface Module. Object validation module and object access module use this interface to send transactional messages and object requests, while network manager and message handling interface utilize it to process incoming message and provide responses to upper layer modules.
 
 \section{Network Module}
 
-Network module plays a very vital role in performance of a DTM protocol. A poor implementation and scalability of network module can lead to a poor performance even for an efficient DTM algorithm. In HyflowCpp we provide pluggable support for any network library through a well defined network interface. Currently in HyflowCpp we support two networking libraies: MsgConnect~\cite{MsgConnect:2012} and ZeroMQ~\cite{hintjens2011omq}.  
+Network module plays a very vital role in performance of a DTM framework. A poor implementation and bad scalability of network module can lead to loss in performance even for an efficient DTM algorithm. In HyflowCPP we provide pluggable support for any network library through a well defined network interface. Currently in HyflowCPP we support two networking libraies: MsgConnect~\cite{MsgConnect:2012} and ZeroMQ~\cite{hintjens2011omq}.  
 
 \begin{figure}
 \begin{minipage}[b]{0.9\linewidth}\centering
@@ -786,19 +790,19 @@ Network module plays a very vital role in performance of a DTM protocol. A poor 
 \end{minipage}
 \end{figure}
 
-MsgConnect is a open source library for linux platforms. It provides a high level messaging interface for users. It frees user from socket level message handling and provides a reliable way of communication using TCP protocol~\cite{forouzan2002tcp}. Unfortunately we found some scalability issues in open source implementation. Still, for basic prototyping it can be reliable networking library.
+MsgConnect is an open source library for linux platforms. It provides a high level messaging interface for programmers. It frees programmers from socket level message handling and provides a reliable way of communication using TCP protocol~\cite{forouzan2002tcp}. Unfortunately we found some scalability issues in open source implementation. Still, for basic prototyping it can be a reliable networking library.
 
-To design a fast and scalable networking solution we use industry standard ZeroMQ library. ZeroMQ is socket level library, but provides very efficient solutions for in-process communication between threads, which makes zeroMQ very suitable for any multi-threaded networking requirement. In Figure~\ref{Fig:HyflowCppNetwork}, we describe our networking architecture designed using ZeroMQ socket library. This architecture design allows configuring architecture to fine tune for desired workload. 
+To design a fast and scalable networking solution, we use industry standard ZeroMQ library. ZeroMQ is socket level library, but provides very efficient solutions for in-process communication between threads, which makes it suitable for any multi-threaded networking requirement. In Figure~\ref{Fig:HyflowCppNetwork}, we describe our networking architecture designed using ZeroMQ socket library. This architecture design allows configuring the networking threads to fine tune for desired workload. 
 
-As described in Figure~\ref{Fig:HyflowCppNetwork} any transactional node A and B communicates with each other using ~\emph{forwarder} and ~\emph{catcher} threads. These dedicated threads are responsible for connecting with different nodes using ZeroMQ router~\cite{hintjens2011omq} socket. ZeroMQ router sockets are very useful to communicate with multiple nodes simultaneously. Forwarder threads are responsible for receiving message request from transactional threads and forward it to catcher thread of desired nodes. On other side catcher threads are responsible for receiving message work-load from forwarder thread and assign it to available ~\emph{worker} thread. Worker threads process the message send back reply to catcher thread if required. Catcher thread in turn returns message back to forwarder thread, which conveys it to original requester transactional thread.
+As described in Figure~\ref{Fig:HyflowCppNetwork} any transactional node A and B communicates with each other using ~\emph{forwarder} and ~\emph{catcher} networking threads. These dedicated threads are responsible for connecting with different nodes using ZeroMQ router socket. ZeroMQ router sockets are very useful to communicate with multiple nodes simultaneously. Forwarder threads are responsible for receiving message request from transactional threads and forward it to catcher thread of desired nodes. On other side, catcher threads are responsible for receiving message work-load from forwarder thread and assign it to available ~\emph{worker} thread. Worker threads process the message send back reply to catcher thread if required. Catcher thread in turn returns message back to forwarder thread, which conveys it to original requester transactional thread.
 
-ZeroMQ provides four to five times better performance in comparison to MsgConnect. Using multipart messaging of ZeroMQ, we are able to reduce the amount of polling between threads to bare minimum at two sockets. With experiments we found that one forwarder is enough for six to seven transactional threads. On contrast, even one worker per catcher can be sufficient for message processing in some situations. To fine tune these values, we define two ratios ~\emph{zeroMQTFR} i. e., zeroMQ transactional thread to forwarder thread ratio and ~\emph{zeroMQWFR} i. e., zeroMQ worker thread to forwarder thread ratio. It is worth noting that forwarder to catcher ratio is always one, therefore zeroMQWFR also defines the Catcher threads to worker thread ratio. By fine tuning these values user can extract a very high messaging throughput.
+ZeroMQ provides 4 to 5 times better performance in comparison to MsgConnect. Using multi-part messaging of ZeroMQ, we are able to reduce the amount of polling between threads to bare minimum at two sockets. With experiments we found that one forwarder is enough for six to seven transactional threads. On contrast, even one worker per catcher can be sufficient for message processing in some situations. To fine tune these values, we define two ratios zeroMQTFR (i. e., zeroMQ transactional thread to forwarder thread ratio) and zeroMQWFR (i. e., zeroMQ worker thread to forwarder thread ratio). It is worth noting that forwarder to catcher ratio is always one, therefore zeroMQWFR also defines the Catcher threads to worker thread ratio. By fine tuning these values user can extract a very high messaging throughput.
 
 \section{Message Processing Module}
 
-Message processing module provides message handling capability to any network library. The major task to this interface is to find a proper handler for any message and support asynchronous messaging. When a user create a new type of message, he/she also creates a proper message handler of this message type. All message handlers are registered by Message handler interface, at network initiation time. Later, when network library receives a request message using the message handler it creates a proper response and replies back as required.
+Message processing module provides message handling capability to any network library. The major task to this interface is to find a proper handler for any message and support asynchronous messaging. When a programmer create a new type of message, he/she also creates a proper message handler of this message type. All message handlers are registered by Message handler interface, at network initiation time. Later, when network library receives a request message, using the message handler it creates a proper response, and replies back as required.
 
-Another important task performed by this module is to support the asynchronous messaging. This module defines a class ~\emph{HyflowMessageFuture}, which allows a transactional thread to send a message asynchronously. A transactional thread can send a message with a HyflowMessageFuture object and proceed with other tasks. Later transaction thread can come to message specific HyflowMessageFuture to wait on the message response. 
+Another important task performed by this module is to support the asynchronous messaging. This module defines a class ~\emph{HyflowMessageFuture}, which allows a transactional thread to send a message asynchronously. A transactional thread can send a message with a HyflowMessageFuture object and proceed with other tasks. Later transaction thread can come back to message specific HyflowMessageFuture and wait for message response. 
 
 This module directly interface with network module and object serialization module. All the messages and there handling is defined in object serialization module. Message and there handler mapping is defined in the message processing module. Network module utilizes this module to find the appropriate handler and provide the asynchronous message response notification to requesting transactional threads.
 
@@ -812,12 +816,12 @@ This module directly interface with network module and object serialization modu
 Transactional Forwarding Algorithm
 \hfill}
 
-In this chapter we describe Transaction Forwarding Algorithm(TFA) in detail for different transactional models. TFA is a lock-based algorithm with lazy acquisition scheme. It usages an innovative asynchronous distributed clock mechanism to validate the transactions. TFA supports the opacity property~\cite{guerraoui2009semantics} and guarantees  strong progress~\cite{guerraoui2009semantics}. Opacity is a stronger property in comparison to serialization and informally can be described as an extension of the classical database serializability property with the additional requirement that even non-committed transactions are prevented from accessing inconsistent states. Strong progressiveness promises that all non-conflicting transactions will commit and at least one of all conflicting transactions will commit.  
+In this chapter, we describe Transaction Forwarding Algorithm(TFA) in detail for different transactional models. TFA is a lock-based algorithm with lazy acquisition scheme. It uses an innovative asynchronous distributed clock mechanism to validate transactions. TFA supports opacity property~\cite{guerraoui2009semantics} and guarantees strong progress~\cite{guerraoui2009semantics}. Opacity is a stronger property in comparison to serialization and informally can be described as an extension of the classical database serializability property with the additional requirement that even non-committed transactions are prevented from accessing inconsistent states. Strong progressiveness promises that all non-conflicting transactions will commit and at least one of all conflicting transactions will commit.
  
-Now we present the TFA algorithm in different transactional models and define its main procedures for transaction validation.
+Now we present the TFA algorithm for different transactional models and define its main procedures for transaction validation.
  
 \section{Flat Nesting}
-TFA uses a synchronization variant similar to Lamport~\cite{lamport1978time} mechanism to keep the clocks synchronized. In TFA each distributed node has a local clock $lc$. Each node increases its local clock atomically on a write transaction commit. All the communication between nodes piggyback the nodes local clock. On receiving the messages of remote node, each nodes compares the piggybacked remote node clock with its local clock. Node updates its clock to remote node clock if it is higher than its local clock, otherwise it ignore it. This way all the nodes are kept in synchronization and are able to establish the happens before relationship between object reads. 
+TFA uses a synchronization variant similar to Lamport~\cite{lamport1978time} mechanism to keep the clocks synchronized. In TFA each distributed node has a local clock $lc$. Each node increases its local clock atomically on a write transaction commit. All the communication between nodes piggyback the sender node's local clock. On receiving the messages of remote node, each node compares the piggybacked remote node clock with its local clock. A node updates its local clock to remote node clock if it is higher than node's local clock, otherwise node ignores it. This way all the nodes are kept in synchronization and are able to establish the happens before relationship between object reads.
 
 Asynchronous distributed clocking enables the TFA to detect any early conflicts in the transaction. Early conflicts in the transaction are detected through a process called Transaction Forwarding, which is performed at the time of object access(read/write). 
 
@@ -874,13 +878,13 @@ Context::Commit() {
 \label{Fig:FlatCommit}
 \end{figure}
 
-On start of any transaction, node's local clock is attached to its context as a time stamp $wv$. When any object is accessed by a transaction the sender nodes clock $rc$ is compared against the transactions time stamp $wv$. If sender nodes clock $rc$ is greater than the transactions time stamp $wv$, we verify whether we can move the transaction time stamp $wv$ to $wv'$, where $wv'$ = $rc$. This validation is done by validating all read-set objects version against transaction time stamp $wv$, if they are still less than $wv$, we can safely forward transaction from $wv$ to $wv'$. Figure ~\ref{Fig:FlatTFA} illustrates the Transaction Forwarding procedure.
+On start of any transaction, node's local clock is attached to its context $c$ as a time stamp $wv$. When any object is accessed by a transaction, the sender nodes clock $rc$ is compared against the transactions time stamp $wv$. If sender nodes clock $rc$ is greater than the transactions time stamp $wv$, we verify whether we can move the transaction time stamp $wv$ to $wv'$, where $wv'$ = $rc$. This validation is done by validating all read-set objects version against transaction time stamp $wv$, if they are still less than $wv$, we can safely forward transaction from $wv$ to $wv'$. Figure ~\ref{Fig:FlatTFA} illustrates the Transaction Forwarding procedure.
 
-In Figure~\ref{Fig:FlatCommit} we illustrate the transaction commit process. Transaction commit in TFA is performed similar to two phase commit~\cite{TwoPC:weikum1991principles} protocol. At commit time the transactional node tries to acquire locks on the write-set objects in any appropriate order to avoid deadlocks. Remote object lock requests are send to object owner and if any of locks can not be acquired transaction rollbacks. After successfully acquiring the object locks, transaction tries to re-validate the read-set object. Again if read-set objects validation fails the transaction performs rollback. Once write set locks are acquired and read-set objects are validated it is safe to commit the transaction. In commit process for write transactions local clock is increased atomically. All write-set object version is updated to transaction version. For local objects the updated copies of objects is committed and for remote the change of object ownership is performed. Publish-set and delete set object entries are updated in object access module. After completion of commit process all the write-set object locks are released. 
+In figure~\ref{Fig:FlatCommit}, we illustrate the transaction commit process. Transaction commit in TFA is performed similar to two phase commit~\cite{TwoPC:weikum1991principles} protocol. At commit time the transactional node tries to acquire locks on the write-set objects in appropriate order to avoid deadlocks. Remote object lock requests are sent to object owner. If any of locks cannot be acquired, transaction rollbacks. If transaction succeeds in acquiring the object locks, it tries to re-validate the read-set objects. Again if read-set object validation fails the transaction performs rollback. Once write-set locks are acquired and read-set objects are validated, it is safe to commit the transaction. In commit process for write transactions, local clock is increased atomically. All write-set object versions are updated to transaction version. For local objects, the updated copies of objects are committed and for the remote objects the change of object ownership is performed. Publish-set and delete-set object entries are updated in object access module. After completion of commit process all the write-set object locks are released. 
    
 \section{Closed Nesting} 
 
-In closed nesting each transaction attempts to do individual commits, but for inner transactions the commit not visible outside of the enclosing transaction. Inner transactions are allowed to abort independently of their parents. In this way by permitting partial aborts for the inner transactions closed nesting helps to improve performance. In this section we present the modified version of TFA for closed nesting: ~\emph{Transaction Forwarding Alogrithm for closed nesting(TFACN)}.
+In closed nesting, each transaction attempts to do individual commits, but for inner transactions the commits are not visible outside of the enclosing transaction. Inner transactions are allowed to abort independently of their parents. In this way by permitting partial aborts for the inner transactions closed nesting helps to improve performance. In this section we present the modified version of TFA for closed nesting: ~\emph{Transaction Forwarding Alogrithm for closed nesting(TFACN)}.
 
 \begin{figure}[H]
 \begin{minipage}[b]{0.9\linewidth}\centering
@@ -905,13 +909,13 @@ Context::TransactionForwarding(senderNodeClock) {
 \label{Fig:CloseTFA}
 \end{figure} 
 
-To support closed nesting each context maintains a reference to the parent context, for outermost context parent context reference is set to null. In transaction forwarding step we performed transaction forwarding on whole context tree branch instead on just current inner transaction. In Figure~\ref{Fig:CloseTFA} we illustrate the transaction forwarding step for TFACN.
+To support closed nesting, each context maintains a reference to the parent context. For outermost contex, the parent context reference is set to $null$. In transaction forwarding step, we perform transaction forwarding on whole context tree branch rather than looking only at the current inner transaction. In figure~\ref{Fig:CloseTFA}, we illustrate the transaction forwarding step for TFACN.
 
 In commit phase TFACN directly merges the context objects to parent context objects for inner transactions. For outermost transaction commit procedure is same as in flat nesting. 
 
 \section{Checkpointing}
 
-Transaction checkpointing saves the transaction execution state at various points. Later on commit failure it enables a transaction to resume from previously saved valid Checkpoint. Checkpointing allows a transaction to abort only required part of transaction for which actually the conflict happens and therefore boosts the performance. Checkpointing can be consider as a extension of closed nesting, where partial aborts can be applied at any point in transaction execution state. In this section we present  the modified the TFA algorithm for checkpointing: ~\emph{Transaction Forwarding Algorithm with checkpointing(TFACP)}.
+Transaction checkpointing saves the transaction execution state at various points. Later on commit failure it enables a transaction to resume from previously saved valid checkpoint. Checkpointing allows a transaction to abort only required part of transaction for which actually the conflict happens and therefore boosts the performance. Checkpointing can be considered as a extension of closed nesting, where partial aborts can be applied at any point in transaction execution state. In this section, we present the modified the TFA algorithm for checkpointing: ~\emph{Transaction Forwarding Algorithm with checkpointing(TFACP)}.
 
 \begin{figure}[H]
 \begin{minipage}[b]{0.9\linewidth}\centering
@@ -938,7 +942,7 @@ Context::TransactionForwarding(senderNodeClock) {
 \label{Fig:CheckPointTFA}
 \end{figure} 
 
-To support checkpointing in TFACP we partition read-set, write-set, publish-set and delete-set data on basis of first access Checkpoint. This allows TFACP to identity the conflicting objects and to determine the valid Checkpoint to resume. To save the transaction execution stack state we use the ~\emph{setContext()} and ~\emph{getContext()} functions. Heap objects are maintained in context read-set, write-set and publish-set. 
+To support checkpointing in TFACP we partition read-set, write-set, publish-set and delete-set data on basis of first access checkpoint. This allows TFACP to identity the conflicting objects and calculate dependency to determine the valid checkpoint. To save the transaction execution stack state we use the ~\emph{setContext()} and ~\emph{getContext()} functions. Heap objects are maintained in context read-set, write-set and publish-set.  
 
 \begin{figure}
 \begin{minipage}[b]{0.9\linewidth}\centering
@@ -986,16 +990,15 @@ Context::Commit() {
 
 HyflowCpp provides a helper class ~\emph{CheckPointProvider} to create, iterator and maintain the transaction checkpoints.~\emph{HYFLOW{\_}STORE(OBJECT{\_}REF, OBJECT{\_}VALUE)} macro is provided to store any stack or heap object values just before creating checkpoint. These values are automatically are restored on continuing from checkpoint after partial abort.     
 
-In Figure~\ref{Fig:CheckPointTFA} we illustrate the transaction forwarding process for TFACP. Similar to flat nesting we perform transaction forwarding by object validation. But on validation failure, we do not rollback instead resume the transaction from valid checkpoint if available. Before resuming we remove all the invalidated heap objects from the context.
+In figure~\ref{Fig:CheckPointTFA}, we illustrate the transaction forwarding process for TFACP. Similar to flat nesting we perform transaction forwarding by object validation. But on validation failure, we do not rollback instead resume the transaction from valid checkpoint if available. Before resuming we remove all the invalidated heap objects from the context.
 
-Commit process in TFACP is also modified similar to transaction forwarding. On commit failure in place of restarting transaction we resume from available valid checkpoint. Note that here we are required to release any acquired lock before resuming. Figure~\ref{Fig:CheckPointCommit} illustrate the commit procedure in TFACP. 
-
+Figure~\ref{Fig:CheckPointCommit} illustrates the commit procedure in TFACP. Commit process in TFACP is also modified similar to transaction forwarding. On commit failure instead of restarting transaction we resume from available valid checkpoint. Note that here we are required to release any acquired lock before resuming. 
 
 \section{Open Nesting}
 
 Open nesting provides the performance improvement by reducing the false memory level conflict. In contrast to closed nesting in open nesting the inner transactions commit on completion are visible globally and corresponding undo action is merged into parent transaction. In case of parent transaction abort the undo action are used to recover from the inner transaction commit. To maintain the memory consistency the inner transaction specific higher level locks are maintained.  
 
-To support open nesting in TFA a concept of abstract locks is introduced, which provided the higher level locks for inner transactions. Unfortunately abstract lock mechanism suffers from the livelocks issue and uses a random back-off mechanism to overcome this issue. TFAON allows user to define the \textit{onAbort} and \textit{onCommit} functions to be performed in case of abort or commit on parent transaction. TFAON acquires abstract locks in inner transactions and releases them in parent transaction on commit or abort. 
+To support open nesting in TFA (TFAON), a concept of abstract locks is introduced, which provides the higher level locks for inner transactions. Unfortunately, abstract lock mechanism suffers from the livelocks issue and uses a random back-off mechanism to overcome this issue. TFAON allows user to define the \textit{onAbort} and \textit{onCommit} functions to be performed in case of abort or commit on parent transaction. TFAON acquires abstract locks in inner transactions and releases them in parent transaction on commit or abort. 
 
 \begin{figure}
 \begin{minipage}[b]{0.9\linewidth}\centering
@@ -1058,7 +1061,7 @@ Context::Commit() {
 \label{Fig:OpenNestingCommit}
 \end{figure}
 
-As described in figure~\ref{Fig:OpenNestingCommit} abstract locks can be created by provide unique string name for transaction. Abstract lock are registered in transaction using the \textit{onLockAcess} function. At commit time the registered abstract locks are acquired. Later, abstract locks are either merged to parent context or released if top transaction. In case of aborts rollback is performed by using onAbort function. Once compensating action for related inner transaction is completed abstract locks are released. Compensation action run with higher priority and don't perform random back-off.   
+As described in figure~\ref{Fig:OpenNestingCommit} abstract locks can be created by provide unique string name for transaction. Abstract lock are registered in transaction using the \textit{onLockAcess} function. At commit time the registered abstract locks are acquired. Later, abstract locks are either merged to parent context or released (for outermost transaction). In case of aborts rollback is performed by using \textit{onAbort} function. Once compensating action for related inner transaction is completed abstract locks are released. Compensation action run with higher priority and don't perform random back-off.   
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %																									%
@@ -1080,7 +1083,7 @@ Our all experiments are conducted on 48 core machine. Machine contains four AMD 
 
 Flat nesting does not provide any performance incentive over other partial abort models like closed or open nesting. Still, it is very useful to understand benchmarks characteristics and compare the raw performance between different DTM frameworks. We have evaluated the performance with different read ratios (0.2 , 0.5 and 0.8) on nodes from 4 to 48. For concentrating focus on the distributed behavior in experiments we have limited threads on each node to one.  
 
-For performance comparsion, we compare the HyflowCpp with various competitors like HyflowJava~\cite{Saad:2011:HHP:1996130.1996167}, HyflowScala~\cite{turcuhyflow2}, DecentRSTM~\cite{DecentSTM:5470446} and GenRSTM~\cite{GenRSTM:6038614}. We have compared the all the benchmarks already available in competitors with our benchmarks. For some HyflowCPP benchmarks, we have not found any implementation in competitors. We have not spent time in developing benchmarks in competitor frameworks, instead we devoted our time in more important research work. 
+For performance comparsion, we compare the HyflowCPP with various competitors like HyflowJava~\cite{Saad:2011:HHP:1996130.1996167}, HyflowScala~\cite{turcuhyflow2}, DecentRSTM~\cite{DecentSTM:5470446} and GenRSTM~\cite{GenRSTM:6038614}. We have compared the all the benchmarks already available in competitors with our benchmarks. For some HyflowCPP benchmarks, we have not found any implementation in competitors. We have not spent time in developing benchmarks in competitor frameworks, instead we devoted our time in more important research work. 
 
 \subsection{Micro Benchmarks}
 
@@ -1130,7 +1133,7 @@ Poor performance of HyflowJava and  DecentSTM is rooted in their bad implementat
 
 \subsubsection{Linked List}
 
-In this benchmark, we have designed an ordered, singly-linked linear list data structure. We implement the list as set and don't allow the duplicate objects in the list. It helps to control the maximum number of objects in list. It supports two write operations: add and remove, and one read operation: contains. While traversing the list all the read objects are added to transaction readSet, which makes list prone to high contention. Any write operation on traversed node will lead to transaction abort.
+In this benchmark, we have designed an ordered, singly-linked linear list data structure. We implement the list as set and don't allow the duplicate objects in the list. It helps to control the maximum number of objects in list. It supports two write operations: add and remove, and one read operation: contains. While traversing the list all the read objects are added to transaction read-set, which makes list prone to high contention. Any write operation on traversed node will lead to transaction abort.
 
 For our experiments we initialize the linked list with 50 objects. In figure~\ref{Fig:flatList}, we observe that HyflowCPP performance is 3 to 5 times better in comparison to nearest competitor HyflowScala. HyflowJava performs even worse than HyflowScala. We also find increase in transactional throughput with increase in read percent. We are unable to find any consistent pattern in throughput with increase in number of nodes as contention is very high in list and aborts happen in random order. On average the list throughput decreases as number of nodes are increased, due to higher contention.
 
@@ -1372,9 +1375,9 @@ In figure~\ref{Fig:cpBankEx3} we present the relative change in throughput and a
 \subsection{Linked List}
 In figure~\ref{Fig:cpListEx1R20}, we present the results for 20\% reads in first group of experiments. In these experiments, we maintain object count constant and increase node count and number of inner transactions. We present throughput for different inner transactions ${2, 5, 10}$ for closed nesting and checkpointing relative to flat nesting. We can observer that with lower number of inner transactions checkpointing and closed performs worse in comparison to flat nesting. But at higher inner transaction count both nesting models performance improves. So, we establish that checkpointing and closed nesting are helpful only in case of higher inner transactions for list benchmark.
 
-In figure~\ref{Fig:cpListEx2R20}, we present the results for 20\% reads in second group of experiments. In these experiments, we increase object count with increase in number of inner transactions. For such experiments, we obtain similar pattern as in Figure~\ref{Fig:cpListEx1R20}. Similar pattern can be easily as increasing the list size don't impact on contention level. In list, only one transaction proceeds which locks the nearest node to head. Read set size don't impact on contention level in list.
+In figure~\ref{Fig:cpListEx2R20}, we present the results for 20\% reads in second group of experiments. In these experiments, we increase object count with increase in number of inner transactions. For such experiments, we obtain similar pattern as in Figure~\ref{Fig:cpListEx1R20}. Similar pattern can be easily understood as increasing the list size don't impact on contention level. In list, only one transaction proceeds which locks the nearest node to head. Read set size don't impact on contention level in list.
 
-In figure~\ref{Fig:cpListEx3}, we can observer at very high contention abort rate is not effected by transaction granularity and not throughput.
+In figure~\ref{Fig:cpListEx3}, we present the relative change in throughput and abort rate for minimum to maximum granularity with inner transactions 1 and 10. we can observer at very high contention abort rate and throughput is not effected by transaction granularity.
 
 \begin{figure}[H]
 \centering
@@ -1480,7 +1483,7 @@ In figure~\ref{Fig:onHashTableReads}, we present the open and closed nesting thr
 In figure~\ref{Fig:onHashTableTime}, we examine the time split of open nested transactions. We can observer 
 that with increase number of nodes the commit time increase slowly, but increase in total sub-transaction time and abort compensation time is high. Backoff time also increases, but it constitute very small part of total time spent.  
 
-In figure~\ref{Fig:onHashTableObjs}, we present the open and closed nesting throughput relative to flat nesting for different number of inner transaction for 1500 bucket objects.
+In figure~\ref{Fig:onHashTableObjs}, we present the open and closed nesting throughput relative to flat nesting for different number of inner transaction for 1500 bucket objects. We can observe the performance improvement in open nesting performance as fundamental contention decreases.
 
 \begin{figure}[H]
 \centering
@@ -1515,16 +1518,91 @@ In figure~\ref{Fig:onHashTableObjs}, we present the open and closed nesting thro
 
 \subsection{Skip List}
 
-To Be Added 
+In figure~\ref{Fig:onHashTableTrpR20}, we present the open and closed nesting throughput relative to flat nesting for different number of inner transactions for 300 bucket objects. We can observer that as we increase the number of inner transactions open nesting performance improves as amount of contention increases. But at very higher contention for 8 inner transaction performance actually falls with increased abstract lock contention. 
+
+In figure~\ref{Fig:onHashTableReads}, we present the open and closed nesting throughput relative to flat nesting for different read ratios for 3 inner transactions. We find increase in throughput with increase in read ratio due to decreased abstract lock contention. It is worth noting we have observered very contention in this experiment between 200\% to 4000\%. 
+
+In figure~\ref{Fig:onHashTableTime}, we examine the time split of open nested transactions. We can observer 
+that with increase number of nodes the commit time increase slowly, but increase in total sub-transaction time and abort compensation time is high. Backoff time also increases, but it constitute very small part of total time spent.  
+
+In figure~\ref{Fig:onHashTableObjs}, we present the open and closed nesting throughput relative to flat nesting for different number of inner transaction for 1500 bucket objects. We can observe the performance improvement in open nesting performance as fundamental contention decreases.
+
+\begin{figure}[H]
+\centering
+\subfigure[Skip-list: Open and closed nesting throughput relative to flat nesting with 100 objects for different number of inner transactions]{
+\includegraphics[width=0.7\textwidth]{\string"eps/open/skipList/trp/r20".pdf}
+\label{Fig:onSkipListTrpR20}
+}
+\end{figure}
+\begin{figure}[H]
+\centering
+\subfigure[Skip-list: Open and closed nesting throughput relative to flat nesting for read ratios]{
+\includegraphics[width=0.7\textwidth]{\string"eps/open/skipList/reads/inTx3".pdf}
+\label{Fig:onSkipListReads}
+}
+\end{figure}
+\begin{figure}[H]
+\centering
+\subfigure[Skip-list: Open and closed nesting throughput relative to flat nesting with 1000 objects for different number of inner transactions]{
+\includegraphics[width=0.7\textwidth]{\string"eps/open/skipList/objs/r20".pdf}
+\label{Fig:onSkipListObjs}
+}
+\end{figure}
+\begin{figure}[H]
+\centering
+\subfigure[Skip-list: Execution time split for open nested transaction]{
+\includegraphics[width=0.7\textwidth]{\string"eps/open/skipList/time/r20".pdf}
+\label{Fig:onSkipListTime}
+}
+\caption{Open Nesting: Relative Transactional throughput and execution time split for Skip-list}
+\label{Fig:cpHashTable}
+\end{figure}
 
 \subsection{Binary Search Tree}
-that
-To Be Added
+
+In figure~\ref{Fig:onBSTTrpR20}, we present the open and closed nesting throughput relative to flat nesting for different number of inner transactions for 300 bucket objects. We can observer that as we increase the number of inner transactions open nesting performance improves as amount of contention increases. But at very higher contention for 8 inner transaction performance actually falls with increased abstract lock contention. 
+
+In figure~\ref{Fig:onBSTReads}, we present the open and closed nesting throughput relative to flat nesting for different read ratios for 3 inner transactions. We find increase in throughput with increase in read ratio due to decreased abstract lock contention. It is worth noting we have observered very contention in this experiment between 200\% to 4000\%. 
+
+In figure~\ref{Fig:onBSTTime}, we examine the time split of open nested transactions. We can observer 
+that with increase number of nodes the commit time increase slowly, but increase in total sub-transaction time and abort compensation time is high. Backoff time also increases, but it constitute very small part of total time spent.  
+
+In figure~\ref{Fig:onBSTObjs}, we present the open and closed nesting throughput relative to flat nesting for different number of inner transaction for 1500 bucket objects. We can observe the performance improvement in open nesting performance as fundamental contention decreases.
+
+\begin{figure}[H]
+\centering
+\subfigure[BST: Open and closed nesting throughput relative to flat nesting with 100 objects for different number of inner transactions]{
+\includegraphics[width=0.7\textwidth]{\string"eps/open/bst/trp/r20".pdf}
+\label{Fig:onBSTTrpR20}
+}
+\end{figure}
+\begin{figure}[H]
+\centering
+\subfigure[BST: Open and closed nesting throughput relative to flat nesting for read ratios]{
+\includegraphics[width=0.7\textwidth]{\string"eps/open/bst/reads/inTx3".pdf}
+\label{Fig:onBSTReads}
+}
+\end{figure}
+\begin{figure}[H]
+\centering
+\subfigure[BST: Open and closed nesting throughput relative to flat nesting with 1000 objects for different number of inner transactions]{
+\includegraphics[width=0.7\textwidth]{\string"eps/open/bst/objs/r20".pdf}
+\label{Fig:onBSTObjs}
+}
+\end{figure}
+\begin{figure}[H]
+\centering
+\subfigure[BST: Execution time split for open nested transaction]{
+\includegraphics[width=0.7\textwidth]{\string"eps/open/BST/time/r20".pdf}
+\label{Fig:onBSTTime}
+}
+\caption{Open Nesting: Relative Transactional throughput and execution time split for BST}
+\label{Fig:cpBSTTable}
+\end{figure}
 
 \section{Summary}
 
-In summary we can see HyflowCPP provides a very high throughput in comparison to its competitors.
-To be Added.
+In summary, we can see HyflowCPP provides a very high throughput in comparison to its competitors like GenRSTM, DecentRSTM, HyflowJava and HyflowScala for flat nesting experiments. We achieved maximum performance improvement upto 6 times in comparison to HyflowScala. Relative to other competitors like GenRSTM, DecentRSTM and HyflowJava we achieve more than 10 times improvements. Our close nesting and checkpointing, respectively achieved upto 90\% and 100\% performance gains. For first time we achieved higher performance gain using checkpointing in comparison to closed nesting. Our experiments showed inefficacy of checkpointing granularity in high contention levels. Open nesting experiments demonstrated as much as 140\% improvement over flat nesting and 90\% over closed nesting. We achieved lower performance gain for large read-set size benchmarks like Skip-list and Binary Search Tree.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %																									%
@@ -1536,27 +1614,38 @@ To be Added.
 Conclusion and Future Work
 \hfill}
 
-In this thesis, we presented a C++ DTM framework, HyflowCPP. In HyflowCPP, we provided a first ever generic programming interface based DTM abstraction in C++ with pluggable support for different concurrency control algorithms, directory lookup protocols, contention management policies, and network communication protocols.
-We supported various transaction features like strong atomicity, flat nesting, closed nesting, open nesting, and checkpointing to export high programmability and good performance.
+In this thesis, we presented a DTM framework for C++ called HyflowCPP. HyflowCPP provides a generic programming interface-based DTM abstraction, with pluggable support for different concurrency control algorithms, directory lookup protocols, contention management policies, and network communication protocols. The framework also supports transactional features including strong atomicity, flat nesting, closed nesting, open nesting, and checkpointing for improved performance and code composability.
 
-Using cache coherent Transaction Forwarding Algorithm for concurrency control, HyflowCPP provides excellent performance gains over other JVM based contemporary frameworks like GenRSTM, DecentRSTM, HyflowJava, and HyflowScala. HyflowCPP scales smoothly with increase in number of objects, read-write ratio and nodes. We performed experiments on 8 different micro-benchmarks and macro-benchmarks. Our results for flat nesting show that HyflowCPP outperforms its nearest competitor HyflowScala by as much as 6 times in certain cases. Other competitors like GenRSTM, DecentRSTM and HyflowJava perform much worse in comparison to HyflowCPP. We attribute HyflowCPP's high performance to its efficient ZeroMQ based networking support and optimized C++ based environment.
+We implemented the Transaction Forwarding Algorithm for concurrency control in HyflowCPP. We conducted experimental studies using a set of micro-benchmarks and macro-benchmarks and comparing with competitor (JVM-based) DTM frameworks including GenRSTM, DecentRSTM, HyflowJava, and HyflowScala. We observed that, HyflowCPP's transactional throughput scales robustly with increase in number of objects, read-write ratio, and number of nodes. Our results for flat nesting show that HyflowCPP outperforms its nearest competitor, HyflowScala, by as much as 6 times in certain cases. Other competitors such as GenRSTM, DecentRSTM, and HyflowJava perform much worse in comparison to HyflowCPP. We attribute HyflowCPP's high performance to its efficient ZeroMQ-based networking support and optimized C++ implementation.
 
-In checkpointing, we achieved upto 100\% performance improvement over flat nesting and upto 50\% over closed nesting. We observed maximum performance gains for Bank and Hash-table benchmark upto 100\%. We observed that gain improves with increase in number of inner transactions (i.e. increase in checkpoints) with considerable contention level. Performance gains diminishes with increase in contention level. Using configurable checkpointing support in HyflowCPP, we demonstrated that maximum granularity checkpointing is not useful in cases where abort rate is extremely high. To the best of our knowledge, this is the first ever DTM implementation where checkpointing provides higher performance gain in comparison to closed nesting. Our close nesting results endorsed the previous studies. We outperformed flat nesting by as much as 90\% in certain cases. We achieved maximum consistent performance gain upto 90\% for Hash-table and Bank benchmarks. We observed these higher performance gains with increase in inner transactions at same contention level.
+Our experiments on checkpointing -- a uniquely distinguishing feature of HyflowCPP -- revealed upto 100\% performance improvement over flat nesting and upto 50\% improvement over closed nesting. The maximum performance gains were observed for the Bank macro-benchmark and the hash-table micro-benchmark. We observed that the performance gain improves with increase in the number of inner transactions (i.e.,  increase in the number of checkpoints) at significant levels of contention. 
+%%BR: I reworded, but double check for accuracy. 
+The performance gain diminishes as the contention level increases. With configurable checkpointing support, we demonstrated that the maximum granularity for checkpointing is not useful in cases where abort rate is extremely high. To the best of our knowledge, this is the first ever DTM implementation where checkpointing provides higher performance gain in comparison to closed nesting. 
 
-Our open nesting based experiments qualified the performance results of previous studies and achieved higher improvements. We achieved upto 140\% improvement using open nesting over flat nesting and over 90\% improvement over closed nesting. We observed maximum performance gain for Hash-table benchmark upto 140\%. %%SM: Revisit 
-We have observed decrease in performance gains over flat and closed nesting with increase in read-set size at high inner transaction count for benchmarks like Skip-list and Binary Search Tree as flat and closed nesting are able to utilized the cached object copy opened in previous inner transactions. 
+Our closed nesting results endorsed previous studies. Closed nesting outperformed flat nesting by as much as 90\% in certain cases. The maximum consistent performance gain were observed for the Bank and hash-table benchmarks. We observed these higher performance gains with increase in inner transactions at the same contention level.
+
+Our open nesting experiments also confirmed the trends of previous studies. Additionally, they showed higher improvements. Open nesting was found to achieve upto 140\% performance improvement over flat nesting and over 90\% performance improvement over closed nesting. The maximum performance gain was observed for the hash-table benchmark. 
+%%SM: Revisit 
+However, open nesting's performance gains were found to decrease with increase in read-set sizes at high inner transaction count for benchmarks such as skip-list and binary search tree. 
+%%BR: No need to capitalize the names of benchmarks, except that of Bank. Fix this throughout. 
+This is because, flat nesting and closed nesting are able to utilize the cached object copy opened in the previous inner transactions. 
+%%BR: I reworded. Check for accuracy. 
 
 \section{Future Work}
 
-Several directions exist for future work. These include the following:
+Several directions exist for future work. Immediate directions include extending HyflowCPP to support conditional transactional synchronization and irrevocable transactions~\cite{welc2008irrevocable}. Conditional synchronization will enable programmers to correctly coordinate thread accesses to shared objects, without unnecessarily enforcing serialization of thread execution. It can very useful to develop complex event driven application efficiently. Similarly irrevocable transactions support will allow programmers to perform actions whose side effects either cannot be rolled back or are expensive to roll back, which is one of the limitation of current TM systems.
+%BR: Explain what these are, and how they can be supported in 3-4 sentences. 
 
-\begin{enumerate}
-\item HyflowCPP does not support some advanced DTM features such as conditional synchronization and 
-irrevocable transactions~\cite{welc2008irrevocable}, which can be immediate directions for further work.
-\item HyflowCPP does not support any replication based protocol such as tree-quorum~\cite{Zhang:2011:QRF:2183536.2183539}, which will enable the DTM support for failure prone links.
-\item HyflowCPP based DTM support can be utilized in a production application like in Hadoop to understand the feasibility of DTM in production class C++ software code.
-\item To make HyflowCPP programming interface more transparent to programmer, specially for the advance nesting features, a compiler support can be added. 
-\end{enumerate}
+HyflowCPP can also be extended to support replication-based concurrency protocols such as the quorum-based DTM protocol in~\cite{Zhang:2011:QRF:2183536.2183539}, which enables fault-tolerant DTM. Current network module of HyflowCPP is optimized for peer to peer communication design. For efficient communication in a cluster environment, a new network module with multi-cast support can be plugged in HyflowCPP. For concurrency control algorithm such as tree-quorum HyflowCPP already provides pluggable support.
+%BR: Again, sketch how this extension can be done (3-4 sentences).
+
+Near term (or longer-term) future directions include integrating HyflowCPP into production application systems and empirically characterizing performance. Example such production systems include Phonix++~\cite{Phonixpp}, CloudStore~\cite{CloudStore}, Boost.MapReduce~\cite{Boost:MapReduce}, and Sector/Sphere~\cite{Sector:sphere}. In such products the lock based synchronization can be replaced with atomic section support provided by HyflowCPP. Such implementations can be highly useful to understand the performance gains and limitation of DTM in production environment.
+%%BR: Complete. Again, explain what will take to do this. 
+
+HyflowCPP's programming interface can also be made more programmer-transparent, especially for advanced nesting features, through compiler support. A configurable LLVM~\cite{llvm} or GCC~\cite{gcc} compiler module can be created to support atomic section based concurrency. Such module can automatically parse the different nested modules and argument dependency without any explicit user feedback. Compiler support will swiftly decrease the learning curve for new DTM programmers and reduce the incorrect usages based errors in code.
+%%BR: Complete. Again, explain what will take to do this. 
+
+%%BR: Done. 5:25PM, JST, 1/23/2013. 
 
 \newpage
 \markright{Bibliography \hfill}

@@ -169,6 +169,8 @@ int BenchmarkExecutor::transactionLength=0;
 int BenchmarkExecutor::innerTxns=1;
 int BenchmarkExecutor::itcpr=1;
 int BenchmarkExecutor::objectNesting=2;
+int BenchmarkExecutor::baseBackOffTime=1000;
+bool BenchmarkExecutor::backAllNesting=false;
 unsigned long BenchmarkExecutor::executionTime=0;
 boost::mutex* BenchmarkExecutor::metaWriteMutex=NULL;
 
@@ -215,7 +217,7 @@ void BenchmarkExecutor::writeResults() {
 	Logger::result("AbortedSubTxnTime=%llu\n", benchNodeMetadata.abortedSubTxnTime/1000);
 	Logger::result("CompensateSubTxns=%u\n", benchNodeMetadata.compensateSubTxns);
 	Logger::result("CompensateSubTxnTime=%llu\n", benchNodeMetadata.compensateSubTxnTime/1000);
-	Logger::result("BackoffTime=%llu\n", benchNodeMetadata.backOffTime);
+	Logger::result("BackoffTime=%llu\n", benchNodeMetadata.backOffTime);	// Already in millisecond
 	Logger::result("RepeatedAbort=%u\n", benchNodeMetadata.repeatedAbort);
 	Logger::result("AbstractAbort=%u\n", benchNodeMetadata.abstractAbort);
 	Logger::result("RFConflictAbort=%u\n", benchNodeMetadata.rfconflictAbort);
@@ -268,6 +270,8 @@ void BenchmarkExecutor::initExecutor(){
 		doWarmUp = (strcmp(ConfigFile::Value(DO_WARMUP).c_str(), TRUE) == 0)? true:false;
 		transactionLength = atoi(ConfigFile::Value(TRANSACTIONS_LENGTH).c_str());
 		executionTime = strtoul(ConfigFile::Value(EXECUTION_TIME).c_str(), NULL, 10);
+		baseBackOffTime = atoi(ConfigFile::Value(BASE_BACKOFF_TIME).c_str());
+		backAllNesting = (strcmp(ConfigFile::Value(BACKOFF_ALL_NESTING).c_str(), TRUE) == 0)? true:false;
 		int it = atoi(ConfigFile::Value(INNER_TXNS).c_str());
 		if (it>0) {
 			innerTxns = it;
@@ -277,6 +281,7 @@ void BenchmarkExecutor::initExecutor(){
 		benchMarkThreadMetadata = new HyflowMetaData[threadCount];
 		metaWriteMutex = new boost::mutex[threadCount];
 		writeConfig();
+		LOG_DEBUG("BE :baseBackOffTime=%d, backAllNesting=%s\n", baseBackOffTime, backAllNesting?"true":"false");
 	}
 }
 

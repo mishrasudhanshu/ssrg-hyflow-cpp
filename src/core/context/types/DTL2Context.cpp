@@ -178,8 +178,8 @@ void DTL2Context::contextDeinit() {
 
 		if ((nestingModel == HYFLOW_NESTING_OPEN)) {
 			rollback();
-			ContentionManager::deInit(this);
 		}
+		ContentionManager::deInit(this);
 	}else{
 		txnMeta.committedSubTxnTime = Logger::getCurrentMicroSec() - startTime;
 		if (contextExecutionDepth) {

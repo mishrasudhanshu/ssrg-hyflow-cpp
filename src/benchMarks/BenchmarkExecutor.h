@@ -119,6 +119,8 @@ class BenchmarkExecutor {
 	static int itcpr;
 	static int objectNesting;
 	static unsigned long executionTime;
+	static int baseBackOffTime;
+	static bool backAllNesting;
 
 	static boost::mutex* metaWriteMutex;
 	static bool* transactionType;
@@ -169,6 +171,14 @@ public:
 	static void increaseMetaData(HyflowMetaDataType type);
 
 	static void transactionLengthDelay();
+
+	static bool isBackAllNesting() {
+		return backAllNesting;
+	}
+
+	static int getBaseBackOffTime() {
+		return baseBackOffTime;
+	}
 
 	static bool isDoWarmUp() {
 		return doWarmUp;

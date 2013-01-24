@@ -249,6 +249,14 @@ void ConfigFile::UpdateMap() {
 	value = getenv(EXECUTION_TIME);
 	if (value)
 			Update(EXECUTION_TIME, value);
+
+	value = getenv(BASE_BACKOFF_TIME);
+	if (value)
+		Update(BASE_BACKOFF_TIME, value);
+
+	value = getenv(BACKOFF_ALL_NESTING);
+	if (value)
+			Update(BACKOFF_ALL_NESTING, value);
 }
 
 void ConfigFile::test() {

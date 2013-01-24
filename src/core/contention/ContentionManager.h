@@ -14,6 +14,7 @@ namespace vt_dstm {
  * Contention Manager is used to perform random back-off in case of too many aborts
  */
 class ContentionManager {
+	static void performBackOff(int aborts);
 public:
 	ContentionManager();
 	virtual ~ContentionManager();

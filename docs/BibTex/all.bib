@@ -67,17 +67,18 @@
   year={2010}
 }
 
-@misc{objectFabDoe,
+@ONLINE{objectFabDoe,
 Author = {{ObjectFabric Inc.}},
 Title = {{ObjectFabric}},
 year = {2011},
 howpublished = {\url{http://objectfabric.com}} }
 
-@misc{Multiverse,
+@@ONLINE{Multiverse,
 Author = {Peter Veentjer},
 Title = {Multiverse},
 year = {2011},
-howpublished = {\url{http://multiverse.codehaus.org}} }
+howpublished = {\url{http://multiverse.codehaus.org}}
+}
 @inproceedings{DSTM2herlihy2006flexible,
   title={A flexible framework for implementing software transactional memory},
   author={Herlihy, M. and Luchangco, V. and Moir, M.},
@@ -179,7 +180,8 @@ howpublished = {\url{http://multiverse.codehaus.org}} }
 @misc{lockfreeHash,
 Author = {Doug Lea},
 Title = {Java Concurrency Package Concurrent Hash Map in java.util.concurrent},
-howpublished = {\url{http://gee.cs.oswego.edu/cgi-bin/viewcvs.cgi/jsr166/src/main/java/util/concurrent/}} }
+howpublished = {\url{http://gee.cs.oswego.edu/cgi-bin/viewcvs.cgi/jsr166/src/main/java/util/concurrent/}} 
+}
 
 @article{STMbookharris2010transactional,
   title={Transactional memory},
@@ -1658,10 +1660,6 @@ title = {On Closed Nesting in Distributed Transactional Memory},
 INSTITUTION = {ECE Dept., Virginia Tech},
 Year = {2011}, Note = {To appear, Available \url{http://hyflow.org/hyflow/chrome/site/pub/ntfa_tech.pdf}}
 }
-
-
-
-
 
 @inproceedings{sr-dac12,
 author ={Mohammed El-Shambakey and Binoy Ravindran}, 
@@ -5101,16 +5099,13 @@ YEAR = {2010},
  address = {New York, NY, USA},
  keywords = {embedded systems, locking, multicore, software transactional memory (stm), synchronization, transactions},
 }
-
-  @book{MESI,
+@book{MESI,
  author = {Intel Corporation},
  title = {Pentium Processor User's Manual},
  year = {1993},
  isbn = {1555121934},
  publisher = {Intel Books},
 }
-
-
 @inproceedings{hyflow-transact11,
  author = {Saad, Mohamed and Ravindran, Binoy},
  title = {Supporting {STM} in Distributed Systems: Mechanisms and a {Java} Framework},
@@ -5573,9 +5568,8 @@ ISSN={1063-6927},
 }
 @MISC{continuation:wiki,
 title = {Complete Context Control},
-month = Jan,
-year = {2013},
-url = {http://www.gnu.org/software/libc/manual/html_node/System-V-contexts.html#System-V-contexts}
+howpublished = {\url{http://www.gnu.org/software/libc/manual/html_node/System-V-contexts.html#System-V-contexts}},
+note = {Accessed: 20/01/2013}
 }
 @article{saad2011transactional,
   title={Transactional forwarding algorithm},
@@ -5599,10 +5593,19 @@ url = {http://www.gnu.org/software/libc/manual/html_node/System-V-contexts.html#
   year={1994},
   publisher={DATABASE ASSOCIATES INTERNATIONAL}
 }
-@MISC{Schneider93chapter7,
-    author = {Fred B. Schneider},
-    title = {Chapter 7: Replication Management Using the State-machine Approach, Distributed Systems, 2nd edn},
-    year = {1993}
+@incollection{Schneider93chapter7,
+ author = {Schneider, Fred B.},
+ chapter = {Replication management using the state-machine approach},
+ title = {Distributed systems (2nd Ed.)},
+ editor = {Mullender, Sape},
+ year = {1993},
+ isbn = {0-201-62427-3},
+ pages = {169--197},
+ numpages = {29},
+ url = {http://dl.acm.org/citation.cfm?id=302430.302437},
+ acmid = {302437},
+ publisher = {ACM Press/Addison-Wesley Publishing Co.},
+ address = {New York, NY, USA},
 }
 @ARTICLE{Checkpointing:1702129, 
 author={Koo, R. and Toueg, S.}, 
@@ -5618,9 +5621,36 @@ ISSN={0098-5589},
 }
 @MISC{langpop,
 title = {Language popularity},
-month = Jan,
-year = {2013},
-url = {http://www.langpop.com/}
+howpublished = {\url{http://www.langpop.com/}},
+note = {Accessed: 20/01/2013}
 }
-
-
+@MISC{Phonixpp,
+title = {The Phoenix System for MapReduce Programming},
+howpublished = {\url{http://mapreduce.stanford.edu/}},
+note = {Accessed: 20/01/2013}
+}
+@MISC{CloudStore,
+title = {CloudStore:Mapreduce support in C++},
+howpublished = {\url{http://en.wikipedia.org/wiki/CloudStore}},
+note = {Accessed: 20/01/2013}
+}
+@MISC{Boost:MapReduce,
+title = {Boost Library for Map-reduce},
+howpublished = {\url{http://www.craighenderson.co.uk/mapreduce/}},
+note = {Accessed: 20/01/2013}
+}
+@MISC{Sector:sphere,
+title = {Sector/Sphere:High Performance Distributed File System and Parallel Data Processing Engine},
+howpublished = {\url{http://sector.sourceforge.net/}},
+note = {Accessed: 20/01/2013}
+}
+@MISC{llvm,
+title = {The LLVM Compiler Infrastructure},
+howpublished = {\url{http://llvm.org/}},
+note = {Accessed: 20/01/2013}
+}
+@misc{gcc,
+title = {GCC, the GNU Compiler Collection},
+howpublished = {\url{http://gcc.gnu.org/}},
+note = {Accessed: 20/01/2013}
+}

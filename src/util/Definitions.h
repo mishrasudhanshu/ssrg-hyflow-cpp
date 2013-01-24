@@ -100,6 +100,8 @@ namespace vt_dstm
 #define ITCPR "ITCPR"
 #define CLUSTER_TIMEOUT "clusterTimeout"
 #define EXECUTION_TIME "executionTime"
+#define BASE_BACKOFF_TIME "baseBackoffTime"
+#define BACKOFF_ALL_NESTING "backoffAllNesting"
 
 #define TRUE "true"
 #define FALSE "false"
