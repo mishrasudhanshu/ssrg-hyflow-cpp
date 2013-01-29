@@ -202,7 +202,7 @@ void BenchmarkExecutor::writeResults() {
 	if (benchNodeMetadata.txnRunTime < 1000000) {
 		benchNodeMetadata.txnRunTime = 1000000;
 	}
-	double throughPut = (double(benchNodeMetadata.committedTxns))/((benchNodeMetadata.txnRunTime+1)/1000000);
+	double throughPut = (double(benchNodeMetadata.committedTxns))/((benchNodeMetadata.txnRunTime+1)/(1000000*threadCount));
 	LOG_DEBUG("BE :Throughput=%f, retryCount=%d, total tries=%d\n", throughPut, benchNodeMetadata.txnAborts.getValue(),
 			benchNodeMetadata.txnTries.getValue());
 	Logger::result("RunTime=%llu\n", benchNodeMetadata.txnRunTime);
