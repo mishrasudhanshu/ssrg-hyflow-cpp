@@ -135,7 +135,7 @@ void HashBucket::removeAtomically(HyflowObject* self, BenchMarkArgs* args, Hyflo
 void HashBucket::getAtomically(HyflowObject* self, BenchMarkArgs* args, HyflowContext* __context__, BenchMarkReturn* hRet) {
 	int key = *(((HTArgs*)args)->key1);
 	std::string targetBucket = HashTableBenchmark::getBucketId(key);
-	HYFLOW_FETCH(targetBucket, false);
+	HYFLOW_FETCH(targetBucket, true);
 
 	if (__context__->getNestingModel() == HYFLOW_NESTING_OPEN ) {
 		// Create unique abstract lock for this transaction
