@@ -15,5 +15,6 @@ echo "build the Project"
 make -j16 -C Debug | tee >/dev/null
 make -j16 -C Release | tee >/dev/null
 
-echo "Running the Project"
-#Debug/ssrg-hyflow-cpp
+echo "Running the unitTests for Project"
+unitTest=true Debug/ssrg-hyflow-cpp
+unitTest=true Release/ssrg-hyflow-cpp

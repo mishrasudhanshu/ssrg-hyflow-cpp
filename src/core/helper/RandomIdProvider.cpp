@@ -41,7 +41,6 @@ int RandomIdProvider::getNext() {
 }
 
 unsigned int RandomIdProvider::getSeed() {
-	timeval tv;
 	unsigned long long t = Logger::getCurrentMicroSec();
 	return (t%INT_MAX -1);
 }

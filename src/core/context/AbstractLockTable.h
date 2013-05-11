@@ -29,9 +29,8 @@ public:
 	/*
 	 * If lock is successful, the Abstract lock values will be used
 	 */
-	static bool isLocked(std::string lockName);
-	static bool tryLock(std::string lockName, AbstractLock *lock, bool isRead);
-	static void unlock(std::string lockName);
+	static bool tryLock(AbstractLock *lock, bool isRead);
+	static void unlock(AbstractLock *lock, bool isRead);
 };
 
 } /* namespace vt_dstm */

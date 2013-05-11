@@ -18,7 +18,6 @@
 namespace vt_dstm {
 
 class AbstractLockMsg: public vt_dstm::BaseMessage {
-	unsigned long long txnId;
 	bool doLock;
 	bool request;
 	bool read;
@@ -36,10 +35,9 @@ public:
     	read = false;
     	response = false;
     	abstractLock = NULL;
-    	txnId = 0;
     }
 
-	AbstractLockMsg(AbstractLock* absLock, unsigned long long txnId, bool lock);
+	AbstractLockMsg(AbstractLock* absLock, bool lock, bool read);
 	virtual ~AbstractLockMsg();
 
 	static void absLockAccessHandler(HyflowMessage& m);

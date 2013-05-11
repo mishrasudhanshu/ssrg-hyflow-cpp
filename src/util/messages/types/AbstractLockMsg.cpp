@@ -21,12 +21,11 @@
 
 namespace vt_dstm {
 
-AbstractLockMsg::AbstractLockMsg(AbstractLock* absLock, unsigned long long tid, bool lock) {
-	txnId = tid;
+AbstractLockMsg::AbstractLockMsg(AbstractLock* absLock, bool lock, bool rd) {
 	doLock = lock;
 	request = true;
 	abstractLock = absLock;
-	read = false;
+	read = rd;
 	response = false;
 }
 
@@ -36,7 +35,6 @@ template<class Archive>
 void AbstractLockMsg::serialize(Archive & ar, const unsigned int version) {
 	ar & boost::serialization::base_object<BaseMessage>(*this);
 
-	ar & txnId;
 	ar & doLock;
 	ar & request;
 	ar & read;
@@ -49,11 +47,11 @@ void AbstractLockMsg::absLockAccessHandler(HyflowMessage& m) {
 	if (almsg->request) {
 		if (almsg->doLock) {
 			LOG_DEBUG("ABL :Got Lock  request for %s\n", almsg->abstractLock->getLockName().c_str());
-			bool resp = AbstractLockTable::tryLock(almsg->abstractLock->getLockName(), almsg->abstractLock, almsg->read);
+			bool resp = AbstractLockTable::tryLock(almsg->abstractLock, almsg->read);
 			almsg->response = resp;
 		}else {
 			LOG_DEBUG("ABL :Got unlock  request for %s\n", almsg->abstractLock->getLockName().c_str());
-			AbstractLockTable::unlock(almsg->abstractLock->getLockName());
+			AbstractLockTable::unlock(almsg->abstractLock, almsg->read);
 		}
 		almsg->request = false;
 		/* If message as callback and network library don't support the callback, we need to reply manually*/

@@ -592,13 +592,13 @@ bool DTL2Context::doAbstractLock(AbstractLock* absLock, bool read) {
 	int tracker = absLock->getTracker();
 	if ( myNode == tracker) {
 		LOG_DEBUG("DTL :Lock :Got local AbstractLock %s\n", absLock->getLockName().c_str());
-		return AbstractLockTable::tryLock(absLock->getLockName(), absLock, read);
+		return AbstractLockTable::tryLock(absLock, read);
 	}else {
 		LOG_DEBUG("DTL :Lock :Got AbstractLock %s tracker as %d\n", absLock->getLockName().c_str(), tracker);
 		HyflowMessageFuture mFu;
 		HyflowMessage hmsg(absLock->getLockName());
 		hmsg.init(MSG_ABSTRACT_LOCK, true);
-		AbstractLockMsg almsg(absLock,txnId, true);
+		AbstractLockMsg almsg(absLock, true, read);
 		hmsg.setMsg(&almsg);
 		NetworkManager::sendCallbackMessage(tracker, hmsg, mFu);
 		mFu.waitOnFuture();
@@ -612,12 +612,12 @@ void DTL2Context::doAbstractUnLock(AbstractLock* absLock, bool read) {
 	int tracker = absLock->getTracker();
 	if ( myNode == tracker) {
 		LOG_DEBUG("DTL :Unlock :Got local AbstractLock %s\n", absLock->getLockName().c_str());
-		AbstractLockTable::unlock(absLock->getLockName());
+		AbstractLockTable::unlock(absLock, read);
 	}else {
 		LOG_DEBUG("DTL :Unlock :Got AbstractLock %s tracker as %d\n", absLock->getLockName().c_str(), tracker);
 		HyflowMessage hmsg(absLock->getLockName());
 		hmsg.init(MSG_ABSTRACT_LOCK, false);
-		AbstractLockMsg almsg(absLock,txnId, false);
+		AbstractLockMsg almsg(absLock, false, read);
 		hmsg.setMsg(&almsg);
 		NetworkManager::sendMessage(tracker, hmsg);
 	}
@@ -1133,15 +1133,16 @@ void DTL2Context::tryCommitON() {
 		// Obtain the abstract locks
 		std::map<std::string, AbstractLock*>::iterator arItr;
 		for ( arItr = abstractReadLocks.begin() ; arItr != abstractReadLocks.end() ; arItr++) {
-			if (!arItr->second->isLocked()) {
+			if (!arItr->second->isFetchted()) {
 				if (!doAbstractLock(arItr->second, true)) {
-					BenchmarkExecutor::increaseMetaData(HYFLOW_METADATA_ABSTRACT_ABORT);
 					setStatus(TXN_ABORTED);
 					LOG_DEBUG("Commit :Unable to get Atomic AbstractReadLock for %s\n", arItr->first.c_str());
 					TransactionException unableToAbsReadLock("Commit :Unable to get abstract readLock for "+arItr->first + "\n");
 					for (HyflowContext* pc = parentContext ; pc!=NULL ; pc = pc->getParentContext() ) {
 						pc->setStatus(TXN_ABORTED);
+						BenchmarkExecutor::increaseMetaData(HYFLOW_METADATA_CHILDFORCED_ABORT);
 					}
+					BenchmarkExecutor::increaseMetaData(HYFLOW_METADATA_ABSTRACT_ABORT);
 					throw unableToAbsReadLock;
 				}
 				lockedReadAbstractLock.push_back(arItr->first);
@@ -1149,7 +1150,7 @@ void DTL2Context::tryCommitON() {
 		}
 		std::map<std::string, AbstractLock*>::iterator awItr;
 		for ( awItr = abstractWriteLocks.begin() ; awItr != abstractWriteLocks.end() ; awItr++) {
-			if (!awItr->second->isLocked()) {
+			if (!awItr->second->isFetchted()) {
 				if (!doAbstractLock(awItr->second, false)) {
 					setStatus(TXN_ABORTED);
 					LOG_DEBUG("Commit :Unable to get AbstractWriteLock for %s\n", awItr->first.c_str());
@@ -1257,14 +1258,14 @@ void DTL2Context::reallyCommitON() {
 			for ( std::map<std::string, AbstractLock*>::iterator arItr = abstractReadLocks.begin() ; arItr != abstractReadLocks.end() ; arItr++) {
 				AbstractLock *absRCopy = NULL;
 				arItr->second->getClone(&absRCopy);
-				absRCopy->setAbsLock(true);
+				absRCopy->setFetchted(true);
 				parentContext->addAbstractLock(arItr->first, absRCopy, true);
 			}
 			// Abstract Write locks
 			for ( std::map<std::string, AbstractLock*>::iterator awItr = abstractWriteLocks.begin() ; awItr != abstractWriteLocks.end() ; awItr++) {
 				AbstractLock *absWCopy = NULL;
 				awItr->second->getClone(&absWCopy);
-				absWCopy->setAbsLock(true);
+				absWCopy->setFetchted(true);
 				parentContext->addAbstractLock(awItr->first, absWCopy, false);
 			}
 			// current Actions
@@ -1339,17 +1340,17 @@ void DTL2Context::rollback() {
 		}
 
 		for (std::map<std::string, AbstractLock*>::iterator arItr = abstractReadLocks.begin() ; arItr != abstractReadLocks.end() ; arItr++ ) {
-			if (arItr->second->isLocked()) {
+			if (arItr->second->isFetchted()) {
 				doAbstractUnLock(arItr->second, true);
 			}
-			arItr->second->setAbsLock(false);
+			arItr->second->setFetchted(false);
 		}
 
 		for (std::map<std::string, AbstractLock*>::iterator awItr = abstractWriteLocks.begin() ; awItr != abstractWriteLocks.end() ; awItr++ ) {
-			if (awItr->second->isLocked()) {
-				doAbstractUnLock(awItr->second, true);
+			if (awItr->second->isFetchted()) {
+				doAbstractUnLock(awItr->second, false);
 			}
-			awItr->second->setAbsLock(false);
+			awItr->second->setFetchted(false);
 		}
 	}
 }

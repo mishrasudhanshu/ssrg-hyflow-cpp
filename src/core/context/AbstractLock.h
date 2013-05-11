@@ -9,6 +9,8 @@
 #define ABSTRACTLOCK_H_
 
 #include <string>
+#include <set>
+#include <boost/serialization/set.hpp>
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>
 
@@ -22,40 +24,56 @@ class AbstractLock {
 
 	std::string highestObjectName;
 	std::string lockName;
-	// Mutual exclusion lock for current
-	bool absLock;
-	unsigned long long txnId;
+	// Shared lock for current
+	int absLock;
+	bool fetched;
+	unsigned long long requesterTxnId;
+	std::set<unsigned long long > txnIds;
+
 public:
 	AbstractLock();
 	AbstractLock(std::string highestObjectName, std::string lockName, unsigned long long txnId);
 	virtual ~AbstractLock();
-
-	bool isLocked();
-	bool lock(bool isRead);
-	void unlock();
+	bool isWriteLockable(unsigned long long txnId);
+	bool isReadLockable(unsigned long long txnId);
+	void readlock();
+	void readlock(unsigned long long txnId);
+	void writelock();
+	void writelock(unsigned long long txnId);
+	void unlock(bool isRead, unsigned long long txnId);
 	int getTracker();
 
-	void setAbsLock(bool absLock) {
-		this->absLock = absLock;
-	}
-
-	std::string getLockName() const {
+	std::string getLockName() const
+	{
 		return lockName;
 	}
 
-	void getClone(AbstractLock **abl) {
+	void getClone(AbstractLock** abl)
+	{
 		AbstractLock* absLockCopy = new AbstractLock();
 		absLockCopy->highestObjectName = highestObjectName;
 		absLockCopy->lockName = lockName;
 		absLockCopy->absLock = absLock;
-		absLockCopy->txnId = txnId;
-		*abl = absLockCopy ;
+		absLockCopy->txnIds = txnIds;
+		absLockCopy->requesterTxnId = requesterTxnId;
+		*abl = absLockCopy;
 	}
 
 	static void serializationTest();
 
-	unsigned long long getTxnId() const {
-		return txnId;
+	bool isFetchted() const
+	{
+		return fetched;
+	}
+
+	void setFetchted(bool fetchted)
+	{
+		this->fetched = fetchted;
+	}
+
+	unsigned long long getRequesterTxnId() const
+	{
+		return requesterTxnId;
 	}
 };
 

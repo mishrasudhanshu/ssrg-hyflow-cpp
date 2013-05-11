@@ -13,20 +13,20 @@
 
 #include "AbstractLock.h"
 #include "../../util/networking/NetworkManager.h"
-
+#include "../../util/logging/Logger.h"
 
 namespace vt_dstm {
 
 AbstractLock::AbstractLock() {
-	absLock = false;
-	txnId = 0;
+	absLock = 0;
 }
 
 AbstractLock::AbstractLock(std::string hO, std::string lN, unsigned long long tid) {
 	highestObjectName = hO;
 	lockName = lN;
-	txnId = tid;
-	absLock = false;
+	requesterTxnId = tid;
+	absLock = 0;
+	fetched = false;
 }
 
 AbstractLock::~AbstractLock() {}
@@ -36,24 +36,91 @@ void AbstractLock::serialize(Archive & ar, const unsigned int version) {
 	ar & highestObjectName;
 	ar & lockName;
 	ar & absLock;
-	ar & txnId;
+	ar & requesterTxnId;
+	ar & txnIds;
+	ar & fetched;
 }
 
-bool AbstractLock::isLocked() {
-	return absLock;
-}
-
-bool AbstractLock::lock(bool isRead) {
-	if (!absLock) {
-		absLock = true;
+bool AbstractLock::isReadLockable(unsigned long long txnId) {
+	if ( absLock > -1) {
 		return true;
 	}else {
+		if ( txnId == requesterTxnId ) {
+			LOG_DEBUG("ABSLCK : Currently write locked by requesting txn %llu\n", txnId);
+			return true;
+		}
 		return false;
 	}
 }
 
-void AbstractLock::unlock() {
-	absLock = false;
+bool AbstractLock::isWriteLockable(unsigned long long txnId) {
+	if ( absLock == -1) { // Write locked
+		if ( txnId == requesterTxnId ) {
+			LOG_DEBUG("ABSLCK : Currently write locked by requesting txn %llu\n", txnId);
+			return true;
+		}
+		return false;
+	}else if ( absLock == 0) { // Not locked
+		return true;
+	}else if ( absLock == 1) { // Read locked by 1
+		if ( txnIds.find(txnId) != txnIds.end() ) {
+			LOG_DEBUG("ABSLCK : Currently read locked by requesting txn %llu\n", txnId);
+			return true;
+		}
+		return false;
+	}else {	// Read locked by more than 1
+		return false;
+	}
+}
+
+void AbstractLock::readlock(unsigned long long txnId) {
+	if ( (txnId == requesterTxnId) &&
+			( absLock == -1 ) ){ // If write lock by me do nothing
+		return;
+	}
+	txnIds.insert(txnId);
+	absLock = txnIds.size();
+}
+
+void AbstractLock::readlock() {
+	txnIds.insert(requesterTxnId);
+	absLock = txnIds.size();
+}
+
+void AbstractLock::writelock(unsigned long long txnId) {
+	requesterTxnId = txnId;
+	absLock = -1;
+	txnIds.clear();
+}
+
+void AbstractLock::writelock() {
+	absLock = -1;
+	txnIds.clear();
+}
+
+void AbstractLock::unlock(bool isRead, unsigned long long txnId) {
+	if ( isRead ) {
+		if ( absLock == -1) {
+			if (requesterTxnId == txnId) {
+				// Possible if object first took read lock later applied for write lock, just ignore
+				LOG_DEBUG("ABSLCK : Lock %s is actually write locked by %llu\n", lockName.c_str(), requesterTxnId);
+			}
+			Logger::fatal("ABSLCK : Lock %s is locked by different owner %llu\n", lockName.c_str(), requesterTxnId);
+		}else if ( absLock == 0 ) {
+			Logger::fatal("ABSLCK : Lock %s is already unlocked owner %llu\n", lockName.c_str(), requesterTxnId);
+		}else {
+			txnIds.erase(txnId);
+			absLock = txnIds.size();
+		}
+	} else {
+		if ( absLock != -1 ) {
+			Logger::fatal("ABSLCK : Lock %s is not write locked %d owner %llu\n", lockName.c_str(), absLock, requesterTxnId);
+		}else {
+			absLock = 0;
+			requesterTxnId = 0;
+			txnIds.clear();
+		}
+	}
 }
 
 int AbstractLock::getTracker() {
